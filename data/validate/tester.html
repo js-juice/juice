@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Validation Tester</title>
+        <link rel="stylesheet" href="../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/juice.css" />
+        <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet" />
+        <script type="module" src="../../forms/juice-forms-setup.mjs"></script>
+        <script type="module" src="../../forms/juice-forms.mjs"></script>
+        <style>
+            :root {
+                --bg: #f4f5f7;
+                --panel: #ffffff;
+                --ink: #131620;
+                --muted: #5c6170;
+                --accent: #0b6bcf;
+                --line: #d6dbe6;
+                --error: #b1302e;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                min-height: 100vh;
+                background:
+                    radial-gradient(1200px 500px at 10% -20%, #d6e6ff 0%, transparent 60%),
+                    radial-gradient(900px 600px at 90% 0%, #ffe7d1 0%, transparent 60%),
+                    var(--bg);
+                color: var(--ink);
+                font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+                padding: 0;
+            }
+
+            .shell {
+                max-width: 980px;
+                margin: 0 auto;
+                display: grid;
+                gap: 1rem;
+            }
+
+            .grid {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            @media (min-width: 860px) {
+                .grid {
+                    grid-template-columns: 1fr 1fr;
+                    align-items: start;
+                }
+            }
+
+            .card {
+                background: var(--panel);
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                padding: 1rem;
+                box-shadow: 0 10px 26px rgba(15, 26, 56, 0.06);
+            }
+
+            .card h2 {
+                margin: 0 0 0.85rem;
+                font-size: 1rem;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                color: #334;
+            }
+
+            .stack {
+                display: grid;
+                gap: 0.85rem;
+            }
+
+            .field-row {
+                display: grid;
+                gap: 0.35rem;
+            }
+
+            .label {
+                font-size: 0.88rem;
+                color: var(--muted);
+            }
+
+            input[type="text"] {
+                width: 100%;
+                border: 1px solid #bcc5d6;
+                border-radius: 8px;
+                padding: 0.55rem 0.7rem;
+                font-size: 0.95rem;
+                outline: none;
+            }
+
+            input[type="text"]:focus {
+                border-color: var(--accent);
+                box-shadow: 0 0 0 3px rgba(11, 107, 207, 0.14);
+            }
+
+            .hint {
+                font-size: 0.8rem;
+                color: var(--muted);
+            }
+
+            .status {
+                display: inline-block;
+                border-radius: 999px;
+                font-size: 0.8rem;
+                padding: 0.2rem 0.55rem;
+                font-weight: 700;
+                letter-spacing: 0.02em;
+            }
+
+            .status.ok {
+                background: #e5f5e7;
+                color: #0f6c2b;
+            }
+
+            .status.bad {
+                background: #fdeaea;
+                color: var(--error);
+            }
+
+            pre {
+                margin: 0;
+                background: #12151d;
+                color: #d8dfef;
+                border-radius: 10px;
+                padding: 0.7rem;
+                overflow: auto;
+                font-size: 0.82rem;
+                line-height: 1.4;
+                min-height: 250px;
+            }
+
+            .event-list {
+                margin: 0;
+                padding-left: 1rem;
+                font-size: 0.86rem;
+                display: grid;
+                gap: 0.3rem;
+                max-height: 280px;
+                overflow: auto;
+            }
+
+            .event-list li {
+                color: #2a2f3d;
+            }
+
+            .event-list code {
+                color: #1b4f8f;
+                font-weight: 700;
+            }
+        </style>
+    </head>
+
+    <body>
+        <header>
+            <div
+                data-include="../../brand/templates/includes/nav.html"
+                data-nav-base="../../"></div>
+        </header>
+        <main>
+            <div id="hero" class="container padding:1o5">
+                <h1 id="page-title">Validation Test Page</h1>
+                <p>Type a rule string and a value. The input validates live and the debug output shows what the input receives.</p>
+            </div>
+            <div class="container padding:1o5">
+                <div id="content" class="shell">
+                    <section class="grid">
+                        <article class="card">
+                            <h2>Inputs</h2>
+                            <div class="stack">
+                                <div class="field-row">
+                                    <label class="label" for="ruleString">Rule String</label>
+                                    <input id="ruleString" type="text" value="required|min:3|max:12|a-z0-9" />
+                                    <div class="hint">Examples: <code>required|email</code> or <code>min:2|max:5|a-z</code></div>
+                                </div>
+
+                                <div class="field-row">
+                                    <span class="label">Value Input (custom component under test)</span>
+                                    <input-text id="valueInput" name="probe" label="Value" placeholder="Type here..."
+                                        validation="required|min:3|max:12|a-z0-9"></input-text>
+                                </div>
+
+                                <div class="field-row">
+                                    <span id="validBadge" class="status ok">VALID</span>
+                                    <div class="hint" id="summary"></div>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="card">
+                            <h2>Output Returned To Input</h2>
+                            <pre id="debugJson"></pre>
+                        </article>
+                    </section>
+
+                    <section class="card">
+                        <h2>Validator Events</h2>
+                        <ol class="event-list" id="eventList"></ol>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <script>
+            const ruleField = document.getElementById("ruleString");
+            const valueInput = document.getElementById("valueInput");
+            const debugJson = document.getElementById("debugJson");
+            const eventList = document.getElementById("eventList");
+            const validBadge = document.getElementById("validBadge");
+            const summary = document.getElementById("summary");
+
+            let activeValidator = null;
+            const eventHandlers = [];
+            let renderTimer = null;
+
+            function scheduleRender() {
+                if (renderTimer !== null) {
+                    clearTimeout(renderTimer);
+                }
+                renderTimer = setTimeout(() => {
+                    renderTimer = null;
+                    forceRender();
+                }, 0);
+            }
+
+            async function ensureValidationFresh() {
+                if (typeof valueInput._runValidation === "function") {
+                    await valueInput._runValidation();
+                }
+            }
+
+            async function forceRender() {
+                await ensureValidationFresh();
+                renderState();
+            }
+
+            function pushEvent(eventName, payload) {
+                const line = document.createElement("li");
+                const code = document.createElement("code");
+                code.textContent = eventName;
+                line.appendChild(code);
+                line.appendChild(document.createTextNode(` ${payload}`));
+                eventList.prepend(line);
+                while (eventList.children.length > 40) {
+                    eventList.removeChild(eventList.lastChild);
+                }
+            }
+
+            function detachValidatorEvents() {
+                if (!activeValidator || !eventHandlers.length) return;
+                for (let i = 0; i < eventHandlers.length; i += 1) {
+                    const item = eventHandlers[i];
+                    activeValidator.off(item.event, item.handler);
+                }
+                eventHandlers.length = 0;
+            }
+
+            function attachValidatorEvents() {
+                const validator = valueInput._validator;
+                if (!validator) {
+                    detachValidatorEvents();
+                    activeValidator = null;
+                    return;
+                }
+                if (!validator || validator === activeValidator) return;
+
+                detachValidatorEvents();
+                activeValidator = validator;
+
+                const add = (event, handler) => {
+                    validator.on(event, handler);
+                    eventHandlers.push({ event, handler });
+                };
+
+                add("error", (property, error) => {
+                    pushEvent("error", `${property} -> ${error.type}`);
+                    scheduleRender();
+                });
+                add("resolve", (property, removedTypes) => {
+                    pushEvent("resolve", `${property} -> [${(removedTypes || []).join(", ")}]`);
+                    scheduleRender();
+                });
+                add("property:invalid", (property) => {
+                    pushEvent("property:invalid", property);
+                    scheduleRender();
+                });
+                add("property:valid", (property) => {
+                    pushEvent("property:valid", property);
+                    scheduleRender();
+                });
+                add("invalid", (property) => {
+                    pushEvent("invalid", `first invalid property: ${property}`);
+                    scheduleRender();
+                });
+                add("valid", (property) => {
+                    pushEvent("valid", `all clear after: ${property}`);
+                    scheduleRender();
+                });
+            }
+
+            function snapshotValidity(validity) {
+                if (!validity) return null;
+                return {
+                    valid: !!validity.valid,
+                    customError: !!validity.customError,
+                    valueMissing: !!validity.valueMissing,
+                    typeMismatch: !!validity.typeMismatch,
+                    patternMismatch: !!validity.patternMismatch,
+                    tooShort: !!validity.tooShort,
+                    tooLong: !!validity.tooLong,
+                    rangeUnderflow: !!validity.rangeUnderflow,
+                    rangeOverflow: !!validity.rangeOverflow,
+                    stepMismatch: !!validity.stepMismatch,
+                    badInput: !!validity.badInput
+                };
+            }
+
+            function renderState() {
+                attachValidatorEvents();
+
+                const property = valueInput._validationProperty || valueInput.getAttribute("name") || "__value";
+                const validatorMessages = valueInput._validator ? valueInput._validator.messages(property) : [];
+                const validatorErrors = valueInput._validator
+                    ? valueInput._validator.errorsOf(property).map((error) => ({
+                        type: error.type,
+                        message: error.message,
+                        args: error.args
+                    }))
+                    : [];
+
+                const shadowMsg = valueInput.shadowRoot
+                    ? (valueInput.shadowRoot.querySelector(".validation-message") || {}).textContent || ""
+                    : "";
+
+                const output = {
+                    value: valueInput.value,
+                    ruleString: valueInput.getAttribute("validation") || "",
+                    effectiveRules: typeof valueInput._getValidationRules === "function"
+                        ? valueInput._getValidationRules()
+                        : "",
+                    validatorPresent: !!valueInput._validator,
+                    validationProperty: valueInput._validationProperty || null,
+                    hasInvalidAttribute: valueInput.hasAttribute("invalid"),
+                    ariaInvalid: valueInput.nativeInput ? valueInput.nativeInput.getAttribute("aria-invalid") : null,
+                    validationMessage: valueInput.validationMessage,
+                    validity: snapshotValidity(valueInput.validity),
+                    checkValidityResult: valueInput.checkValidity(),
+                    uiMessageText: shadowMsg,
+                    validatorMessages,
+                    validatorErrors
+                };
+
+                debugJson.textContent = JSON.stringify(output, null, 2);
+
+                const isValid = !output.hasInvalidAttribute;
+                validBadge.textContent = isValid ? "VALID" : "INVALID";
+                validBadge.className = `status ${isValid ? "ok" : "bad"}`;
+                summary.textContent = isValid
+                    ? "Input is currently valid for the active rule string."
+                    : `Input is invalid: ${output.validationMessage || shadowMsg || "no message"}`;
+            }
+
+            function applyRulesFromField() {
+                const rules = ruleField.value.trim();
+                if (rules) valueInput.setAttribute("validation", rules);
+                else valueInput.removeAttribute("validation");
+                scheduleRender();
+            }
+
+            ruleField.addEventListener("input", applyRulesFromField);
+            valueInput.addEventListener("input", scheduleRender);
+            valueInput.addEventListener("change", scheduleRender);
+
+            customElements.whenDefined("input-text").then(() => {
+                forceRender();
+                applyRulesFromField();
+            });
+        </script>
+        <script type="module" src="../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

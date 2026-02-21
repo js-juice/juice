@@ -1,0 +1,381 @@
+@use "sass:map";
+@use "sass:string";
+
+@function str-replace($string, $search, $replace: "") {
+    $index: string.index($string, $search);
+
+    @if $index {
+        @return string.slice($string, 1, $index - 1) + $replace +
+            str-replace(string.slice($string, $index + string.length($search)), $search, $replace);
+    }
+
+    @return $string;
+}
+
+@function percent($n) {
+    @return $n * 1%;
+}
+
+@function rem($n) {
+    @return $n * 1rem;
+}
+
+$sides: (top, right, bottom, left);
+
+$breakpoints: (
+    xs: 0,
+    sm: 576px,
+    md: 768px,
+    lg: 992px,
+    xl: 1200px
+);
+
+.no-decoration {
+    text-decoration: none;
+}
+
+@for $i from 1 through 40 {
+    .padding\:#{str-replace(#{$i * 0.1}, ".", "o")} {
+        padding: rem($i * 0.1);
+    }
+}
+
+@each $side in $sides {
+    @for $i from 1 through 40 {
+        .padding\:#{$side}\:#{str-replace(#{$i * 0.1}, ".", "o")} {
+            padding-#{$side}: rem($i * 0.1);
+        }
+    }
+}
+
+@for $i from 1 through 40 {
+    .margin\:#{str-replace(#{$i * 0.1}, ".", "o")} {
+        margin: rem($i * 0.1);
+    }
+}
+
+@each $side in $sides {
+    @for $i from 1 through 40 {
+        .margin\:#{$side}\:#{str-replace(#{$i * 0.1}, ".", "o")} {
+            margin-#{$side}: rem($i * 0.1);
+        }
+    }
+}
+
+/***
+ * 
+  ██████╗ ██████╗ ██╗      ██████╗ ██████╗ ███████╗
+ ██╔════╝██╔═══██╗██║     ██╔═══██╗██╔══██╗██╔════╝
+ ██║     ██║   ██║██║     ██║   ██║██████╔╝███████╗
+ ██║     ██║   ██║██║     ██║   ██║██╔══██╗╚════██║
+ ╚██████╗╚██████╔╝███████╗╚██████╔╝██║  ██║███████║
+  ╚═════╝ ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝                 
+ * 
+ ***/
+$color-map: (
+    "blue": #007cc7,
+    "red": #bb1414,
+    "yellow": #ffab1a,
+    "black": #1b2020,
+    "grey": #c8cdd0,
+    "darkgrey": #415058,
+    "white": #ffffff,
+    "lime": #7ed321,
+    "teal": #008080
+);
+
+$colors: (
+    // Brand / Primary
+    primary: #0d6efd,
+    secondary: #6c757d,
+    success: #198754,
+    danger: #dc3545,
+    warning: #ffc107,
+    info: #0dcaf0,
+
+    // Grayscale
+    white: #ffffff,
+    gray-100: #f8f9fa,
+    gray-200: #e9ecef,
+    gray-300: #dee2e6,
+    gray-400: #ced4da,
+    gray-500: #adb5bd,
+    gray-600: #6c757d,
+    gray-700: #495057,
+    gray-800: #343a40,
+    gray-900: #212529,
+    black: #000000,
+
+    // Extended palette
+    red: #e74c3c,
+    orange: #fd7e14,
+    yellow: #f1c40f,
+    green: #27ae60,
+    teal: #20c997,
+    cyan: #17a2b8,
+    blue: #3498db,
+    indigo: #6610f2,
+    purple: #6f42c1,
+    pink: #d63384,
+
+    // Pastels
+    pastel-pink: #ffb3c6,
+    pastel-green: #b8e994,
+    pastel-blue: #a3c9f9,
+    pastel-yellow: #fff3b0,
+    pastel-purple: #d4a5f9,
+
+    // Darker accents
+    navy: #001f3f,
+    maroon: #800000,
+    olive: #556b2f,
+    brown: #8b4513,
+    gold: #ffd700,
+    silver: #c0c0c0
+);
+
+@each $color, $hex in $color-map {
+    .text\:#{$color} {
+        color: $hex;
+    }
+}
+
+@each $color, $hex in $color-map {
+    .bg\:#{$color} {
+        background-color: $hex;
+    }
+}
+
+/***
+ * 
+ ████████╗███████╗██╗  ██╗████████╗
+ ╚══██╔══╝██╔════╝╚██╗██╔╝╚══██╔══╝
+    ██║   █████╗   ╚███╔╝    ██║   
+    ██║   ██╔══╝   ██╔██╗    ██║   
+    ██║   ███████╗██╔╝ ██╗   ██║   
+    ╚═╝   ╚══════╝╚═╝  ╚═╝   ╚═╝   
+                                   
+ *
+ ***/
+$heading-font: "Proxima Nova", Georgia, sans-serif;
+
+$font-styles: (
+    h1: (
+        font-family: $heading-font,
+        font-size: 3rem,
+        font-weight: 700,
+        line-height: 1.2,
+        margin-bottom: 1rem
+    ),
+    h2: (
+        font-family: $heading-font,
+        font-size: 2rem,
+        font-weight: 600,
+        line-height: 1.3,
+        margin-bottom: 0.75rem
+    ),
+    h3: (
+        font-family: $heading-font,
+        font-size: 1.75rem,
+        font-weight: 600,
+        line-height: 1.35,
+        margin-bottom: 0.75rem
+    ),
+    h4: (
+        font-family: $heading-font,
+        font-size: 1.5rem,
+        font-weight: 500,
+        line-height: 1.4,
+        margin-bottom: 0.5rem
+    ),
+    h5: (
+        font-family: $heading-font,
+        font-size: 1.25rem,
+        font-weight: 500,
+        line-height: 1.5,
+        margin-bottom: 0.5rem
+    ),
+    h6: (
+        font-family: $heading-font,
+        font-size: 1rem,
+        font-weight: 500,
+        line-height: 1.6,
+        margin-bottom: 0.5rem
+    ),
+    p: (
+        font-size: 1rem,
+        font-weight: 400,
+        line-height: 1.6,
+        margin-bottom: 1rem
+    )
+);
+
+@each $name, $styles in $font-styles {
+    #{$name} {
+        @each $prop, $val in $styles {
+            #{$prop}: $val;
+        }
+    }
+}
+
+/***
+ * 
+███████╗██╗     ███████╗██╗  ██╗██████╗  ██████╗ ██╗  ██╗    ███████╗████████╗ █████╗ ██████╗ ████████╗
+██╔════╝██║     ██╔════╝╚██╗██╔╝██╔══██╗██╔═══██╗╚██╗██╔╝    ██╔════╝╚══██╔══╝██╔══██╗██╔══██╗╚══██╔══╝
+█████╗  ██║     █████╗   ╚███╔╝ ██████╔╝██║   ██║ ╚███╔╝     ███████╗   ██║   ███████║██████╔╝   ██║   
+██╔══╝  ██║     ██╔══╝   ██╔██╗ ██╔══██╗██║   ██║ ██╔██╗     ╚════██║   ██║   ██╔══██║██╔══██╗   ██║   
+██║     ███████╗███████╗██╔╝ ██╗██████╔╝╚██████╔╝██╔╝ ██╗    ███████║   ██║   ██║  ██║██║  ██║   ██║   
+╚═╝     ╚══════╝╚══════╝╚═╝  ╚═╝╚═════╝  ╚═════╝ ╚═╝  ╚═╝    ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   
+*
+***/
+
+// Base flex mixin
+@mixin flex-base($direction) {
+    position: relative;
+    display: flex;
+    flex-direction: $direction;
+}
+
+// Maps of justify-content options
+$justify-map: (
+    center: center,
+    left: flex-start,
+    right: flex-end,
+    top: flex-start,
+    bottom: flex-end,
+    space-between: space-between,
+    space-around: space-around,
+    space-even: space-evenly
+);
+
+// Maps of align-items options
+$align-map: (
+    start: flex-start,
+    end: flex-end,
+    center: center,
+    stretch: stretch,
+    baseline: baseline
+);
+
+.flex-v {
+    @include flex-base(column);
+
+    > * {
+        flex: 1 0 auto;
+    }
+    > .flex-all {
+        flex: 1 1 100%;
+    }
+    > .flex-shrink {
+        flex: 0 1 auto;
+    }
+    > .flex-grow {
+        flex: 1 0 auto;
+    }
+    > .flex-static {
+        flex: 0 0 auto;
+    }
+    > .self-btm {
+        align-self: flex-end;
+        margin-top: auto;
+    }
+    > .self-middle {
+        align-self: center;
+        margin: auto 0;
+    }
+    > .self-top {
+        align-self: flex-start;
+        margin-bottom: auto;
+    }
+}
+
+.flex-h {
+    @include flex-base(row);
+    flex-wrap: nowrap;
+
+    > * {
+        flex: 0 1 auto;
+        position: relative;
+    }
+    > .flex-all {
+        flex: 1 1 100%;
+    }
+    > .flex-shrink {
+        flex: 0 1 auto;
+    }
+    > .flex-grow {
+        flex-grow: 1;
+    }
+    > .flex-static {
+        flex: 0 0 auto;
+    }
+}
+
+@mixin flex-utils($class) {
+    .#{$class}.items-wrap {
+        flex-wrap: wrap;
+    }
+
+    // Generate justify-content helpers
+    @each $name, $val in $justify-map {
+        .#{$class}.#{$name} {
+            justify-content: $val;
+        }
+    }
+
+    // Generate align-items helpers
+    @each $name, $val in $align-map {
+        .#{$class}.items-align-#{$name} {
+            align-items: $val;
+        }
+    }
+}
+
+@include flex-utils("flex-v");
+@include flex-utils("flex-h");
+
+/***
+ * 
+ ███████╗██╗     ███████╗██╗  ██╗██████╗  ██████╗ ██╗  ██╗    ███████╗███╗   ██╗██████╗ 
+ ██╔════╝██║     ██╔════╝╚██╗██╔╝██╔══██╗██╔═══██╗╚██╗██╔╝    ██╔════╝████╗  ██║██╔══██╗
+ █████╗  ██║     █████╗   ╚███╔╝ ██████╔╝██║   ██║ ╚███╔╝     █████╗  ██╔██╗ ██║██║  ██║
+ ██╔══╝  ██║     ██╔══╝   ██╔██╗ ██╔══██╗██║   ██║ ██╔██╗     ██╔══╝  ██║╚██╗██║██║  ██║
+ ██║     ███████╗███████╗██╔╝ ██╗██████╔╝╚██████╔╝██╔╝ ██╗    ███████╗██║ ╚████║██████╔╝
+ ╚═╝     ╚══════╝╚══════╝╚═╝  ╚═╝╚═════╝  ╚═════╝ ╚═╝  ╚═╝    ╚══════╝╚═╝  ╚═══╝╚═════╝                                        
+ * 
+*/
+
+a.button {
+    display: inline-block;
+    padding: 0.65rem 1rem;
+    border-radius: 8px;
+    font-family: "Proxima Nova", Georgia, sans-serif;
+    background: map.get($color-map, "red");
+    margin: 0 0.5rem;
+
+    &\:dark {
+        background: map.get($color-map, "black");
+        color: map.get($color-map, "white");
+        border: 1px solid map.get($color-map, "black");
+        &:hover {
+            background: map.get($color-map, "white");
+            color: map.get($color-map, "black");
+            border: 1px solid map.get($color-map, "black");
+        }
+    }
+
+    &\:light {
+        background: map.get($color-map, "white");
+        color: map.get($color-map, "black");
+        border: 1px solid map.get($color-map, "darkgrey");
+        &:hover {
+            background: map.get($color-map, "black");
+            color: map.get($color-map, "white");
+            border: 1px solid map.get($color-map, "white");
+        }
+    }
+}
+
+.hidden {
+    display: none;
+}

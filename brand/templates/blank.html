@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Juice Template</title>
+        <link rel="stylesheet" href="./css/default.css" />
+        <link rel="stylesheet" href="./css/juice.css" />
+        <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet">
+    </head>
+
+    <body>
+        <header>
+            <div class="container repo-nav-shell">
+                <div class="flex-h w:100 gap:1">
+                    <div class="branding">
+                        <a href="">
+                            <img src="../logo-long.svg" alt="JS Juice" />
+                        </a>
+                    </div>
+                    <div id="nav">
+                        <div data-include="./includes/nav.html" data-nav-base="../../"></div>
+                    </div>
+                    <div id="search">
+                        <div data-include="./includes/search.html" data-nav-base="../../"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <main>
+            <div id="hero" class="container padding:1o5">
+                <h1 id="page-title">Page Title</h1>
+                <p>Page subtitle or summary text.</p>
+            </div>
+            <div class="container padding:1o5">
+                <div id="content">
+                    <h2>Content Title</h2>
+                </div>
+            </div>
+        </main>
+        <script type="module" src="./includes/include.mjs"></script>
+    </body>
+
+</html>

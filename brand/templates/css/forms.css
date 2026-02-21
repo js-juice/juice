@@ -1,0 +1,175 @@
+:root {
+  --input-font-size: 1.2rem;
+  --input-padding: 0.65rem 1rem;
+}
+
+label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  margin-top: 1rem;
+  font-family: "Proxima Nova", Georgia, sans-serif;
+}
+
+.form-input {
+  margin-top: 1rem;
+}
+
+.form-input > label {
+  margin-top: 0;
+}
+
+label:after {
+  content: ":";
+}
+
+label.required:before {
+  content: "*";
+  color: red;
+}
+
+input {
+  border: 1px solid #d2d2d2;
+}
+
+.field {
+  margin-bottom: 1.5rem;
+}
+
+textarea {
+  line-height: 1.4 !important;
+  min-height: 300px;
+}
+
+form .row {
+  display: flex;
+  position: relative;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  padding-top: 30px;
+  justify-content: space-between;
+}
+
+form .row > * {
+  width: 100%;
+  flex: 1 1 100%;
+  margin-right: 1rem;
+}
+
+.row > div:last-child {
+  margin-right: 0;
+}
+
+.form-input.inline label {
+  margin-bottom: 0;
+}
+
+.form-input:not(.inline) {
+  width: 100%;
+}
+
+.row-label {
+  position: absolute;
+  top: 0;
+}
+
+.label-inline {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.label-inline label {
+  flex: 0 0 auto;
+  margin-top: 0;
+  margin-right: 1rem;
+}
+
+.label-inline .input {
+  flex: 0 1 auto;
+  width: 100%;
+}
+
+.label-inline .input > * {
+  width: 100%;
+}
+
+.label-inline select {
+  display: inline-block;
+}
+
+form input[type=text] {
+  width: 100%;
+  font-size: 1.2rem;
+  padding: 0.65rem 0.8rem;
+}
+form input[type=submit] {
+  margin-right: 0.5rem;
+  font-size: 1.2rem;
+  background-color: #1b2020;
+  color: #fff;
+  padding: 0 1rem;
+  height: 2.8rem;
+  cursor: pointer;
+}
+form input[type=checkbox] {
+  margin-right: 0.5rem;
+}
+form input[type=radio] {
+  margin-right: 0.5rem;
+}
+form textarea {
+  width: 100%;
+}
+
+.datalist {
+  min-height: 30px;
+  background: #d2d2d2;
+  position: absolute;
+  margin-top: -2px;
+  border-top: 3px solid #2b3333;
+  display: none;
+  z-index: 1000;
+}
+.datalist.visible {
+  display: block;
+}
+.datalist .item {
+  display: flex;
+  flex-direction: row;
+  background: #fff;
+  padding: 10px;
+  border-bottom: 1px solid #333;
+  cursor: pointer;
+}
+.datalist .item:hover {
+  background: #eee;
+}
+.datalist .item .icon {
+  flex: 0 0 auto;
+  width: 50px;
+  position: relative;
+}
+.datalist .item .icon .icon-inner {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: auto;
+}
+.datalist .item .icon .icon-inner svg {
+  width: 100%;
+  height: 100%;
+}
+.datalist .item .address {
+  font-family: "Proxima Nova", Georgia, serif;
+  flex: 1 1 auto;
+  line-height: 1.4rem;
+}
+
+input.datalist-visible {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}

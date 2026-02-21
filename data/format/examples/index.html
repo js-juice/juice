@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Data Format Examples</title>
+        <link rel="stylesheet" href="../../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../../brand/templates/css/juice.css" />
+        <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet" />
+        <style>
+            :root {
+                --bg-a: #dce9ff;
+                --bg-b: #ffe8d8;
+                --panel: #ffffff;
+                --ink: #111827;
+                --muted: #51607a;
+                --line: #d6deef;
+                --accent: #0f67cf;
+                --ok: #2e9b4b;
+                --error: #be3434;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                min-height: 100vh;
+                color: var(--ink);
+                background:
+                    radial-gradient(1100px 500px at -5% -20%, var(--bg-a) 0%, transparent 60%),
+                    radial-gradient(900px 600px at 100% -10%, var(--bg-b) 0%, transparent 65%),
+                    #f4f6fb;
+            }
+
+            .layout {
+                max-width: 1060px;
+                margin: 0 auto;
+                padding: 1.2rem;
+                display: grid;
+                gap: 1rem;
+            }
+
+            .grid {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            @media (min-width: 880px) {
+                .grid {
+                    grid-template-columns: 1fr 1fr;
+                }
+            }
+
+            .card {
+                background: var(--panel);
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                padding: 1rem;
+                box-shadow: 0 10px 24px rgba(12, 31, 68, 0.08);
+            }
+
+            .card h2 {
+                margin: 0 0 0.8rem;
+                font-size: 1rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+
+            .field {
+                display: grid;
+                gap: 0.35rem;
+                margin-bottom: 0.7rem;
+            }
+
+            .label {
+                font-size: 0.82rem;
+                color: var(--muted);
+            }
+
+            .input {
+                width: 100%;
+                border: 1px solid #bfcbe2;
+                border-radius: 8px;
+                padding: 0.58rem 0.7rem;
+                font-size: 0.95rem;
+                outline: none;
+            }
+
+            .input:focus {
+                border-color: var(--accent);
+                box-shadow: 0 0 0 3px rgba(15, 103, 207, 0.14);
+            }
+
+            .out {
+                margin-top: 0.65rem;
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                background: #f7f9fe;
+                padding: 0.7rem;
+                min-height: 2.2rem;
+                font-family: "Consolas", "Courier New", monospace;
+            }
+
+            .row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.6rem;
+                margin-bottom: 0.6rem;
+            }
+
+            .pill {
+                display: inline-flex;
+                align-items: center;
+                border-radius: 999px;
+                padding: 0.17rem 0.54rem;
+                font-size: 0.78rem;
+                font-weight: 700;
+                border: 1px solid transparent;
+            }
+
+            .pill.ok {
+                color: #0f6f2f;
+                background: #e8f7ec;
+                border-color: #b7e7c2;
+            }
+
+            .pill.error {
+                color: #8f1f1f;
+                background: #ffecec;
+                border-color: #f4b5b5;
+            }
+
+            .steps {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.45rem;
+            }
+
+            .step {
+                border: 1px solid #ced8ec;
+                background: #f2f6ff;
+                border-radius: 999px;
+                padding: 0.2rem 0.56rem;
+                font-size: 0.8rem;
+                color: #264f84;
+            }
+
+            .step.empty {
+                color: #6a7285;
+                background: #f8f8fa;
+            }
+
+            .registry {
+                color: var(--muted);
+                font-size: 0.84rem;
+                line-height: 1.45;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.85rem;
+            }
+
+            th,
+            td {
+                border-bottom: 1px solid var(--line);
+                text-align: left;
+                padding: 0.52rem 0.45rem;
+                vertical-align: top;
+            }
+
+            th {
+                color: #1d365b;
+                background: #f7f9ff;
+            }
+        </style>
+    </head>
+
+    <body>
+        <header>
+            <div
+                data-include="../../../brand/templates/includes/nav.html"
+                data-nav-base="../../../"></div>
+        </header>
+        <main>
+            <div id="hero" class="container padding:1o5">
+                <h1 id="page-title">Format Pipeline Visual Demo</h1>
+                <p>See how `data/format` transforms values live as you change the input and pipeline spec.</p>
+            </div>
+            <div class="container padding:1o5">
+                <div id="content" class="layout">
+                    <section class="grid">
+                        <article class="card">
+                            <h2>Interactive</h2>
+                            <div class="field">
+                                <label class="label" for="input-value">Input Value</label>
+                                <input id="input-value" class="input" type="text" value="  hello world from juice  " />
+                            </div>
+                            <div class="field">
+                                <label class="label" for="format-spec">Format Spec</label>
+                                <input id="format-spec" class="input" type="text" value="trim:ucwords" />
+                            </div>
+                            <div class="row">
+                                <strong>Output</strong>
+                                <span id="output-status" class="pill ok">OK</span>
+                            </div>
+                            <div id="output-value" class="out"></div>
+                        </article>
+
+                        <article class="card">
+                            <h2>Pipeline Steps</h2>
+                            <div id="step-list" class="steps"></div>
+                            <h2 style="margin-top: 1rem;">Available Formatters</h2>
+                            <div id="registry-list" class="registry"></div>
+                        </article>
+                    </section>
+
+                    <section class="card">
+                        <h2>Working Examples</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Case</th>
+                                    <th>Input</th>
+                                    <th>Spec</th>
+                                    <th>Result</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sample-body"></tbody>
+                        </table>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <script type="module" src="./main.mjs"></script>
+        <script type="module" src="../../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>
