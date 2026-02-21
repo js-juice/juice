@@ -3,4 +3,3 @@ _not_included/*
 legacy
 legacy/*
 node_modules
-dist
