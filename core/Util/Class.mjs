@@ -37,6 +37,38 @@ export function copyProperties(target, source) {
         }
     }
 }
+
+/**
+ * Blends multiple classes into a single class.
+ * The resulting class copies static members and prototype methods from each mixin,
+ * and copies instance properties from each mixin instance at construction time.
+ * @param {...Function} mixins - Classes to blend
+ * @returns {Function} Blended class
+ * @example
+ * class A { a() { return "a"; } }
+ * class B { b() { return "b"; } }
+ * const AB = blendClasses(A, B);
+ * const value = new AB();
+ */
+export function blendClasses(...mixins) {
+    class Blended {
+        constructor(...args) {
+            for (const Mixin of mixins) {
+                if (typeof Mixin !== "function") continue;
+                const mixinInstance = new Mixin(...args);
+                copyProperties(this, mixinInstance);
+            }
+        }
+    }
+
+    for (const Mixin of mixins) {
+        if (typeof Mixin !== "function") continue;
+        copyProperties(Blended, Mixin);
+        copyProperties(Blended.prototype, Mixin.prototype);
+    }
+
+    return Blended;
+}
 /**
  * ClassUtil provides utility methods for working with JavaScript classes.
  * Includes methods for managing protected properties and setting up class modifiers.

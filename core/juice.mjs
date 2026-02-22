@@ -6,9 +6,10 @@
  */
 
 import "./Dev/Log.mjs";
-import { copyProperties } from "./Util/Class.mjs";
+import { blendClasses } from "./Util/Class.mjs";
+import _config from "./Configuration.mjs";
 
-export const root = window || global;
+export const root = typeof globalThis !== "undefined" ? globalThis : {};
 
 import JuiceStorage from "./inc/Storage.mjs";
 import JuiceQueues from "./inc/Queues.mjs";
@@ -59,21 +60,17 @@ class Juice {
      * const instance = new Blended();
      */
     static blend(...mixins) {
-        class Blended {
-            constructor(...args) {
-                for (const Mixin of mixins) {
-                    const mixinInstance = new Mixin(...args);
-                    copyProperties(this, mixinInstance);
-                }
-            }
-        }
+        return blendClasses(...mixins);
+    }
 
-        for (const Mixin of mixins) {
-            copyProperties(Composite, Mixin);
-            copyProperties(Composite.prototype, Mixin.prototype);
-        }
-
-        return Blended;
+    /**
+     * Semantic alias for blend when creating "flavors" of Juice classes.
+     * @param {...Function} mixins - Mixin classes to blend together
+     * @returns {Function} A new blended class
+     * @static
+     */
+    static flavor(...mixins) {
+        return Juice.blend(...mixins);
     }
 
     /**
@@ -87,6 +84,8 @@ class Juice {
         this.queues = new JuiceQueues();
         this.storage = new JuiceStorage();
         this.eventRegistry = {};
+        this.config = _config;
+        this.callStack = [];
     }
 
     /**
@@ -96,6 +95,48 @@ class Juice {
      */
     blend(...mixins) {
         return Juice.blend(...mixins);
+    }
+
+    /**
+     * Instance alias for blend to support flavor-based composition semantics.
+     * @param {...Function} mixins - Mixin classes to blend
+     * @returns {Function} A new blended class
+     */
+    flavor(...mixins) {
+        return this.blend(...mixins);
+    }
+
+    path(scope, relative) {
+        return this.config.get(`paths.${scope}`);
+    }
+
+    /**
+     * Wraps a function to track its calls in the call stack.
+     * @param {Function} fn - The function to track
+     * @returns {Function} A wrapped version of the function that tracks calls
+     */
+    track(fn) {
+        const stack = this.callStack;
+        return function trackedCall(...args) {
+            const originalCallStackLength = stack.length;
+            stack.push(fn);
+            try {
+                return fn.apply(this, args);
+            } finally {
+                stack.splice(originalCallStackLength, 1);
+            }
+        };
+    }
+
+    /**
+     * Gets the calling function from the call stack.
+     * @returns {Function|null} The calling function, or null if not available
+     */
+    caller() {
+        if (this.callStack.length < 2) {
+            return null;
+        }
+        return this.callStack[this.callStack.length - 1];
     }
 
     /**
@@ -209,62 +250,12 @@ class Juice {
  */
 export const juice = new Juice();
 juice.expose();
-
-import _config from "./Configuration.mjs";
 /**
  * Global configuration object.
  * @type {DotNotation}
  */
 export const config = _config;
-juice.config = config;
 
 config.set("paths.root", currentFile(import.meta));
-
-/**
- * Gets a configured path by scope.
- * @param {string} scope - The path scope (e.g., 'root')
- * @param {string} relative - Relative path (not currently used)
- * @returns {string} The configured path
- */
-juice.path = function (scope, relative) {
-    return config.get(`paths.${scope}`);
-};
-
-/**
- * Internal call stack for tracking function calls.
- * @type {Array<Function>}
- * @private
- */
-const callstack = [];
-
-/**
- * Wraps a function to track its calls in the call stack.
- * @param {Function} fn - The function to track
- * @returns {Function} A wrapped version of the function that tracks calls
- * @example
- * const tracked = juice.track(myFunction);
- */
-juice.track = function trackCall(fn) {
-    return function trackedCall(...args) {
-        const originalCallStackLength = callStack.length;
-        callStack.push(fn);
-        try {
-            return fn.apply(this, args);
-        } finally {
-            callStack.splice(originalCallStackLength, 1);
-        }
-    };
-};
-
-/**
- * Gets the calling function from the call stack.
- * @returns {Function|null} The calling function, or null if not available
- */
-juice.caller = function () {
-    if (callStack.length < 2) {
-        return null;
-    }
-    return callStack[callStack.length - 1];
-};
 
 export default juice;

@@ -1,3 +1,7 @@
+import {
+    configureJuice as configureCoreJuice,
+    getJuiceConfig as getCoreJuiceConfig
+} from "../../core/Configuration.mjs";
 import { registerPresets } from "../../data/validate/Presets.mjs";
 import { registerFormatters } from "../../data/format/Presets.mjs";
 import {
@@ -64,15 +68,9 @@ function deepMerge(target, source) {
     return target;
 }
 
-let juiceConfig = deepClone(DEFAULT_JUICE_CONFIG);
-
-function emitJuiceConfigChange() {
-    if (typeof document === "undefined" || typeof CustomEvent !== "function") return;
-    document.dispatchEvent(
-        new CustomEvent("juice:configchange", {
-            detail: deepClone(juiceConfig)
-        })
-    );
+function getEffectiveConfig() {
+    const current = getCoreJuiceConfig() || {};
+    return deepMerge(deepClone(DEFAULT_JUICE_CONFIG), current);
 }
 
 function applyValidationColorVariables(validationConfig = {}) {
@@ -80,9 +78,10 @@ function applyValidationColorVariables(validationConfig = {}) {
     const root = document.documentElement;
     if (!root || !root.style) return;
 
-    const colors = validationConfig && validationConfig.colors
-        ? validationConfig.colors
-        : {};
+    const colors =
+        validationConfig && validationConfig.colors
+            ? validationConfig.colors
+            : {};
     const mergedColors = {
         ...DEFAULT_JUICE_CONFIG.validation.colors,
         ...(colors || {})
@@ -96,12 +95,14 @@ function applyValidationColorVariables(validationConfig = {}) {
 
 function applyValidationConfig(validationConfig = {}) {
     applyValidationColorVariables(validationConfig || {});
-    const configuredPresets = validationConfig && validationConfig.presets
-        ? validationConfig.presets
-        : {};
-    const configuredErrorTypes = validationConfig && validationConfig.errorTypes
-        ? validationConfig.errorTypes
-        : {};
+    const configuredPresets =
+        validationConfig && validationConfig.presets
+            ? validationConfig.presets
+            : {};
+    const configuredErrorTypes =
+        validationConfig && validationConfig.errorTypes
+            ? validationConfig.errorTypes
+            : {};
     registerPresets(
         { ...(DEFAULT_VALIDATION_PRESETS || {}), ...(configuredPresets || {}) },
         { ...(DEFAULT_VALIDATION_ERROR_TYPES || {}), ...(configuredErrorTypes || {}) }
@@ -109,40 +110,62 @@ function applyValidationConfig(validationConfig = {}) {
 }
 
 function applyFormattingConfig(formattingConfig = {}) {
-    const configuredPresets = formattingConfig && formattingConfig.presets
-        ? formattingConfig.presets
-        : {};
+    const configuredPresets =
+        formattingConfig && formattingConfig.presets
+            ? formattingConfig.presets
+            : {};
     registerFormatters({
         ...(DEFAULT_FORMAT_PRESETS || {}),
         ...(configuredPresets || {})
     });
 }
 
+function syncRuntimeConfig() {
+    const config = getEffectiveConfig();
+    applyFormattingConfig(config.formatting || {});
+    applyValidationConfig(config.validation || {});
+    return config;
+}
+
+let listeningForChanges = false;
+function ensureConfigListener() {
+    if (listeningForChanges) return;
+    if (typeof document === "undefined") return;
+    listeningForChanges = true;
+    document.addEventListener("juice:configchange", () => {
+        syncRuntimeConfig();
+    });
+}
+
+function ensureDefaults() {
+    const merged = getEffectiveConfig();
+    configureCoreJuice(merged);
+    return merged;
+}
+
 export function configureJuice(nextConfig = {}) {
-    if (!isPlainObject(nextConfig)) return deepClone(juiceConfig);
-    juiceConfig = deepMerge(juiceConfig, nextConfig);
-    applyFormattingConfig(juiceConfig.formatting || {});
-    applyValidationConfig(juiceConfig.validation || {});
-    emitJuiceConfigChange();
-    return deepClone(juiceConfig);
+    ensureDefaults();
+    if (isPlainObject(nextConfig)) {
+        configureCoreJuice(nextConfig);
+    }
+    return deepClone(syncRuntimeConfig());
 }
 
 export function getJuiceConfig(section) {
-    if (!section) return deepClone(juiceConfig);
-    if (!Object.prototype.hasOwnProperty.call(juiceConfig, section)) return {};
-    return deepClone(juiceConfig[section]);
+    const effective = getEffectiveConfig();
+    if (!section) return deepClone(effective);
+    if (!Object.prototype.hasOwnProperty.call(effective, section)) return {};
+    return deepClone(effective[section]);
 }
 
 export function resetJuiceConfig() {
-    juiceConfig = deepClone(DEFAULT_JUICE_CONFIG);
-    applyFormattingConfig(juiceConfig.formatting || {});
-    applyValidationConfig(juiceConfig.validation || {});
-    emitJuiceConfigChange();
-    return deepClone(juiceConfig);
+    configureCoreJuice(deepClone(DEFAULT_JUICE_CONFIG));
+    return deepClone(syncRuntimeConfig());
 }
 
-applyFormattingConfig(juiceConfig.formatting || {});
-applyValidationConfig(juiceConfig.validation || {});
+ensureConfigListener();
+ensureDefaults();
+syncRuntimeConfig();
 
 export default {
     configureJuice,
