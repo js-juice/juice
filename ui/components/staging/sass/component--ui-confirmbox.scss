@@ -1,0 +1,72 @@
+@use "sass:color";
+@import 'vars';
+
+:host {
+    position: absolute;
+    z-Index: 1000;
+    left: 50%;
+    top:0;
+    transform: translateX(-50%);
+}
+
+
+.confirm-box {
+    position:relative;
+    bottom:0;
+    opacity:0;
+    transition: opacity 0.3s ease;
+    color:#333;
+    header {
+        background: #FFF;
+        font-size: 1.2rem;
+        font-weight:bold;
+        padding:0.5rem 1rem;
+        padding-top:1rem;
+        border-top:10px solid $blue;
+        
+    }
+    main {
+        background: #FFF;
+        padding:0.5rem 1rem;
+        padding-top: 0.25rem;
+        &:empty{
+            display:none;
+        }
+    }
+    footer {
+        padding:0.5rem 1rem;
+        padding-bottom:1rem;
+        text-align:right;
+        .action{
+
+        }
+    }
+}
+
+
+.component--html{
+
+    background: #FFF;
+    border: 1px solid #d2d2d2;
+    border-top: 1px solid $lt-gray;
+
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    transition: height 0.4s ease;
+    overflow:hidden;
+    height: 0;
+
+    &.open{
+        transition: height 0.4s ease;
+        .confirm-box{
+            opacity:1;
+        }
+    }
+    
+    &.remove{
+        transition: height 0.4s ease;
+        .confirm-box{
+            transition: opacity 0.5s ease;
+            opacity:0;
+        }
+    }
+}

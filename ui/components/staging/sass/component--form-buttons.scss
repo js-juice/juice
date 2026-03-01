@@ -1,0 +1,149 @@
+@import 'vars';
+
+
+.button,
+button,
+[type=submit],
+[type=button] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    display: inline-block;
+    padding: 1.038rem 1.5rem;
+    color: $dark-bg-text;
+    background-color: $blue;
+    text-transform: uppercase;
+    text-decoration: none;
+    font-size: 1rem;
+    line-height: 1.4;
+    font-weight: 800;
+    cursor: pointer;
+    text-align: center;
+    white-space: nowrap;
+    border: 0;
+    transition: all 0.3s ease;
+    user-select: none;
+    color:#FFF;
+    border-radius: var(--input-border-radius);
+    font-family: inherit;
+    width:100%;
+    &:visited{
+        color:#FFF;
+    }
+    &:hover {
+        background-color:lighten( $blue, 10);
+        color: #FFF
+    }
+    &.red{
+        background:rgb(173, 10, 10);
+        &:hover {
+            background-color: rgb(211, 6, 6);
+            color:#FFF;
+        }
+    }
+    &.yellow{
+        background:$warning-color;
+        &:hover {
+            background-color: lighten($warning-color, 10);
+            color:#FFF;
+        }
+    }
+    &.orange{
+        background:rgba(255, 72, 0, 0.938);
+        &:hover {
+            background-color: rgba(233, 82, 22, 0.938);
+            color:#FFF;
+        }
+    }
+    &.lime{
+        background: $lime;
+        color:$dark-grey;
+        &:hover {
+            background-color: lighten( $lime, 15 );
+        }
+    }
+    &.green{
+        background: $green;
+        color:$white;
+        &:hover {
+            background-color: lighten( $green, 15 );
+        }
+    }
+    &.transparent{
+        background: transparent;
+        color:darken( $lt-gray, 20 );
+        &:hover {
+            background-color: transparent;
+            color: $dark-gray;
+        }
+    }
+    &.xxsm{
+        padding: 0.2rem 0.5rem;
+        font-size: 0.8rem;
+        .rounded{
+            border-radius: 5px;
+        }
+    }
+    &.xsm{
+        padding: 0.3rem 0.75rem;
+        font-size: 0.9rem;
+    }
+    &.sm{
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+    &.med{
+        padding: 0.77rem 1rem;
+    }
+    &:active{
+        background-color: lighten($lime, 20) !important;
+    }
+
+    &[disabled]{
+        pointer-events: none;
+        background-color: $dark-gray !important;
+        color: $mid-gray !important;
+        &:active{
+            background-color: #333333 !important;
+        }
+    }
+
+    &.dark {
+        color: $dark-bg-text;
+        background-color: $dark-bg;
+    }
+
+    &[loader]{
+        .contents{
+            line-height: 30px;
+            justify-content:center;
+            .label{
+                padding-left:1rem;
+            }
+        }
+        &.inline{
+            height:55px;
+            padding: 0 1.2rem;
+            margin-left:2rem;
+        }
+    }
+
+    .contents{
+        display:flex;
+        flex-direction: row;
+        flex-wrap:nowrap;
+    }
+    
+}
+
+:host([loader]){
+    button{
+        .contents{
+            line-height: 30px;
+            justify-content:center;
+            .label{
+                padding-left:1rem;
+            }
+        }
+    }
+}

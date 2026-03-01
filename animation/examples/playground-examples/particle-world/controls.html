@@ -1,0 +1,21 @@
+<div class="controls">
+    <button id="toggle-orbit" type="button">Orbit: off</button>
+    <button id="toggle-repel" type="button">Repel: off</button>
+    <button id="random-target" type="button">Random Target</button>
+</div>
+<div class="controls-config">
+    <label for="world-config">Config JSON</label>
+    <input id="world-config" type="text"
+        value='{"particles":500,"radius":0.4,"orbitRadius":0.4,"repelRadius":0.4,"orbitFieldRadius":1.2,"repelFieldRadius":1.2,"z":-4,"drift":1,"orbitSpeed":1.5,"orbitPull":1,"repelStrength":1}' />
+    <button id="apply-config" type="button">Apply</button>
+</div>
+<div class="readout">
+    <div class="item">target x: <span id="tx">0.00</span></div>
+    <div class="item">target y: <span id="ty">0.00</span></div>
+    <div class="item">target z: <span id="tz">-4.00</span></div>
+    <div class="item">radius: <span id="tr">0.40</span></div>
+</div>
+
+<div class="controls-mask" data-mask-placeholder></div>
+
+<!-- Emitter controls moved to the standalone emitter example -->

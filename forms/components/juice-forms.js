@@ -1,4 +1,4 @@
-import { getJuiceConfig } from "../config/JuiceConfig.mjs";
+import { getJuiceConfig } from "../../config/juice-config.mjs";
 import {
     layout as DEFAULT_LAYOUT_PRESET,
     presets as DEFAULT_LAYOUT_FIELD_PRESETS,
@@ -14,6 +14,7 @@ const FIELD_TAGS = new Set([
     "input-text",
     "input-textarea",
     "input-select",
+    "input-button",
     "input-checkbox",
     "input-radio",
     "option-group",

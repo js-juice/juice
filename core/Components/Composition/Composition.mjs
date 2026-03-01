@@ -5,7 +5,7 @@
  */
 
 import { type } from "../../Util/Core.mjs";
-import Component from "../Component.mjs";
+import Component from "../../../ui/component.mjs";
 
 /**
  * Composition container for managing multiple layers.

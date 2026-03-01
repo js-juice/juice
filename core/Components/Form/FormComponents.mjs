@@ -4,7 +4,7 @@
  * @module Components/Form/FormComponents
  */
 
-import Component from "../Component.mjs";
+import Component from "../../../ui/component.mjs";
 import Request from "../../core/HTTP/Request.mjs";
 import String from "../../core/Util/String.mjs";
 import toggleCSS from "!../../../sass/form/form--field-toggle.scss?toString";

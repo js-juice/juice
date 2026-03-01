@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>UI Examples</title>
+        <link rel="stylesheet" href="../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/juice.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/pages.css" />
+        <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet" />
+        <script type="module" src="./register.mjs"></script>
+    </head>
+
+    <body class="docs-page docs-page--forms">
+        <header>
+            <div class="container flex-h flex-grow" style="flex:0 1 auto;">
+                <div class="branding">
+                    <a href="">
+                        <img src="../../brand/logo-long.svg" alt="JS Juice" />
+                    </a>
+                </div>
+                <div data-include="../../brand/templates/includes/nav.html" data-nav-base="../../"></div>
+            </div>
+        </header>
+        <main>
+            <div id="hero" class="container padding:1o5">
+                <h1 id="page-title">UI Component Examples</h1>
+                <p>Starter examples for migrated components in the new `ui/` package.</p>
+            </div>
+            <div class="container padding:1o5">
+                <div id="content" class="layout">
+                    <section class="grid">
+                        <article class="card">
+                            <h2>Keyboard Components</h2>
+                            <p class="hint">Preview of `ui-key` and `ui-key-group`.</p>
+                            <div class="out">
+                                <ui-key-group layout="wasd"></ui-key-group>
+                            </div>
+                            <p><a href="./keyboard.html">Open keyboard example</a></p>
+                        </article>
+
+                        <article class="card">
+                            <h2>Scroll Components</h2>
+                            <p class="hint">Preview of `scroll-view` with `scroll-bar`.</p>
+                            <div class="out" style="height:220px; position:relative; overflow:hidden;">
+                                <scroll-view>
+                                    <div style="padding:0.75rem; line-height:1.4;">
+                                        <p>This is a quick visual smoke test for scroll components.</p>
+                                        <p>Use the mouse wheel here to verify behavior.</p>
+                                        <p>More examples can be added incrementally in this folder.</p>
+                                        <p>Line 4</p>
+                                        <p>Line 5</p>
+                                        <p>Line 6</p>
+                                    </div>
+                                </scroll-view>
+                            </div>
+                            <p><a href="./scroll.html">Open scroll example</a></p>
+                        </article>
+
+                        <article class="card">
+                            <h2>Gauge Components</h2>
+                            <p class="hint">Preview of `gauge-bar` with live value updates.</p>
+                            <div class="out" style="padding:1rem;">
+                                <gauge-bar id="preview-gauge" min="0" max="100" value="65" width="420" height="18" label="Preview"></gauge-bar>
+                            </div>
+                            <p><a href="./gauge.html">Open gauge example</a></p>
+                        </article>
+
+                        <article class="card">
+                            <h2>Shapes Components</h2>
+                            <p class="hint">Preview of migrated 2D shape elements.</p>
+                            <div class="out" style="height:200px; position:relative; overflow:hidden; background:linear-gradient(180deg,#f8fbff,#ecf3ff);">
+                                <shape-circle x="90" y="75" size="54" bg="#3a86ff"></shape-circle>
+                                <shape-square x="200" y="120" size="64" rotate="15" bg="#ff6b6b"></shape-square>
+                            </div>
+                            <p><a href="./shapes.html">Open shapes example</a></p>
+                        </article>
+
+                        <article class="card">
+                            <h2>Sortable List</h2>
+                            <p class="hint">Drag-and-drop list reordering component.</p>
+                            <div class="out" style="padding:0.75rem;">
+                                <sortable-list itemtag="li">
+                                    <li data-value="one">One</li>
+                                    <li data-value="two">Two</li>
+                                    <li data-value="three">Three</li>
+                                </sortable-list>
+                            </div>
+                            <p><a href="./sortable-list.html">Open sortable list example</a></p>
+                        </article>
+
+                        <article class="card">
+                            <h2>Expandable List</h2>
+                            <p class="hint">Object/array explorer with collapsible branches.</p>
+                            <div class="out" style="padding:0.75rem;">
+                                <expandable-list id="preview-tree"></expandable-list>
+                            </div>
+                            <p><a href="./expandable-list.html">Open expandable list example</a></p>
+                        </article>
+
+                        <article class="card">
+                            <h2>Checklist Components</h2>
+                            <p class="hint">Task list with completion tracking and progress meter.</p>
+                            <div class="out" style="padding:0.75rem;">
+                                <ui-checklist title="Quick Checklist" open>
+                                    <ui-checklist-item label="Task A" checked></ui-checklist-item>
+                                    <ui-checklist-item label="Task B"></ui-checklist-item>
+                                </ui-checklist>
+                            </div>
+                            <p><a href="./checklist.html">Open checklist example</a></p>
+                        </article>
+
+                        <article class="card">
+                            <h2>Tabs Components</h2>
+                            <p class="hint">Panel switching with disabled tab support.</p>
+                            <div class="out" style="padding:0.75rem;">
+                                <ui-tabs active="one">
+                                    <ui-content name="one" label="One"><p>Panel one</p></ui-content>
+                                    <ui-content name="two" label="Two"><p>Panel two</p></ui-content>
+                                </ui-tabs>
+                            </div>
+                            <p><a href="./tabs.html">Open tabs example</a></p>
+                        </article>
+
+                        <article class="card">
+                            <h2>Progress Components</h2>
+                            <p class="hint">Linear progress indicator for task/step completion.</p>
+                            <div class="out" style="padding:0.75rem;">
+                                <ui-progress label="Preview" value="58"></ui-progress>
+                            </div>
+                            <p><a href="./progress.html">Open progress example</a></p>
+                        </article>
+                    </section>
+                </div>
+            </div>
+        </main>
+        <script type="module">
+            const tree = document.getElementById("preview-tree");
+            if (tree) {
+                tree.setData({
+                    list: ["alpha", "beta"],
+                    config: { mode: "demo", enabled: true }
+                });
+            }
+        </script>
+        <script type="module" src="../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

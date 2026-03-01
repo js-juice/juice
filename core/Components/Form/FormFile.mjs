@@ -2,7 +2,7 @@
  * File upload form component with custom styling.
  * @module Components/Form/FormFile
  */
-import Component from "../Component.mjs";
+import Component from "../../../ui/component.mjs";
 
 /**
  * File input component with styled file selector button.

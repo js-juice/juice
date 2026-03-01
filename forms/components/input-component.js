@@ -1,6 +1,6 @@
 import { render } from "./layout.js";
 import FieldValidationController from "./validation/FieldValidationController.mjs";
-import { getJuiceConfig } from "../config/JuiceConfig.mjs";
+import { getJuiceConfig } from "../../config/juice-config.mjs";
 import { applyFormatPipeline } from "../../data/format/FormatPipeline.mjs";
 import { isPlainObject, looksLikeStyleMap, mergeStyleMaps, toKebabCase, makeCSSString } from "./component-util.js";
 /*
@@ -155,7 +155,7 @@ class InputComponent extends HTMLElement {
             },
             ".input-wrapper": {
                 border: "var(--input-border, 1px solid #c8c8c8)",
-                borderRadius: "0.2rem",
+                borderRadius: "var(--input-border-radius, 5px)",
                 position: "relative",
                 display: "flex",
                 flexDirection: "row",

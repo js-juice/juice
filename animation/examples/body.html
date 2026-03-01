@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Animation Body Example</title>
+        <link rel="stylesheet" href="../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/juice.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/pages.css" />
+        <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet" />
+        <style>
+            .demo-card {
+                max-width: 900px;
+                margin: 0 auto;
+            }
+
+            .stage {
+                position: relative;
+                width: 100%;
+                height: 320px;
+                border-radius: 12px;
+                overflow: hidden;
+                background: radial-gradient(circle at 20% 20%, #2b4d73 0%, #18293e 55%, #0c1624 100%);
+            }
+
+            .body-box {
+                width: 100%;
+                height: 100%;
+                border-radius: 14px;
+                background: linear-gradient(160deg, #2ad7ff 0%, #1f8dff 45%, #0059d8 100%);
+                border: 1px solid rgba(255, 255, 255, 0.35);
+                box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+            }
+
+            .readout {
+                margin-top: 0.9rem;
+                display: flex;
+                gap: 0.8rem;
+                flex-wrap: wrap;
+                font-family: monospace;
+            }
+
+            .readout .item {
+                background: #eef3fb;
+                border-radius: 8px;
+                padding: 0.45rem 0.6rem;
+                font-size: 13px;
+            }
+
+        </style>
+    </head>
+
+    <body class="docs-page docs-page--forms">
+        <header>
+            <div class="container flex-h flex-grow" style="flex:0 1 auto;">
+                <div class="branding">
+                    <a href="">
+                        <img src="../../brand/logo-long.svg" alt="JS Juice" />
+                    </a>
+                </div>
+                <div data-include="../../brand/templates/includes/nav.html" data-nav-base="../../"></div>
+            </div>
+        </header>
+        <main>
+            <div class="container padding:1o5">
+                <p><a href="./index.html">Back to Animation Examples</a></p>
+                <article class="card demo-card">
+                    <h1>Body Example</h1>
+                    <p>Using <code>animation/components/body.mjs</code> directly.</p>
+
+                    <div class="stage" id="stage">
+                        <animation-body id="demo-body" debug anchor="center center">
+                            <div class="body-box"></div>
+                        </animation-body>
+                    </div>
+
+                    <div class="readout">
+                        <div class="item">x: <span id="x">0</span></div>
+                        <div class="item">y: <span id="y">0</span></div>
+                        <div class="item">rotation: <span id="r">0</span></div>
+                    </div>
+
+                    <example-code-box id="example-code" title="View Example Code"></example-code-box>
+                </article>
+            </div>
+        </main>
+
+        <script type="module">
+            import "../components/body.mjs";
+            import "./lib/code-box.mjs";
+
+            const stage = document.getElementById("stage");
+            const body = document.getElementById("demo-body");
+
+            const xEl = document.getElementById("x");
+            const yEl = document.getElementById("y");
+            const rEl = document.getElementById("r");
+            const codeBox = document.getElementById("example-code");
+
+            codeBox.code = `import "../components/body.mjs";
+
+const stage = document.getElementById("stage");
+const body = document.getElementById("demo-body");
+
+body.width = 180;
+body.height = 110;
+body.scale = 1;
+
+function tick(now) {
+  // Orbit body around stage center
+  body.position.x = ...;
+  body.position.y = ...;
+  body.rotation.x = ...;
+  body.render(now);
+  requestAnimationFrame(tick);
+}
+`;
+
+            body.width = 180;
+            body.height = 110;
+            body.scale = 1;
+            body.x = 160;
+            body.y = 160;
+
+            let last = performance.now();
+            let t = 0;
+
+            function tick(now) {
+                const dt = Math.min(0.05, (now - last) / 1000);
+                last = now;
+                t += dt;
+
+                const bounds = stage.getBoundingClientRect();
+                const cx = bounds.width * 0.5;
+                const cy = bounds.height * 0.5;
+
+                body.position.x = cx + Math.cos(t * 1.25) * 120;
+                body.position.y = cy + Math.sin(t * 1.75) * 70;
+                body.rotation.x = (t * 85) % 360;
+
+                body.render(now);
+
+                xEl.textContent = body.position.x.toFixed(1);
+                yEl.textContent = body.position.y.toFixed(1);
+                rEl.textContent = body.rotation.x.toFixed(1);
+
+                requestAnimationFrame(tick);
+            }
+
+            body.addEventListener(
+                "ready",
+                () => {
+                    body.render(0);
+                    requestAnimationFrame(tick);
+                },
+                { once: true }
+            );
+        </script>
+        <script type="module" src="../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

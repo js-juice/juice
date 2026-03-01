@@ -4,7 +4,7 @@
  * @module Components/Form
  */
 
-import Component from "./Component.mjs";
+import Component from "../../ui/component.mjs";
 
 /**
  * @class FormInput

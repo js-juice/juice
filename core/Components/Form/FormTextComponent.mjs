@@ -2,7 +2,7 @@
  * Text input form component with label and disabled state styling.
  * @module Components/Form/FormTextComponent
  */
-import Component from "../Component.mjs";
+import Component from "../../../ui/component.mjs";
 import Attributes from "../../Dom/Attributes.mjs";
 import { BaseInput } from "./FormBaseComponents.mjs";
 

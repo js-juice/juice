@@ -1,5 +1,12 @@
 import InputComponent from "./input-component.js";
 
+/**
+ * Style Vars
+ * --form-accent-color: Accent color for the form, used for dropdown arrow and selected option background.
+ * --selected-option-bg: Background color for the selected option in custom dropdown mode.
+ * --selected-option-color: Text color for the selected option in custom dropdown mode.
+ */
+
 function parseOptionItem(option) {
     if (typeof option === "string") {
         if (option.includes(":")) {
@@ -71,10 +78,13 @@ class InputSelect extends InputComponent {
             ":host": {
                 cursor: "pointer"
             },
-            ".input-wrapper": {
-                padding: 0
+            label: {
+                marginBottom: "0.25rem"
             },
-            input: {
+            ".input-wrapper": {
+                padding: 0,
+                background: "#FFFFFF",
+                borderRadius: "var(--input-border-radius, 5px)",
                 userSelect: "none",
                 cursor: "pointer"
             },
@@ -94,7 +104,7 @@ class InputSelect extends InputComponent {
                 width: "50%",
                 aspectRatio: "5/3",
                 clipPath: "polygon(0 0,0 var(--s),50% 100%,100% var(--s),100% 0,50% calc(100% - var(--s)))",
-                background: "var(--form-accent-color, #0059ff)",
+                background: "var(--select-arrow-color, var(--form-accent-color, #0059ff))",
                 left: "50%",
                 top: "50%",
                 transform: "translate(-50%, -50%)"
@@ -125,6 +135,7 @@ class InputSelect extends InputComponent {
                 display: "block"
             },
             ".select-options li": {
+                color: "#333333",
                 padding: "0.3rem 0.45rem",
                 cursor: "pointer",
                 fontSize: "0.9rem",
@@ -326,14 +337,42 @@ class InputSelect extends InputComponent {
         }
     }
 
+    _expandOptionList() {
+        console.log("_expandOptionList");
+        if (!this._optionList) return;
+        if (this._optionList) this._optionList.classList.add("open");
+        const rect = this.getBoundingClientRect();
+        const listRect = this._optionList.getBoundingClientRect();
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+
+        const bottomSpace = viewportHeight - rect.bottom;
+        const topSpace = rect.top;
+
+        if (bottomSpace > topSpace) {
+            this._optionList.style.maxHeight = `${bottomSpace - 50}px`;
+            this._optionList.style.top = "100%";
+            this._optionList.style.bottom = "auto";
+        } else {
+            this._optionList.style.maxHeight = `${topSpace - 50}px`;
+            this._optionList.style.top = "auto";
+            this._optionList.style.bottom = "100%";
+        }
+
+        console.log(rect, viewportHeight, listRect);
+    }
+
     _bindCustomDropdownEvents() {
         if (this._useNativeMode() || !this._dom.native || !this._optionList) return;
         if (this._customBoundNative === this._dom.native && this._customBoundList === this._optionList) return;
         this._customBoundNative = this._dom.native;
         this._customBoundList = this._optionList;
 
+        this._dom.native.addEventListener("click", () => {
+            this._expandOptionList();
+        });
+
         this._dom.native.addEventListener("focus", () => {
-            if (this._optionList) this._optionList.classList.add("open");
+            this._expandOptionList();
         });
 
         this._dom.native.addEventListener("blur", () => {

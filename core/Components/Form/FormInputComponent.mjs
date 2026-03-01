@@ -2,7 +2,7 @@
  * Form input component with label, validation status, and loading states.
  * @module Components/Form/FormInputComponent
  */
-import Component from "../Component.mjs";
+import Component from "../../../ui/component.mjs";
 
 import { BaseInput } from "./FormBaseComponents.mjs";
 import { load as loadSASS } from "../../Style/SASS.mjs";

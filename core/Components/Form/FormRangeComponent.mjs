@@ -3,7 +3,7 @@
  * @module Components/Form/FormRangeComponent
  */
 
-import Component from "../Component.mjs";
+import Component from "../../../ui/component.mjs";
 import { BaseInput } from "./FormBaseComponents.mjs";
 //import setupCSS from "!../../../sass/component--setup.scss?toString";
 

@@ -1,0 +1,155 @@
+@import "vars";
+
+:host{
+    padding-top:1rem;
+}
+.note{
+    padding:0;
+    .note-user{
+        padding:10px;
+        padding-right:25px;
+    }
+    
+    .message{
+        background:$lt-gray;
+        padding:1rem;
+        padding-top:0.5rem;
+        border-radius:8px;
+        position:relative;
+        .note-created{
+            font-weight:bold;
+            font-size:0.9rem;
+            padding-bottom:0.5rem;
+        }
+        .message-txt{
+            
+        }
+        &:before{
+            content: '';
+            display:block;
+            width:15px;
+            height:15px;
+            position:absolute;
+            left:0;
+            top:20px;
+            transform:rotate(-45deg);
+            transform-origin: left bottom;
+            background:$lt-gray;
+        }
+    }
+    &:after{
+        content: '';
+        display:block;
+        clear:both;
+    }
+
+    ::slotted([slot="created"]){
+        font-weight:bold;
+        font-size:0.9rem;
+        padding-bottom:0.5rem;
+    }
+
+    &.editing{
+        .message-txt{
+            slot{
+                display:none;
+            }
+        }
+        .message-editor{
+            background:#FFF;
+            border-top-right-radius: 0.5rem;
+            .message-editor-field{
+                
+                textarea{
+                    width:calc( 100% - 20px );
+                    min-width:calc( 100% - 20px );
+                    min-height: 30px;
+                    border:0;
+                    margin:0;
+                    padding-left:10px;
+                }
+            }
+            .message-editor-submit{
+                .submit-bottom{
+                    padding:5px;
+                    input{
+                    background:$blue;
+                    color:#FFF;
+                    }
+                }
+            }
+        }
+    }
+        
+}
+
+.actions{
+    padding-top:5px;
+    ul{
+        padding:0;
+        margin:0;
+        li{
+            display: block;
+            float:right;
+            padding:0 10px;
+            a{
+                display:block;
+                cursor:pointer;
+                text-transform: uppercase;
+                font-size:0.9rem;
+                &:hover{
+                    color: #007cc7;
+                }
+                &.delete:hover{
+                    color: $red;
+                }
+            }
+            &:first-child{
+                padding-right:0;
+            }
+        }
+    }
+    &:after{
+        content: '';
+        display:block;
+        clear:both;
+    }
+}
+
+:host([slot="replies"]){
+    padding-top: 0.25rem;
+    .component--html{
+        width:calc(100% - 80px);
+        margin-left:80px;
+        .note{
+            flex-direction: row-reverse;
+            .note-user {
+                padding-right: 10px;
+                padding-left: 25px;
+            }
+            .message{
+                background: darken( $lt-gray, 20 );
+                &::before{
+                    left: auto;
+                    right:0;
+                    transform-origin: right bottom;
+                    transform: rotate(45deg);
+                    background: inherit;
+                }
+            }
+        }
+        .actions{
+            ul{
+                li{
+                    float:left;
+                }
+            }
+        }
+    }
+}
+
+.note-list {
+    > noteable-note{
+        border-bottom:1px solid #333;
+    }
+}

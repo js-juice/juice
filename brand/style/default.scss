@@ -34,31 +34,37 @@ $breakpoints: (
     text-decoration: none;
 }
 
-@for $i from 1 through 40 {
+@for $i from 0 through 40 {
     .padding\:#{str-replace(#{$i * 0.1}, ".", "o")} {
         padding: rem($i * 0.1);
     }
 }
 
 @each $side in $sides {
-    @for $i from 1 through 40 {
+    @for $i from 0 through 40 {
         .padding\:#{$side}\:#{str-replace(#{$i * 0.1}, ".", "o")} {
             padding-#{$side}: rem($i * 0.1);
         }
     }
 }
 
-@for $i from 1 through 40 {
+@for $i from 0 through 40 {
     .margin\:#{str-replace(#{$i * 0.1}, ".", "o")} {
         margin: rem($i * 0.1);
     }
 }
 
 @each $side in $sides {
-    @for $i from 1 through 40 {
+    @for $i from 0 through 40 {
         .margin\:#{$side}\:#{str-replace(#{$i * 0.1}, ".", "o")} {
             margin-#{$side}: rem($i * 0.1);
         }
+    }
+}
+
+@for $i from 1 through 100 {
+    .w\:#{$i} {
+        width: percent($i);
     }
 }
 
@@ -257,7 +263,8 @@ $align-map: (
     baseline: baseline
 );
 
-.flex-v {
+.flex-v,
+.flex-column {
     @include flex-base(column);
 
     > * {
@@ -289,7 +296,8 @@ $align-map: (
     }
 }
 
-.flex-h {
+.flex-h,
+.flex-row {
     @include flex-base(row);
     flex-wrap: nowrap;
 
@@ -316,6 +324,10 @@ $align-map: (
         flex-wrap: wrap;
     }
 
+    .#{$class}.items-nowrap {
+        flex-wrap: nowrap;
+    }
+
     // Generate justify-content helpers
     @each $name, $val in $justify-map {
         .#{$class}.#{$name} {
@@ -333,6 +345,9 @@ $align-map: (
 
 @include flex-utils("flex-v");
 @include flex-utils("flex-h");
+
+@include flex-utils("flex-column");
+@include flex-utils("flex-row");
 
 /***
  * 
@@ -376,6 +391,47 @@ a.button {
     }
 }
 
+.absolute {
+    position: absolute;
+}
+
+.relative {
+    position: relative;
+}
+
+.fixed {
+    position: fixed;
+}
+
+.sticky {
+    position: sticky;
+}
+
+.block {
+    display: block;
+}
+
+.inline-block {
+    display: inline-block;
+}
+
+.inline {
+    display: inline;
+}
+
 .hidden {
     display: none;
+}
+
+.float-left {
+    float: left;
+}
+.float-right {
+    float: right;
+}
+
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
 }

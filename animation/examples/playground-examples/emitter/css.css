@@ -1,0 +1,45 @@
+.viewport {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border: 1px solid #d8e2f1;
+    border-radius: 10px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #00121a 0%, #012935 100%);
+}
+
+#emitter-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.controls-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.controls-row label {
+    min-width: 120px;
+    font-size: 12px;
+}
+
+.controls-row input,
+.controls-row select {
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #9fb1c9;
+    background: #fff;
+}
+
+button {
+    border: 1px solid #9fb1c9;
+    border-radius: 6px;
+    padding: 6px 10px;
+    background: #fff;
+    cursor: pointer;
+}

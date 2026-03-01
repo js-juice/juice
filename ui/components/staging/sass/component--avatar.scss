@@ -1,0 +1,289 @@
+
+.color-picker{
+    border-radius: 50%;
+    width:30px;
+    height:30px;
+    padding:0;
+    margin:0;
+    -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.preview{
+    position: relative;
+    ui-shape{
+        border-radius: 50%;
+        z-index: 10;
+        overflow: hidden;
+        position:relative;
+
+        .safe{
+            position:absolute;
+            width: calc(100% - 10px);
+            height: calc(100% - 10px);
+            top: 5px;
+            left: 5px;
+            border-radius: 50%;
+            overflow: hidden;
+            .textbox{
+                position:absolute;
+                top:50%;
+                left:50%;
+                transform: translate(-50%, -50%);
+                font-size: 65px;
+                font-weight:600;
+                letter-spacing: 10px;
+                font-family: proxima-nova-bold;
+                display:none;
+                z-index:10;
+            }
+            canvas{
+                position:absolute;
+                top:0;
+                left:0;
+                z-index:1;
+            }
+            #current-avatar{
+                width:100%;
+                height:100%;
+            }
+            
+        }
+    }
+   
+    form-color{
+        position: absolute;
+        bottom:0;
+        right:0;
+        z-index: 100;
+        m-icon{
+            position:relative;
+            display:inline-block;
+            margin:0 auto;
+        }
+    }
+
+    form-color.graphic-color{
+        left:0;
+        bottom:0;
+        display: none;
+    }   
+
+}
+
+
+
+.component--html{
+    
+    .bg-color{
+        display: none;
+    }
+
+    .controls{
+
+        position: relative;
+        padding-top:1rem;
+        width: 100%;
+
+        .control{
+            position:relative;
+            display:none;
+        }
+    
+        .initials{
+            padding-top:1rem;
+            position: relative;
+            input{
+                width: 100%;
+            }
+           
+        }
+
+        .samples{
+            padding:10px;
+            border:1px solid #d2d2d2;
+            border-radius: 4px;
+            margin-top:1rem;
+            ul{
+                display:block;
+                padding:0;
+                margin:0;
+                border:1px solid #d2d2d2;
+                overflow:auto;
+                max-height:165px;
+                &:after{
+                    content: "";
+                    display:block;
+                    width:100%;
+                    clear:both;
+                }
+                li{
+                    width:33%;
+                    float:left;
+                    display:block;
+                    position:relative;
+                    cursor:pointer;
+                    background-size:auto 90%;
+                    background-repeat:no-repeat;
+                    background-position:center;
+                    &:after{
+                        content: "";
+                        display:block;
+                        width:100%;
+                        padding-bottom:100%;
+                    }
+                    img{
+                        display:block;
+                        position: absolute;
+                        width:100%;
+                        height:100%
+                    }
+                    &:hover{
+                        opacity:0.4;
+                    }
+                }
+            }
+        }
+    
+    
+    }
+
+    
+    form-color{
+        color: #FFF;
+        m-icon{
+            position:relative;
+            display:inline-block;
+            margin:0 auto;
+        }
+    }
+    
+    .actions{
+        .action{
+            display: none
+        }
+    }
+
+    &.initial{
+        
+        .create-btn,
+        .file-button{
+            display: block;
+        }
+        .create{
+            display:none;
+        }
+        .preview{
+            canvas{
+                display:none;
+            }
+        }
+        
+    }
+
+    &.image{
+
+        .safe{
+            cursor:grab;
+            img{
+                display:none;
+            }
+            
+        }
+
+        .bg-color{
+            display: block;
+        }
+    
+
+ .actions{
+
+            .cancel-btn{
+                display:block !important;
+            }
+            .save-btn{
+                display:block !important;
+            }
+
+            .create-btn{
+                display:none !important;
+            }
+
+            .choose-btn{
+                display:none !important;
+            }
+        }
+    }
+
+    &.creating{
+
+        .control.create{
+            display:block !important;
+        }
+        
+        .bg-color{
+            display: block;
+        }
+
+        .safe{
+            cursor:grab;
+            img{
+                display:none;
+            }
+            
+        }
+        
+
+        .actions{
+
+            .cancel-btn{
+                display:block !important;
+            }
+            .save-btn{
+                display:block !important;
+            }
+
+            .create-btn{
+                display:none !important;
+            }
+
+            .choose-btn{
+                display:none !important;
+            }
+        }
+      
+    }
+    
+    &.has-image{
+        .control.image{
+            display:block !important;
+        }
+        .actions{
+           
+        }
+        form-color.graphic-color{
+            display: block;
+        }
+    }
+
+    &.has-text{
+        .safe{
+        .textbox{
+            display:block !important;
+        }
+        }
+    }
+
+    &.dragging{
+        .safe{
+            cursor:grabbing;
+        }
+    }
+    
+}
+
+ui-shape{
+    position:relative;
+}
+

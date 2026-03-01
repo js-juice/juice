@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Animation Sprite Example</title>
+        <link rel="stylesheet" href="../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/juice.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/pages.css" />
+        <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet" />
+        <style>
+            .demo-card {
+                max-width: 820px;
+                margin: 0 auto;
+            }
+
+            .stack {
+                display: grid;
+                gap: 1rem;
+            }
+
+            .stage {
+                display: grid;
+                place-items: center;
+                min-height: 640px;
+                border-radius: 14px;
+                background: radial-gradient(circle at 15% 20%, #2b3e67 0%, #152238 55%, #0a1120 100%);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                overflow: hidden;
+            }
+
+            animation-sprite,
+            rocket-sprite {
+                border-radius: 12px;
+                box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+            }
+
+            .controls {
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+                margin-top: 0.9rem;
+            }
+
+            .controls button {
+                border: 0;
+                border-radius: 8px;
+                padding: 0.5rem 0.75rem;
+                background: #264466;
+                color: #fff;
+                cursor: pointer;
+            }
+
+            .controls button.alt {
+                background: #4f6076;
+            }
+
+            .readout {
+                margin-top: 0.75rem;
+                display: flex;
+                gap: 0.65rem;
+                flex-wrap: wrap;
+                font-family: monospace;
+            }
+
+            .readout .item {
+                background: #eef3fb;
+                border-radius: 8px;
+                padding: 0.45rem 0.6rem;
+                font-size: 13px;
+            }
+
+            @media (max-width: 900px) {
+                .stage {
+                    min-height: 560px;
+                }
+            }
+        </style>
+    </head>
+
+    <body class="docs-page docs-page--forms">
+        <header>
+            <div class="container flex-h flex-grow" style="flex:0 1 auto;">
+                <div class="branding">
+                    <a href="">
+                        <img src="../../brand/logo-long.svg" alt="JS Juice" />
+                    </a>
+                </div>
+                <div data-include="../../brand/templates/includes/nav.html" data-nav-base="../../"></div>
+            </div>
+        </header>
+        <main>
+            <div class="container padding:1o5">
+                <p><a href="./index.html">Back to Animation Examples</a></p>
+                <div class="stack">
+                    <article class="card demo-card">
+                        <h1>Sprite Progression</h1>
+                        <p>Step 1: base <code>animation-sprite</code> with direct frame playback.</p>
+
+                        <div class="stage">
+                            <animation-sprite
+                                id="base-sprite"
+                                width="265"
+                                height="600"
+                                src="./assets/rocket-yaw-sheet-med.png"
+                                frames="30"
+                                frame="0"
+                            ></animation-sprite>
+                        </div>
+
+                        <div class="controls">
+                            <button id="base-play" type="button">Play</button>
+                            <button id="base-pause" class="alt" type="button">Pause</button>
+                            <button id="base-step" class="alt" type="button">Step</button>
+                            <button id="base-reset" class="alt" type="button">Reset</button>
+                        </div>
+
+                        <div class="readout">
+                            <div class="item">frame: <span id="base-frame">0</span></div>
+                            <div class="item">fps: <span id="base-fps">0</span></div>
+                            <div class="item">frames: <span id="base-frames">30</span></div>
+                            <div class="item">state: <span id="base-state">loading</span></div>
+                        </div>
+
+                        <example-code-box id="base-code" title="View Base Example Code"></example-code-box>
+                    </article>
+
+                    <article class="card demo-card">
+                        <p>
+                            Step 2: extended <code>RocketSprite</code> class with porthole overlay and yaw-to-frame
+                            mapping, using the same sheet.
+                        </p>
+
+                        <div class="stage">
+                            <rocket-sprite id="rocket-sprite"></rocket-sprite>
+                        </div>
+
+                        <div class="controls">
+                            <button id="play" type="button">Play</button>
+                            <button id="pause" class="alt" type="button">Pause</button>
+                            <button id="left" class="alt" type="button">Yaw -5deg</button>
+                            <button id="right" class="alt" type="button">Yaw +5deg</button>
+                            <button id="reset" class="alt" type="button">Reset</button>
+                        </div>
+                        <div class="controls">
+                            <label for="speed">speed</label>
+                            <input id="speed" type="range" min="0.25" max="3" step="0.25" value="1" />
+                        </div>
+
+                        <div class="readout">
+                            <div class="item">frame: <span id="frame">0</span></div>
+                            <div class="item">fps: <span id="fps">0</span></div>
+                            <div class="item">frames: <span id="frames">30</span></div>
+                            <div class="item">yaw: <span id="yaw">0</span></div>
+                            <div class="item">state: <span id="state">loading</span></div>
+                        </div>
+
+                        <example-code-box id="extended-code" title="View Extended Example Code"></example-code-box>
+                    </article>
+                </div>
+            </div>
+        </main>
+
+        <script type="module">
+            import "../components/sprite.mjs";
+            import "./rocket-sprite.mjs";
+            import "./lib/code-box.mjs";
+
+            const FRAME_COUNT = 30;
+            const BASE_FPS = 12;
+
+            const baseSprite = document.getElementById("base-sprite");
+            const baseFrameEl = document.getElementById("base-frame");
+            const baseFpsEl = document.getElementById("base-fps");
+            const baseStateEl = document.getElementById("base-state");
+            const baseCodeBox = document.getElementById("base-code");
+
+            const rocket = document.getElementById("rocket-sprite");
+            const frameEl = document.getElementById("frame");
+            const fpsEl = document.getElementById("fps");
+            const yawEl = document.getElementById("yaw");
+            const stateEl = document.getElementById("state");
+            const speedEl = document.getElementById("speed");
+            const extendedCodeBox = document.getElementById("extended-code");
+
+            baseCodeBox.code = `<animation-sprite
+  id="base-sprite"
+  width="265"
+  height="600"
+  src="./assets/rocket-yaw-sheet-med.png"
+  frames="30"
+  frame="0"
+></animation-sprite>
+
+<script type="module">
+  import "../components/sprite.mjs";
+  const sprite = document.getElementById("base-sprite");
+  sprite.frame = 0;
+<\/script>`;
+
+            const rocketUsageCode = `import "./rocket-sprite.mjs";
+
+const rocket = document.getElementById("rocket-sprite");
+rocket.addDegrees(5);     // manual yaw
+rocket.setFrameByDegree(0); // reset yaw/frame mapping
+`;
+
+            fetch("./rocket-sprite.mjs")
+                .then((response) => response.text())
+                .then((source) => {
+                    extendedCodeBox.code = `${rocketUsageCode}\n${source}`;
+                })
+                .catch(() => {
+                    extendedCodeBox.code = rocketUsageCode;
+                });
+
+            let baseReady = false;
+            let basePlaying = false;
+            let baseFrame = 0;
+            let baseLast = performance.now();
+            let baseFps = 0;
+            const BASE_FRAME_MS = 1000 / BASE_FPS;
+
+            let playing = false;
+            let lastFrameAt = performance.now();
+            let fps = 0;
+            let direction = 1;
+            const MAX_YAW = 60;
+
+            function renderBaseReadout() {
+                baseFrameEl.textContent = String(baseFrame);
+                baseFpsEl.textContent = String(Math.round(baseFps));
+            }
+
+            function applyBaseFrame(nextFrame) {
+                if (!baseReady) return;
+                baseFrame = ((nextFrame % FRAME_COUNT) + FRAME_COUNT) % FRAME_COUNT;
+                baseSprite.frame = baseFrame;
+                renderBaseReadout();
+            }
+
+            function renderReadout() {
+                frameEl.textContent = String(rocket.frame || 0);
+                fpsEl.textContent = String(Math.round(fps));
+                yawEl.textContent = Number(rocket.degrees || 0).toFixed(1);
+            }
+
+            function tick(now) {
+                if (basePlaying && baseReady) {
+                    const elapsed = now - baseLast;
+                    if (elapsed >= BASE_FRAME_MS) {
+                        baseFps = 1000 / elapsed;
+                        baseLast = now;
+                        applyBaseFrame(baseFrame + 1);
+                        baseStateEl.textContent = "playing";
+                    }
+                }
+
+                if (playing) {
+                    const elapsed = now - lastFrameAt;
+                    if (elapsed >= 12) {
+                        fps = 1000 / elapsed;
+                        lastFrameAt = now;
+                        const speed = Number(speedEl.value) || 1;
+                        rocket.addDegrees(direction * speed);
+                        if (rocket.degrees >= MAX_YAW || rocket.degrees <= -MAX_YAW) {
+                            direction *= -1;
+                        }
+                        stateEl.textContent = "playing";
+                    }
+                }
+                renderBaseReadout();
+                renderReadout();
+                requestAnimationFrame(tick);
+            }
+
+            async function setupBaseSprite() {
+                await new Promise((resolve) => {
+                    baseSprite.addEventListener("ready", resolve, { once: true });
+                });
+                baseReady = true;
+                baseStateEl.textContent = "ready";
+                applyBaseFrame(0);
+            }
+
+            document.getElementById("base-play").addEventListener("click", () => {
+                if (!baseReady) return;
+                basePlaying = true;
+                baseLast = performance.now();
+            });
+
+            document.getElementById("base-pause").addEventListener("click", () => {
+                basePlaying = false;
+                baseStateEl.textContent = "paused";
+            });
+
+            document.getElementById("base-step").addEventListener("click", () => {
+                applyBaseFrame(baseFrame + 1);
+                baseStateEl.textContent = "manual";
+            });
+
+            document.getElementById("base-reset").addEventListener("click", () => {
+                basePlaying = false;
+                applyBaseFrame(0);
+                baseStateEl.textContent = "reset";
+            });
+
+            document.getElementById("play").addEventListener("click", () => {
+                playing = true;
+                lastFrameAt = performance.now();
+            });
+
+            document.getElementById("pause").addEventListener("click", () => {
+                playing = false;
+                stateEl.textContent = "paused";
+            });
+
+            document.getElementById("left").addEventListener("click", () => {
+                rocket.addDegrees(-5);
+                stateEl.textContent = "manual";
+                renderReadout();
+            });
+
+            document.getElementById("right").addEventListener("click", () => {
+                rocket.addDegrees(5);
+                stateEl.textContent = "manual";
+                renderReadout();
+            });
+
+            document.getElementById("reset").addEventListener("click", () => {
+                playing = false;
+                direction = 1;
+                rocket.setFrameByDegree(0);
+                stateEl.textContent = "reset";
+                renderReadout();
+            });
+
+            Promise.all([
+                setupBaseSprite(),
+                new Promise((resolve) => rocket.addEventListener("sheet-ready", resolve, { once: true }))
+            ]).then(() => {
+                stateEl.textContent = "ready";
+                renderReadout();
+                requestAnimationFrame(tick);
+            });
+        </script>
+        <script type="module" src="../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

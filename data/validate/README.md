@@ -151,7 +151,7 @@ Validation core config (non-UI):
 Example:
 
 ```js
-import { configureJuice } from "../../forms/config/JuiceConfig.mjs";
+import { configureJuice } from "../../config/juice-config.mjs";
 import { ValidationError } from "./Errors.mjs";
 
 class UsernameTakenError extends ValidationError {}

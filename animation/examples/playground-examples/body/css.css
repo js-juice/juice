@@ -1,0 +1,32 @@
+.stage {
+    position: relative;
+    width: 100%;
+    min-height: 360px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: radial-gradient(circle at 20% 20%, #2b4d73 0%, #18293e 55%, #0c1624 100%);
+}
+
+.body-box {
+    width: 100%;
+    height: 100%;
+    border-radius: 14px;
+    background: linear-gradient(160deg, #2ad7ff 0%, #1f8dff 45%, #0059d8 100%);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.readout {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+}
+
+.item {
+    background: #eff4fb;
+    border-radius: 8px;
+    padding: 6px 8px;
+}

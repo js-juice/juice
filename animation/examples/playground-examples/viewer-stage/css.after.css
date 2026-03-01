@@ -1,0 +1,60 @@
+.stage-controls {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #d8e2f1;
+    border-radius: 10px;
+    background: #f7fbff;
+}
+
+.stage-controls h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+}
+
+.control-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+}
+
+.control-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+}
+
+.control-grid input,
+.control-grid select {
+    font: inherit;
+    padding: 5px 6px;
+    border: 1px solid #b6c6dd;
+    border-radius: 7px;
+    background: #fff;
+}
+
+.control-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.control-actions button {
+    font: inherit;
+    border: 1px solid #a9bbd6;
+    border-radius: 8px;
+    padding: 6px 10px;
+    background: #fff;
+    cursor: pointer;
+}
+
+#stage-attr-readout {
+    margin: 8px 0 0;
+    font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #2a3d56;
+    background: #eef4fd;
+    border: 1px solid #d8e2f1;
+    border-radius: 8px;
+    padding: 8px;
+    white-space: pre-wrap;
+}

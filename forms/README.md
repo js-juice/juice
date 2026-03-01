@@ -3,6 +3,7 @@
 Juice Forms is a web component form system with:
 
 - Custom input elements (`input-text`, `input-select`, `input-checkbox`, `input-radio`, `input-textarea`)
+- Custom input elements (`input-text`, `input-select`, `input-checkbox`, `input-radio`, `input-textarea`, `input-button`)
 - Inline field validation
 - Form history support through `form-info` (undo/revert actions)
 - Form runtime registration through `window.JUICE_FORMS`
@@ -15,11 +16,17 @@ Juice Forms is a web component form system with:
 - `components/input-checkbox.js`: `input-checkbox`
 - `components/input-radio.js`: `input-radio`
 - `components/input-select.js`: `input-select`
+- `components/input-button.js`: `input-button`
 - `components/option-group.js`: `option-group`
 - `components/juice-forms.js`: `juice-forms` container entry
 - `components/form-info.js`: `form-info` state/actions panel
+- `native/juice-form.mjs`: native form binder and enhancer class (`JuiceForm`)
+- `native/form-input.mjs`: migrated form input base class
+- `native/virtual-builder.mjs`: migrated virtual form builder utilities
 - `../data/validate/*`: shared validation engine (rules, parser, errors, presets, validator)
-- `forms/Form.mjs`: form runtime integration and rule collection
+- `forms/Form.mjs`: runtime bridge to migrated compatibility `Form` class
+- `compat/Form/*`: remaining legacy helpers pending migration
+- `compat/Components/Form/Form.mjs`: compatibility export for legacy `Form.fromVDom(...)` consumers
 - `juice-forms.mjs`: runtime bootstrap entry
 - `index.html`: demo page
 
@@ -36,9 +43,9 @@ Juice Forms is a web component form system with:
 - Forms template-based examples page: [`forms/examples/index.html`](./examples/index.html)
 - Core validation examples file: [`data/validate/examples.mjs`](../data/validate/examples.mjs)
 
-## Optional Juice Config
+## Shared Juice Config
 
-An optional root config file (`juice.config.mjs`) is auto-loaded by the Juice Forms runtime when present.
+Juice Forms reads config from the shared root module `config/juice-config.mjs`.
 
 Config is sectioned by domain:
 
@@ -48,6 +55,20 @@ Config is sectioned by domain:
 
 Async validation presets are supported. If your preset takes a second `context` argument,
 use `context.fetch(...)` to automatically cancel previous in-flight requests to the same endpoint.
+
+Example:
+
+```js
+import { configureJuice } from "../config/juice-config.mjs";
+
+configureJuice({
+  forms: {
+    layout: {
+      maxColumns: 2
+    }
+  }
+});
+```
 
 ## Validation Usage
 
@@ -125,6 +146,33 @@ const validator = Validator.make({
 const ok = await validator.test("username", "john123");
 const messages = validator.messages("username");
 ```
+
+## Native Form Enhancers
+
+`forms/native` is the home for enhancements that target already-native `<form>` markup.
+
+Example:
+
+```js
+import JuiceForm from "./native/index.mjs";
+
+JuiceForm.register("autosave", (form, jf) => {
+  if (!jf.config.autosave) return;
+  form.dataset.autosave = "enabled";
+});
+
+const form = document.querySelector("form");
+const bound = new JuiceForm(form); // binds this form to Juice native enhancements
+
+// Optional: bind every native form under a root
+JuiceForm.enhanceAll(document);
+```
+
+By default, `new JuiceForm(form)` auto-enhances native controls (`input`, `textarea`, `select`).
+To opt a control (or a wrapper subtree) out, use either:
+
+- attribute: `juicex`
+- class: `juicex`
 
 ## Important Notes
 

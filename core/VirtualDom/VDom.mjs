@@ -164,20 +164,26 @@ class VDom {
      * @param {string} eventHandlers - Handler string(s) to parse and apply
      */
     applyEventHandlers(el, eventHandlers) {
+        if (!el || !eventHandlers) return;
+        const scope = this.scope || this.options?.scope || null;
         const handlers = eventHandlers.split("||");
-        handlers.forEach((handler) => {
-            const [event, fnName] = handler.split("::");
-            const args = handler.includes("(")
-                ? handler
-                      .split("(")
-                      .pop()
-                      .split(")")
-                      .shift()
-                      .split(",")
-                      .map((arg) => arg.replace(/['"]/g, "").trim())
-                : [];
+        let applied = false;
 
-            const handlerFn = this.scope[fnName] ? this.scope[fnName].bind(this.scope) : function () {};
+        handlers.forEach((handler) => {
+            const [event, call] = handler.split("::");
+            if (!event || !call) return;
+
+            const openIndex = call.indexOf("(");
+            const closeIndex = call.lastIndexOf(")");
+            const fnName = (openIndex === -1 ? call : call.slice(0, openIndex)).trim();
+            const argsText = openIndex === -1 || closeIndex <= openIndex ? "" : call.slice(openIndex + 1, closeIndex);
+            const args = argsText
+                .split(",")
+                .map((arg) => arg.replace(/['"]/g, "").trim())
+                .filter(Boolean);
+
+            const handlerFn = scope && typeof scope[fnName] === "function" ? scope[fnName].bind(scope) : null;
+            if (!handlerFn) return;
 
             el.addEventListener(event, (e) => {
                 const respArgs = args.map((arg) => {
@@ -192,9 +198,12 @@ class VDom {
             });
 
             el.classList.add("events-set");
+            applied = true;
         });
 
-        el.removeAttribute("event");
+        if (applied) {
+            el.removeAttribute("event");
+        }
     }
     /**
      * Recursively indexes elements with 'id' attributes in the virtual DOM.
@@ -240,7 +249,7 @@ class VDom {
         const eventEls = this.rootFragment.querySelectorAll("[event]");
         for (const eventEl of eventEls) {
             const eventHandle = eventEl.getAttribute("event");
-            this.applyEventHandle(eventHandle);
+            this.applyEventHandlers(eventEl, eventHandle);
         }
 
         this.indexVDom(this.#staged);

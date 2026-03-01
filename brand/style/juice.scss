@@ -28,7 +28,7 @@ body > header > .container {
     gap: 1rem;
 }
 
-body > header > .container > div:not(.branding) {
+body > header > .container > #nav {
     height: 100%;
     width: 100%;
 }
@@ -39,6 +39,19 @@ body > header > .container nav {
     height: 100%;
     gap: 0.75rem;
     width: 100%;
+}
+
+#back-link {
+    white-space: nowrap;
+    padding: 0 1rem;
+    background: #333;
+    color: #fff;
+}
+#back-link a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-family: "Segoe UI", Arial, sans-serif;
 }
 
 .branding {

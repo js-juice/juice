@@ -1,0 +1,44 @@
+.component--html {
+	perspective: 800px;
+	perspective-origin: 50% 100px;
+}
+
+
+:host(shape-cube){
+    .cube{
+        position: relative;
+        width: 100%;
+        transform-style: preserve-3d;
+        transform: rotateX(0) rotateY(0) rotateZ(0);
+    }
+    .cube > * {
+        position: absolute;
+        height:100%;
+        width:100%;
+        border: 1px solid #000;
+    }
+    .cube {
+        .back {
+            transform: translateZ(-100%) rotateY(180deg);
+        }
+        .right {
+            transform: rotateY(-270deg) translateX(0%);
+            transform-origin: top right;
+        }
+        .left {
+            transform: rotateY(270deg) translateX(0%);
+            transform-origin: center left;
+        }
+        .top {
+            transform: rotateX(-90deg) translateY(-100%);
+            transform-origin: top center;
+        }
+        .bottom {
+            transform: rotateX(90deg) translateY(100%);
+            transform-origin: bottom center;
+        }
+        .front {
+            transform: translateZ(100%);
+        }
+    }
+}

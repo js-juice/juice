@@ -1,0 +1,212 @@
+animation-stage {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+animation-stage::part(background) {
+    background: radial-gradient(circle at 20% 20%, #273b60 0%, #101a2b 100%);
+}
+
+.editor-shell {
+    position: absolute;
+    inset: 0;
+    padding: 12px;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+    overflow: auto;
+    box-sizing: border-box;
+}
+
+.panel {
+    border: 1px solid #d8e2f1;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.panel h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+}
+
+#bezier-editor {
+    width: 100%;
+    height: 240px;
+    border: 1px solid #d8e2f1;
+    border-radius: 8px;
+    background: #f7fafe;
+    touch-action: none;
+    box-sizing: border-box;
+}
+
+.custom-code {
+    margin-top: 8px;
+    font: 600 12px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #1b457e;
+    overflow-wrap: anywhere;
+}
+
+.css-export {
+    margin-top: 8px;
+    display: grid;
+    gap: 6px;
+}
+
+.css-label {
+    font-size: 12px;
+    color: #516789;
+}
+
+.css-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.css-input {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid #bac9dd;
+    border-radius: 6px;
+    padding: 6px 8px;
+    box-sizing: border-box;
+    font: 12px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #1b457e;
+    background: #fff;
+}
+
+.copy-btn {
+    border: 1px solid #a9bbd6;
+    border-radius: 6px;
+    background: #fff;
+    padding: 6px 10px;
+    cursor: pointer;
+    font: 600 12px/1.1 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.editor-hint {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #516789;
+}
+
+.editor-grid {
+    stroke: #d3dfef;
+    stroke-width: 1;
+}
+
+.editor-line {
+    stroke: #8ca5cc;
+    stroke-width: 1.4;
+}
+
+.editor-handle-line {
+    stroke: #8ca5cc;
+    stroke-width: 1.2;
+}
+
+.editor-linear {
+    stroke: #91aacd;
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+}
+
+.editor-curve {
+    stroke: #2f7cff;
+    stroke-width: 2;
+    fill: none;
+}
+
+.editor-hit {
+    stroke: transparent;
+    stroke-width: 16;
+    cursor: copy;
+}
+
+.editor-handle {
+    fill: #2f7cff;
+    stroke: #fff;
+    stroke-width: 2;
+    cursor: grab;
+}
+
+.editor-handle:active {
+    cursor: grabbing;
+}
+
+.editor-handle.fixed {
+    fill: #8ca5cc;
+    cursor: default;
+}
+
+.editor-tangent-handle {
+    fill: #ff8c2f;
+    stroke: #fff;
+    stroke-width: 2;
+    cursor: grab;
+}
+
+.editor-tangent-handle:active {
+    cursor: grabbing;
+}
+
+.compare {
+    display: grid;
+    gap: 8px;
+}
+
+.compare-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 64px;
+    gap: 10px;
+    align-items: center;
+}
+
+.compare-name {
+    font: 600 12px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #1c2a3c;
+}
+
+.compare-track {
+    position: relative;
+    height: 14px;
+    border-radius: 999px;
+    background: #dfe7f6;
+    overflow: hidden;
+}
+
+.compare-track::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, #9fbfff 0%, #2f7cff 100%);
+    opacity: 0.22;
+}
+
+.compare-dot {
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.75) inset;
+}
+
+.compare-dot.linear {
+    background: #7f8ea8;
+}
+
+.compare-dot.custom {
+    background: #2f7cff;
+}
+
+.compare-value {
+    text-align: right;
+    font: 600 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #1b457e;
+}

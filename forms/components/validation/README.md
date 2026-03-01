@@ -114,7 +114,7 @@ Applied by controller:
 
 ## Global UI Config
 
-UI-facing validation config in `juice.config.mjs` / `configureJuice(...)`:
+UI-facing validation config in `config/juice-config.mjs` via `configureJuice(...)`:
 
 - `validation.colors.none`
 - `validation.colors.valid`

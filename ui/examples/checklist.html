@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>UI Checklist Example</title>
+        <link rel="stylesheet" href="../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/juice.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/pages.css" />
+        <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet" />
+        <style>
+            .layout {
+                max-width: 980px;
+                margin: 0 auto;
+                display: grid;
+                gap: 1rem;
+            }
+
+            .card {
+                background: #fff;
+                border: 1px solid #d7dce5;
+                border-radius: 12px;
+                padding: 1rem;
+            }
+
+            .hint {
+                color: #5c6170;
+                margin-top: 0;
+            }
+
+            .controls {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.6rem;
+                margin-top: 1rem;
+            }
+
+            .nav-back {
+                font-size: 0.9rem;
+            }
+        </style>
+    </head>
+
+    <body class="docs-page docs-page--forms">
+        <header>
+            <div class="container flex-h flex-grow" style="flex:0 1 auto;">
+                <div class="branding">
+                    <a href="">
+                        <img src="../../brand/logo-long.svg" alt="JS Juice" />
+                    </a>
+                </div>
+                <div data-include="../../brand/templates/includes/nav.html" data-nav-base="../../"></div>
+            </div>
+        </header>
+        <main>
+            <div id="hero" class="container padding:1o5">
+                <h1 id="page-title">Checklist Components</h1>
+                <p>Demo page for `ui-checklist` and `ui-checklist-item`.</p>
+            </div>
+            <div class="container padding:1o5">
+                <div id="content" class="layout">
+                    <p class="nav-back"><a href="./index.html">Back to UI examples</a></p>
+                    <article class="card">
+                        <h2>Build Checklist</h2>
+                        <p class="hint">Use buttons to change item state; completion fires when all visible items are checked.</p>
+                        <ui-checklist id="demo-checklist" title="Release Readiness" open>
+                            <ui-checklist-item item-id="lint" label="Run lint" checked></ui-checklist-item>
+                            <ui-checklist-item item-id="tests" label="Run tests"></ui-checklist-item>
+                            <ui-checklist-item item-id="docs" label="Update docs"></ui-checklist-item>
+                        </ui-checklist>
+                        <div class="controls">
+                            <button id="check-tests" type="button">Check Tests</button>
+                            <button id="check-docs" type="button">Check Docs</button>
+                            <button id="uncheck-all" type="button">Uncheck All</button>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </main>
+
+        <script type="module" src="./register.mjs"></script>
+        <script type="module">
+            const checklist = document.getElementById("demo-checklist");
+            document.getElementById("check-tests").addEventListener("click", () => checklist.check("tests"));
+            document.getElementById("check-docs").addEventListener("click", () => checklist.check("docs"));
+            document.getElementById("uncheck-all").addEventListener("click", () => {
+                checklist.uncheck("lint");
+                checklist.uncheck("tests");
+                checklist.uncheck("docs");
+            });
+        </script>
+        <script type="module" src="../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

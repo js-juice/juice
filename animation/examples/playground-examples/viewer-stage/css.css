@@ -1,0 +1,45 @@
+.viewport {
+    position: relative;
+    height: 100%;
+    border: 1px solid #d8e2f1;
+    border-radius: 10px;
+    overflow: hidden;
+    background: radial-gradient(circle at 20% 20%, #273b60 0%, #101a2b 100%);
+}
+
+animation-viewer {
+    position: absolute;
+    inset: 0;
+}
+
+animation-stage {
+    position: absolute;
+    inset: 0;
+    background: rgba(18, 34, 56, 0.58);
+}
+
+demo-moving-stage {
+    position: absolute;
+    inset: 0;
+    
+}
+
+.world-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+    background-size: 32px 32px;
+}
+
+.probe {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    left: 0;
+    top: 0;
+    background: linear-gradient(140deg, #b2ff59 0%, #43a047 100%);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+}

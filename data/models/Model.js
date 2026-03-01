@@ -12,7 +12,7 @@ import { normalCase, studly, unStudly, pascalCase, dashed } from "../../juice/Ut
 import { setEnumerability } from "../../juice/Util/Object.mjs";
 import Watch from "../../juice/Proxy/Watch.mjs";
 import ModelSQLBuilder from "./ModelSQLBuilder.js";
-import FormBuilder from "../../juice/Form/Builder.mjs";
+import FormBuilder from "../../forms/compat/Form/Builder.mjs";
 
 /**
  * Base ORM model class with CRUD operations, relationships, and validation.

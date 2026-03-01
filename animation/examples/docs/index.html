@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Animation Example Docs</title>
+        <link rel="stylesheet" href="../../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../../brand/templates/css/juice.css" />
+        <link rel="stylesheet" href="../../../brand/templates/css/pages.css" />
+        <style>
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 12px;
+            }
+
+            .card {
+                border: 1px solid #d7e2f2;
+                border-radius: 10px;
+                background: #fff;
+                padding: 12px;
+            }
+
+            .card h2 {
+                margin: 0 0 6px;
+                font-size: 16px;
+            }
+
+            .card p {
+                margin: 0 0 8px;
+                color: #405873;
+                font-size: 13px;
+            }
+        </style>
+    </head>
+
+    <body class="docs-page docs-page--forms">
+        <header>
+            <div class="container flex-h flex-grow" style="flex:0 1 auto;">
+                <div class="branding">
+                    <a href="">
+                        <img src="../../../brand/logo-long.svg" alt="JS Juice" />
+                    </a>
+                </div>
+                <div data-include="../../../brand/templates/includes/nav.html" data-nav-base="../../../"></div>
+            </div>
+        </header>
+        <main>
+            <div class="container padding:1o5">
+                <p><a href="../playground.html">Back to Playground</a></p>
+                <h1>Animation Example Docs</h1>
+                <p>Reference pages for each playground example, including methods, attributes, and implementation details.</p>
+                <section class="grid">
+                    <article class="card">
+                        <h2>Stage</h2>
+                        <p>Standalone stage lifecycle, timeline ownership, anchor and bounds behavior.</p>
+                        <a href="./stage.html">Open docs</a>
+                    </article>
+                    <article class="card">
+                        <h2>Viewer + Stage</h2>
+                        <p>Viewer camera behavior, follow logic, stage bounds, and minimap integration.</p>
+                        <a href="./viewer-stage.html">Open docs</a>
+                    </article>
+                    <article class="card">
+                        <h2>Timeline</h2>
+                        <p>Timeline API, tick loop, FPS limiting, and update/render callbacks.</p>
+                        <a href="./timeline.html">Open docs</a>
+                    </article>
+                    <article class="card">
+                        <h2>Easing</h2>
+                        <p>Reference for built-in easing curves with live timeline-driven sampling.</p>
+                        <a href="./easing.html">Open docs</a>
+                    </article>
+                    <article class="card">
+                        <h2>Custom Easing</h2>
+                        <p>Interactive cubic-bezier editor with draggable control points.</p>
+                        <a href="./custom-easing.html">Open docs</a>
+                    </article>
+                    <article class="card">
+                        <h2>Particle World</h2>
+                        <p>WebGL particle world usage with orbit/repel target controls.</p>
+                        <a href="./particle-world.html">Open docs</a>
+                    </article>
+                    <article class="card">
+                        <h2>Body</h2>
+                        <p>Animation body transforms, world/view coordinates, and runtime utility methods.</p>
+                        <a href="./body.html">Open docs</a>
+                    </article>
+                    <article class="card">
+                        <h2>Sprite Base</h2>
+                        <p>Base sprite sheet playback flow with frame stepping and timing.</p>
+                        <a href="./sprite-base.html">Open docs</a>
+                    </article>
+                    <article class="card">
+                        <h2>Sprite Extended</h2>
+                        <p>Rocket sprite extension and yaw-to-frame mapping details.</p>
+                        <a href="./sprite-extended.html">Open docs</a>
+                    </article>
+                </section>
+            </div>
+        </main>
+        <script type="module" src="../../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

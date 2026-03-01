@@ -1,0 +1,25 @@
+
+animation-stage::part(background) {
+    background: #05265e;
+}
+
+.world-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+
+.probe {
+    position: absolute;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    left: calc(50% - 27px);
+    top: calc(50% - 27px);
+    background: linear-gradient(145deg, #fff59f 0%, #f9a825 100%);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+

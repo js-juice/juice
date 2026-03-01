@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>UI Gauge Example</title>
+        <link rel="stylesheet" href="../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/juice.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/pages.css" />
+        <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet" />
+        <style>
+            .layout {
+                max-width: 980px;
+                margin: 0 auto;
+                display: grid;
+                gap: 1rem;
+            }
+
+            .card {
+                background: #fff;
+                border: 1px solid #d7dce5;
+                border-radius: 12px;
+                padding: 1rem;
+            }
+
+            .hint {
+                color: #5c6170;
+                margin-top: 0;
+            }
+
+            .controls {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                margin-top: 1rem;
+            }
+
+            .controls input[type="range"] {
+                flex: 1 1 auto;
+            }
+
+            gauge-bar {
+                width: 100%;
+                display: block;
+            }
+
+            gauge-bar::part(box) {
+                border: 1px solid #ced4e0;
+                border-radius: 8px;
+                overflow: hidden;
+                background: #f3f6fb;
+            }
+
+            gauge-bar::part(bar) {
+                background: linear-gradient(90deg, #2c6bff, #47b8ff);
+            }
+
+            gauge-bar::part(label) {
+                color: #22304a;
+                font-weight: 600;
+            }
+
+            .nav-back {
+                font-size: 0.9rem;
+            }
+        </style>
+    </head>
+
+    <body class="docs-page docs-page--forms">
+        <header>
+            <div class="container flex-h flex-grow" style="flex:0 1 auto;">
+                <div class="branding">
+                    <a href="">
+                        <img src="../../brand/logo-long.svg" alt="JS Juice" />
+                    </a>
+                </div>
+                <div data-include="../../brand/templates/includes/nav.html" data-nav-base="../../"></div>
+            </div>
+        </header>
+        <main>
+            <div id="hero" class="container padding:1o5">
+                <h1 id="page-title">Gauge Components</h1>
+                <p>Demo page for `gauge-bar`.</p>
+            </div>
+            <div class="container padding:1o5">
+                <div id="content" class="layout">
+                    <p class="nav-back"><a href="./index.html">Back to UI examples</a></p>
+                    <article class="card">
+                        <h2>Bar Gauge</h2>
+                        <p class="hint">Use the slider to verify value updates and fill width behavior.</p>
+                        <gauge-bar id="demo-gauge" min="0" max="100" value="40" width="720" height="26" label="Load"></gauge-bar>
+                        <div class="controls">
+                            <label for="gauge-value">Value</label>
+                            <input id="gauge-value" type="range" min="0" max="100" value="40" />
+                            <output id="gauge-output">40</output>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </main>
+
+        <script type="module" src="./register.mjs"></script>
+        <script type="module">
+            const gauge = document.getElementById("demo-gauge");
+            const valueInput = document.getElementById("gauge-value");
+            const valueOutput = document.getElementById("gauge-output");
+
+            valueInput.addEventListener("input", () => {
+                gauge.setAttribute("value", valueInput.value);
+                valueOutput.textContent = valueInput.value;
+            });
+        </script>
+        <script type="module" src="../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

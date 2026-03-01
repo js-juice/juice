@@ -7,7 +7,7 @@
 
 import "./Dev/Log.mjs";
 import { blendClasses } from "./Util/Class.mjs";
-import _config from "./Configuration.mjs";
+import _config from "../config/juice-config.mjs";
 
 export const root = typeof globalThis !== "undefined" ? globalThis : {};
 

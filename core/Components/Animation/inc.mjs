@@ -4,13 +4,17 @@
  * @module Components/Animation/inc
  */
 
-import "./Viewer.mjs";
-import "./Stage.mjs";
-import "./Body.mjs";
-import "./Particles.mjs";
-import "./Sprite.mjs";
-import "./Stats.mjs";
-import "./Container.mjs";
-import "./Loop.mjs";
-import "./Marker.mjs";
-import "./ParticleWorld.mjs";
+import "../../../animation/components/viewer.mjs";
+import "../../../animation/components/stage.mjs";
+import "../../../animation/components/body.mjs";
+import "../../../animation/components/particles.mjs";
+import "../../../animation/components/sprite.mjs";
+import "../../../animation/components/stats.mjs";
+import "../../../animation/components/container.mjs";
+import "../../../animation/components/loop.mjs";
+import "../../../animation/components/marker.mjs";
+import "../../../animation/components/preview.mjs";
+import "../../../animation/components/particle-world.mjs";
+import "../../../animation/components/background.mjs";
+import "../../../animation/components/body2d.mjs";
+import "../../../animation/components/canvas/animation-canvas.mjs";

@@ -1,0 +1,379 @@
+@import "vars";
+
+:host{
+    padding:1rem;
+    background:#FFF;
+    display: block;
+    position:relative;
+    border:1px solid #d2d2d2;
+    .component--html{
+
+        &.initial{
+            #meta-icon{
+                color:var(--color-yellow);
+            }
+        }
+
+        &.valid{
+            #meta-icon{
+                color:var(--color-green);
+            }
+            .status-label{
+                color:var(--color-green);
+               
+            }
+        }
+
+        &.valid-unsaved{
+            #meta-icon{
+                color:var(--color-orange);
+            }
+            .status-label{
+                color:var(--color-orange);
+               
+            }
+        }
+    
+        &.invalid{
+            #meta-icon{
+                color:var(--color-red);
+            }
+            .status-label{
+                color:var(--color-red);
+            }
+        }
+    
+        &.unsaved{
+            #meta-icon{
+                color:var(--color-yellow);
+            }
+        }
+
+    
+
+
+    header{
+        display:block;
+        margin-bottom: 0.8em;
+        &:after{
+            content:"";
+            display:block;
+            clear:both;
+        }
+        .field--template-select{
+            float:right;
+            select{
+                min-width:250px;
+                -webkit-appearance: none;
+                padding: 7px 40px 7px 12px;
+                width: 100%;
+                border: 1px solid #e8eaed;
+                border-radius: 5px;
+                box-shadow: 0 1px 3px -2px #9098a9;
+                cursor: pointer;
+                font-family: inherit;
+                font-size: 16px;
+                transition: all 150ms ease;
+                background: #f9f9f9 url("data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Ctitle%3Edown-arrow%3C%2Ftitle%3E%3Cg%20fill%3D%22%23000000%22%3E%3Cpath%20d%3D%22M10.293%2C3.293%2C6%2C7.586%2C1.707%2C3.293A1%2C1%2C0%2C0%2C0%2C.293%2C4.707l5%2C5a1%2C1%2C0%2C0%2C0%2C1.414%2C0l5-5a1%2C1%2C0%2C1%2C0-1.414-1.414Z%22%20fill%3D%22%23000000%22%3E%3C%2Fpath%3E%3C%2Fg%3E%3C%2Fsvg%3E") no-repeat;
+                background-position: 95% 49%;
+            }
+        }
+
+        h4{
+            font-size: 1.2rem;
+            font-family: proxima-nova-light;
+            text-transform: uppercase;
+            margin:0;
+            
+            line-height:30px;
+        }
+        p.description{
+            font-size:0.9rem;
+        }
+
+        .icon{
+            position:relative;
+            width:50px;
+            margin-right:1rem;
+            svg{
+                position:relative;
+                width:100%;
+            }
+            m-icon{
+                position:relative;
+                width:100%;
+                height:100%;
+            }
+        }
+    }
+   
+    > .contents{
+       /* border:1px solid #d2d2d2; */
+        min-height:30px;
+        margin-bottom:1rem;
+        margin-top:1rem;
+        clear:both;
+        background:#FFF;
+        table{
+            width:100%;
+            margin:0;
+            padding:0;
+            tr{
+                td{
+                    border-bottom:1px solid #d2d2d2;
+                    &.delete{
+                        padding-right:10px;
+                        text-align: right;
+                        cursor:pointer;
+                        width:1%;
+                        line-height:44px;
+                        .icon{
+                            padding-left:5px;
+                            position:relative;
+                            display:inline-block;
+                            line-height:15px;
+                            vertical-align: middle;
+                            transform:translateX(3px);
+                        }
+                        &:hover{
+                            color:#aa0404;
+                        }
+                    }
+                    &.locked{
+                        text-align: center;
+                        cursor:not-allowed;
+                        width:1%;
+                        line-height:44px;
+                        white-space: nowrap;
+                        padding-right:10px;
+                        span{
+                            display:inline-block;
+                            font-size:0.6rem;
+                            line-height:1;
+                            padding:3px 8px;
+                            border-radius: 4px;
+                            background:#aa0404;
+                            vertical-align: middle;
+                            color:#FFF;
+                            text-transform: uppercase;
+                        }
+                        .icon{
+                            padding-left:5px;
+                            display:inline-block;
+                            line-height:15px;
+                            vertical-align: middle;
+                        }
+                        &:hover{
+                            color:#aa0404;
+                        }
+                    }
+                    input{
+                        border:0;
+                        width:100%;
+                        font-size:1.2rem;
+                        padding:0.5rem;
+                        border-bottom: 3px solid #FFF;
+                        &:focus{
+                            outline: none;
+                            border-bottom: 3px solid $lime;
+                        }
+                    }
+                    
+                }
+                &:last-child{
+                    td{border-bottom:0;}
+                }
+                &.error{
+                    td{
+                       input{
+                            color:$red;
+                            border-bottom:3px solid $red;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .data-table{
+        &:empty{
+            text-align:center;
+            line-height:30px;
+            color: var(--color-gray);
+            &:after{
+            content: "No Metadata Created. Start by adding a attribute below."
+            }
+        }
+        .scope{
+            background-color: var(--color-gray);
+            border-top-right-radius: 8px;
+            border:5px solid var(--color-gray);
+
+            &:not(:last-child){
+                margin-bottom:1rem;
+            }
+
+            > header{
+                padding-bottom:5px;
+                padding-top:5px;
+                margin-bottom:0;
+                font-size: 0.8rem;
+                font-weight:bold;
+                &:before{
+                    text-transform: uppercase;
+                    display:inline-block;
+                    
+                }
+                span{
+                    padding-left:10px;
+                }
+                a.hide{
+                    color:inherit;
+                    float:right;
+                }
+            }
+
+            &.project{
+                background-color: var(--color-yellow);
+                border:5px solid var(--color-yellow);
+                > header{
+                    color:#333;
+                }
+                .group:not(:last-child){
+                    border-bottom: 5px solid var(--color-yellow);
+
+                }
+            }
+
+            &.signee{
+                background-color: var(--color-blue);
+                border:5px solid var(--color-blue);
+                > header{
+                    color:#FFF;
+                }
+                .group:not(:last-child){
+                    border-bottom: 5px solid var(--color-blue);
+
+                }
+            }
+
+            &.package{
+                background-color: var(--color-green);
+                border:5px solid var(--color-green);
+                > header{
+                    color:#FFF;
+                }
+                .group:not(:last-child){
+                    border-bottom: 5px solid var(--color-green);
+
+                }
+            }
+            
+            &.template{
+                background-color: var(--color-orange);
+                border:5px solid var(--color-orange);
+                header{
+                    color:#FFF;
+                    &:before{
+                        content: "Template:";
+                    }
+                }
+            }
+            &.user{
+                background-color: var(--color-blue);
+                border:5px solid var(--color-blue);
+                header{
+                    color:#FFF;
+                    &:before{
+                        content: "User Created:";
+                    }
+                }
+            }
+            .group{
+                border:1px solid var(--color-dark-gray);
+                header{
+                    background:#FFF;
+                    margin-bottom:0;
+                    padding:0.25rem 0.5rem;
+                    border-bottom:1px solid var(--color-gray);
+                    font-size:0.8rem;
+                }
+                &.empty{
+                    display:none;
+                }
+            }
+            &.hidden{
+                .group{
+                    display:none;
+                }
+            }
+        }
+
+        .drag-tmp{
+            height: 42px;
+            background-color: var(--color-lt-gray);      
+            border:1px solid var(--color-gray)
+        }
+    }
+
+    .add-metadata{
+        .status{
+
+            height:40px;
+            padding-top:10px;
+            float:right;
+           
+            &.visible{
+                opacity:1;
+            }
+            
+            .label{
+                height:30px;
+                line-height:30px;
+                vertical-align: middle;
+                display:inline-block;
+                font-size:0.9rem;
+                padding-right:1rem;
+                text-transform: uppercase;
+                font-weight:bold;
+            }
+            m-icon{
+                height:30px;
+                line-height:30px;
+                vertical-align: middle;
+                display:inline-block;
+            }
+            .ring-wrap{
+                display:none;
+            }
+        }
+    }
+
+    .add-btn{
+        display:inline-block;
+        cursor:pointer;
+        height:40px;
+        
+        span{
+            height:40px;
+            line-height:40px;
+            display:inline-block;
+            vertical-align: middle;
+        }
+        .plus{
+            font-size: 30px;
+            font-weight:600;
+            font-family: proxima-nova;
+            color: $blue;
+        }
+        .label{
+            padding-left:10px;
+        }
+    }
+
+    .add-dropdown{
+        background:#f1f1f1;
+    }
+
+}
+}

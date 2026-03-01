@@ -2,7 +2,7 @@
  * Tag component for displaying removable tags/labels.
  * @module Components/Form/FormTagComponent
  */
-import Component from "../Component.mjs";
+import Component from "../../../ui/component.mjs";
 import { BaseInput } from "./FormBaseComponents.mjs";
 import Obj from "../../Util/Object.mjs";
 //import setupCSS from "!../../../sass/component--setup.scss?toString";

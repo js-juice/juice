@@ -6,7 +6,9 @@
   "scripts": {
     "scss:build": "sass brand/style:brand/templates/css --style=expanded --no-source-map",
     "scss:watch": "sass --watch brand/style:brand/templates/css --style=expanded --no-source-map",
-    "test": "echo \"No tests configured\""
+    "test": "node --test ui/tests/*.test.mjs",
+    "test:ui": "node --test ui/tests/*.test.mjs",
+    "manifest:animation-components": "node animation/components/generate-component-manifest.mjs"
   },
   "keywords": [],
   "author": "",

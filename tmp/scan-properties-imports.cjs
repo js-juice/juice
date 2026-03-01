@@ -1,0 +1,1 @@
+for(const root of roots){if(!fs.existsSync(root)) continue; for(const file of walk(root)){const text=read(file); if(!text.includes('Animation/Properties/')) continue; const lines=text.split(/\r?\n/); for(let i=0;i<lines.length;i++){if(lines[i].includes('Animation/Properties/')) console.log(file+':'+(i+1)+':'+lines[i].trim());}}})  

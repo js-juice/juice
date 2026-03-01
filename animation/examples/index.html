@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Animation Examples</title>
+        <link rel="stylesheet" href="../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/juice.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/pages.css" />
+        <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet" />
+    </head>
+
+    <body class="docs-page docs-page--forms">
+        <header>
+            <div class="container flex-h flex-grow" style="flex:0 1 auto;">
+                <div class="branding">
+                    <a href="">
+                        <img src="../../brand/logo-long.svg" alt="JS Juice" />
+                    </a>
+                </div>
+                <div data-include="../../brand/templates/includes/nav.html" data-nav-base="../../"></div>
+            </div>
+        </header>
+        <main>
+            <div id="hero" class="container padding:1o5">
+                <h1 id="page-title">Animation Examples</h1>
+                <p>
+                    Index page for standalone animation demos in the top-level <code>animation/</code> package,
+                    optimized for speed and usability.
+                </p>
+                <p><a href="./docs/index.html">Open example docs hub</a></p>
+            </div>
+            <div class="container padding:1o5">
+                <div id="content" class="layout">
+                    <section class="grid">
+                        <article class="card">
+                            <h2>Timeline</h2>
+                            <p class="hint">Basic timeline lifecycle with play, pause, and reset controls.</p>
+                            <p><a href="./timeline.html">Open timeline example</a></p>
+                        </article>
+                        <article class="card">
+                            <h2>Body</h2>
+                            <p class="hint">
+                                <code>animation-body</code> component from the new animation source-of-truth location.
+                            </p>
+                            <p><a href="./body.html">Open body example</a></p>
+                        </article>
+                        <article class="card">
+                            <h2>Sprite</h2>
+                            <p class="hint">
+                                Rocket yaw sprite playback using <code>animation-sprite</code> and
+                                <code>animation/graphics/webgl/sprite-sheet.mjs</code>.
+                            </p>
+                            <p><a href="./sprite.html">Open sprite example</a></p>
+                        </article>
+                    </section>
+                </div>
+            </div>
+        </main>
+        <script type="module" src="../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

@@ -1,0 +1,170 @@
+
+:host{
+    display:block;
+    position:relative;
+    width:100%;
+    .expanded{
+        display:none;
+    }
+    .component--html:after{
+        content: "";
+        position: relative;
+        display: block;
+        width: 100%;
+        padding-bottom: 100%;
+    }
+    .guage-wrapper{
+        position:relative;
+    }
+    .gauge{
+        top:5%;
+        left:5%;
+        width:90%;
+        height:90%;
+        position:relative;
+        .top-cover{
+            position:absolute;
+            width:calc( 100% - 30px );
+            height:calc( 100% - 30px );
+            background:#FFF;
+            border-radius:50%;
+            top:50%;
+            left:50%;
+            transform:translate(-50%, -50%);
+            box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+            z-index:200;
+            
+        }
+        .content{
+            position:absolute;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            border-radius:50%;
+            z-index:100;
+            circle-sector{
+                top:0;
+                left:0;
+                position:absolute;
+                width:100%;
+                height:100%;
+            }
+        }
+        .bg{
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            border-radius:50%;
+            background:#e0e0e0;
+            position:absolute;
+            border:1px solid #d2d2d2;
+            box-shadow: rgba(60, 64, 67, 0.3) 0px 0px 2px 0px, rgba(60, 64, 67, 0.15) 0px 0px 6px 2px;
+            z-index:1;
+        }
+
+        
+    }
+    .data{
+        position:absolute;
+        width:60%;
+        height:60%;
+        top:20%;
+        left:20%;
+        z-index:200;
+        transform: scale(0.7);
+        table{
+            width:100%;
+            margin:0;
+            padding:0;
+            position:relative;
+            top:50%;
+            transform:translateY(-50%);
+            tr{
+                th{
+                    font-size:0.8rem;
+                }
+                td{
+                    font-size:0.7rem;
+                    line-height:1.3;
+                    white-space: nowrap;
+                    i{
+                        display:inline-block;
+                        width:10px;
+                        height:10px;
+                        border-radius:50%;
+                        margin-right:4px;
+                    }
+                    &:last-child{
+                        text-align:right;
+                    }
+                }
+                &:first-child{
+                    td{
+                        text-align:center;
+                        text-transform: uppercase;
+                        font-weight:bold;
+                    }
+                }
+            }
+        }
+    }
+    
+}
+
+:host([expanded]){
+    .component--html{
+        position:relative;
+        .gauge{
+            position:relative;
+           
+        }
+        .cover{
+            width:80%;
+            top:55%;
+            left:50%;
+            position:absolute;
+            transform: translate(-50%, -50%);
+            text-align:center;
+            .subject{
+                font-weight:bold;
+                font-size:0.85rem;
+            }
+            .value{
+                font-size:3rem;
+                font-weight:bold;
+            }
+        }
+        .data{
+            position:absolute;
+            width:calc(50% - 1rem); 
+            top:50%;
+            transform:scale(1) translateY(-50%);
+            left: auto;
+            right: 0;
+            z-index:200;
+            table{
+                tr{
+                    th{
+                        text-align:left;
+                        margin-bottom:5px;
+                        border-bottom: 1px solid #333;
+                    }
+                    td{
+                        font-size:0.85rem;
+                        line-height:1.3;
+                    }
+                    &:nth-child(2){
+                        td{
+                            padding-top:10px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    .expanded{
+        display:block;
+    }
+}

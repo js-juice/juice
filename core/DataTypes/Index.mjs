@@ -190,6 +190,16 @@ export class TrieIndex {
     }
 }
 
+const Index = {
+    propertyIndex,
+    sortedIndex,
+    createInvertedIndex,
+    binarySearch,
+    TrieIndex
+};
+
+export default Index;
+
 /**
 Usage example
 const array = [

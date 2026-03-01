@@ -3,7 +3,7 @@
  * @module Components/Canvas
  */
 
-import Component from "./Component.mjs";
+import Component from "../../ui/component.mjs";
 import { random } from "../Util/Math.mjs";
 import PropertyArray from "../DataTypes/PropertyArray.mjs";
 import Canvas from "../Graphics/Canvas.mjs";

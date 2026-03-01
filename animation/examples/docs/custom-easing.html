@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Custom Easing Example Docs</title>
+        <link rel="stylesheet" href="../../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../../brand/templates/css/docs.css" />
+        <style>
+            .doc {
+                max-width: 980px;
+                margin: 0 auto;
+            }
+
+            .doc section {
+                margin: 14px 0;
+                padding: 12px;
+                border: 1px solid #d7e2f2;
+                border-radius: 10px;
+                background: #fff;
+            }
+
+            .doc h2 {
+                margin: 0 0 8px;
+                font-size: 18px;
+            }
+
+            .doc code {
+                font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            }
+
+            .doc ul {
+                margin: 0;
+                padding-left: 18px;
+            }
+
+            .doc li {
+                margin: 4px 0;
+            }
+        </style>
+    </head>
+
+    <body class="docs-page docs-page--forms">
+        <header>
+            <div class="container flex-h flex-grow" style="flex:0 1 auto;">
+                <div class="branding"><a href=""><img src="../../../brand/logo-long.svg" alt="JS Juice" /></a></div>
+                <div data-include="../../../brand/templates/includes/nav.html" data-nav-base="../../../"></div>
+            </div>
+        </header>
+        <main>
+            <div class="container padding:1o5 doc">
+                <p><a href="../playground.html">Back to Playground</a> | <a href="./index.html">All Example Docs</a></p>
+                <h1>Custom Easing Example Docs</h1>
+                <section>
+                    <h2>Purpose</h2>
+                    <ul>
+                        <li>Create a custom easing curve by adding and dragging control points.</li>
+                        <li>Compare linear output vs custom output at the same timeline phase.</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>Interaction Model</h2>
+                    <ul>
+                        <li>Fixed endpoints: <code>(0,0)</code> and <code>(1,1)</code>.</li>
+                        <li>Click the blue curve to add new intermediate points.</li>
+                        <li>Each point has a tangent handle for local smoothing control.</li>
+                        <li>Curve output uses piecewise cubic interpolation across all points.</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>Runtime Flow</h2>
+                    <ul>
+                        <li><code>animation-stage</code> timeline provides time progression.</li>
+                        <li><code>timeline-controls</code> handles play/pause/step/reset/speed/reverse.</li>
+                        <li>Panel provides a copyable CSS easing function string.</li>
+                    </ul>
+                </section>
+            </div>
+        </main>
+        <script type="module" src="../../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

@@ -1,0 +1,29 @@
+<animation-stage id="stage" width="100%" height="100%" fps="60" background="transparent">
+    <div class="editor-shell">
+        <section class="panel">
+            <h3>Custom Cubic Bezier</h3>
+            <svg id="bezier-editor" viewBox="0 0 1000 260"></svg>
+            <div class="editor-hint">Click the blue curve to add points. Drag points to shape the easing.</div>
+            <div class="custom-code" id="custom-code">cubic-bezier(0.25, 0.10, 0.25, 1.00)</div>
+            <div class="css-export">
+                <label class="css-label" for="custom-css">CSS Easing</label>
+                <div class="css-row">
+                    <input id="custom-css" class="css-input" type="text" readonly value="" />
+                    <button id="copy-css" class="copy-btn" type="button">Copy CSS</button>
+                </div>
+            </div>
+        </section>
+        <section class="panel compare">
+            <div class="compare-row">
+                <div class="compare-name">linear</div>
+                <div class="compare-track"><div id="linear-dot" class="compare-dot linear"></div></div>
+                <div id="linear-value" class="compare-value">0.000</div>
+            </div>
+            <div class="compare-row">
+                <div class="compare-name">custom</div>
+                <div class="compare-track"><div id="custom-dot" class="compare-dot custom"></div></div>
+                <div id="custom-value" class="compare-value">0.000</div>
+            </div>
+        </section>
+    </div>
+</animation-stage>

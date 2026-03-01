@@ -2,7 +2,7 @@
  * Base form input component with form association and validation support.
  * @module Components/Form/FormBaseComponents
  */
-import Component from "../Component.mjs";
+import Component from "../../../ui/component.mjs";
 
 /**
  * Base input component that can be used as a form element.

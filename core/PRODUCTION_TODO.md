@@ -4,19 +4,19 @@ Use this checklist to track production-readiness work in `core/`.
 
 ## Critical Fixes
 
-- [ ] Fix undefined `Composite` usage in `Juice.blend()` (`core/Core.mjs`).
-- [ ] Fix `callstack` vs `callStack` naming mismatch in call tracking (`core/Core.mjs`).
+- [x] Fix undefined `Composite` usage in `Juice.blend()` (`core/juice.mjs`).
+- [x] Fix `callstack` vs `callStack` naming mismatch in call tracking (`core/juice.mjs`).
 - [ ] Fix undefined `name` usage in `updateInputs()` (`core/Components/Form/Form.mjs`).
-- [ ] Fix missing helper imports/usages in `TargetInput` (`core/Form/CustomInputs/TargetInput.mjs`).
-- [ ] Rename malformed file `particleOrbit.mjs]` to `particleOrbit.mjs` and update references (`core/Graphics/Particles/`).
+- [x] Fix missing helper imports/usages in `TargetInput` (`core/Form/CustomInputs/TargetInput.mjs`).
+- [x] Rename malformed file `particleOrbit.mjs]` to `particleOrbit.mjs` and update references (`core/Graphics/Particles/`).
 
 ## High Priority Cleanup
 
-- [ ] Implement or remove placeholder module `core/Components/Form/Forms.mjs`.
+- [x] Implement or remove placeholder module `core/Components/Form/Forms.mjs`.
 - [ ] Consolidate duplicate `InputName` implementations:
   - `core/Form/InputName.mjs`
   - `core/Components/Form/InputName.mjs`
-- [ ] Consolidate/remove duplicate sprite sheet module:
+- [x] Consolidate/remove duplicate sprite sheet module:
   - `core/Graphics/WebGL/SpriteSheet.mjs`
   - `core/Graphics/WebGL/SpriteSheet copy.mjs`
 - [ ] Move/remove non-production test artifact in `core/Dom/Observe/test.js`.
@@ -40,7 +40,7 @@ Use this checklist to track production-readiness work in `core/`.
 
 - [ ] Add lint configuration for `core/`.
 - [ ] Add automated tests for:
-  - Core runtime (`Core.mjs`)
+  - Core runtime (`juice.mjs`)
   - Form system (`core/Form`, `core/Components/Form`)
   - Virtual DOM (`core/VirtualDom`)
   - WebGL hot paths (`core/Graphics/WebGL`)

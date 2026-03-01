@@ -1,0 +1,19 @@
+@font-face {
+    font-family: "george-bold";
+    font-style: bold;
+    font-weight: 600;
+    src: url("../fonts/george-bold.woff2") format("woff2");
+}
+
+h1,
+h2,
+h3,
+h4 {
+    font-family: "george-bold", sans-serif !important;
+    font-weight: normal !important;
+}
+
+h1 {
+    font-size: 2em;
+    margin-bottom: 0.5em;
+}

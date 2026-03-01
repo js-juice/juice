@@ -4,7 +4,7 @@
  * @module Components/Form/FormMultiFile
  */
 
-import Component from "../Component.mjs";
+import Component from "../../../ui/component.mjs";
 
 /**
  * Form component for multiple file uploads.

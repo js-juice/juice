@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Animation Playground</title>
+        <link rel="stylesheet" href="../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/juice.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/pages.css" />
+        <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet" />
+        <script type="module" src="../../forms/juice-forms.mjs"></script>
+        <style>
+            :root {
+                --color-orange: #f77700;
+                --color-dark-grey: #48484A;
+                --color-lt-grey: #dde3e6;
+                --select-arrow-color: #48484A;
+            }
+
+            body>main {
+                margin: 0 !important;
+                padding: 0 !important;
+                min-height: calc(100vh - 60px);
+                max-height: calc(100vh - 60px);
+                overflow: hidden;
+                position: absolute;
+                top: 60px;
+                left: 0;
+                right: 0;
+                bottom: 0;
+            }
+
+            .playground-layout {
+                display: grid;
+                grid-template-columns: 220px minmax(0, 1fr);
+                min-height: 100%;
+                height: 100%;
+                position: relative;
+            }
+
+            #playground-sidebar {
+                border-right: 1px solid #858585;
+            }
+
+            #playground-sidebar>header {
+                padding: 0.37rem 0.5rem;
+                background: var(--color-dark-grey);
+            }
+
+            #playground-sidebar h3 {
+                margin: 0;
+                padding: 0.55rem 0;
+                font-size: 1em;
+                color: #FFF;
+            }
+
+            .playground-panel {
+                background: #fff;
+                position: relative;
+                width: 100%;
+            }
+
+            .playground-panel:not(#playground-sidebar) {
+                border: 1px solid #d2d2d2;
+                display: flex;
+                flex-direction: column;
+            }
+
+
+            .playground-panel .content {
+                margin: 0.75rem;
+                height: 100%;
+                flex: 1 1 auto;
+                overflow: hidden;
+                position: relative;
+            }
+
+            .playground-panel .content iframe {
+                height: 100%
+            }
+
+            .playground-panel h3 {
+                margin: 0;
+                padding: 0.45rem;
+                font-size: 1em;
+                color: var(--color-dark-grey);
+                background: var(--color-lt-grey);
+            }
+
+            #panel-1-tabs {
+                color: var(--color-dark-grey);
+                background: var(--color-lt-grey);
+            }
+
+            #panel-1-tabs h3 {
+                color: inherit !important;
+                background: transparent !important;
+            }
+
+            #panel-1-tabs li {
+                padding: 0 1rem;
+                border-right: 1px solid #d2d2d2;
+            }
+
+            #panel-1-tabs li.active {
+                color: var(--color-dark-grey) !important;
+                background: #FFF !important;
+            }
+
+            #panel-1-tabs li[disabled] {
+                color: #757575 !important;
+                background: #4d4d4d;
+            }
+
+            .controls {
+                display: flex;
+                gap: 0.5rem;
+                align-items: center;
+                flex-wrap: wrap;
+                margin-bottom: 0.75rem;
+            }
+
+            .controls select,
+            .controls button {
+                border-radius: 8px;
+                border: 1px solid #bac9dd;
+                padding: 0.4rem 0.55rem;
+                font-size: 13px;
+                background: #fff;
+            }
+
+            .controls button {
+                cursor: pointer;
+            }
+
+            #file-list {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+                max-height: calc(72vh - 44px);
+                overflow: auto;
+            }
+
+            #file-list button {
+                width: 100%;
+                border: 0;
+                border-bottom: 1px solid #eef2f8;
+                background: #fff;
+                text-align: left;
+                padding: 0.55rem 0.65rem;
+                cursor: pointer;
+                font-family: monospace;
+                font-size: 12px;
+            }
+
+            #file-list button.active {
+                background: #e8f0ff;
+                font-weight: 600;
+            }
+
+            #editor {
+                height: 100%;
+            }
+
+            #docs-view {
+                display: none;
+                height: 100%;
+            }
+
+            #docs-preview {
+                width: 100%;
+                height: 100%;
+                border: 0;
+                background: #fff;
+            }
+
+            .readme-doc-link {
+                margin: 0 14px 14px;
+                padding: 10px 12px;
+                border: 1px solid #d8e2f1;
+                border-radius: 8px;
+                background: #f8fbff;
+                font-size: 13px;
+            }
+
+            .readme-doc-link a {
+                color: #215fcc;
+                text-decoration: underline;
+            }
+
+            #preview {
+                width: 100%;
+                height: 100%;
+                border: 0;
+                background: #fff;
+            }
+
+            .hint {
+                font-size: 12px;
+                color: #52607a;
+                margin-top: 0.35rem;
+            }
+
+            #reset-files {
+                font-size: 0.7rem;
+                margin: 0.3rem;
+            }
+
+            .controls {
+                padding: 0.5rem;
+                background-color: var(--color-orange);
+                color: #FFF !important;
+
+                label {
+                    color: #FFF !important;
+                    font-family: "Segoe UI", Arial, sans-serif;
+                    font-family: ;
+                    text-transform: uppercase;
+                    font-size: 0.7rem;
+                    color: #52607a;
+                    display: block;
+                    margin-bottom: 0.4rem;
+                }
+            }
+
+            .playground-content {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
+
+            .playground-content>header {
+                padding: 0.25rem 0.5rem;
+                background-color: var(--color-lt-grey);
+                color: var(--color-dark-grey);
+            }
+
+            .playground-content>header>h4 {
+                margin: 0.2rem;
+            }
+
+            #playground-panels {
+                display: flex;
+                flex-direction: row;
+                gap: 0.75rem;
+                padding: 0.75rem;
+                flex: 0 1 auto;
+                height: 100%;
+            }
+
+            #example-set {
+                margin-bottom: 0.2rem;
+            }
+
+            #resize-handle {
+                position: absolute;
+                top: 50%;
+                right: 5px;
+                transform: translate(100%, -50%);
+                width: 15px;
+                height: 80px;
+                cursor: col-resize;
+                z-index: 10;
+                border-radius: 3px;
+                background-color: #52607a;
+            }
+
+            #resize-handle:after {
+                content: "";
+                position: absolute;
+                top: 10px;
+                left: 3px;
+                --s: 3px;
+                /* control the shape (can be percentage) */
+
+                height: 15px;
+                aspect-ratio: 3/5;
+                clip-path: polygon(0 0, var(--s) 0, 100% 50%, var(--s) 100%, 0 100%, calc(100% - var(--s)) 50%);
+                background: #FFF;
+            }
+
+            #resize-handle:before {
+                content: "";
+                position: absolute;
+                bottom: 10px;
+                left: 3px;
+                --s: 3px;
+                /* control the shape (can be percentage) */
+
+                height: 15px;
+                aspect-ratio: 3/5;
+                clip-path: polygon(100% 0, calc(100% - var(--s)) 0, 0 50%, calc(100% - var(--s)) 100%, 100% 100%, var(--s) 50%);
+
+                background: #FFF;
+            }
+
+            #playground-editor-panel {
+                width: var(--preview-width, 100%);
+            }
+
+            #playground-preview-panel {
+                width: 100%;
+            }
+
+            .tab-content {
+                display: none;
+                height: 100%;
+            }
+
+            .tab-content.active {
+                display: block;
+            }
+
+            @media (max-width: 1100px) {
+                .playground-layout {
+                    grid-template-columns: 1fr;
+                }
+
+                #file-list {
+                    max-height: 190px;
+                }
+            }
+        </style>
+    </head>
+
+    <body class="docs-page docs-page--forms">
+        <header>
+            <div class="flex-h flex-grow h:100" style="flex:0 1 auto;">
+                <div class="branding">
+                    <a href="">
+                        <img src="../../brand/logo-long.svg" alt="JS Juice" />
+                    </a>
+                </div>
+                <div id="nav">
+                    <div data-include="../../brand/templates/includes/nav.html" data-nav-base="../../"></div>
+                </div>
+                <div id="back-link">
+                    <p><a href="./index.html">Back to Animation Examples</a></p>
+                </div>
+            </div>
+        </header>
+        <main>
+
+
+
+            <div class="playground-layout">
+                <section id="playground-sidebar" class="">
+                    <header>
+                        <button id="reset-files" class="float-right" type="button">Reset Files</button>
+                        <h3>Files</h3>
+                        <div class="clearfix"></div>
+                    </header>
+                    <div class="controls flex-h">
+                        <div class="example-select w:100">
+                            <input-select id="example-set" label="Choose Example" name="example-set"
+                                class="w:100 relative">
+                            </input-select>
+                        </div>
+                    </div>
+                    <ul id="file-list"></ul>
+                </section>
+                <div class="playground-content">
+                    <header>
+                        <h4>Animation Playground</h4>
+                    </header>
+                    <div id="playground-panels">
+                        <section id="playground-editor-panel" class="playground-panel">
+                            <div id="resize-handle"></div>
+                            <ul id="panel-1-tabs" class="flex-h items-nowrap w:100 padding:0 margin:0">
+                                <li class="tab block active" data-tab="editor">
+                                    <h3>Editor</h3>
+                                </li>
+                                <li class="tab block" data-tab="controls" disabled>
+                                    <h3>Controls</h3>
+                                </li>
+                            </ul>
+                            <div class="content">
+                                <div class="tab-content active" data-tab="editor">
+                                    <div id="editor"></div>
+                                    <div id="readme-view" style="display:none;height:100%;overflow:auto;"></div>
+                                    <div id="docs-view">
+                                        <iframe id="docs-preview" title="Example Documentation"></iframe>
+                                    </div>
+                                </div>
+                                <div class="tab-content" data-tab="controls"></div>
+                            </div>
+                        </section>
+                        <section id="playground-preview-panel" class="playground-panel">
+                            <h3>Preview</h3>
+                            <div class="content">
+                                <iframe id="preview" title="Example Preview"></iframe>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <script type="module" src="./playground.mjs?v=20260228c"></script>
+        <script type="module" src="../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

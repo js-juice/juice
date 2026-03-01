@@ -10,21 +10,31 @@ import { vElement } from "../VirtualBuilder.mjs";
  * Crosshair element for target selection.
  * @private
  */
-const crossHair = vElement("div", { class: "crosshair round" }, [
-    div({ class: "line vertical w-1px h-120 centered" }),
-    div({ class: "line horzontal h-1px w-120 centered" }),
+const CrossHair = vElement.make("div", { class: "crosshair round" }, [
+    new vElement("div", { class: "line vertical w-1px h-120 centered" }),
+    new vElement("div", { class: "line horizontal h-1px w-120 centered" })
 ]);
 
-const activator = vElement("a", { class: "activator block absolute height-80 aspect-ratio-1" }, [crossHair()], {
-    events: {
-        click: function (e) {
-            this.clone().appendTo(document.body);
-            this.dispatchEvent(new CustomEvent("click", { detail: { clone: this.clone() } }));
-        },
-    },
-});
+const Activator = vElement.make(
+    "a",
+    { class: "activator block absolute height-80 aspect-ratio-1", href: "#" },
+    [new CrossHair()],
+    {
+        events: {
+            click(event) {
+                event.preventDefault();
+                this.dispatchEvent(
+                    new CustomEvent("target-input:activate", {
+                        bubbles: true,
+                        detail: { source: this }
+                    })
+                );
+            }
+        }
+    }
+);
 
 export default vElement.make("div", { class: "target-input" }, [
-    activator({ class: "" }),
-    input({ name: "target", type: "text" }),
+    new Activator(),
+    new vElement("input", { name: "target", type: "text" })
 ]);

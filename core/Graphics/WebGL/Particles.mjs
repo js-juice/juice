@@ -8,10 +8,9 @@ import { createProgram } from "./Lib/Helper.mjs";
 import { random, randomInt, randomBetween, diff } from "../../Util/Math.mjs";
 import WebGL from "./Lib/WebGL.mjs";
 const { VariableTypes, ShaderTypes } = WebGL;
-import { mat4 } from "gl-matrix";
-import { Vector2D, Vector3D, Vector4D } from "../../Animation/Properties/Vector.mjs";
+import { Vector2D, Vector3D, Vector4D } from "../../../animation/Properties/Vector.mjs";
 import Particles from "../Particles/Particles.mjs";
-import AnimationValue from "../../Animation/Properties/Value.mjs";
+import AnimationValue from "../../../animation/Properties/Value.mjs";
 import TransformFeedback from "./Lib/TransformFeedback.mjs";
 import WebGLDebugUtils from "./debug/webgl-debug.js";
 
@@ -98,7 +97,6 @@ class GLParticles {
         // this.feedback.debugReadback = true;
 
         const maxVaryings = this.feedback.MAX_VARYINGS;
-        console.log("Max Transform Feedback Varyings:", maxVaryings);
 
         //insert Wraping Function from left to right top to bottom
         this.feedback.addFunction(
@@ -180,9 +178,12 @@ class GLParticles {
         //Initialize uniforms describing environment
         //Uniforms stay constant between draw call
 
-        this.uTargetPoint = this.feedback.addUniform("uTargetPoint", VariableTypes.FLOAT_VEC4, [0.0, 0.0, -2.0, 0.0], {
-            debug: true
-        });
+        this.uTargetPoint = this.feedback.addUniform(
+            "uTargetPoint",
+            VariableTypes.FLOAT_VEC4,
+            [0.0, 0.0, -2.0, 0.0],
+            { debug: false }
+        );
         //this.uTime = this.feedback.addUniform("uTime", VariableTypes.FLOAT_VEC4, [0.0, 0.0, 0.0, 0.0]);
         //this.uSpeed = this.feedback.addUniform("uSpeed", VariableTypes.FLOAT, this.speed.value);
         //this.uMovement = this.feedback.addUniform("uMovement", VariableTypes.FLOAT_VEC4, [0.0, 0.0, 0.0, 0.3]);
@@ -220,7 +221,7 @@ class GLParticles {
             "aPosition",
             VariableTypes.FLOAT_VEC3,
             this.particles.positions,
-            { debug: true }
+            { debug: false }
         );
         /*
         this.feedbackVelocity = this.feedback.addVariable(
@@ -518,7 +519,8 @@ class GLParticles {
 
             gl_Position =  uProjectionMatrix * vec4(aPosition, 1.0);
        
-            gl_PointSize = ${this.particleSize} / abs(aPosition.z);
+            float depth = max(0.2, abs(aPosition.z));
+            gl_PointSize = max(1.5, ${this.particleSize} / depth);
         
             if (particleState == 0.0) {
                 particleStateColor = vec3(0.0, 1.0, 0.0);  // Green for state 0
@@ -676,19 +678,19 @@ class GLParticles {
 
         //this.uTime.value = [this.time, this.time.delta, 0.0, 0.0];
 
-        if (this.state.dirty && (this.uState.value = this.state.value) !== false) {
+        if (this.uState && this.state.dirty && (this.uState.value = this.state.value) !== false) {
             this.state.save();
         }
 
-        if (this.speed.dirty && (this.uSpeed.value = this.speed.value) !== false) {
+        if (this.uSpeed && this.speed.dirty && (this.uSpeed.value = this.speed.value) !== false) {
             this.speed.save();
         }
 
-        if (this.direction.dirty && (this.uDirection.value = this.direction.toArray()) !== false) {
+        if (this.uDirection && this.direction.dirty && (this.uDirection.value = this.direction.toArray()) !== false) {
             this.direction.save();
         }
 
-        if (this.repel.dirty && (this.uRepel.value = this.repel.value) !== false) {
+        if (this.uRepel && this.repel.dirty && (this.uRepel.value = this.repel.value) !== false) {
             this.repel.save();
         }
 
@@ -697,7 +699,7 @@ class GLParticles {
                 this.repelPoint.clean();
             }
 
-            if (this.repelParams.dirty && (this.uRepelParams.value = this.repelParams.toArray()) !== false) {
+            if (this.uRepelParams && this.repelParams.dirty && (this.uRepelParams.value = this.repelParams.toArray()) !== false) {
                 this.repelParams.clean();
             }
         }
@@ -710,7 +712,7 @@ class GLParticles {
             this.orbitPoint.clean();
         }
         /*
-        if (this.orbitParams.dirty && (this.uOrbitParams.value = this.orbitParams.toArray())) {
+        if (this.uOrbitParams && this.orbitParams.dirty && (this.uOrbitParams.value = this.orbitParams.toArray())) {
             this.orbitParams.clean();
         }
 */
@@ -729,10 +731,10 @@ class GLParticles {
         gl.enable(gl.DEPTH_TEST);
 
         this.feedback.applyDownStreamData();
+        gl.useProgram(this.program);
 
         //gl.bindBuffer(gl.ARRAY_BUFFER, this.feedbackDestination.buffer.output);
 
-        gl.finish();
         gl.drawArrays(gl.POINTS, 0, this.particles.count);
 
         requestAnimationFrame(this.update);

@@ -1,0 +1,280 @@
+:host {
+    width:0;
+    height:0;
+    .component--html {
+        transform: translate(-50%, -50%);
+        transform-origin: center;
+        width: calc( var(--width) * var(--scale, 1) * var(--page-zoom, 1) * 1px );
+        height: calc( var(--height) * var(--scale, 1) * var(--page-zoom, 1) * 1px );
+        .box{
+            position:absolute;
+            width: calc( var(--width) * var(--scale, 1) * var(--page-zoom, 1) * 1px );
+            height: calc( var(--height) * var(--scale, 1) * var(--page-zoom, 1) * 1px );
+            transform:rotate( calc( var(--rotation, 0) * 1deg ) );
+            svg{
+                width:100%;
+                height:100%;
+            }
+        }
+        .corner {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #3498eb;
+            box-sizing: border-box;
+            border: 1px solid var(--color-dark-gray);
+            cursor: nwse-resize;
+            z-index: 600;
+
+            &:hover {
+                background: var(--color-red);
+            }
+            .inner {
+                opacity: 0;
+                cursor: none;
+                transform-origin: center;
+            }
+            &:hover {
+                cursor: grab;
+                &:active{
+                    cursor: grabbing;
+                }
+                .inner {
+                    opacity: 1;
+                    background: url(/img/cursors/scale.svg) no-repeat top left;
+                }
+            }
+            .inner:hover,
+            .inner.target {
+                opacity: 1;
+                background: url(/img/cursors/rotate.svg) no-repeat top left !important;
+            }
+            &.top {
+                top: -2.5px;
+                .inner {
+                    bottom: 100%;
+                }
+            }
+            &.bottom {
+                bottom: -2.5px;
+                .inner {
+                    top: 100%;
+                }
+            }
+            &.left {
+                left: -2.5px;
+                .inner {
+                    right: 100%;
+                }
+            }
+            &.right {
+                right: -2.5px;
+                .inner {
+                    left: 100%;
+                }
+            }
+            &.top.right {
+                &:hover {
+                    .inner {
+                        transform: rotate(0deg);
+                    }
+                }
+                .inner:hover {
+                    transform: rotate(90deg);
+                }
+            }
+            &.top.left {
+                &:hover {
+                    .inner {
+                        transform: rotate(-90deg);
+                    }
+                }
+                .inner:hover {
+                    transform: rotate(0deg);
+                }
+            }
+
+            &.bottom.left {
+                &:hover {
+                    .inner {
+                        transform: rotate(-180deg);
+                    }
+                }
+                .inner:hover {
+                    transform: rotate(270deg);
+                }
+            }
+            &.bottom.right {
+                &:hover {
+                    .inner {
+                        transform: rotate(90deg);
+                    }
+                }
+                .inner:hover {
+                    transform: rotate(180deg);
+                }
+            }
+        }
+
+        &.transform-rotate {
+            cursor: grabbing !important;
+            .corner {
+                .inner {
+                    opacity: 1;
+                    background: url(/img/cursors/rotate.svg) no-repeat top left;
+                }
+
+                &.top.right {
+                    .inner {
+                        transform: rotate(90deg);
+                    }
+                }
+                &.top.left {
+                    .inner {
+                        transform: rotate(0deg);
+                    }
+                }
+
+                &.bottom.left {
+                    .inner {
+                        transform: rotate(270deg);
+                    }
+                }
+                &.bottom.right {
+                    .inner {
+                        transform: rotate(180deg);
+                    }
+                }
+            }
+        }
+        &.transform-scale {
+            cursor: grabbing !important;
+            .corner {
+                .inner {
+                    opacity: 1;
+                    background: url(/img/cursors/scale.svg) no-repeat top left;
+                }
+
+                &.top.right {
+                    .inner {
+                        transform: rotate(0deg);
+                    }
+                }
+                &.top.left {
+                    .inner {
+                        transform: rotate(-90deg);
+                    }
+                }
+
+                &.bottom.left {
+                    .inner {
+                        transform: rotate(-180deg);
+                    }
+                }
+                &.bottom.right {
+                    .inner {
+                        transform: rotate(90deg);
+                    }
+                }
+            }
+        }
+
+        .handel {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border: 1px solid var(--color-dark-gray);
+            background: var(--color-gray);
+            box-sizing: border-box;
+        }
+        .handel .inner {
+            cursor: none;
+            transform-origin: center;
+            opacity: 0;
+        }
+        .handel .inner:hover,
+        .handel .inner.target {
+            opacity: 1;
+        }
+        .handel.top {
+            top: -4px;
+            left: calc(50% - 4px);
+            cursor: ns-resize;
+        }
+        .handel.top .inner {
+            bottom: 100%;
+            background: url(/img/cursors/rotate.svg) no-repeat top left;
+            transform: translateX(-25%) rotate(45deg);
+        }
+        .handel.bottom {
+            bottom: -4px;
+            left: calc(50% - 4px);
+            cursor: ns-resize;
+        }
+        .handel.bottom .inner {
+            top: 100%;
+            background: url(/img/cursors/rotate.svg) no-repeat top left;
+            transform: translateX(-25%) rotate(-135deg);
+        }
+        .handel.left {
+            left: -4px;
+            top: calc(50% - 4px);
+            cursor: ew-resize;
+        }
+        .handel.left .inner {
+            right: 100%;
+            background: url(/img/cursors/rotate.svg) no-repeat top left;
+            transform: translateY(-25%) rotate(-45deg);
+        }
+        .handel.right {
+            right: -4px;
+            top: calc(50% - 4px);
+            cursor: ew-resize;
+        }
+        .handel.right .inner {
+            left: 100%;
+            background: url(/img/cursors/rotate.svg) no-repeat top left;
+            transform: translateY(-25%) rotate(135deg);
+        }
+        .handel .inner,
+        .corner .inner {
+            width: 20px;
+            height: 20px;
+            position: absolute;
+        }
+
+        .anchor {
+            top: 50%;
+            left: 50%;
+            height: 10px;
+            width: 10px;
+            position: absolute;
+            z-index: 500;
+            border: 1px solid var(--color-red);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .anchor:before {
+            content: "";
+            display: block;
+            position: absolute;
+            width: 1px;
+            height: 30px;
+            background: var(--color-red);
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .anchor:after {
+            content: "";
+            display: block;
+            position: absolute;
+            height: 1px;
+            width: 30px;
+            background: var(--color-red);
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+    }
+}

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>UI Sortable List Example</title>
+        <link rel="stylesheet" href="../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/juice.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/pages.css" />
+        <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet" />
+        <style>
+            .layout {
+                max-width: 980px;
+                margin: 0 auto;
+                display: grid;
+                gap: 1rem;
+            }
+
+            .card {
+                background: #fff;
+                border: 1px solid #d7dce5;
+                border-radius: 12px;
+                padding: 1rem;
+            }
+
+            .hint {
+                color: #5c6170;
+                margin-top: 0;
+            }
+
+            .nav-back {
+                font-size: 0.9rem;
+            }
+
+            sortable-list > li {
+                list-style: none;
+                background: #fff;
+                border: 1px solid #d7dce5;
+                border-radius: 8px;
+                padding: 0.7rem 0.9rem;
+                margin: 0.5rem 0;
+                cursor: grab;
+            }
+
+            sortable-list > li.is-dragging {
+                opacity: 0.65;
+                cursor: grabbing;
+            }
+
+            .order {
+                margin-top: 0.9rem;
+                color: #33445e;
+                font-family: monospace;
+            }
+        </style>
+    </head>
+
+    <body class="docs-page docs-page--forms">
+        <header>
+            <div class="container flex-h flex-grow" style="flex:0 1 auto;">
+                <div class="branding">
+                    <a href="">
+                        <img src="../../brand/logo-long.svg" alt="JS Juice" />
+                    </a>
+                </div>
+                <div data-include="../../brand/templates/includes/nav.html" data-nav-base="../../"></div>
+            </div>
+        </header>
+        <main>
+            <div id="hero" class="container padding:1o5">
+                <h1 id="page-title">Sortable List</h1>
+                <p>Drag list items to re-order.</p>
+            </div>
+            <div class="container padding:1o5">
+                <div id="content" class="layout">
+                    <p class="nav-back"><a href="./index.html">Back to UI examples</a></p>
+                    <article class="card">
+                        <h2>Demo</h2>
+                        <p class="hint">Drag with mouse to reorder; the order output updates on sort.</p>
+                        <sortable-list id="todo-list" itemtag="li">
+                            <li id="i-1" data-value="task-1">Task 1: Wire components</li>
+                            <li id="i-2" data-value="task-2">Task 2: Add docs</li>
+                            <li id="i-3" data-value="task-3">Task 3: QA pass</li>
+                            <li id="i-4" data-value="task-4">Task 4: Release</li>
+                        </sortable-list>
+                        <div class="order" id="order-output"></div>
+                    </article>
+                </div>
+            </div>
+        </main>
+        <script type="module" src="./register.mjs"></script>
+        <script type="module">
+            const list = document.getElementById("todo-list");
+            const output = document.getElementById("order-output");
+
+            function refreshOrder(order) {
+                output.textContent = `Order: ${order.join(" -> ")}`;
+            }
+
+            refreshOrder(Array.from(list.children).map((el) => el.dataset.value));
+            list.addEventListener("sorted", (event) => refreshOrder(event.detail.order));
+        </script>
+        <script type="module" src="../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

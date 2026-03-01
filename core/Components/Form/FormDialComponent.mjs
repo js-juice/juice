@@ -4,7 +4,7 @@
  * @module Components/Form/FormDialComponent
  */
 
-import Component from "../Component.mjs";
+import Component from "../../../ui/component.mjs";
 import { BaseInput } from "./FormBaseComponents.mjs";
 import Obj from "../../Util/Object.mjs";
 //import setupCSS from "!../../../sass/component--setup.scss?toString";

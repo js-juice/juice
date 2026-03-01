@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Timeline Example Docs</title>
+        <link rel="stylesheet" href="../../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../../brand/templates/css/juice.css" />
+        <link rel="stylesheet" href="../../../brand/templates/css/pages.css" />
+        <style>
+            .doc { max-width: 980px; margin: 0 auto; }
+            .doc section { margin: 14px 0; padding: 12px; border: 1px solid #d7e2f2; border-radius: 10px; background: #fff; }
+            .doc h2 { margin: 0 0 8px; font-size: 18px; }
+            .doc code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+            .doc ul { margin: 0; padding-left: 18px; }
+            .doc li { margin: 4px 0; }
+        </style>
+    </head>
+
+    <body class="docs-page docs-page--forms">
+        <header>
+            <div class="container flex-h flex-grow" style="flex:0 1 auto;">
+                <div class="branding"><a href=""><img src="../../../brand/logo-long.svg" alt="JS Juice" /></a></div>
+                <div data-include="../../../brand/templates/includes/nav.html" data-nav-base="../../../"></div>
+            </div>
+        </header>
+        <main>
+            <div class="container padding:1o5 doc">
+                <p><a href="../playground.html">Back to Playground</a> | <a href="./index.html">All Example Docs</a></p>
+                <h1>Timeline Example Docs</h1>
+                <section>
+                    <h2>Core Class</h2>
+                    <ul>
+                        <li><code>animation/timeline.mjs</code> exports <code>Timeline</code>.</li>
+                        <li>Execution is managed by an internal shared ticker.</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>Primary Methods</h2>
+                    <ul>
+                        <li><code>play()</code>, <code>pause()</code>, <code>reset()</code>.</li>
+                        <li><code>setReverse(boolean)</code>, <code>setTimeScale(number)</code>.</li>
+                        <li><code>addAnimator(animator)</code>, <code>addUpdate(fn)</code>, <code>addRender(fn)</code>.</li>
+                        <li><code>afterUpdate(fn, options)</code> for post-update hooks.</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>Time Object Fields</h2>
+                    <ul>
+                        <li><code>time.ms</code>: elapsed milliseconds.</li>
+                        <li><code>time.delta</code>: seconds since previous processed step.</li>
+                        <li><code>time.fps</code>: instantaneous processed-step FPS value.</li>
+                        <li><code>time.frame</code>: processed frame counter.</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>Technical Notes</h2>
+                    <ul>
+                        <li>FPS cap uses an accumulator so sub-frame jitter does not force 30/60 oscillation.</li>
+                        <li>Update and render callbacks run only when timeline has active work.</li>
+                        <li>Time scale supports both forward and reverse playback.</li>
+                    </ul>
+                </section>
+            </div>
+        </main>
+        <script type="module" src="../../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

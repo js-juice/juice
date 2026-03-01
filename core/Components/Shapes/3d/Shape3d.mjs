@@ -4,7 +4,7 @@
  * @module Components/Shapes/3d/Shape3d
  */
 
-import Component from "../../Component.mjs";
+import Component from "../../../../ui/component.mjs";
 import { Vector3D } from "../../../Animation/Properties/Vector.mjs";
 import { Scale } from "../../../Animation/Properties/Scale.mjs";
 import { Rotation3D } from "../../../Animation/Properties/Rotation.mjs";

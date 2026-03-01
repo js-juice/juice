@@ -1,0 +1,3045 @@
+{
+  "generatedAt": "2026-02-27T21:42:55.462Z",
+  "root": "animation/components",
+  "count": 13,
+  "componentsByTag": {
+    "animation-body": {
+      "file": "animation/components/body.mjs",
+      "extends": "Component.HTMLElement",
+      "baseComponent": {
+        "name": "Component.HTMLElement",
+        "file": "ui/component.mjs",
+        "methods": [
+          {
+            "name": "initialize",
+            "params": [],
+            "description": "Initializes the static configuration of the component."
+          },
+          {
+            "name": "html",
+            "params": [
+              "data"
+            ],
+            "description": "Performs the html operation."
+          },
+          {
+            "name": "setStyleVar",
+            "params": [
+              "key",
+              "value"
+            ],
+            "description": "Sets stylevar values."
+          },
+          {
+            "name": "setStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Sets stylevars values."
+          },
+          {
+            "name": "writeStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Performs the writeStyleVars operation."
+          },
+          {
+            "name": "setDefined",
+            "params": [
+              "prop",
+              "value"
+            ],
+            "description": "Sets defined values."
+          },
+          {
+            "name": "dirty",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the dirty operation."
+          },
+          {
+            "name": "clean",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the clean operation."
+          },
+          {
+            "name": "connectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is appended into a document-connected element."
+          },
+          {
+            "name": "disconnectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is disconnected from the document's DOM"
+          },
+          {
+            "name": "ref",
+            "params": [
+              "id"
+            ],
+            "description": "Get Element ref from template"
+          },
+          {
+            "name": "adoptedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is moved to a new document."
+          },
+          {
+            "name": "setRef",
+            "params": [
+              "ref",
+              "el"
+            ],
+            "description": "Sets ref values."
+          },
+          {
+            "name": "slot",
+            "params": [
+              "name"
+            ],
+            "description": "Performs the slot operation."
+          },
+          {
+            "name": "computedName",
+            "params": [],
+            "description": "Performs the computedName operation."
+          },
+          {
+            "name": "compileData",
+            "params": [],
+            "description": "Performs the compileData operation."
+          },
+          {
+            "name": "attributeChangedCallback",
+            "params": [
+              "property",
+              "oldValue",
+              "newValue"
+            ],
+            "description": "Invoked each time one of the custom element's attributes is added, removed, or changed."
+          }
+        ]
+      },
+      "attributes": [
+        {
+          "name": "width",
+          "type": "int",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "height",
+          "type": "int",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "x",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "z",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "vx",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "vy",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "vz",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "offset",
+          "type": "string",
+          "default": 0,
+          "linked": null
+        },
+        {
+          "name": "r",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "rx",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "ry",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "rz",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "scale",
+          "type": "number",
+          "default": 1,
+          "linked": true
+        },
+        {
+          "name": "anchor",
+          "type": "string",
+          "default": "center",
+          "linked": true
+        },
+        {
+          "name": "debug",
+          "type": "exists",
+          "default": false,
+          "linked": true
+        },
+        {
+          "name": "position",
+          "type": null,
+          "default": null,
+          "linked": null
+        }
+      ],
+      "methods": [
+        {
+          "name": "html",
+          "params": [
+            "data"
+          ],
+          "description": "Performs the html operation."
+        },
+        {
+          "name": "freezeAt",
+          "params": [
+            "x",
+            "y",
+            "z"
+          ],
+          "description": "Performs the freezeAt operation."
+        },
+        {
+          "name": "beforeCreate",
+          "params": [],
+          "description": "Performs the beforeCreate operation."
+        },
+        {
+          "name": "setAnchor",
+          "params": [
+            "value"
+          ],
+          "description": "Sets anchor values."
+        },
+        {
+          "name": "moveTo",
+          "params": [
+            "x",
+            "y"
+          ],
+          "description": "Moves the component or its internal state."
+        },
+        {
+          "name": "onPropertyChanged",
+          "params": [
+            "property",
+            "previous",
+            "value"
+          ],
+          "description": "Lifecycle/event hook: onPropertyChanged."
+        },
+        {
+          "name": "onAttributeChanged",
+          "params": [
+            "property",
+            "prevous",
+            "value"
+          ],
+          "description": "Lifecycle/event hook: onAttributeChanged."
+        },
+        {
+          "name": "isInViewport",
+          "params": [],
+          "description": "Performs the isInViewport operation."
+        },
+        {
+          "name": "update",
+          "params": [
+            "time"
+          ],
+          "description": "Updates internal animation state."
+        },
+        {
+          "name": "render",
+          "params": [
+            "time"
+          ],
+          "description": "Renders the component state to DOM/canvas."
+        },
+        {
+          "name": "setOffset",
+          "params": [
+            "left",
+            "top"
+          ],
+          "description": "Sets offset values."
+        },
+        {
+          "name": "absolutePosition",
+          "params": [],
+          "description": "Performs the absolutePosition operation."
+        },
+        {
+          "name": "viewerPosition",
+          "params": [],
+          "description": "Returns position relative to viewer (cached for performance)."
+        },
+        {
+          "name": "getStagePosition",
+          "params": [],
+          "description": "Returns the position of the element with respect to the stage."
+        },
+        {
+          "name": "relativePosition",
+          "params": [
+            "relativeTo"
+          ],
+          "description": "Returns position relative to a specific ancestor element (optimized fast path)."
+        },
+        {
+          "name": "topParent",
+          "params": [],
+          "description": "Performs the topParent operation."
+        },
+        {
+          "name": "onAnimationConnect",
+          "params": [],
+          "description": "Lifecycle/event hook: onAnimationConnect."
+        }
+      ]
+    },
+    "animation-body2d": {
+      "file": "animation/components/body2d.mjs",
+      "extends": "Component.HTMLElement",
+      "baseComponent": {
+        "name": "Component.HTMLElement",
+        "file": "ui/component.mjs",
+        "methods": [
+          {
+            "name": "initialize",
+            "params": [],
+            "description": "Initializes the static configuration of the component."
+          },
+          {
+            "name": "html",
+            "params": [
+              "data"
+            ],
+            "description": "Performs the html operation."
+          },
+          {
+            "name": "setStyleVar",
+            "params": [
+              "key",
+              "value"
+            ],
+            "description": "Sets stylevar values."
+          },
+          {
+            "name": "setStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Sets stylevars values."
+          },
+          {
+            "name": "writeStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Performs the writeStyleVars operation."
+          },
+          {
+            "name": "setDefined",
+            "params": [
+              "prop",
+              "value"
+            ],
+            "description": "Sets defined values."
+          },
+          {
+            "name": "dirty",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the dirty operation."
+          },
+          {
+            "name": "clean",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the clean operation."
+          },
+          {
+            "name": "connectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is appended into a document-connected element."
+          },
+          {
+            "name": "disconnectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is disconnected from the document's DOM"
+          },
+          {
+            "name": "ref",
+            "params": [
+              "id"
+            ],
+            "description": "Get Element ref from template"
+          },
+          {
+            "name": "adoptedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is moved to a new document."
+          },
+          {
+            "name": "setRef",
+            "params": [
+              "ref",
+              "el"
+            ],
+            "description": "Sets ref values."
+          },
+          {
+            "name": "slot",
+            "params": [
+              "name"
+            ],
+            "description": "Performs the slot operation."
+          },
+          {
+            "name": "computedName",
+            "params": [],
+            "description": "Performs the computedName operation."
+          },
+          {
+            "name": "compileData",
+            "params": [],
+            "description": "Performs the compileData operation."
+          },
+          {
+            "name": "attributeChangedCallback",
+            "params": [
+              "property",
+              "oldValue",
+              "newValue"
+            ],
+            "description": "Invoked each time one of the custom element's attributes is added, removed, or changed."
+          }
+        ]
+      },
+      "attributes": [
+        {
+          "name": "width",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "height",
+          "type": "int",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "x",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "vx",
+          "type": "number",
+          "default": null,
+          "linked": null
+        },
+        {
+          "name": "vy",
+          "type": "number",
+          "default": null,
+          "linked": null
+        },
+        {
+          "name": "r",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "scale",
+          "type": "number",
+          "default": 1,
+          "linked": true
+        },
+        {
+          "name": "anchor",
+          "type": "string",
+          "default": "center",
+          "linked": true
+        }
+      ],
+      "methods": [
+        {
+          "name": "html",
+          "params": [
+            "data"
+          ],
+          "description": "Performs the html operation."
+        },
+        {
+          "name": "polorControl",
+          "params": [
+            "velocity",
+            "angle"
+          ],
+          "description": "Performs the polorControl operation."
+        },
+        {
+          "name": "beforeCreate",
+          "params": [],
+          "description": "Performs the beforeCreate operation."
+        },
+        {
+          "name": "setAnchor",
+          "params": [
+            "value"
+          ],
+          "description": "Sets anchor values."
+        },
+        {
+          "name": "move",
+          "params": [
+            "x",
+            "y"
+          ],
+          "description": "Moves the component or its internal state."
+        },
+        {
+          "name": "moveTo",
+          "params": [
+            "x",
+            "y"
+          ],
+          "description": "Moves the component or its internal state."
+        },
+        {
+          "name": "movePolor",
+          "params": [
+            "dist",
+            "angle"
+          ],
+          "description": "Moves the component or its internal state."
+        },
+        {
+          "name": "onFirstConnect",
+          "params": [],
+          "description": "Lifecycle/event hook: onFirstConnect."
+        },
+        {
+          "name": "update",
+          "params": [],
+          "description": "Updates internal animation state."
+        },
+        {
+          "name": "render",
+          "params": [],
+          "description": "Renders the component state to DOM/canvas."
+        },
+        {
+          "name": "onChildren",
+          "params": [
+            "children"
+          ],
+          "description": "Lifecycle/event hook: onChildren."
+        },
+        {
+          "name": "onPropertyChanged",
+          "params": [
+            "property",
+            "prevous",
+            "value"
+          ],
+          "description": "Lifecycle/event hook: onPropertyChanged."
+        }
+      ]
+    },
+    "animation-container": {
+      "file": "animation/components/container.mjs",
+      "extends": "Component.HTMLElement",
+      "baseComponent": {
+        "name": "Component.HTMLElement",
+        "file": "ui/component.mjs",
+        "methods": [
+          {
+            "name": "initialize",
+            "params": [],
+            "description": "Initializes the static configuration of the component."
+          },
+          {
+            "name": "html",
+            "params": [
+              "data"
+            ],
+            "description": "Performs the html operation."
+          },
+          {
+            "name": "setStyleVar",
+            "params": [
+              "key",
+              "value"
+            ],
+            "description": "Sets stylevar values."
+          },
+          {
+            "name": "setStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Sets stylevars values."
+          },
+          {
+            "name": "writeStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Performs the writeStyleVars operation."
+          },
+          {
+            "name": "setDefined",
+            "params": [
+              "prop",
+              "value"
+            ],
+            "description": "Sets defined values."
+          },
+          {
+            "name": "dirty",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the dirty operation."
+          },
+          {
+            "name": "clean",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the clean operation."
+          },
+          {
+            "name": "connectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is appended into a document-connected element."
+          },
+          {
+            "name": "disconnectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is disconnected from the document's DOM"
+          },
+          {
+            "name": "ref",
+            "params": [
+              "id"
+            ],
+            "description": "Get Element ref from template"
+          },
+          {
+            "name": "adoptedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is moved to a new document."
+          },
+          {
+            "name": "setRef",
+            "params": [
+              "ref",
+              "el"
+            ],
+            "description": "Sets ref values."
+          },
+          {
+            "name": "slot",
+            "params": [
+              "name"
+            ],
+            "description": "Performs the slot operation."
+          },
+          {
+            "name": "computedName",
+            "params": [],
+            "description": "Performs the computedName operation."
+          },
+          {
+            "name": "compileData",
+            "params": [],
+            "description": "Performs the compileData operation."
+          },
+          {
+            "name": "attributeChangedCallback",
+            "params": [
+              "property",
+              "oldValue",
+              "newValue"
+            ],
+            "description": "Invoked each time one of the custom element's attributes is added, removed, or changed."
+          }
+        ]
+      },
+      "attributes": [
+        {
+          "name": "width",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "height",
+          "type": "int",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "x",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "z",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "anchor",
+          "type": "string",
+          "default": "center",
+          "linked": true
+        }
+      ],
+      "methods": [
+        {
+          "name": "html",
+          "params": [
+            "data"
+          ],
+          "description": "Performs the html operation."
+        },
+        {
+          "name": "setAnchor",
+          "params": [
+            "value"
+          ],
+          "description": "Sets anchor values."
+        },
+        {
+          "name": "beforeCreate",
+          "params": [],
+          "description": "Performs the beforeCreate operation."
+        },
+        {
+          "name": "onPropertyChanged",
+          "params": [
+            "property",
+            "prevous",
+            "value"
+          ],
+          "description": "Lifecycle/event hook: onPropertyChanged."
+        },
+        {
+          "name": "update",
+          "params": [],
+          "description": "Updates internal animation state."
+        },
+        {
+          "name": "render",
+          "params": [],
+          "description": "Renders the component state to DOM/canvas."
+        },
+        {
+          "name": "onCustomChildReady",
+          "params": [
+            "child"
+          ],
+          "description": "Lifecycle/event hook: onCustomChildReady."
+        }
+      ]
+    },
+    "animation-layer": {
+      "file": "animation/components/layer.mjs",
+      "extends": "Component.HTMLElement",
+      "baseComponent": {
+        "name": "Component.HTMLElement",
+        "file": "ui/component.mjs",
+        "methods": [
+          {
+            "name": "initialize",
+            "params": [],
+            "description": "Initializes the static configuration of the component."
+          },
+          {
+            "name": "html",
+            "params": [
+              "data"
+            ],
+            "description": "Performs the html operation."
+          },
+          {
+            "name": "setStyleVar",
+            "params": [
+              "key",
+              "value"
+            ],
+            "description": "Sets stylevar values."
+          },
+          {
+            "name": "setStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Sets stylevars values."
+          },
+          {
+            "name": "writeStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Performs the writeStyleVars operation."
+          },
+          {
+            "name": "setDefined",
+            "params": [
+              "prop",
+              "value"
+            ],
+            "description": "Sets defined values."
+          },
+          {
+            "name": "dirty",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the dirty operation."
+          },
+          {
+            "name": "clean",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the clean operation."
+          },
+          {
+            "name": "connectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is appended into a document-connected element."
+          },
+          {
+            "name": "disconnectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is disconnected from the document's DOM"
+          },
+          {
+            "name": "ref",
+            "params": [
+              "id"
+            ],
+            "description": "Get Element ref from template"
+          },
+          {
+            "name": "adoptedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is moved to a new document."
+          },
+          {
+            "name": "setRef",
+            "params": [
+              "ref",
+              "el"
+            ],
+            "description": "Sets ref values."
+          },
+          {
+            "name": "slot",
+            "params": [
+              "name"
+            ],
+            "description": "Performs the slot operation."
+          },
+          {
+            "name": "computedName",
+            "params": [],
+            "description": "Performs the computedName operation."
+          },
+          {
+            "name": "compileData",
+            "params": [],
+            "description": "Performs the compileData operation."
+          },
+          {
+            "name": "attributeChangedCallback",
+            "params": [
+              "property",
+              "oldValue",
+              "newValue"
+            ],
+            "description": "Invoked each time one of the custom element's attributes is added, removed, or changed."
+          }
+        ]
+      },
+      "attributes": [
+        {
+          "name": "width",
+          "type": "number",
+          "default": 100,
+          "linked": null
+        },
+        {
+          "name": "height",
+          "type": "number",
+          "default": 100,
+          "linked": null
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "default": "canvas",
+          "linked": null
+        },
+        {
+          "name": "debug",
+          "type": "exists",
+          "default": false,
+          "linked": true
+        }
+      ],
+      "methods": [
+        {
+          "name": "html",
+          "params": [],
+          "description": "Performs the html operation."
+        },
+        {
+          "name": "onFirstConnect",
+          "params": [],
+          "description": "Lifecycle/event hook: onFirstConnect."
+        },
+        {
+          "name": "onChildren",
+          "params": [
+            "children"
+          ],
+          "description": "Lifecycle/event hook: onChildren."
+        },
+        {
+          "name": "setup",
+          "params": [],
+          "description": "Sets up values."
+        },
+        {
+          "name": "update",
+          "params": [
+            "time"
+          ],
+          "description": "Updates internal animation state."
+        },
+        {
+          "name": "render",
+          "params": [
+            "time"
+          ],
+          "description": "Renders the component state to DOM/canvas."
+        }
+      ]
+    },
+    "animation-loop": {
+      "file": "animation/components/loop.mjs",
+      "extends": "Component.HTMLElement",
+      "baseComponent": {
+        "name": "Component.HTMLElement",
+        "file": "ui/component.mjs",
+        "methods": [
+          {
+            "name": "initialize",
+            "params": [],
+            "description": "Initializes the static configuration of the component."
+          },
+          {
+            "name": "html",
+            "params": [
+              "data"
+            ],
+            "description": "Performs the html operation."
+          },
+          {
+            "name": "setStyleVar",
+            "params": [
+              "key",
+              "value"
+            ],
+            "description": "Sets stylevar values."
+          },
+          {
+            "name": "setStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Sets stylevars values."
+          },
+          {
+            "name": "writeStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Performs the writeStyleVars operation."
+          },
+          {
+            "name": "setDefined",
+            "params": [
+              "prop",
+              "value"
+            ],
+            "description": "Sets defined values."
+          },
+          {
+            "name": "dirty",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the dirty operation."
+          },
+          {
+            "name": "clean",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the clean operation."
+          },
+          {
+            "name": "connectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is appended into a document-connected element."
+          },
+          {
+            "name": "disconnectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is disconnected from the document's DOM"
+          },
+          {
+            "name": "ref",
+            "params": [
+              "id"
+            ],
+            "description": "Get Element ref from template"
+          },
+          {
+            "name": "adoptedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is moved to a new document."
+          },
+          {
+            "name": "setRef",
+            "params": [
+              "ref",
+              "el"
+            ],
+            "description": "Sets ref values."
+          },
+          {
+            "name": "slot",
+            "params": [
+              "name"
+            ],
+            "description": "Performs the slot operation."
+          },
+          {
+            "name": "computedName",
+            "params": [],
+            "description": "Performs the computedName operation."
+          },
+          {
+            "name": "compileData",
+            "params": [],
+            "description": "Performs the compileData operation."
+          },
+          {
+            "name": "attributeChangedCallback",
+            "params": [
+              "property",
+              "oldValue",
+              "newValue"
+            ],
+            "description": "Invoked each time one of the custom element's attributes is added, removed, or changed."
+          }
+        ]
+      },
+      "attributes": [
+        {
+          "name": "asset",
+          "type": null,
+          "default": null,
+          "linked": null
+        },
+        {
+          "name": "from",
+          "type": null,
+          "default": null,
+          "linked": null
+        },
+        {
+          "name": "to",
+          "type": null,
+          "default": null,
+          "linked": null
+        },
+        {
+          "name": "duration",
+          "type": null,
+          "default": null,
+          "linked": null
+        }
+      ],
+      "methods": []
+    },
+    "animation-marker": {
+      "file": "animation/components/marker.mjs",
+      "extends": "Component.HTMLElement",
+      "baseComponent": {
+        "name": "Component.HTMLElement",
+        "file": "ui/component.mjs",
+        "methods": [
+          {
+            "name": "initialize",
+            "params": [],
+            "description": "Initializes the static configuration of the component."
+          },
+          {
+            "name": "html",
+            "params": [
+              "data"
+            ],
+            "description": "Performs the html operation."
+          },
+          {
+            "name": "setStyleVar",
+            "params": [
+              "key",
+              "value"
+            ],
+            "description": "Sets stylevar values."
+          },
+          {
+            "name": "setStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Sets stylevars values."
+          },
+          {
+            "name": "writeStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Performs the writeStyleVars operation."
+          },
+          {
+            "name": "setDefined",
+            "params": [
+              "prop",
+              "value"
+            ],
+            "description": "Sets defined values."
+          },
+          {
+            "name": "dirty",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the dirty operation."
+          },
+          {
+            "name": "clean",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the clean operation."
+          },
+          {
+            "name": "connectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is appended into a document-connected element."
+          },
+          {
+            "name": "disconnectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is disconnected from the document's DOM"
+          },
+          {
+            "name": "ref",
+            "params": [
+              "id"
+            ],
+            "description": "Get Element ref from template"
+          },
+          {
+            "name": "adoptedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is moved to a new document."
+          },
+          {
+            "name": "setRef",
+            "params": [
+              "ref",
+              "el"
+            ],
+            "description": "Sets ref values."
+          },
+          {
+            "name": "slot",
+            "params": [
+              "name"
+            ],
+            "description": "Performs the slot operation."
+          },
+          {
+            "name": "computedName",
+            "params": [],
+            "description": "Performs the computedName operation."
+          },
+          {
+            "name": "compileData",
+            "params": [],
+            "description": "Performs the compileData operation."
+          },
+          {
+            "name": "attributeChangedCallback",
+            "params": [
+              "property",
+              "oldValue",
+              "newValue"
+            ],
+            "description": "Invoked each time one of the custom element's attributes is added, removed, or changed."
+          }
+        ]
+      },
+      "attributes": [
+        {
+          "name": "x",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        }
+      ],
+      "methods": [
+        {
+          "name": "onFirstConnect",
+          "params": [],
+          "description": "Lifecycle/event hook: onFirstConnect."
+        },
+        {
+          "name": "updatePosition",
+          "params": [],
+          "description": "Updates internal animation state."
+        },
+        {
+          "name": "html",
+          "params": [
+            "data"
+          ],
+          "description": "Performs the html operation."
+        },
+        {
+          "name": "onAttributeChange",
+          "params": [
+            "name",
+            "oldValue",
+            "newValue"
+          ],
+          "description": "Lifecycle/event hook: onAttributeChange."
+        }
+      ]
+    },
+    "animation-minimap": {
+      "file": "animation/components/preview.mjs",
+      "extends": "Component.HTMLElement",
+      "baseComponent": {
+        "name": "Component.HTMLElement",
+        "file": "ui/component.mjs",
+        "methods": [
+          {
+            "name": "initialize",
+            "params": [],
+            "description": "Initializes the static configuration of the component."
+          },
+          {
+            "name": "html",
+            "params": [
+              "data"
+            ],
+            "description": "Performs the html operation."
+          },
+          {
+            "name": "setStyleVar",
+            "params": [
+              "key",
+              "value"
+            ],
+            "description": "Sets stylevar values."
+          },
+          {
+            "name": "setStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Sets stylevars values."
+          },
+          {
+            "name": "writeStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Performs the writeStyleVars operation."
+          },
+          {
+            "name": "setDefined",
+            "params": [
+              "prop",
+              "value"
+            ],
+            "description": "Sets defined values."
+          },
+          {
+            "name": "dirty",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the dirty operation."
+          },
+          {
+            "name": "clean",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the clean operation."
+          },
+          {
+            "name": "connectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is appended into a document-connected element."
+          },
+          {
+            "name": "disconnectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is disconnected from the document's DOM"
+          },
+          {
+            "name": "ref",
+            "params": [
+              "id"
+            ],
+            "description": "Get Element ref from template"
+          },
+          {
+            "name": "adoptedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is moved to a new document."
+          },
+          {
+            "name": "setRef",
+            "params": [
+              "ref",
+              "el"
+            ],
+            "description": "Sets ref values."
+          },
+          {
+            "name": "slot",
+            "params": [
+              "name"
+            ],
+            "description": "Performs the slot operation."
+          },
+          {
+            "name": "computedName",
+            "params": [],
+            "description": "Performs the computedName operation."
+          },
+          {
+            "name": "compileData",
+            "params": [],
+            "description": "Performs the compileData operation."
+          },
+          {
+            "name": "attributeChangedCallback",
+            "params": [
+              "property",
+              "oldValue",
+              "newValue"
+            ],
+            "description": "Invoked each time one of the custom element's attributes is added, removed, or changed."
+          }
+        ]
+      },
+      "attributes": [
+        {
+          "name": "viewer",
+          "type": "string",
+          "default": "",
+          "linked": true
+        },
+        {
+          "name": "stage",
+          "type": "string",
+          "default": "",
+          "linked": true
+        },
+        {
+          "name": "padding",
+          "type": "number",
+          "default": 8,
+          "linked": true
+        },
+        {
+          "name": "mapstyle",
+          "type": "string",
+          "default": "transparent",
+          "linked": true
+        },
+        {
+          "name": "metadata",
+          "type": "boolean",
+          "default": true,
+          "linked": true
+        },
+        {
+          "name": "width",
+          "type": "string",
+          "default": "",
+          "linked": true
+        },
+        {
+          "name": "height",
+          "type": "string",
+          "default": "",
+          "linked": true
+        }
+      ],
+      "methods": [
+        {
+          "name": "html",
+          "params": [],
+          "description": "Performs the html operation."
+        },
+        {
+          "name": "beforeCreate",
+          "params": [],
+          "description": "Performs the beforeCreate operation."
+        },
+        {
+          "name": "onFirstConnect",
+          "params": [],
+          "description": "Lifecycle/event hook: onFirstConnect."
+        },
+        {
+          "name": "onPropertyChanged",
+          "params": [
+            "property"
+          ],
+          "description": "Lifecycle/event hook: onPropertyChanged."
+        },
+        {
+          "name": "onDisconnect",
+          "params": [],
+          "description": "Lifecycle/event hook: onDisconnect."
+        }
+      ]
+    },
+    "animation-sprite": {
+      "file": "animation/components/sprite.mjs",
+      "extends": "Component.HTMLElement",
+      "baseComponent": {
+        "name": "Component.HTMLElement",
+        "file": "ui/component.mjs",
+        "methods": [
+          {
+            "name": "initialize",
+            "params": [],
+            "description": "Initializes the static configuration of the component."
+          },
+          {
+            "name": "html",
+            "params": [
+              "data"
+            ],
+            "description": "Performs the html operation."
+          },
+          {
+            "name": "setStyleVar",
+            "params": [
+              "key",
+              "value"
+            ],
+            "description": "Sets stylevar values."
+          },
+          {
+            "name": "setStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Sets stylevars values."
+          },
+          {
+            "name": "writeStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Performs the writeStyleVars operation."
+          },
+          {
+            "name": "setDefined",
+            "params": [
+              "prop",
+              "value"
+            ],
+            "description": "Sets defined values."
+          },
+          {
+            "name": "dirty",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the dirty operation."
+          },
+          {
+            "name": "clean",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the clean operation."
+          },
+          {
+            "name": "connectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is appended into a document-connected element."
+          },
+          {
+            "name": "disconnectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is disconnected from the document's DOM"
+          },
+          {
+            "name": "ref",
+            "params": [
+              "id"
+            ],
+            "description": "Get Element ref from template"
+          },
+          {
+            "name": "adoptedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is moved to a new document."
+          },
+          {
+            "name": "setRef",
+            "params": [
+              "ref",
+              "el"
+            ],
+            "description": "Sets ref values."
+          },
+          {
+            "name": "slot",
+            "params": [
+              "name"
+            ],
+            "description": "Performs the slot operation."
+          },
+          {
+            "name": "computedName",
+            "params": [],
+            "description": "Performs the computedName operation."
+          },
+          {
+            "name": "compileData",
+            "params": [],
+            "description": "Performs the compileData operation."
+          },
+          {
+            "name": "attributeChangedCallback",
+            "params": [
+              "property",
+              "oldValue",
+              "newValue"
+            ],
+            "description": "Invoked each time one of the custom element's attributes is added, removed, or changed."
+          }
+        ]
+      },
+      "attributes": [
+        {
+          "name": "src",
+          "type": "string",
+          "default": "",
+          "linked": true
+        },
+        {
+          "name": "width",
+          "type": "int",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "height",
+          "type": "int",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "scale",
+          "type": "float",
+          "default": 1,
+          "linked": true
+        },
+        {
+          "name": "frames",
+          "type": "int",
+          "default": 1,
+          "linked": true
+        },
+        {
+          "name": "frame",
+          "type": "int",
+          "default": null,
+          "linked": true
+        },
+        {
+          "name": "tempo",
+          "type": "float",
+          "default": 0.1,
+          "linked": true
+        },
+        {
+          "name": "loop",
+          "type": "exists",
+          "default": false,
+          "linked": true
+        },
+        {
+          "name": "auto",
+          "type": "exists",
+          "default": false,
+          "linked": true
+        },
+        {
+          "name": "noanimation",
+          "type": "exists",
+          "default": false,
+          "linked": true
+        },
+        {
+          "name": "in",
+          "type": "int",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "out",
+          "type": "int",
+          "default": 0,
+          "linked": true
+        }
+      ],
+      "methods": [
+        {
+          "name": "html",
+          "params": [],
+          "description": "Performs the html operation."
+        },
+        {
+          "name": "hasExplicitAttribute",
+          "params": [
+            "name"
+          ],
+          "description": "Performs the hasExplicitAttribute operation."
+        },
+        {
+          "name": "updateDisplaySize",
+          "params": [],
+          "description": "Updates internal animation state."
+        },
+        {
+          "name": "syncFromSheet",
+          "params": [
+            "sheet"
+          ],
+          "description": "Performs the syncFromSheet operation."
+        },
+        {
+          "name": "onFirstConnect",
+          "params": [],
+          "description": "Lifecycle/event hook: onFirstConnect."
+        },
+        {
+          "name": "update",
+          "params": [
+            "data"
+          ],
+          "description": "Updates internal animation state."
+        },
+        {
+          "name": "render",
+          "params": [
+            "force"
+          ],
+          "description": "Renders the component state to DOM/canvas."
+        },
+        {
+          "name": "next",
+          "params": [],
+          "description": "Navigates animation frame state."
+        },
+        {
+          "name": "prev",
+          "params": [],
+          "description": "Navigates animation frame state."
+        },
+        {
+          "name": "addSheet",
+          "params": [
+            "src",
+            "width",
+            "height",
+            "options"
+          ],
+          "description": "Adds sheet data or elements."
+        },
+        {
+          "name": "onPropertyChanged",
+          "params": [
+            "property",
+            "old",
+            "value"
+          ],
+          "description": "Lifecycle/event hook: onPropertyChanged."
+        }
+      ]
+    },
+    "animation-stage": {
+      "file": "animation/components/stage.mjs",
+      "extends": "Component.HTMLElement",
+      "baseComponent": {
+        "name": "Component.HTMLElement",
+        "file": "ui/component.mjs",
+        "methods": [
+          {
+            "name": "initialize",
+            "params": [],
+            "description": "Initializes the static configuration of the component."
+          },
+          {
+            "name": "html",
+            "params": [
+              "data"
+            ],
+            "description": "Performs the html operation."
+          },
+          {
+            "name": "setStyleVar",
+            "params": [
+              "key",
+              "value"
+            ],
+            "description": "Sets stylevar values."
+          },
+          {
+            "name": "setStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Sets stylevars values."
+          },
+          {
+            "name": "writeStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Performs the writeStyleVars operation."
+          },
+          {
+            "name": "setDefined",
+            "params": [
+              "prop",
+              "value"
+            ],
+            "description": "Sets defined values."
+          },
+          {
+            "name": "dirty",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the dirty operation."
+          },
+          {
+            "name": "clean",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the clean operation."
+          },
+          {
+            "name": "connectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is appended into a document-connected element."
+          },
+          {
+            "name": "disconnectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is disconnected from the document's DOM"
+          },
+          {
+            "name": "ref",
+            "params": [
+              "id"
+            ],
+            "description": "Get Element ref from template"
+          },
+          {
+            "name": "adoptedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is moved to a new document."
+          },
+          {
+            "name": "setRef",
+            "params": [
+              "ref",
+              "el"
+            ],
+            "description": "Sets ref values."
+          },
+          {
+            "name": "slot",
+            "params": [
+              "name"
+            ],
+            "description": "Performs the slot operation."
+          },
+          {
+            "name": "computedName",
+            "params": [],
+            "description": "Performs the computedName operation."
+          },
+          {
+            "name": "compileData",
+            "params": [],
+            "description": "Performs the compileData operation."
+          },
+          {
+            "name": "attributeChangedCallback",
+            "params": [
+              "property",
+              "oldValue",
+              "newValue"
+            ],
+            "description": "Invoked each time one of the custom element's attributes is added, removed, or changed."
+          }
+        ]
+      },
+      "attributes": [
+        {
+          "name": "debug",
+          "type": "exists",
+          "default": false,
+          "linked": true
+        },
+        {
+          "name": "width",
+          "type": "string",
+          "default": "100%",
+          "linked": true
+        },
+        {
+          "name": "height",
+          "type": "string",
+          "default": "100%",
+          "linked": true
+        },
+        {
+          "name": "x",
+          "type": "number",
+          "default": 0,
+          "linked": null
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "default": 0,
+          "linked": null
+        },
+        {
+          "name": "anchor",
+          "type": "string",
+          "default": "left top",
+          "linked": null
+        },
+        {
+          "name": "frction",
+          "type": "number",
+          "default": 0.6,
+          "linked": null
+        },
+        {
+          "name": "gravity",
+          "type": "number",
+          "default": 9.81,
+          "linked": null
+        },
+        {
+          "name": "fps",
+          "type": "number",
+          "default": 10,
+          "linked": true
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "default": "initial",
+          "linked": null
+        },
+        {
+          "name": "friction",
+          "type": null,
+          "default": null,
+          "linked": null
+        }
+      ],
+      "methods": [
+        {
+          "name": "html",
+          "params": [
+            "data"
+          ],
+          "description": "Performs the html operation."
+        },
+        {
+          "name": "beforeCreate",
+          "params": [],
+          "description": "Performs the beforeCreate operation."
+        },
+        {
+          "name": "moveTo",
+          "params": [
+            "x",
+            "y"
+          ],
+          "description": "Moves the component or its internal state."
+        },
+        {
+          "name": "move",
+          "params": [
+            "x",
+            "y"
+          ],
+          "description": "Moves the component or its internal state."
+        },
+        {
+          "name": "onAttributeChanged",
+          "params": [
+            "property",
+            "prevous",
+            "value"
+          ],
+          "description": "Lifecycle/event hook: onAttributeChanged."
+        },
+        {
+          "name": "onPropertyChanged",
+          "params": [
+            "property",
+            "prevous",
+            "value"
+          ],
+          "description": "Lifecycle/event hook: onPropertyChanged."
+        },
+        {
+          "name": "addBackground",
+          "params": [
+            "element",
+            "options"
+          ],
+          "description": "Adds background data or elements."
+        },
+        {
+          "name": "update",
+          "params": [
+            "time"
+          ],
+          "description": "Updates internal animation state."
+        },
+        {
+          "name": "render",
+          "params": [
+            "data"
+          ],
+          "description": "Renders the component state to DOM/canvas."
+        },
+        {
+          "name": "onCustomChildReady",
+          "params": [
+            "child"
+          ],
+          "description": "Lifecycle/event hook: onCustomChildReady."
+        },
+        {
+          "name": "addAnimator",
+          "params": [
+            "animator"
+          ],
+          "description": "Adds animator data or elements."
+        },
+        {
+          "name": "setAnchor",
+          "params": [
+            "anchorPosition"
+          ],
+          "description": "Sets anchor values."
+        },
+        {
+          "name": "onFirstConnect",
+          "params": [],
+          "description": "Lifecycle/event hook: onFirstConnect."
+        },
+        {
+          "name": "onViewerConnect",
+          "params": [
+            "viewer"
+          ],
+          "description": "Lifecycle/event hook: onViewerConnect."
+        },
+        {
+          "name": "onViewerDisconnect",
+          "params": [
+            "viewer"
+          ],
+          "description": "Lifecycle/event hook: onViewerDisconnect."
+        },
+        {
+          "name": "onDisconnect",
+          "params": [],
+          "description": "Lifecycle/event hook: onDisconnect."
+        }
+      ]
+    },
+    "animation-stats": {
+      "file": "animation/components/stats.mjs",
+      "extends": "Component.HTMLElement",
+      "baseComponent": {
+        "name": "Component.HTMLElement",
+        "file": "ui/component.mjs",
+        "methods": [
+          {
+            "name": "initialize",
+            "params": [],
+            "description": "Initializes the static configuration of the component."
+          },
+          {
+            "name": "html",
+            "params": [
+              "data"
+            ],
+            "description": "Performs the html operation."
+          },
+          {
+            "name": "setStyleVar",
+            "params": [
+              "key",
+              "value"
+            ],
+            "description": "Sets stylevar values."
+          },
+          {
+            "name": "setStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Sets stylevars values."
+          },
+          {
+            "name": "writeStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Performs the writeStyleVars operation."
+          },
+          {
+            "name": "setDefined",
+            "params": [
+              "prop",
+              "value"
+            ],
+            "description": "Sets defined values."
+          },
+          {
+            "name": "dirty",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the dirty operation."
+          },
+          {
+            "name": "clean",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the clean operation."
+          },
+          {
+            "name": "connectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is appended into a document-connected element."
+          },
+          {
+            "name": "disconnectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is disconnected from the document's DOM"
+          },
+          {
+            "name": "ref",
+            "params": [
+              "id"
+            ],
+            "description": "Get Element ref from template"
+          },
+          {
+            "name": "adoptedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is moved to a new document."
+          },
+          {
+            "name": "setRef",
+            "params": [
+              "ref",
+              "el"
+            ],
+            "description": "Sets ref values."
+          },
+          {
+            "name": "slot",
+            "params": [
+              "name"
+            ],
+            "description": "Performs the slot operation."
+          },
+          {
+            "name": "computedName",
+            "params": [],
+            "description": "Performs the computedName operation."
+          },
+          {
+            "name": "compileData",
+            "params": [],
+            "description": "Performs the compileData operation."
+          },
+          {
+            "name": "attributeChangedCallback",
+            "params": [
+              "property",
+              "oldValue",
+              "newValue"
+            ],
+            "description": "Invoked each time one of the custom element's attributes is added, removed, or changed."
+          }
+        ]
+      },
+      "attributes": [
+        {
+          "name": "fps",
+          "type": "integer",
+          "default": 0,
+          "linked": null
+        },
+        {
+          "name": "time",
+          "type": "number",
+          "default": 0,
+          "linked": null
+        }
+      ],
+      "methods": [
+        {
+          "name": "html",
+          "params": [
+            "data"
+          ],
+          "description": "Performs the html operation."
+        },
+        {
+          "name": "beforeCreate",
+          "params": [],
+          "description": "Performs the beforeCreate operation."
+        },
+        {
+          "name": "onFirstConnect",
+          "params": [],
+          "description": "Lifecycle/event hook: onFirstConnect."
+        },
+        {
+          "name": "shouldSample",
+          "params": [
+            "time"
+          ],
+          "description": "Performs the shouldSample operation."
+        },
+        {
+          "name": "setStat",
+          "params": [
+            "key",
+            "value"
+          ],
+          "description": "Sets stat values."
+        },
+        {
+          "name": "addStat",
+          "params": [
+            "key",
+            "value"
+          ],
+          "description": "Adds stat data or elements."
+        },
+        {
+          "name": "update",
+          "params": [
+            "time"
+          ],
+          "description": "Updates internal animation state."
+        }
+      ]
+    },
+    "animation-timeline-controls": {
+      "file": "animation/components/timeline-controls.mjs",
+      "extends": "Component.HTMLElement",
+      "baseComponent": {
+        "name": "Component.HTMLElement",
+        "file": "ui/component.mjs",
+        "methods": [
+          {
+            "name": "initialize",
+            "params": [],
+            "description": "Initializes the static configuration of the component."
+          },
+          {
+            "name": "html",
+            "params": [
+              "data"
+            ],
+            "description": "Performs the html operation."
+          },
+          {
+            "name": "setStyleVar",
+            "params": [
+              "key",
+              "value"
+            ],
+            "description": "Sets stylevar values."
+          },
+          {
+            "name": "setStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Sets stylevars values."
+          },
+          {
+            "name": "writeStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Performs the writeStyleVars operation."
+          },
+          {
+            "name": "setDefined",
+            "params": [
+              "prop",
+              "value"
+            ],
+            "description": "Sets defined values."
+          },
+          {
+            "name": "dirty",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the dirty operation."
+          },
+          {
+            "name": "clean",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the clean operation."
+          },
+          {
+            "name": "connectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is appended into a document-connected element."
+          },
+          {
+            "name": "disconnectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is disconnected from the document's DOM"
+          },
+          {
+            "name": "ref",
+            "params": [
+              "id"
+            ],
+            "description": "Get Element ref from template"
+          },
+          {
+            "name": "adoptedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is moved to a new document."
+          },
+          {
+            "name": "setRef",
+            "params": [
+              "ref",
+              "el"
+            ],
+            "description": "Sets ref values."
+          },
+          {
+            "name": "slot",
+            "params": [
+              "name"
+            ],
+            "description": "Performs the slot operation."
+          },
+          {
+            "name": "computedName",
+            "params": [],
+            "description": "Performs the computedName operation."
+          },
+          {
+            "name": "compileData",
+            "params": [],
+            "description": "Performs the compileData operation."
+          },
+          {
+            "name": "attributeChangedCallback",
+            "params": [
+              "property",
+              "oldValue",
+              "newValue"
+            ],
+            "description": "Invoked each time one of the custom element's attributes is added, removed, or changed."
+          }
+        ]
+      },
+      "attributes": [
+        {
+          "name": "timeline",
+          "type": "string",
+          "default": "",
+          "linked": null
+        },
+        {
+          "name": "viewer",
+          "type": "string",
+          "default": "",
+          "linked": null
+        },
+        {
+          "name": "stage",
+          "type": "string",
+          "default": "",
+          "linked": null
+        },
+        {
+          "name": "speed",
+          "type": "number",
+          "default": 1,
+          "linked": true
+        },
+        {
+          "name": "minspeed",
+          "type": "number",
+          "default": 0.1,
+          "linked": true
+        },
+        {
+          "name": "maxspeed",
+          "type": "number",
+          "default": 4,
+          "linked": true
+        },
+        {
+          "name": "stepspeed",
+          "type": "number",
+          "default": 0.1,
+          "linked": true
+        }
+      ],
+      "methods": [
+        {
+          "name": "html",
+          "params": [],
+          "description": "Performs the html operation."
+        },
+        {
+          "name": "beforeCreate",
+          "params": [],
+          "description": "Performs the beforeCreate operation."
+        },
+        {
+          "name": "onFirstConnect",
+          "params": [],
+          "description": "Lifecycle/event hook: onFirstConnect."
+        },
+        {
+          "name": "onDisconnect",
+          "params": [],
+          "description": "Lifecycle/event hook: onDisconnect."
+        },
+        {
+          "name": "onPropertyChanged",
+          "params": [
+            "property"
+          ],
+          "description": "Lifecycle/event hook: onPropertyChanged."
+        },
+        {
+          "name": "onPlay",
+          "params": [],
+          "description": "Lifecycle/event hook: onPlay."
+        },
+        {
+          "name": "onPause",
+          "params": [],
+          "description": "Lifecycle/event hook: onPause."
+        },
+        {
+          "name": "onReset",
+          "params": [],
+          "description": "Lifecycle/event hook: onReset."
+        },
+        {
+          "name": "onStepForward",
+          "params": [],
+          "description": "Lifecycle/event hook: onStepForward."
+        },
+        {
+          "name": "onStepBack",
+          "params": [],
+          "description": "Lifecycle/event hook: onStepBack."
+        },
+        {
+          "name": "onSpeedInput",
+          "params": [
+            "event",
+            "input"
+          ],
+          "description": "Lifecycle/event hook: onSpeedInput."
+        },
+        {
+          "name": "onReverseChange",
+          "params": [
+            "event",
+            "input"
+          ],
+          "description": "Lifecycle/event hook: onReverseChange."
+        }
+      ]
+    },
+    "animation-viewer": {
+      "file": "animation/components/viewer.mjs",
+      "extends": "Component.HTMLElement",
+      "baseComponent": {
+        "name": "Component.HTMLElement",
+        "file": "ui/component.mjs",
+        "methods": [
+          {
+            "name": "initialize",
+            "params": [],
+            "description": "Initializes the static configuration of the component."
+          },
+          {
+            "name": "html",
+            "params": [
+              "data"
+            ],
+            "description": "Performs the html operation."
+          },
+          {
+            "name": "setStyleVar",
+            "params": [
+              "key",
+              "value"
+            ],
+            "description": "Sets stylevar values."
+          },
+          {
+            "name": "setStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Sets stylevars values."
+          },
+          {
+            "name": "writeStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Performs the writeStyleVars operation."
+          },
+          {
+            "name": "setDefined",
+            "params": [
+              "prop",
+              "value"
+            ],
+            "description": "Sets defined values."
+          },
+          {
+            "name": "dirty",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the dirty operation."
+          },
+          {
+            "name": "clean",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the clean operation."
+          },
+          {
+            "name": "connectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is appended into a document-connected element."
+          },
+          {
+            "name": "disconnectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is disconnected from the document's DOM"
+          },
+          {
+            "name": "ref",
+            "params": [
+              "id"
+            ],
+            "description": "Get Element ref from template"
+          },
+          {
+            "name": "adoptedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is moved to a new document."
+          },
+          {
+            "name": "setRef",
+            "params": [
+              "ref",
+              "el"
+            ],
+            "description": "Sets ref values."
+          },
+          {
+            "name": "slot",
+            "params": [
+              "name"
+            ],
+            "description": "Performs the slot operation."
+          },
+          {
+            "name": "computedName",
+            "params": [],
+            "description": "Performs the computedName operation."
+          },
+          {
+            "name": "compileData",
+            "params": [],
+            "description": "Performs the compileData operation."
+          },
+          {
+            "name": "attributeChangedCallback",
+            "params": [
+              "property",
+              "oldValue",
+              "newValue"
+            ],
+            "description": "Invoked each time one of the custom element's attributes is added, removed, or changed."
+          }
+        ]
+      },
+      "attributes": [
+        {
+          "name": "width",
+          "type": "number",
+          "default": 100,
+          "linked": null
+        },
+        {
+          "name": "height",
+          "type": "number",
+          "default": 100,
+          "linked": null
+        },
+        {
+          "name": "fps",
+          "type": "number",
+          "default": 60,
+          "linked": true
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "default": "initial",
+          "linked": null
+        },
+        {
+          "name": "follow",
+          "type": "string",
+          "default": false,
+          "linked": null
+        },
+        {
+          "name": "debug",
+          "type": "exists",
+          "default": false,
+          "linked": true
+        },
+        {
+          "name": "stats",
+          "type": null,
+          "default": null,
+          "linked": null
+        }
+      ],
+      "methods": [
+        {
+          "name": "html",
+          "params": [
+            "data"
+          ],
+          "description": "Performs the html operation."
+        },
+        {
+          "name": "onResize",
+          "params": [
+            "w",
+            "h"
+          ],
+          "description": "Lifecycle/event hook: onResize."
+        },
+        {
+          "name": "onStageConnect",
+          "params": [
+            "stage"
+          ],
+          "description": "Lifecycle/event hook: onStageConnect."
+        },
+        {
+          "name": "onTargetConnect",
+          "params": [
+            "target"
+          ],
+          "description": "Lifecycle/event hook: onTargetConnect."
+        },
+        {
+          "name": "onChildren",
+          "params": [
+            "children"
+          ],
+          "description": "Lifecycle/event hook: onChildren."
+        },
+        {
+          "name": "onCustomChildReady",
+          "params": [
+            "child"
+          ],
+          "description": "Lifecycle/event hook: onCustomChildReady."
+        },
+        {
+          "name": "update",
+          "params": [
+            "time"
+          ],
+          "description": "Updates internal animation state."
+        },
+        {
+          "name": "render",
+          "params": [],
+          "description": "Renders the component state to DOM/canvas."
+        },
+        {
+          "name": "onCustomChildConnect",
+          "params": [
+            "child"
+          ],
+          "description": "Lifecycle/event hook: onCustomChildConnect."
+        },
+        {
+          "name": "updateCamera",
+          "params": [
+            "time"
+          ],
+          "description": "Updates internal animation state."
+        },
+        {
+          "name": "follow",
+          "params": [
+            "target"
+          ],
+          "description": "Performs the follow operation."
+        },
+        {
+          "name": "onAssetAdded",
+          "params": [
+            "asset"
+          ],
+          "description": "Lifecycle/event hook: onAssetAdded."
+        },
+        {
+          "name": "onPropertyChanged",
+          "params": [
+            "property",
+            "previous",
+            "value"
+          ],
+          "description": "Lifecycle/event hook: onPropertyChanged."
+        },
+        {
+          "name": "onFirstConnect",
+          "params": [],
+          "description": "Lifecycle/event hook: onFirstConnect."
+        },
+        {
+          "name": "onDisconnect",
+          "params": [],
+          "description": "Lifecycle/event hook: onDisconnect."
+        },
+        {
+          "name": "onTimelineReady",
+          "params": [],
+          "description": "Lifecycle/event hook: onTimelineReady."
+        },
+        {
+          "name": "addLayer",
+          "params": [
+            "name",
+            "options"
+          ],
+          "description": "Adds layer data or elements."
+        },
+        {
+          "name": "appendLayer",
+          "params": [
+            "name",
+            "options"
+          ],
+          "description": "Performs the appendLayer operation."
+        },
+        {
+          "name": "prependLayer",
+          "params": [
+            "name",
+            "options"
+          ],
+          "description": "Performs the prependLayer operation."
+        },
+        {
+          "name": "layer",
+          "params": [
+            "indexOrName"
+          ],
+          "description": "Performs the layer operation."
+        }
+      ]
+    },
+    "particle-world": {
+      "file": "animation/components/particle-world.mjs",
+      "extends": "Component.HTMLElement",
+      "baseComponent": {
+        "name": "Component.HTMLElement",
+        "file": "ui/component.mjs",
+        "methods": [
+          {
+            "name": "initialize",
+            "params": [],
+            "description": "Initializes the static configuration of the component."
+          },
+          {
+            "name": "html",
+            "params": [
+              "data"
+            ],
+            "description": "Performs the html operation."
+          },
+          {
+            "name": "setStyleVar",
+            "params": [
+              "key",
+              "value"
+            ],
+            "description": "Sets stylevar values."
+          },
+          {
+            "name": "setStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Sets stylevars values."
+          },
+          {
+            "name": "writeStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Performs the writeStyleVars operation."
+          },
+          {
+            "name": "setDefined",
+            "params": [
+              "prop",
+              "value"
+            ],
+            "description": "Sets defined values."
+          },
+          {
+            "name": "dirty",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the dirty operation."
+          },
+          {
+            "name": "clean",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the clean operation."
+          },
+          {
+            "name": "connectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is appended into a document-connected element."
+          },
+          {
+            "name": "disconnectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is disconnected from the document's DOM"
+          },
+          {
+            "name": "ref",
+            "params": [
+              "id"
+            ],
+            "description": "Get Element ref from template"
+          },
+          {
+            "name": "adoptedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is moved to a new document."
+          },
+          {
+            "name": "setRef",
+            "params": [
+              "ref",
+              "el"
+            ],
+            "description": "Sets ref values."
+          },
+          {
+            "name": "slot",
+            "params": [
+              "name"
+            ],
+            "description": "Performs the slot operation."
+          },
+          {
+            "name": "computedName",
+            "params": [],
+            "description": "Performs the computedName operation."
+          },
+          {
+            "name": "compileData",
+            "params": [],
+            "description": "Performs the compileData operation."
+          },
+          {
+            "name": "attributeChangedCallback",
+            "params": [
+              "property",
+              "oldValue",
+              "newValue"
+            ],
+            "description": "Invoked each time one of the custom element's attributes is added, removed, or changed."
+          }
+        ]
+      },
+      "attributes": [
+        {
+          "name": "renderer",
+          "type": "string",
+          "default": "canvas",
+          "linked": true
+        },
+        {
+          "name": "width",
+          "type": "number",
+          "default": 100,
+          "linked": true
+        },
+        {
+          "name": "height",
+          "type": "number",
+          "default": 100,
+          "linked": true
+        },
+        {
+          "name": "depth",
+          "type": "number",
+          "default": 100,
+          "linked": true
+        }
+      ],
+      "methods": [
+        {
+          "name": "html",
+          "params": [],
+          "description": "Performs the html operation."
+        },
+        {
+          "name": "addForce",
+          "params": [
+            "force",
+            "vx",
+            "vy"
+          ],
+          "description": "Adds force data or elements."
+        },
+        {
+          "name": "removeForce",
+          "params": [
+            "force"
+          ],
+          "description": "Performs the removeForce operation."
+        },
+        {
+          "name": "showControls",
+          "params": [],
+          "description": "Performs the showControls operation."
+        },
+        {
+          "name": "hideControls",
+          "params": [],
+          "description": "Performs the hideControls operation."
+        },
+        {
+          "name": "beforeCreate",
+          "params": [],
+          "description": "Performs the beforeCreate operation."
+        },
+        {
+          "name": "update",
+          "params": [
+            "time"
+          ],
+          "description": "Updates internal animation state."
+        },
+        {
+          "name": "render",
+          "params": [],
+          "description": "Renders the component state to DOM/canvas."
+        },
+        {
+          "name": "build",
+          "params": [],
+          "description": "Performs the build operation."
+        },
+        {
+          "name": "onResize",
+          "params": [
+            "width",
+            "height"
+          ],
+          "description": "Lifecycle/event hook: onResize."
+        },
+        {
+          "name": "onFirstConnect",
+          "params": [],
+          "description": "Lifecycle/event hook: onFirstConnect."
+        },
+        {
+          "name": "onPropertyChanged",
+          "params": [
+            "property",
+            "prevous",
+            "value"
+          ],
+          "description": "Lifecycle/event hook: onPropertyChanged."
+        },
+        {
+          "name": "mask",
+          "params": [
+            "source"
+          ],
+          "description": "Performs the mask operation."
+        }
+      ]
+    }
+  }
+}

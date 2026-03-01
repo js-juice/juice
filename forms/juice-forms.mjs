@@ -2,6 +2,7 @@ import "./components/juice-form.js";
 import "./components/input-checkbox.js";
 import "./components/input-radio.js";
 import "./components/input-select.js";
+import "./components/input-button.js";
 import "./components/input-text.js";
 import "./components/input-number.js";
 import "./components/input-textarea.js";
@@ -17,22 +18,6 @@ class JuiceForms {
         this._FormCtor = null;
         this._initialized = false;
         this._warnedFormImport = false;
-        this._configLoaded = false;
-    }
-
-    async _loadOptionalConfig() {
-        if (this._configLoaded) return;
-        this._configLoaded = true;
-        try {
-            await import("./juice.config.mjs");
-        } catch (error) {
-            const code = error && error.code ? String(error.code) : "";
-            const message = error && error.message ? String(error.message) : "";
-            const missingConfig = code === "ERR_MODULE_NOT_FOUND" && message.includes("juice.config.mjs");
-            if (!missingConfig) {
-                console.warn("[JUICE FORMS] Failed to load juice.config.mjs", error);
-            }
-        }
     }
 
     async _loadFormCtor() {
@@ -91,7 +76,6 @@ class JuiceForms {
     async initialize() {
         if (this._initialized) return;
         this._initialized = true;
-        await this._loadOptionalConfig();
         await this.refresh();
     }
 }

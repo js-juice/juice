@@ -1,0 +1,231 @@
+@import 'vars';
+:host{
+    display:block;
+    padding-bottom:2rem;
+}
+
+*{
+box-sizing:border-box;
+}
+
+.box{
+    header{
+        border:2px solid $dark-gray;
+        background:$dark-gray;
+        color:#FFF;
+        border-top-right-radius: 20px;
+        
+        .name{
+            padding:0.5rem;
+            text-transform: uppercase;
+            color:#FFF;
+        }
+        .status{
+            position:relative;
+            text-align:right;
+            align-items: center;
+            border-top-right-radius: 18px;
+            .content{
+                position:relative;
+                z-index:1;
+                line-height:0.9;
+                padding-right:10px;
+            }
+            .ago{
+                text-transform:capitalize;
+            }
+            .actions{
+                padding-left:15px;
+                padding-right:10px;
+                cursor:pointer;
+                height:100%;
+                z-index:100;
+                > a{
+                    display: block;
+                    width: 30px;
+                    height:100%;
+                    position:relative;
+                    
+                    svg{
+                        width: 30px;
+                        height:100%;
+                        position:relative;
+                        z-index:10;
+                    }
+                }
+                .contents{
+                    display:none;
+                    position:absolute;
+                    top:100%;
+                    right:0;
+                    width:200px;
+                    background:#FFF;
+                    border:1px solid $dark-gray;
+                    z-index:1000;
+                    ul{
+                        display:block;
+                        margin:0;
+                        padding:0;
+                        li{
+                            display:block;
+                            text-align:right;
+                            border-bottom:1px solid #D2D2D2;
+                            &:hover{
+                                color: #FFF;
+                                background:$dark-gray;
+                                a{
+                                    color:#FFF;
+                                }
+                            }
+                            a{
+                                display:block;
+                                padding:0.4rem;
+                            }
+                        }
+                    }
+                }
+                &:hover{
+                    background: rgba(0,0,0,0.2);
+                    .contents{
+                        display:block;
+                    }
+                }
+            }
+            &:after{
+                content:"";
+                display:block;
+                position:absolute;
+                top:0;
+                left:-50px;
+                background:inherit;
+                width:100%;
+                height:100%;
+                transform: skew(-36deg, 0deg);
+            }
+        }
+    }
+  
+    .empty-message{
+        border: 1px solid $red;
+        padding: 1rem;
+        text-align:center;
+        margin-top:1rem;
+        display:none;
+        line-height:30px;
+        vertical-align: middle;
+    }
+    .invite-form{
+        display:none;
+    }
+    
+    main{
+        display:block;
+        border:2px solid $dark-gray;
+        border-top:0;
+        padding:1rem;
+       
+    }
+    footer{
+        display:block;
+        background: $dark-gray;
+        color:#FFF;
+    }
+    &.finalized{
+        header{
+            .status{
+                background:$green;
+                color:#333;
+            }
+        }
+    }
+    &.accepted{
+        header{
+            .status{
+                background:$yellow;
+                color:#333;
+                &::after{
+                    border-left:20px solid $green;
+                }
+            }
+        }
+    }
+    &.rejected{
+        header{
+            .status{
+                background:$red;
+                color:#FFF;
+            }
+        }
+    }
+    &.invited{
+        header{
+            .status{
+                background:rgb(219, 180, 180);
+                color:#333;
+            }
+        }
+    }
+    &.created{
+        header{
+            .status{
+                background:$yellow;
+                color:$black;
+                &::after{
+                border-left:20px solid $red;
+                }
+            }
+        }
+
+        .invite-form{
+            display:block;
+        }
+    }
+    
+    &.empty{
+        main{
+            slot:not([name]){
+                &:after{
+                    content: "No files have been added for this contributor.";
+                    display:block;
+                    background:#FFF;
+                    border: 1px solid #d2d2d2;
+                    padding:1rem;
+                    text-align:center;
+                }
+            }
+        }
+        .empty-message{
+            display:block;
+        }
+        .invite-form{
+            display:none;
+        }
+    }
+}
+
+:host([state="import-pending"]){
+   
+        header{
+            .status{
+                background:$blue;
+                color:#FFF;
+                &::after{
+                border-left:20px solid #FFF;
+                }
+            }
+        }
+    
+}
+
+:host([view="icon"]){
+    slot{
+        display:flex;
+        flex-direction: row;
+        flex-wrap:wrap;
+    }
+    ::slotted(adq-tree-file){
+        display:block;
+        width:33%;
+        flex:0 0 auto;
+    }
+}

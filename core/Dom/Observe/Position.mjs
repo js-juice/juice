@@ -6,7 +6,7 @@
 
 import Emitter from "../../Event/Emitter.mjs";
 import ObserveTools from "./Tools.mjs";
-import Timeline from "../../Animation/Timeline.mjs";
+import Timeline from "../../../animation/timeline.mjs";
 import DomUtil from "../../Util/Dom.mjs";
 
 /**

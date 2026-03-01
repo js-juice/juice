@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Animation Timeline Example</title>
+        <link rel="stylesheet" href="../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/juice.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/pages.css" />
+        <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet" />
+        <style>
+            .demo-card {
+                max-width: 760px;
+                margin: 0 auto;
+            }
+
+            .timeline-track {
+                width: 100%;
+                height: 16px;
+                border-radius: 999px;
+                background: #d7deec;
+                overflow: hidden;
+                margin: 0.75rem 0 1rem;
+            }
+
+            .timeline-progress {
+                width: 0%;
+                height: 100%;
+                border-radius: inherit;
+                background: linear-gradient(90deg, #2f7cff, #1db4ff);
+            }
+
+            .controls {
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+                margin: 0.75rem 0;
+            }
+
+            .controls button {
+                border: 0;
+                border-radius: 8px;
+                padding: 0.5rem 0.75rem;
+                background: #264466;
+                color: #fff;
+                cursor: pointer;
+            }
+
+            .controls button.alt {
+                background: #4f6076;
+            }
+
+            .controls button.active {
+                background: #1d6dff;
+            }
+
+            .readout {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.5rem;
+            }
+
+            .readout .item {
+                background: #eef3fb;
+                border-radius: 8px;
+                padding: 0.5rem 0.6rem;
+                font-family: monospace;
+                font-size: 13px;
+            }
+
+            @media (max-width: 680px) {
+                .readout {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+    </head>
+
+    <body class="docs-page docs-page--forms">
+        <header>
+            <div class="container flex-h flex-grow" style="flex:0 1 auto;">
+                <div class="branding">
+                    <a href="">
+                        <img src="../../brand/logo-long.svg" alt="JS Juice" />
+                    </a>
+                </div>
+                <div data-include="../../brand/templates/includes/nav.html" data-nav-base="../../"></div>
+            </div>
+        </header>
+        <main>
+            <div class="container padding:1o5">
+                <p><a href="./index.html">Back to Animation Examples</a></p>
+                <article class="card demo-card">
+                    <h1>Timeline Example</h1>
+                    <p>Standalone demo using <code>animation/timeline.mjs</code> as the source of truth.</p>
+
+                    <div class="timeline-track">
+                        <div id="progress" class="timeline-progress"></div>
+                    </div>
+
+                    <div class="controls">
+                        <button id="play" type="button">Play</button>
+                        <button id="pause" class="alt" type="button">Pause</button>
+                        <button id="reset" class="alt" type="button">Reset</button>
+                    </div>
+                    <div class="controls">
+                        <button id="reverse" class="alt" type="button">Reverse: Off</button>
+                        <button class="alt speed-btn" type="button" data-speed="0.5">0.5x</button>
+                        <button class="alt speed-btn active" type="button" data-speed="1">1x</button>
+                        <button class="alt speed-btn" type="button" data-speed="2">2x</button>
+                        <button class="alt speed-btn" type="button" data-speed="4">4x</button>
+                    </div>
+
+                    <div class="readout">
+                        <div class="item">cycle: <span id="cycle">0.00</span> / 4.00s</div>
+                        <div class="item">fps: <span id="fps">0</span></div>
+                        <div class="item">frame: <span id="frame">0</span></div>
+                        <div class="item">state: <span id="state">paused</span></div>
+                        <div class="item">speed: <span id="speed">1.00x</span></div>
+                        <div class="item">direction: <span id="direction">forward</span></div>
+                    </div>
+
+                    <example-code-box id="example-code" title="View Example Code"></example-code-box>
+                </article>
+            </div>
+        </main>
+
+        <script type="module">
+            import { Timeline } from "../index.mjs";
+            import "./lib/code-box.mjs";
+
+            const CYCLE_MS = 4000;
+
+            const progressEl = document.getElementById("progress");
+            const cycleEl = document.getElementById("cycle");
+            const fpsEl = document.getElementById("fps");
+            const frameEl = document.getElementById("frame");
+            const stateEl = document.getElementById("state");
+            const speedEl = document.getElementById("speed");
+            const directionEl = document.getElementById("direction");
+            const reverseBtn = document.getElementById("reverse");
+            const speedButtons = Array.from(document.querySelectorAll(".speed-btn"));
+            const codeBox = document.getElementById("example-code");
+
+            codeBox.code = `import { Timeline } from "../index.mjs";
+
+const timeline = new Timeline(null, { defer: true, fps: 60 });
+let baseSpeed = 1;
+
+timeline.update = (time) => {
+  const cycleMs = time.ms % 4000;
+  // update progress bar + readout
+};
+
+document.getElementById("play").addEventListener("click", () => timeline.play());
+document.getElementById("pause").addEventListener("click", () => timeline.pause());
+document.getElementById("reset").addEventListener("click", () => {
+  timeline.pause();
+  timeline.reset();
+});
+`;
+
+            const timeline = new Timeline(null, { defer: true, fps: 60 });
+            let baseSpeed = 1;
+
+            function applyScale() {
+                const sign = timeline.reverse ? -1 : 1;
+                timeline.setTimeScale(sign * baseSpeed);
+                speedEl.textContent = `${baseSpeed.toFixed(2)}x`;
+                directionEl.textContent = timeline.reverse ? "reverse" : "forward";
+                reverseBtn.textContent = `Reverse: ${timeline.reverse ? "On" : "Off"}`;
+            }
+
+            function markActiveSpeedButton() {
+                for (let i = 0; i < speedButtons.length; i += 1) {
+                    const button = speedButtons[i];
+                    const speed = parseFloat(button.dataset.speed || "1");
+                    button.classList.toggle("active", speed === baseSpeed);
+                }
+            }
+
+            function renderCycle(cycleMs, fps, frame) {
+                const ratio = Math.max(0, Math.min(1, cycleMs / CYCLE_MS));
+                progressEl.style.width = `${(ratio * 100).toFixed(2)}%`;
+                cycleEl.textContent = (cycleMs / 1000).toFixed(2);
+                fpsEl.textContent = Number.isFinite(fps) ? String(Math.round(fps)) : "0";
+                frameEl.textContent = String(frame);
+            }
+
+            timeline.update = function (time) {
+                const cycleMs = time.ms % CYCLE_MS;
+                renderCycle(cycleMs, time.fps, time.frame);
+            };
+
+            document.getElementById("play").addEventListener("click", () => {
+                timeline.play();
+                stateEl.textContent = "playing";
+            });
+
+            document.getElementById("pause").addEventListener("click", () => {
+                timeline.pause();
+                stateEl.textContent = "paused";
+            });
+
+            document.getElementById("reset").addEventListener("click", () => {
+                timeline.pause();
+                timeline.reset();
+                renderCycle(0, 0, 0);
+                stateEl.textContent = "paused";
+            });
+
+            reverseBtn.addEventListener("click", () => {
+                timeline.setReverse(!timeline.reverse);
+                applyScale();
+            });
+
+            for (let i = 0; i < speedButtons.length; i += 1) {
+                speedButtons[i].addEventListener("click", () => {
+                    const next = parseFloat(speedButtons[i].dataset.speed || "1");
+                    if (!Number.isFinite(next) || next <= 0) return;
+                    baseSpeed = next;
+                    applyScale();
+                    markActiveSpeedButton();
+                });
+            }
+
+            renderCycle(0, 0, 0);
+            applyScale();
+            markActiveSpeedButton();
+        </script>
+        <script type="module" src="../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

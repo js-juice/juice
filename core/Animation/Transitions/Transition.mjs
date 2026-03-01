@@ -3,7 +3,7 @@
  * @module Animation/Transitions/Transition
  */
 
-import Easing from "../Easing.mjs";
+import Easing from "../../../animation/easing.mjs";
 import { getDotPath, setDotPath, parseDotPath } from "../../Util/DotNotation.mjs";
 import EventEmitter from "../../Event/Emitter.mjs";
 

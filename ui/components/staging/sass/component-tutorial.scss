@@ -1,0 +1,32 @@
+:host{
+    position:absolute;
+    top:0;
+    left:0;
+    z-index:200;
+
+    .component--html{
+        padding-top:30px;
+        .pointer{
+
+        }
+        .content{
+            border:1px solid #d2d2d2;
+            background:#FFF;
+            padding:1rem;
+            min-width:250px;
+            box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+            border-radius:8px;
+            color:#333;
+            header{
+                h3{
+                    margin-top:0;
+                }
+            }
+        }
+    }
+    
+}
+
+.pointer{
+
+}

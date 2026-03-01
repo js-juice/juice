@@ -1,0 +1,43 @@
+@import 'vars';
+
+:host {
+    display: block;
+    width: 100%;
+    border: 1px solid $lt-gray;
+}
+
+.wrapper {
+    display: block
+}
+
+.wrapper.view{
+
+    > header {
+        display: block
+    }
+    > main {
+        display: block;
+        > ul {
+            display: block;
+            margin: 0;
+            padding: 0;
+            li {
+                display: block;
+                margin: 0;
+                padding: 0;
+                debug-message {
+                    
+                }
+            }
+        }
+    }
+    > footer {
+        display: block;
+        display: block;
+        padding: 0.5rem
+    }
+
+} 
+
+
+

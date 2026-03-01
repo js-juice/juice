@@ -4,7 +4,7 @@
  * @module Components/tpl
  */
 
-import Component from "./Component.mjs";
+import Component from "../../ui/component.mjs";
 
 /**
  * Template component demonstrating component creation patterns.

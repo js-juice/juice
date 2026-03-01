@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>UI Tabs Example</title>
+        <link rel="stylesheet" href="../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/juice.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/pages.css" />
+        <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet" />
+        <style>
+            .layout {
+                max-width: 980px;
+                margin: 0 auto;
+                display: grid;
+                gap: 1rem;
+            }
+
+            .card {
+                background: #fff;
+                border: 1px solid #d7dce5;
+                border-radius: 12px;
+                padding: 1rem;
+            }
+
+            .hint {
+                color: #5c6170;
+                margin-top: 0;
+            }
+
+            .controls {
+                margin-top: 1rem;
+                display: flex;
+                gap: 0.55rem;
+            }
+
+            .nav-back {
+                font-size: 0.9rem;
+            }
+        </style>
+    </head>
+
+    <body class="docs-page docs-page--forms">
+        <header>
+            <div class="container flex-h flex-grow" style="flex:0 1 auto;">
+                <div class="branding">
+                    <a href="">
+                        <img src="../../brand/logo-long.svg" alt="JS Juice" />
+                    </a>
+                </div>
+                <div data-include="../../brand/templates/includes/nav.html" data-nav-base="../../"></div>
+            </div>
+        </header>
+        <main>
+            <div id="hero" class="container padding:1o5">
+                <h1 id="page-title">Tabs Components</h1>
+                <p>Demo page for `ui-tabs` and `ui-content`.</p>
+            </div>
+            <div class="container padding:1o5">
+                <div id="content" class="layout">
+                    <p class="nav-back"><a href="./index.html">Back to UI examples</a></p>
+                    <article class="card">
+                        <h2>Tabs Demo</h2>
+                        <p class="hint">Shows tab selection, next navigation, and disabled-tab handling.</p>
+                        <ui-tabs id="demo-tabs" active="overview">
+                            <ui-content name="overview" label="Overview">
+                                <p>Overview content for this component.</p>
+                            </ui-content>
+                            <ui-content name="api" label="API">
+                                <p>API details and public methods.</p>
+                            </ui-content>
+                            <ui-content name="notes" label="Notes" disabled>
+                                <p>This tab is initially disabled.</p>
+                            </ui-content>
+                        </ui-tabs>
+                        <div class="controls">
+                            <button id="next-tab" type="button">Next Tab</button>
+                            <button id="enable-notes" type="button">Enable Notes</button>
+                            <button id="open-notes" type="button">Open Notes</button>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </main>
+
+        <script type="module" src="./register.mjs"></script>
+        <script type="module">
+            const tabs = document.getElementById("demo-tabs");
+            document.getElementById("next-tab").addEventListener("click", () => tabs.next());
+            document.getElementById("enable-notes").addEventListener("click", () => tabs.enable("notes"));
+            document.getElementById("open-notes").addEventListener("click", () => tabs.select("notes"));
+        </script>
+        <script type="module" src="../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

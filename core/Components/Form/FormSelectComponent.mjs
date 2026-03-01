@@ -3,7 +3,7 @@
  * @module Components/Form/FormSelectComponent
  */
 
-import Component from "../Component.mjs";
+import Component from "../../../ui/component.mjs";
 import { type } from "../../Util/Core.mjs";
 import { BaseInput } from "./FormBaseComponents.mjs";
 import Dot from "../../Util/DotNotation.mjs";

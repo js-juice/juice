@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Sprite Base Example Docs</title>
+        <link rel="stylesheet" href="../../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../../brand/templates/css/juice.css" />
+        <link rel="stylesheet" href="../../../brand/templates/css/pages.css" />
+        <style>
+            .doc { max-width: 980px; margin: 0 auto; }
+            .doc section { margin: 14px 0; padding: 12px; border: 1px solid #d7e2f2; border-radius: 10px; background: #fff; }
+            .doc h2 { margin: 0 0 8px; font-size: 18px; }
+            .doc code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+            .doc ul { margin: 0; padding-left: 18px; }
+            .doc li { margin: 4px 0; }
+        </style>
+    </head>
+
+    <body class="docs-page docs-page--forms">
+        <header>
+            <div class="container flex-h flex-grow" style="flex:0 1 auto;">
+                <div class="branding"><a href=""><img src="../../../brand/logo-long.svg" alt="JS Juice" /></a></div>
+                <div data-include="../../../brand/templates/includes/nav.html" data-nav-base="../../../"></div>
+            </div>
+        </header>
+        <main>
+            <div class="container padding:1o5 doc">
+                <p><a href="../playground.html">Back to Playground</a> | <a href="./index.html">All Example Docs</a></p>
+                <h1>Sprite Base Example Docs</h1>
+                <section>
+                    <h2>Core Class</h2>
+                    <ul>
+                        <li><code>animation/components/sprite.mjs</code> exports <code>AnimationSprite</code>.</li>
+                        <li>Handles sprite sheet loading and frame-window rendering through <code>SpriteSheet</code>.</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>Primary Methods</h2>
+                    <ul>
+                        <li><code>next()</code>, <code>prev()</code>: frame stepping helpers.</li>
+                        <li><code>addSheet(src, width, height)</code>: append a sprite source.</li>
+                        <li><code>update(time)</code>: auto-play frame advancement by <code>tempo</code>.</li>
+                        <li><code>render(force)</code>: commit sprite sheet view updates.</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>Main Attributes</h2>
+                    <ul>
+                        <li><code>src</code>, <code>width</code>, <code>height</code>, <code>frames</code>, <code>frame</code>.</li>
+                        <li><code>tempo</code>, <code>in</code>, <code>out</code>, <code>loop</code>, <code>auto</code>.</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>Technical Notes</h2>
+                    <ul>
+                        <li>Frame changes synchronize to the underlying sprite sheet frame index.</li>
+                        <li>Auto mode advances by elapsed timeline delta and configured tempo.</li>
+                        <li>Render path avoids redundant work unless sprite state is dirty or forced.</li>
+                    </ul>
+                </section>
+            </div>
+        </main>
+        <script type="module" src="../../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

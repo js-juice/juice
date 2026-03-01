@@ -100,3 +100,5 @@ class Loader {
         console.log("error");
     }
 }
+
+export default Loader;

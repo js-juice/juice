@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>UI Shapes Example</title>
+        <link rel="stylesheet" href="../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/juice.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/pages.css" />
+        <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet" />
+        <style>
+            .layout {
+                max-width: 980px;
+                margin: 0 auto;
+                display: grid;
+                gap: 1rem;
+            }
+
+            .card {
+                background: #fff;
+                border: 1px solid #d7dce5;
+                border-radius: 12px;
+                padding: 1rem;
+            }
+
+            .hint {
+                color: #5c6170;
+                margin-top: 0;
+            }
+
+            .stage {
+                position: relative;
+                height: 340px;
+                border-radius: 10px;
+                border: 1px solid #d7dce5;
+                overflow: hidden;
+                background: radial-gradient(circle at 30% 20%, #f8fbff, #e9f0fa);
+            }
+
+            .nav-back {
+                font-size: 0.9rem;
+            }
+        </style>
+    </head>
+
+    <body class="docs-page docs-page--forms">
+        <header>
+            <div class="container flex-h flex-grow" style="flex:0 1 auto;">
+                <div class="branding">
+                    <a href="">
+                        <img src="../../brand/logo-long.svg" alt="JS Juice" />
+                    </a>
+                </div>
+                <div data-include="../../brand/templates/includes/nav.html" data-nav-base="../../"></div>
+            </div>
+        </header>
+        <main>
+            <div id="hero" class="container padding:1o5">
+                <h1 id="page-title">2D Shapes Components</h1>
+                <p>Demo page for `shape-circle` and `shape-square`.</p>
+            </div>
+            <div class="container padding:1o5">
+                <div id="content" class="layout">
+                    <p class="nav-back"><a href="./index.html">Back to UI examples</a></p>
+                    <article class="card">
+                        <h2>Shape Stage</h2>
+                        <p class="hint">Static smoke test for migrated 2D shape components.</p>
+                        <div class="stage">
+                            <shape-circle x="120" y="95" size="78" bg="#3a86ff"></shape-circle>
+                            <shape-square x="290" y="170" size="96" rotate="18" bg="#ff6b6b"></shape-square>
+                            <shape-circle x="470" y="120" size="62" bg="#43d17a"></shape-circle>
+                            <shape-square x="600" y="245" size="70" rotate="-12" bg="#f7b733"></shape-square>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </main>
+
+        <script type="module" src="./register.mjs"></script>
+        <script type="module" src="../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

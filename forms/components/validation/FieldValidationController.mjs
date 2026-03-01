@@ -1,6 +1,6 @@
 import Validator from "../../../data/validate/Validator.mjs";
 import Presets from "../../../data/validate/Presets.mjs";
-import { getJuiceConfig } from "../../config/JuiceConfig.mjs";
+import { getJuiceConfig } from "../../../config/juice-config.mjs";
 
 /**
  * Known intrinsic rule types used by parser normalization.

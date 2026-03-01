@@ -29,6 +29,20 @@ Web-component based forms module.
 - Config and presets
 - Demo pages (`index.html`, `examples/`, `test.html`)
 
+### `ui/`
+Standalone UI package extracted from core components.
+
+- Component base class (`Component.mjs`)
+- UI component modules (`components/`)
+- Incremental migration target for `core/Components/UI/*`
+
+### `animation/`
+Centralized animation package and timeline source of truth.
+
+- Optimized for speed and usability
+- Single ticker loop for active timelines
+- Standalone examples (`examples/`)
+
 ### `brand/`
 Brand and UI assets used by the project.
 
@@ -67,4 +81,6 @@ npm install
 - `core/README.md`
 - `data/README.md`
 - `forms/README.md`
+- `ui/README.md`
+- `animation/README.md`
 - `squeeze/README.md`

@@ -1,0 +1,303 @@
+//@use 'setup';
+//@use 'transitions';
+//@use 'form/form--buttons';
+
+:host(logo-creator){
+
+.preview{
+    width:100%;
+    position: relative;
+   
+    > .content{
+        position: absolute;
+        top:0px;
+        left:0px;
+        right:0px;
+        bottom:0px;
+        border:1px solid var(--input-border);
+        border-radius: var(--input-border-radius);
+        canvas{
+            position:relative;
+            z-index:10;
+            transition:opacity 0.4s ease;
+        }
+    }
+    &:after{
+        content: "";
+        display:block;
+        position: relative;
+        width:100%;
+        padding-bottom:100%;
+    }
+}
+
+
+.controls{
+    display:none;
+    padding-top:0.5rem;
+}
+
+.actions{
+    padding-top:0.5rem;
+}
+
+.component--html{
+    .cancel{
+        display:none;
+        width:60px;
+    }
+    .save,
+    .controls{
+        display:none;
+    }
+
+    .save-indicator{
+        display:none;
+        position:absolute;
+        z-index:100;
+        left:50%;
+        top:50%;
+        transform: translate(-50%, -50%);
+        m-ring{
+            transition:opacity 0.4s ease;
+        }
+    }
+
+    .progress{
+        display:none;
+    }
+
+    &.has-graphic{
+        .transition\:spread,
+        #choose-logo{
+            display:none;
+        }
+        .controls{
+            display:block;
+        }
+        .cancel{
+            display:block;
+        }
+        .save{
+            display:block;
+        }
+    }
+
+    &.saving{
+        .progress{
+            display:block;
+        }
+        .save-indicator{
+            display:block;
+        }
+        canvas{
+            opacity:0.5;
+        }
+        .controls{
+            display:none;
+        }
+        .cancel{
+            display:none;
+        }
+        .save{
+            display:none;
+        }
+    }   
+
+    &.saved{
+        .cancel,
+        .save,
+        .controls{
+            display:none;
+        }
+        #choose-logo{
+            display:block;
+        }
+    }
+}
+
+}
+
+
+:host(company-search){
+
+    form-input{
+        display:block;
+        margin-bottom:1rem;
+    }
+
+    .cant-find{
+        padding-top:1rem;
+        text-align:center;
+    }
+
+    .search-details{
+        color:var(--color-gray);
+        font-size:0.9rem;
+        padding-bottom:5px;
+    }
+
+    nav{
+        padding-top:1rem;
+        display:flex;
+        &.prev-next{
+            flex-direction: row;
+            a{
+                display: block;
+                cursor:pointer;
+                &:first-child{
+                    border-top-right-radius:0;
+                    border-bottom-right-radius:0;
+                    border-right:1px solid var(--color-gray);
+                }
+                &:last-child{
+                    border-top-left-radius:0;
+                    border-bottom-left-radius:0;
+                }
+            }
+        }
+    }
+
+
+
+    .search-details,
+    .cant-find,
+    nav{
+        display:none;
+    }
+    
+    .component--html{
+
+    &.has-pages{
+        nav{
+            display:flex;
+        }
+    }
+    &.has-results{
+        .search-details,
+        .cant-find{
+            display:block;
+        }
+    }
+    &.no-results{
+        
+        .cant-find{
+            display:block;
+        }
+    }
+    &.has-selected{
+        display:none;
+    }
+
+        
+    .search-results{
+        border: 1px solid var(--color-lt-gray);
+        border-radius:5px;
+        overflow:hidden;
+        ul{
+            margin:0;
+            padding:0;
+            display:flex;
+            flex-wrap:wrap;
+            overflow:auto;
+            max-height:200px;
+            li{
+                display:block;
+                margin:0 !important;
+                padding:1rem;
+                width:50%;
+                flex:0 1 auto;
+                cursor:pointer;
+                border-bottom: 1px solid var(--color-lt-gray);
+                &:hover{
+                    background-color:var(--color-lt-gray);
+                }
+                &.initial{
+                    width:100%;
+                    text-align:center;
+                    font-size:0.9rem;
+                    padding:0.5rem;
+                    background-color:var(--color-lt-gray);
+                }
+
+                &.not-found{
+                    width:100%;
+                    text-align:center;
+                    font-size:0.9rem;
+                    padding:0.5rem;
+                    background-color:var(--color-gray-blue);
+                    .graphic{
+                        height:80px;
+                        width: 150px;
+                        position:relative;
+                        background:#333;
+                        border-radius:10px;
+                        border-bottom-right-radius:0;
+                        color:#FFF;
+                        &:after{
+                            content: "";
+                            display: block;
+                            position:absolute;
+                            bottom:0;
+                            right:0;
+                            transform: translateX(100%);
+                            width: 0;
+                            height: 0;
+                            border-style: solid;
+                            border-width: 30px 0 0 30px;
+                            border-color: transparent transparent transparent #333;
+                        }
+                        svg{
+                            height:100%;
+                            width:100%;
+                            position:relative;
+                        }
+                    }
+                    .info{
+                        width:100%;
+                        flex:1 1 auto;
+                        padding:0.5rem;
+                        font-size: 15px;
+                        .heading{
+                            margin-bottom:0.5rem;
+                            strong{
+                                font-size: 25px;
+                            }
+                        }
+                    }
+                }
+
+                &:nth-child(2n){
+                    border-left: 1px solid var(--color-lt-gray);
+                }
+
+                .logo{
+                    border: 1px solid var(--color-lt-gray);
+                    border-radius:5px;
+                    overflow:hidden;
+                    img{
+                        width:60px;
+                        height:auto;
+                    }
+                }
+
+                .info{
+                    padding-left:1rem;
+                    .name{
+                        font-weight:bold;
+                    }
+                    div{
+                        padding-bottom:0.25rem;
+                    }
+                }
+
+
+                &:nth-last-child(-n + 2){
+                    border-bottom:0;
+                }
+
+            }
+        }
+    }
+    }
+}
