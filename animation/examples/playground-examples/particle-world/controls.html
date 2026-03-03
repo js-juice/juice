@@ -6,16 +6,112 @@
 <div class="controls-config">
     <label for="world-config">Config JSON</label>
     <input id="world-config" type="text"
-        value='{"particles":500,"radius":0.4,"orbitRadius":0.4,"repelRadius":0.4,"orbitFieldRadius":1.2,"repelFieldRadius":1.2,"z":-4,"drift":1,"orbitSpeed":1.5,"orbitPull":1,"repelStrength":1}' />
+        value='{"particles":500,"radius":0.4,"orbitRadius":0.4,"repelRadius":0.4,"orbitFieldRadius":1.2,"repelFieldRadius":1.2,"z":-4,"drift":0.1,"driftSpeed":1,"driftType":"relative","particleColor":"#ffffff","orbitSpeed":1.5,"orbitPull":1,"repelStrength":1,"gravityX":0,"gravityY":0,"gravityZ":0,"friction":0}' />
     <button id="apply-config" type="button">Apply</button>
 </div>
-<div class="readout">
-    <div class="item">target x: <span id="tx">0.00</span></div>
-    <div class="item">target y: <span id="ty">0.00</span></div>
-    <div class="item">target z: <span id="tz">-4.00</span></div>
-    <div class="item">radius: <span id="tr">0.40</span></div>
-</div>
+<div class="controls-env">
+    <h4>Environment</h4>
+    <div class="controls-env-row">
+        <input-direction id="direction" inline label="Direction" default-x="0" default-y="0"
+            default-z="-1"></input-direction>
+        <input-number id="env-particles" inline label="Particles" type="number" default="2000" min="8" max="50000"
+            step="1" value="2000" maxlength="7"></input-number>
+        <input-number id="env-particle-radius" inline label="Particle Radius" type="number" default="0.4" min="0.01"
+            max="5" step="0.01" value="0.4" maxlength="7"></input-number>
 
-<div class="controls-mask" data-mask-placeholder></div>
+        <input-number id="env-drift" inline label="Drift" type="number" min="0" max="1" step="0.001" value="0.1"
+            maxlength="8"></input-number>
+        <input-number id="env-drift-speed" inline label="Drift Speed" type="number" min="0" max="5" step="0.01"
+            value="1" maxlength="8"></input-number>
+        <input-select id="env-drift-type" inline required label="Drift Type" options="relative, absolute"
+            value="relative"></input-select>
+        <input-number id="env-friction" inline label="Friction" type="number" min="-5" max="5" step="0.01" value="0"
+            maxlength="8"></input-number>
+        <label for="env-particle-color">Particle Color</label>
+        <input id="env-particle-color" type="color" value="#ffffff" />
+        <input-select id="env-particle-type" inline required label="Particle Type" options="sphere, cube"
+            value="sphere"></input-select>
+
+        <input-fieldset label="Orbit">
+            <input-checkbox id="env-orbit-enabled" inline label="Enable Orbit"></input-checkbox>
+            <input-number id="env-orbit-speed" inline label="Orbit Speed" type="number" min="0" max="5" maxlength="5"
+                step="0.1" value="1.5"></input-number>
+            <input-number id="env-orbit-pull" inline label="Orbit Pull" type="number" min="0" max="10" maxlength="5"
+                step="0.1" value="1"></input-number>
+            <input-number id="env-orbit-reach" inline label="Orbit Reach" type="number" step="0.001" maxlength="5"
+                value="1.2" min="0" max="5" decimals="4"></input-number>
+        </input-fieldset>
+        <input-fieldset label="Repel">
+            <input-checkbox id="env-repel-enabled" inline label="Enable Repel"></input-checkbox>
+            <input-number id="env-repel-strength" inline label="Repel Strength" type="number" min="0" max="10"
+                step="0.1" value="1"></input-number>
+            <input-number id="env-repel-reach" inline label="Repel Reach" type="number" step="0.001" value="1.2" min="0"
+                max="5" decimals="4"></input-number>
+        </input-fieldset>
+    </div>
+    <div class="controls-env-row">
+        <input-fieldset label="Gravity">
+            <input-number id="env-gravity-x" inline maxlength="10" label="X" type="number" min="-10" max="10"
+                step="0.01" value="0"></input-number>
+            <input-number id="env-gravity-y" inline maxlength="10" label="Y" type="number" min="-10" max="10"
+                step="0.01" value="0"></input-number>
+            <input-number id="env-gravity-z" inline maxlength="10" label="Z" type="number" min="-10" max="10"
+                step="0.01" value="0"></input-number>
+        </input-fieldset>
+
+
+    </div>
+</div>
+<div class="controls-mask">
+    <div id="mask-fieldsets">
+        <input-fieldset class="mask-fieldset" data-mask-index="1" label="Mask">
+            <input-text id="mask-src" inline label="Mask URL" placeholder="https://... or data:"></input-text>
+            <div class="controls-mask-row">
+                <label>File</label>
+                <div class="file-picker">
+                    <button id="browse-mask" class="file-picker-trigger" type="button">Browse</button>
+                    <input id="mask-file" type="file" accept=".png,image/png,image/*" />
+                    <div id="mask-file-name">No file selected</div>
+                </div>
+            </div>
+            <input-number id="mask-width" inline label="Width %" type="number" min="1" max="100" step="0.1"
+                default="100" value="100" units="%"></input-number>
+            <input-number id="mask-height" inline label="Height %" type="number" min="1" max="100" step="0.1"
+                default="100" value="100" units="%"></input-number>
+            <input-select id="mask-align" inline label="Align"
+                options="center:Center,top-left:Top Left,top-center:Top Center,top-right:Top Right,center-left:Center Left,center-right:Center Right,bottom-left:Bottom Left,bottom-center:Bottom Center,bottom-right:Bottom Right,custom:Custom"
+                value="center"></input-select>
+            <div class="controls-mask-row inline-fields">
+                <input-number id="mask-align-x" inline label="Align X" type="number" min="-1" max="1" step="0.01"
+                    default="0" value="0"></input-number>
+                <input-number id="mask-align-y" inline label="Align Y" type="number" min="-1" max="1" step="0.01"
+                    default="0" value="0"></input-number>
+            </div>
+            <div class="controls-mask-row inline-fields-4">
+                <input-select id="mask-color-mode" inline label="Color"
+                    options="single:Single Color,preserve:Use Mask Pixels" value="single"></input-select>
+                <input-number id="mask-particle-gap" inline label="Particle Gap" type="number" min="0" max="32" step="1"
+                    default="1" value="1"></input-number>
+                <input-number id="mask-drift" inline label="Drift" type="number" min="0" max="1" step="0.01"
+                    default="0.1" value="0.1"></input-number>
+                <input-number id="mask-orbit-speed" inline label="Orbit Speed" type="number" min="0" max="10" step="0.1"
+                    default="1.5" value="1.5"></input-number>
+            </div>
+            <div class="controls-mask-row inline-fields-4">
+                <input-number id="mask-orbit-pull" inline label="Orbit Pull" type="number" min="0" max="10" step="0.1"
+                    default="1" value="1"></input-number>
+                <input-number id="mask-repel-strength" inline label="Repel Strength" type="number" min="0" max="10"
+                    step="0.1" default="1" value="1"></input-number>
+            </div>
+            <div class="controls-mask-actions">
+                <button id="apply-mask" type="button">Apply Mask</button>
+                <button id="clear-mask" type="button">Clear Mask</button>
+            </div>
+        </input-fieldset>
+    </div>
+    <div class="controls-mask-actions controls-mask-add">
+        <button id="add-mask" type="button">Add Another Mask</button>
+    </div>
+</div>
 
 <!-- Emitter controls moved to the standalone emitter example -->

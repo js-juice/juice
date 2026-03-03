@@ -106,6 +106,7 @@ class InputComponent extends HTMLElement {
             "type",
             "icon",
             "inline",
+            "label-inline",
             "stacked",
             "validation",
             "validate",
@@ -132,7 +133,11 @@ class InputComponent extends HTMLElement {
                 display: "block",
                 fontFamily: "system-ui,Segoe UI,Roboto,Arial,sans-serif",
                 boxSizing: "border-box",
-                marginBottom: "1rem"
+                marginBottom: "1rem",
+                marginRight: "0.5rem"
+            },
+            ":host([inline])": {
+                display: "inline-block"
             },
             ":host([stacked])": {
                 display: "block"
@@ -151,7 +156,8 @@ class InputComponent extends HTMLElement {
             },
             ".label-text": {
                 fontSize: "0.8em",
-                fontWeight: "400"
+                fontWeight: "var(--form-label-weight, bold)",
+                color: "var(--form-label-color, #48484A)"
             },
             ".input-wrapper": {
                 border: "var(--input-border, 1px solid #c8c8c8)",
@@ -305,6 +311,7 @@ class InputComponent extends HTMLElement {
             native: render("div.native-wrapper"),
             icon: render("div.icon-wrapper"),
             status: render("div.status-wrapper > div.cover"),
+            default: render("div.default"),
             validation: render("div.validation-wrapper")
         };
 
@@ -372,6 +379,8 @@ class InputComponent extends HTMLElement {
     _onNativeChangeEvent() {}
 
     _syncVisualState() {}
+
+    //END OF LIFECYCLE HOOKS
 
     registerFormatters(formatters = {}) {
         if (!isPlainObject(formatters)) return;
@@ -507,9 +516,11 @@ class InputComponent extends HTMLElement {
     }
 
     _ensureDefaultMountedInInputContainer() {
-        if (!this._dom.default || !this._wireframe.input) return;
-        if (this._dom.default.parentNode !== this._wireframe.input) {
-            this._wireframe.input.appendChild(this._dom.default);
+        const container = this._wireframe.default.parentNode ? this._wireframe.default : this._wireframe.input;
+
+        if (!this._dom.default || !container || !container.parentNode) return;
+        if (this._dom.default.parentNode !== container) {
+            container.appendChild(this._dom.default);
         }
     }
 
@@ -575,7 +586,28 @@ class InputComponent extends HTMLElement {
         // Set CSS variable for input height so validation status can position relative to it.
         const inputWrapper = this._shadow.querySelector(".input-wrapper");
         const rect = inputWrapper.getBoundingClientRect();
-        this._wireframe.root.style.setProperty("--input-height", `${rect.height}px`);
+        if (rect.height > 0) {
+            this._wireframe.root.style.setProperty("--input-height", `${rect.height}px`);
+        } else {
+            this._whenVisible(inputWrapper, () => {
+                const rect = inputWrapper.getBoundingClientRect();
+                this._wireframe.root.style.setProperty("--input-height", `${rect.height}px`);
+            });
+        }
+    }
+
+    _whenVisible(element, callback) {
+        if (!this._visibilityCallbacks) this._visibilityCallbacks = [];
+        this._visibilityCallbacks.push(callback);
+        if (!this._visibilityObserver) {
+            this._visibilityObserver = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    this._visibilityCallbacks.forEach((cb) => cb());
+                    this._visibilityObserver.disconnect();
+                }
+            });
+            this._visibilityObserver.observe(element);
+        }
     }
 
     disconnectedCallback() {
@@ -911,7 +943,8 @@ class InputComponent extends HTMLElement {
             native: this._wireframe.native,
             icon: this._wireframe.icon,
             validation: this._wireframe.validation,
-            status: this._wireframe.status
+            status: this._wireframe.status,
+            default: this._wireframe.default
         };
 
         // Token layout keeps structure configurable without changing subclass render code.
@@ -934,6 +967,7 @@ class InputComponent extends HTMLElement {
             let node = map[token];
             if (!node) {
                 node = render(token);
+                this._wireframe[token] = node;
             }
             scopes[scopeIndex].appendChild(node);
             lastNode = node;
@@ -1248,7 +1282,7 @@ class InputComponent extends HTMLElement {
     }
 
     get format() {
-        return this.getAttribute("format") || "";
+        return this.getAttribute("format") || this._format || "";
     }
 
     set format(value) {

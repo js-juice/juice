@@ -32,6 +32,46 @@ function createSeededRandom(seed) {
 }
 
 /**
+ * Parses hex color input to normalized RGBA floats.
+ *
+ * @param {string|number[]|Float32Array} input
+ * @returns {[number, number, number, number]|null}
+ */
+function normalizeColorInput(input) {
+    if (Array.isArray(input) || input instanceof Float32Array) {
+        const r = Number(input[0]);
+        const g = Number(input[1]);
+        const b = Number(input[2]);
+        const a = Number(input[3]);
+        if ([r, g, b].every(Number.isFinite)) {
+            return [
+                Math.max(0, Math.min(1, r)),
+                Math.max(0, Math.min(1, g)),
+                Math.max(0, Math.min(1, b)),
+                Number.isFinite(a) ? Math.max(0, Math.min(1, a)) : 1
+            ];
+        }
+        return null;
+    }
+    if (typeof input !== "string") return null;
+    const text = input.trim().toLowerCase();
+    const full = text.match(/^#([0-9a-f]{6})$/);
+    const short = text.match(/^#([0-9a-f]{3})$/);
+    const hex = full
+        ? full[1]
+        : short
+          ? `${short[1][0]}${short[1][0]}${short[1][1]}${short[1][1]}${short[1][2]}${short[1][2]}`
+          : null;
+    if (!hex) return null;
+    return [
+        parseInt(hex.slice(0, 2), 16) / 255,
+        parseInt(hex.slice(2, 4), 16) / 255,
+        parseInt(hex.slice(4, 6), 16) / 255,
+        1
+    ];
+}
+
+/**
  * GPU particle system wrapper.
  */
 class WebGLParticleSystem {
@@ -57,6 +97,8 @@ class WebGLParticleSystem {
 
         // uMotion = [driftScale, orbitSpeedScale, repelStrengthScale, orbitPullScale]
         this.driftScale = 1.0;
+        this.driftSpeedScale = 1.0;
+        this.driftType = "relative";
         this.orbitSpeedScale = 1.0;
         this.repelStrengthScale = 1.0;
         this.orbitPullScale = 1.0;
@@ -65,6 +107,8 @@ class WebGLParticleSystem {
         this.emitter = null;
 
         this.particles = new ParticleStateBuffer(maxParticles, canvas.width, canvas.height);
+        // Keep baseline motion subtle so drift reads as wobble, not ballistic travel.
+        this.particles.config.maxSpeed = 0.03;
         this.particles.setProjection("perspective", { fov: 45, near: 0.01, far: 20 });
 
         this.setupWebGL();
@@ -148,6 +192,7 @@ class WebGLParticleSystem {
 
         // Seed initial particle data on CPU.
         this.particles.build();
+        this._refreshHomeStateFromDestinations();
 
         // Build transform-feedback simulation pipeline.
         this.feedback = new TransformFeedback(this.maxParticles, gl);
@@ -184,6 +229,8 @@ class WebGLParticleSystem {
             { debug: false, clearGLErrors: false }
         );
         this.uMotion = this.feedback.addUniform("uMotion", VariableTypes.FLOAT_VEC4, [1.0, 1.0, 1.0, 0.0]);
+        this.uDriftSpeed = this.feedback.addUniform("uDriftSpeed", VariableTypes.FLOAT, 1.0);
+        this.uDriftMode = this.feedback.addUniform("uDriftMode", VariableTypes.FLOAT, 0.0);
         this.projectionMatrix = this.feedback.addUniform(
             "uProjectionMatrix",
             VariableTypes.FLOAT_MAT4,
@@ -194,7 +241,7 @@ class WebGLParticleSystem {
         this.uOrbitFieldRadius = this.feedback.addUniform("uOrbitFieldRadius", VariableTypes.FLOAT, 1.2);
         this.uRepelFieldRadius = this.feedback.addUniform("uRepelFieldRadius", VariableTypes.FLOAT, 1.2);
         // Gravity (world units/sec^2) and friction (damping per second)
-        this.uGravity = this.feedback.addUniform("uGravity", VariableTypes.FLOAT_VEC3, [0.0, -0.98, 0.0]);
+        this.uGravity = this.feedback.addUniform("uGravity", VariableTypes.FLOAT_VEC3, [0.0, 0.0, 0.0]);
         this.uFriction = this.feedback.addUniform("uFriction", VariableTypes.FLOAT, 0.0);
 
         this.feedbackPosition = this.feedback.addVariable(
@@ -209,12 +256,7 @@ class WebGLParticleSystem {
             this.particles.velocities,
             { debug: false }
         );
-        this.feedbackState = this.feedback.addVariable(
-            "aState",
-            VariableTypes.FLOAT_VEC4,
-            new Float32Array(this.particles.maxCount * 4),
-            {}
-        );
+        this.feedbackState = this.feedback.addVariable("aState", VariableTypes.FLOAT_VEC4, this.particles.states, {});
         this.feedbackColor = this.feedback.addVariable("aColor", VariableTypes.FLOAT_VEC4, this.particles.colors, {
             debug: false
         });
@@ -234,8 +276,14 @@ class WebGLParticleSystem {
 
             vec3 position = aPosition;
             vec3 velocity = aVelocity;
-            float particleState = aState[0];
             float particleAge = aState[1];
+            vec3 home = vec3(aState[2], aState[3], aState[0]);
+            if (home.z > -near || home.z < -far) {
+                home.z = position.z;
+            }
+            float absoluteDriftX = position.x;
+            float absoluteDriftY = position.y;
+            bool driftAbsolute = false;
 
             vec4 bounds = calculateVisibleDimensions(uProjectionMatrix, -position.z);
             float boundLeft = bounds[0];
@@ -268,16 +316,18 @@ class WebGLParticleSystem {
                     position.z += (target.z - position.z) * (0.012 + 0.03 * influence);
                 }
 
-                particleState = 0.0;
             } else if (uOrbit) {
                 vec3 target = vec3(uTargetPoint.x, uTargetPoint.y, uTargetPoint.z);
                 float targetRadius = max(0.02, uTargetPoint.w);
                 float fieldRadius = max(targetRadius, uOrbitFieldRadius);
+                // Orbit reach is evaluated in XY so depth variation doesn't disqualify most particles.
+                float homeDistanceToTarget = length(home.xy - target.xy);
+                bool orbitEligible = homeDistanceToTarget <= fieldRadius;
 
                 vec3 rel = position - target;
                 float d = length(rel);
 
-                if (d <= fieldRadius) {
+                if (orbitEligible) {
                     if (d < 0.0001) {
                         float a = float(index) * 12.9898;
                         rel = normalize(vec3(
@@ -323,15 +373,49 @@ class WebGLParticleSystem {
                     float ringLock = 1.0 - clamp(abs(desiredRadius - targetRadius) / (targetRadius * 8.0), 0.0, 1.0);
                     position += tangent * orbitSpeed * (0.2 + 0.8 * ringLock) * max(0.0, fieldInfluence);
 
-                    particleState = 1.0;
                 } else {
-                    particleState = 0.0;
+                    // Outside orbit reach (based on original/home position), ease back home.
+                    vec3 toHome = home - position;
+                    float homeDistance = length(toHome);
+                    if (homeDistance > 0.0001) {
+                        float homeLerp = 1.0 - exp(-max(0.0, delta) * 5.0);
+                        homeLerp = clamp(homeLerp, 0.0, 0.2);
+                        position += toHome * homeLerp;
+                    }
+                    float settle = clamp(delta * 8.0, 0.0, 1.0);
+                    velocity *= (1.0 - settle);
                 }
             } else {
+                // Orbit is off: settle particles back toward home.
+                vec3 toHome = home - position;
+                float homeDistance = length(toHome);
+                if (homeDistance > 0.0001) {
+                    float homeLerp = 1.0 - exp(-max(0.0, delta) * 6.0);
+                    homeLerp = clamp(homeLerp, 0.0, 0.25);
+                    position += toHome * homeLerp;
+                }
+                float settle = clamp(delta * 10.0, 0.0, 1.0);
+                velocity *= (1.0 - settle);
+
                 float driftSeed = float(index) * 0.013;
-                float drift = 0.0012 * uMotion.x;
-                position.x += sin(time * 0.9 + driftSeed) * drift;
-                position.y += cos(time * 0.8 + driftSeed * 1.7) * drift;
+                float drift = 0.0045 * uMotion.x;
+                float driftSpeed = max(0.0, uDriftSpeed);
+                float driftTime = time * max(0.001, driftSpeed);
+                float driftAmount = drift * step(0.0001, driftSpeed);
+                float wobbleX = sin(driftTime * 1.9 + driftSeed) + sin(driftTime * 0.63 + driftSeed * 2.3) * 0.45;
+                float wobbleY = cos(driftTime * 1.7 + driftSeed * 1.7) + cos(driftTime * 0.57 + driftSeed * 2.9) * 0.45;
+                if (uDriftMode >= 0.5) {
+                    // Absolute: oscillate around the particle's anchor (starting XY).
+                    absoluteDriftX = home.x + wobbleX * driftAmount;
+                    absoluteDriftY = home.y + wobbleY * driftAmount;
+                    position.x = absoluteDriftX;
+                    position.y = absoluteDriftY;
+                    driftAbsolute = true;
+                } else {
+                    // Relative: accumulate from current position.
+                    position.x += wobbleX * driftAmount;
+                    position.y += wobbleY * driftAmount;
+                }
             }
 
             if (position.x < boundLeft) position.x = boundRight;
@@ -345,11 +429,20 @@ class WebGLParticleSystem {
             velocity += uGravity * delta;
             float damp = clamp(uFriction * delta, 0.0, 1.0);
             velocity = velocity * (1.0 - damp);
+            if (driftAbsolute) {
+                // Keep absolute drift centered on anchor in XY.
+                velocity.x = 0.0;
+                velocity.y = 0.0;
+            }
             position += velocity * delta;
+            if (driftAbsolute) {
+                position.x = absoluteDriftX;
+                position.y = absoluteDriftY;
+            }
 
             aPositionOut = position;
             aVelocityOut = velocity;
-            aStateOut = vec4(particleState, particleAge + delta, 0.0, 0.0);
+            aStateOut = vec4(home.z, particleAge + delta, home.x, home.y);
             aColorOut = aColor;
         `);
 
@@ -419,11 +512,39 @@ class WebGLParticleSystem {
     }
 
     /**
+     * Stores each active particle's home position in state channels used by the shader.
+     * Encoding: state.x = home.z, state.z = home.x, state.w = home.y.
+     *
+     * @private
+     */
+    _refreshHomeStateFromDestinations() {
+        if (!this.particles?.states || !this.particles?.destinations || !this.particles?.positions) return;
+        const count = Math.max(0, Math.min(this.maxParticles, this.particles.count || 0));
+        for (let i = 0; i < count; i += 1) {
+            const i3 = i * 3;
+            const i4 = i * 4;
+            const homeX = Number.isFinite(this.particles.destinations[i3])
+                ? this.particles.destinations[i3]
+                : this.particles.positions[i3];
+            const homeY = Number.isFinite(this.particles.destinations[i3 + 1])
+                ? this.particles.destinations[i3 + 1]
+                : this.particles.positions[i3 + 1];
+            const homeZ = Number.isFinite(this.particles.destinations[i3 + 2])
+                ? this.particles.destinations[i3 + 2]
+                : this.particles.positions[i3 + 2];
+            this.particles.states[i4] = homeZ;
+            this.particles.states[i4 + 2] = homeX;
+            this.particles.states[i4 + 3] = homeY;
+        }
+    }
+
+    /**
      * Syncs current CPU particle data into GPU simulation buffers.
      *
      * @private
      */
     _syncStageFromParticles() {
+        this._refreshHomeStateFromDestinations();
         this._syncFeedbackVariable(this.feedbackPosition, this.particles.positions);
         this._syncFeedbackVariable(this.feedbackVelocity, this.particles.velocities);
         this._syncFeedbackVariable(this.feedbackState, this.particles.states);
@@ -431,6 +552,16 @@ class WebGLParticleSystem {
         if (this.feedback) {
             this.feedback.points = Math.max(0, Math.min(this.maxParticles, this.particles.count || 0));
         }
+    }
+
+    /**
+     * Refreshes and uploads only encoded home state channels.
+     *
+     * @private
+     */
+    _syncHomeState() {
+        this._refreshHomeStateFromDestinations();
+        this._syncFeedbackVariable(this.feedbackState, this.particles.states);
     }
 
     /**
@@ -447,6 +578,32 @@ class WebGLParticleSystem {
      */
     setFriction(value) {
         if (this.uFriction) this.uFriction.value = Number(value) || 0;
+    }
+
+    /**
+     * Sets a single default particle color.
+     * Also updates particle state defaults used by rebuilds/masks in non-preserve mode.
+     *
+     * @param {string|number[]|Float32Array} color
+     */
+    setParticleColor(color) {
+        const resolved = normalizeColorInput(color);
+        if (!resolved || !this.particles?.colors) return;
+
+        if (typeof this.particles.setStateDefaults === "function") {
+            this.particles.setStateDefaults({ color: resolved.slice() });
+        }
+
+        const count = Math.max(0, Math.min(this.maxParticles, this.particles.count || 0));
+        for (let i = 0; i < count; i += 1) {
+            const i4 = i * 4;
+            this.particles.colors[i4] = resolved[0];
+            this.particles.colors[i4 + 1] = resolved[1];
+            this.particles.colors[i4 + 2] = resolved[2];
+            this.particles.colors[i4 + 3] = resolved[3];
+        }
+
+        this._syncFeedbackVariable(this.feedbackColor, this.particles.colors);
     }
 
     /**
@@ -507,12 +664,14 @@ class WebGLParticleSystem {
      *   buildOptions?:object,
      *   contentBox?:{width?:number,height?:number},
      *   preserveColor?:boolean,
+     *   particleGap?:number,
      *   position?:{x?:number,y?:number,z?:number},
      *   alphaThreshold?:number
      * }} [options={}]
      * @returns {Promise<{maskIndex:number,count:number}>}
      */
     async loadMask(source, options = {}) {
+        console.log("loadMask", source, options);
         const { apply = true, buildOptions = {}, ...maskOptions } = options;
         if (!source || !this.particles?.loadMask) {
             return { maskIndex: -1, count: this.particles?.count || 0 };
@@ -623,6 +782,7 @@ class WebGLParticleSystem {
         }
         this.orbit.value = enabled ? 1 : 0;
         if (enabled) this.repel.value = 0;
+        this._syncHomeState();
     }
 
     /**
@@ -644,6 +804,7 @@ class WebGLParticleSystem {
         }
         this.repel.value = enabled ? 1 : 0;
         if (enabled) this.orbit.value = 0;
+        this._syncHomeState();
     }
 
     /**
@@ -669,10 +830,17 @@ class WebGLParticleSystem {
     /**
      * Applies motion multiplier values.
      *
-     * @param {{drift?:number,orbitSpeed?:number,repelStrength?:number,orbitPull?:number}} [config={}]
+     * @param {{drift?:number,driftSpeed?:number,driftType?:"relative"|"absolute",orbitSpeed?:number,repelStrength?:number,orbitPull?:number}} [config={}]
      */
     setMotion(config = {}) {
-        if (config.drift !== undefined) this.driftScale = Math.max(0, Number(config.drift) || 0);
+        if (config.drift !== undefined) this.driftScale = Math.min(1, Math.max(0, Number(config.drift) || 0));
+        if (config.driftSpeed !== undefined) this.driftSpeedScale = Math.max(0, Number(config.driftSpeed) || 0);
+        if (config.driftType !== undefined) {
+            const nextType = String(config.driftType || "")
+                .trim()
+                .toLowerCase();
+            this.driftType = nextType === "absolute" ? "absolute" : "relative";
+        }
         if (config.orbitSpeed !== undefined) this.orbitSpeedScale = Math.max(0, Number(config.orbitSpeed) || 0);
         if (config.repelStrength !== undefined)
             this.repelStrengthScale = Math.max(0, Number(config.repelStrength) || 0);
@@ -857,6 +1025,8 @@ class WebGLParticleSystem {
                 Number(this.repelStrengthScale) || 0,
                 Number(this.orbitPullScale) || 0
             ];
+            if (this.uDriftSpeed) this.uDriftSpeed.value = Number(this.driftSpeedScale) || 0;
+            if (this.uDriftMode) this.uDriftMode.value = this.driftType === "absolute" ? 1 : 0;
             const orbitRadius = Math.max(0.0001, Number(this.orbitPoint[3]) || 0.4);
             const repelRadius = Math.max(0.0001, Number(this.repelPoint[3]) || 0.4);
             const orbitFieldRadius =

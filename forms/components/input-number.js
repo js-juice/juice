@@ -1,8 +1,14 @@
 import InputComponent from "./input-component.js";
 
 class InputNumber extends InputComponent {
+    static get observedAttributes() {
+        return [...super.observedAttributes.filter((name) => name !== "type"), "units", "step", "decimals"];
+    }
     constructor() {
-        super({ _layout: "label:input:>:div.stepers:>:div.step.up:div.step.down:<:native:status:<:validation" });
+        super({
+            _layout: "label:input:>:div.stepers:>:div.step.up:div.step.down:<:native:div.units:status:<:validation"
+        });
+
         this.inputType = "number";
     }
 
@@ -15,6 +21,15 @@ class InputNumber extends InputComponent {
                 margin: "var(--input-padding)",
                 width: "100%",
                 boxSizing: "border-box"
+            },
+            ".units": {
+                lineHeight: "var(--input-height)",
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis"
+            },
+            ".units > div": {
+                margin: "auto",
+                padding: "0 0.2em"
             },
             ".stepers": {
                 display: "flex",
@@ -69,21 +84,29 @@ class InputNumber extends InputComponent {
     connectedCallback() {
         super.connectedCallback();
         this._bindStepers();
+        if (this.hasAttribute("units")) {
+            const unit = this.getAttribute("units");
+            //this._wireframe["div.units"].style.width = `${unit.length * 4}ch`; // unit.length
+            this._wireframe["div.units"].innerHTML = `<div>${unit}</div>`; // this.getAttribute("units");
+        }
     }
 
     _createNativeControl() {
         const input = document.createElement("input");
         input.type = "text";
         input.autocomplete = "off";
+        input.inputMode = "decimal";
         input.classList.add("native");
         return input;
     }
 
     _stepValue(step) {
-        const newValue = Number(this._dom.native.value) + step;
+        const current = Number(this._dom.native.value);
+        const base = Number.isFinite(current) ? current : 0;
+        const newValue = base + step;
         this._dom.native.value = newValue;
-        this.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
-        this.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+        this._dom.native.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+        this._dom.native.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
     }
 
     _bindStepers() {

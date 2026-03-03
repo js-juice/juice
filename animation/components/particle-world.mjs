@@ -308,6 +308,7 @@ class ParticleWorldComponent extends Component.HTMLElement {
      *   buildOptions?:object,
      *   contentBox?:{width?:number,height?:number},
      *   preserveColor?:boolean,
+     *   particleGap?:number,
      *   position?:{x?:number,y?:number,z?:number},
      *   alphaThreshold?:number
      * }} [options={}]
@@ -329,6 +330,7 @@ class ParticleWorldComponent extends Component.HTMLElement {
      *   buildOptions?:object,
      *   contentBox?:{width?:number,height?:number},
      *   preserveColor?:boolean,
+     *   particleGap?:number,
      *   position?:{x?:number,y?:number,z?:number},
      *   alphaThreshold?:number
      * }} [options={}]
@@ -373,6 +375,17 @@ class ParticleWorldComponent extends Component.HTMLElement {
         const viewer = this.getViewer();
         if (!viewer?.setValue) return;
         viewer.setValue(name, value);
+    }
+
+    /**
+     * Sets a single default particle color for active particles and future rebuilds.
+     *
+     * @param {string|number[]|Float32Array} color
+     */
+    setParticleColor(color) {
+        const viewer = this.getViewer();
+        if (!viewer?.setParticleColor) return;
+        viewer.setParticleColor(color);
     }
 
     /**
@@ -427,7 +440,7 @@ class ParticleWorldComponent extends Component.HTMLElement {
     /**
      * Applies motion multipliers to particle simulation.
      *
-     * @param {{drift?:number,orbitSpeed?:number,repelStrength?:number,orbitPull?:number}} [config={}]
+     * @param {{drift?:number,driftSpeed?:number,driftType?:"relative"|"absolute",orbitSpeed?:number,repelStrength?:number,orbitPull?:number}} [config={}]
      */
     setMotion(config = {}) {
         const viewer = this.getViewer();
@@ -528,6 +541,8 @@ class ParticleWorldComponent extends Component.HTMLElement {
      *
      * Supported keys:
      * - `drift`
+     * - `driftSpeed`
+     * - `driftType` (`relative` uses current position, `absolute` uses starting position)
      * - `orbitSpeed`
      * - `orbitPull`
      * - `repelStrength`

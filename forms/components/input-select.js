@@ -134,6 +134,9 @@ class InputSelect extends InputComponent {
             ".select-options.open": {
                 display: "block"
             },
+            ".select-options.above": {
+                bottom: "var(--input-height)"
+            },
             ".select-options li": {
                 color: "#333333",
                 padding: "0.3rem 0.45rem",
@@ -355,7 +358,7 @@ class InputSelect extends InputComponent {
         } else {
             this._optionList.style.maxHeight = `${topSpace - 50}px`;
             this._optionList.style.top = "auto";
-            this._optionList.style.bottom = "100%";
+            this._optionList.style.bottom = "var(--input-height)";
         }
 
         console.log(rect, viewportHeight, listRect);

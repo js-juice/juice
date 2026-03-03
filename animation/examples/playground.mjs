@@ -318,13 +318,72 @@ function splitFooterDrawerSections(footerRaw) {
     const template = document.createElement("template");
     template.innerHTML = footerText;
     const fragment = template.content;
-    const maskSection = fragment.querySelector(".controls-mask");
-    const maskHtml = maskSection ? maskSection.outerHTML : "";
-    if (maskSection) maskSection.remove();
+    const maskSections = Array.from(fragment.querySelectorAll(".controls-mask"));
+    let maskHtml = "";
+    for (let i = 0; i < maskSections.length; i += 1) {
+        const section = maskSections[i];
+        const hasControls = Boolean(section.querySelector("#mask-src") || section.querySelector("input-fieldset"));
+        if (hasControls) {
+            maskHtml = section.outerHTML;
+            break;
+        }
+    }
+    if (!maskHtml && maskSections.length > 0) {
+        maskHtml = maskSections[0].outerHTML;
+    }
+    for (let i = 0; i < maskSections.length; i += 1) {
+        maskSections[i].remove();
+    }
     return {
         controlsHtml: String(fragment.innerHTML || "").trim(),
         maskHtml: String(maskHtml || "").trim()
     };
+}
+
+function sanitizeMaskMarkup(markup) {
+    const text = typeof markup === "string" ? markup : String(markup ?? "");
+    if (!text.trim().length) return "";
+    const template = document.createElement("template");
+    template.innerHTML = text;
+    const fragment = template.content;
+
+    const maskSections = Array.from(fragment.querySelectorAll(".controls-mask"));
+    let selectedMask = null;
+    for (let i = 0; i < maskSections.length; i += 1) {
+        const section = maskSections[i];
+        const hasControls = Boolean(
+            section.querySelector("#mask-src") ||
+                section.querySelector("#mask-fieldsets") ||
+                section.querySelector("input-fieldset")
+        );
+        if (hasControls) {
+            selectedMask = section;
+            break;
+        }
+    }
+    if (!selectedMask && maskSections.length > 0) selectedMask = maskSections[0];
+
+    for (let i = 0; i < maskSections.length; i += 1) {
+        if (maskSections[i] !== selectedMask) maskSections[i].remove();
+    }
+
+    const rootMask = selectedMask || fragment.querySelector(".controls-mask");
+    if (rootMask) {
+        const addButtons = Array.from(rootMask.querySelectorAll("#add-mask"));
+        for (let i = 1; i < addButtons.length; i += 1) {
+            addButtons[i].remove();
+        }
+
+        const maskFieldsetsContainer = rootMask.querySelector("#mask-fieldsets");
+        if (maskFieldsetsContainer) {
+            const fieldsets = Array.from(maskFieldsetsContainer.querySelectorAll("input-fieldset, .mask-fieldset"));
+            for (let i = 1; i < fieldsets.length; i += 1) {
+                fieldsets[i].remove();
+            }
+        }
+    }
+
+    return String(fragment.innerHTML || "").trim();
 }
 
 function pathLanguage(path) {
@@ -352,7 +411,6 @@ function getPreviewUi() {
         controlsCloseEl: doc.getElementById("preview-controls-close"),
         footerEl: doc.querySelector("#root > footer"),
         infoReadoutEl: doc.getElementById("preview-info-readout"),
-        componentButtonsEl: doc.getElementById("preview-component-buttons"),
         inspectorOverlayEl: doc.getElementById("preview-component-inspector-overlay"),
         inspectorTitleEl: doc.getElementById("preview-component-inspector-title"),
         inspectorSubtitleEl: doc.getElementById("preview-component-inspector-subtitle"),
@@ -654,17 +712,18 @@ function getComponentSelection() {
 }
 
 function renderComponentButtons() {
+    const host = document.querySelector('.tab-content[data-tab="controls"] #playground-component-buttons');
+    if (!host) return;
     const ui = getPreviewUi();
-    if (!ui?.componentButtonsEl || !ui.doc) return;
-    const { doc, componentButtonsEl, inspectorOverlayEl } = ui;
-    componentButtonsEl.innerHTML = "";
+    const inspectorOverlayEl = ui?.inspectorOverlayEl;
+    host.innerHTML = "";
 
     if (!sceneComponents.length) {
-        const empty = doc.createElement("span");
+        const empty = document.createElement("span");
         empty.textContent = "No animation components";
         empty.style.fontSize = "12px";
         empty.style.opacity = "0.75";
-        componentButtonsEl.appendChild(empty);
+        host.appendChild(empty);
         return;
     }
 
@@ -678,7 +737,7 @@ function renderComponentButtons() {
     for (let i = 0; i < tags.length; i += 1) {
         const tag = tags[i];
         const count = counts.get(tag) || 1;
-        const button = doc.createElement("button");
+        const button = document.createElement("button");
         button.type = "button";
         button.className = "playground-header-btn";
         button.textContent = count > 1 ? `${tag} (${count})` : tag;
@@ -687,7 +746,7 @@ function renderComponentButtons() {
         button.addEventListener("click", () => {
             openComponentInspector(tag);
         });
-        componentButtonsEl.appendChild(button);
+        host.appendChild(button);
     }
 }
 
@@ -852,7 +911,7 @@ function renderComponentInspector() {
     if (!selectedComponentTag) {
         inspectorTitleEl.textContent = "Component Inspector";
         inspectorSubtitleEl.textContent = "";
-        inspectorBodyEl.innerHTML = "<p>Select a component tag from the header.</p>";
+        inspectorBodyEl.innerHTML = "<p>Select a component tag from the Controls tab.</p>";
         return;
     }
 
@@ -1209,13 +1268,17 @@ function buildComposedDocument(resolved) {
     const drawerSections = useControlsDrawer ? splitFooterDrawerSections(footerRaw) : null;
     const splitControlsMarkup = useControlsDrawer ? String(drawerSections?.controlsHtml || "").trim() : "";
     const splitMaskMarkup = useControlsDrawer ? String(drawerSections?.maskHtml || "").trim() : "";
-    const hasMaskDrawer = useControlsDrawer && splitMaskMarkup.length > 0;
+    const hasMaskDrawer = useControlsDrawer;
     const controlsDrawerMarkup = useControlsDrawer
         ? splitControlsMarkup.length > 0
             ? splitControlsMarkup
             : footerRaw
         : footerRaw;
-    const maskDrawerMarkup = hasMaskDrawer ? splitMaskMarkup : "";
+    const maskDrawerMarkup = hasMaskDrawer
+        ? splitMaskMarkup.length > 0
+            ? sanitizeMaskMarkup(splitMaskMarkup)
+            : '<div class="controls-mask" data-mask-placeholder="true"></div>'
+        : "";
     const footerMarkup = hasFooterControls ? `<div id="controls">${controlsDrawerMarkup}</div>` : "";
     const maskMarkup = hasMaskDrawer ? `<div id="mask-controls" class="drawer-panel">${maskDrawerMarkup}</div>` : "";
     const footerClass = useControlsDrawer ? ` class="has-controls${hasMaskDrawer ? " has-mask" : ""}"` : "";
@@ -1264,10 +1327,9 @@ ${htmlBefore}
 <pre id="preview-info-readout">Loading runtime info...</pre>
 </div>
 </div>
-${useControlsDrawer ? '<button id="preview-controls-button" type="button" class="playground-header-btn" aria-expanded="false">Controls</button>' : ""}
-${hasMaskDrawer ? '<button id="preview-mask-button" type="button" class="playground-header-btn" aria-expanded="false">Load Mask</button>' : ""}
+
+
 </div>
-<div id="preview-component-buttons"></div>
 </header>
 <main>
 ${htmlMain}
@@ -1297,7 +1359,7 @@ ${scriptTags.join("\n")}
         entryAbs: new URL(htmlMainPath, location.href).href,
         doc,
         inlineModules,
-        controlsForTab: controlsDrawerMarkup,
+        controlsForTab: footerRaw,
         hasFooterControls
     };
 }
@@ -1399,6 +1461,306 @@ function showPreviewError(error) {
     preview.srcdoc = `<!doctype html><html><body style="margin:0;padding:12px;background:#1a0f0f;color:#ffd7d7;font:13px/1.4 monospace;"><h3 style="margin-top:0;">Preview Error</h3><pre>${message}</pre></body></html>`;
 }
 
+let controlsMirrorTimer = null;
+
+function isTimelineControlNode(node) {
+    if (!node || node.nodeType !== 1) return false;
+    const selector = ".timeline, .timeline-controls, #timeline, #timeline-controls, timeline-controls, timeline";
+    const matchesSelf = typeof node.matches === "function" && node.matches(selector);
+    const containsTimeline =
+        matchesSelf || (typeof node.querySelector === "function" && node.querySelector(selector) !== null);
+    return (
+        (node.classList && (node.classList.contains("timeline") || node.classList.contains("timeline-controls"))) ||
+        node.id === "timeline" ||
+        node.id === "timeline-controls" ||
+        containsTimeline
+    );
+}
+
+function hideRelocatedPreviewControls() {
+    const previewDoc = preview?.contentDocument;
+    if (!previewDoc) return;
+    const footer = previewDoc.querySelector("#root > footer");
+    if (!footer) return;
+
+    const containers = [footer.querySelector("#controls"), footer.querySelector("#mask-controls")].filter(Boolean);
+    for (let i = 0; i < containers.length; i += 1) {
+        const container = containers[i];
+        const children = Array.from(container.children);
+        for (let c = 0; c < children.length; c += 1) {
+            const child = children[c];
+            if (container.id === "controls" && isTimelineControlNode(child)) continue;
+            child.style.display = "none";
+            child.setAttribute("data-playground-relocated", "true");
+        }
+    }
+}
+
+function getMirrorControlType(node) {
+    if (!node) return "";
+    const attrType = typeof node.getAttribute === "function" ? node.getAttribute("type") : "";
+    return String(attrType || node.type || "").toLowerCase();
+}
+
+function isMirrorFileInput(node) {
+    const tag = String(node?.tagName || "").toLowerCase();
+    return tag === "input" && getMirrorControlType(node) === "file";
+}
+
+function isMirrorCheckable(node) {
+    const type = getMirrorControlType(node);
+    if (type === "checkbox" || type === "radio") return true;
+    const tag = String(node?.tagName || "").toLowerCase();
+    if ((tag === "input-checkbox" || tag === "input-radio") && typeof node?.checked === "boolean") return true;
+    return false;
+}
+
+function hasMirrorValue(node) {
+    return !!node && typeof node.value !== "undefined";
+}
+
+function getMirrorMaskSuffix(id = "") {
+    const match = String(id).match(/^mask-file(.*)$/);
+    return match ? match[1] : "";
+}
+
+function syncControlsMirrorToPreview() {
+    const previewDoc = preview?.contentDocument;
+    if (!previewDoc) return;
+    const controlsTab = document.querySelector('.tab-content[data-tab="controls"]');
+    if (!controlsTab) return;
+    const clones = controlsTab.querySelectorAll("#playground-tab-controls [id]");
+    for (let i = 0; i < clones.length; i += 1) {
+        const clone = clones[i];
+        const original = previewDoc.getElementById(clone.id);
+        if (!original) continue;
+        const tag = (clone.tagName || "").toLowerCase();
+        if (tag === "input-button") {
+            const originalLabel =
+                typeof original.getAttribute === "function" ? original.getAttribute("label") : null;
+            if (originalLabel !== null && typeof clone.setAttribute === "function") {
+                clone.setAttribute("label", originalLabel);
+            }
+            continue;
+        }
+        const isPlainTextDiv =
+            tag === "div" &&
+            clone.childElementCount === 0 &&
+            original.childElementCount === 0 &&
+            !clone.querySelector("*") &&
+            !original.querySelector("*");
+        if (tag === "button" || tag === "span" || isPlainTextDiv) {
+            clone.textContent = original.textContent || "";
+            continue;
+        }
+
+        if (isMirrorFileInput(clone)) {
+            // Browsers block programmatic file value assignment.
+            continue;
+        }
+
+        if (isMirrorCheckable(clone) && typeof clone.checked !== "undefined" && typeof original.checked !== "undefined") {
+            clone.checked = !!original.checked;
+            continue;
+        }
+
+        if (hasMirrorValue(clone) && hasMirrorValue(original)) {
+            clone.value = original.value;
+            continue;
+        }
+
+        if (tag === "input") {
+            const type = getMirrorControlType(clone);
+            if (type === "checkbox" || type === "radio") {
+                clone.checked = !!original.checked;
+            } else if (typeof original.value !== "undefined") {
+                clone.value = original.value;
+            }
+        } else if (tag === "select" || tag === "textarea" || hasMirrorValue(clone)) {
+            if (typeof original.value !== "undefined") clone.value = original.value;
+        }
+    }
+}
+
+function bindControlsMirror() {
+    clearInterval(controlsMirrorTimer);
+    const previewDoc = preview?.contentDocument;
+    if (!previewDoc) return;
+    const controlsTab = document.querySelector('.tab-content[data-tab="controls"]');
+    if (!controlsTab) return;
+
+    if (!controlsTab.__playgroundControlsMirrorBound) {
+        const collectOriginalsById = (doc, id) => {
+            if (!doc || !id) return [];
+            const nodes = doc.querySelectorAll("[id]");
+            const matches = [];
+            for (let i = 0; i < nodes.length; i += 1) {
+                const node = nodes[i];
+                if (node.id === id) matches.push(node);
+            }
+            return matches;
+        };
+
+        const resolvePair = (eventTarget) => {
+            const clone = eventTarget?.closest?.("#playground-tab-controls [id]");
+            if (!clone) return null;
+            const doc = preview?.contentDocument;
+            if (!doc) return null;
+            const originals = collectOriginalsById(doc, clone.id);
+            if (!originals.length) return null;
+            const original = originals[originals.length - 1];
+            return { clone, original, originals, doc };
+        };
+
+        controlsTab.addEventListener("click", (event) => {
+            const pair = resolvePair(event.target);
+            if (!pair) return;
+            const { clone, original, originals } = pair;
+            const tag = (clone.tagName || "").toLowerCase();
+            const type = getMirrorControlType(clone);
+
+            if (tag === "button" || tag === "input-button") {
+                event.preventDefault();
+                const browseMatch = String(clone.id || "").match(/^browse-mask(.*)$/);
+                if (browseMatch) {
+                    const suffix = browseMatch[1] || "";
+                    const cloneFileInput = controlsTab.querySelector(`#playground-tab-controls #mask-file${suffix}`);
+                    if (cloneFileInput && typeof cloneFileInput.click === "function") {
+                        cloneFileInput.value = "";
+                        cloneFileInput.click();
+                        return;
+                    }
+                }
+                for (let i = 0; i < originals.length; i += 1) {
+                    const node = originals[i];
+                    if (typeof node.click === "function") node.click();
+                    else node.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+                }
+                return;
+            }
+
+            if (isMirrorCheckable(clone)) {
+                for (let i = 0; i < originals.length; i += 1) {
+                    const node = originals[i];
+                    if (typeof node.checked === "undefined") continue;
+                    node.checked = !!clone.checked;
+                    node.dispatchEvent(new Event("change", { bubbles: true }));
+                }
+            }
+        });
+
+        const forwardValueEvent = (eventName) => (event) => {
+            const pair = resolvePair(event.target);
+            if (!pair) return;
+            const { clone, original, originals, doc } = pair;
+            if (isMirrorFileInput(clone)) {
+                if (eventName !== "change") return;
+                const file = clone.files?.[0];
+                const suffix = getMirrorMaskSuffix(clone.id);
+                const sourceId = `mask-src${suffix}`;
+                const fileNameId = `mask-file-name${suffix}`;
+                const applyId = `apply-mask${suffix}`;
+                const sourceOriginals = collectOriginalsById(doc, sourceId);
+                const fileNameOriginals = collectOriginalsById(doc, fileNameId);
+                const applyOriginals = collectOriginalsById(doc, applyId);
+                const sourceClone = controlsTab.querySelector(`#playground-tab-controls #${sourceId}`);
+                const fileNameClone = controlsTab.querySelector(`#playground-tab-controls #${fileNameId}`);
+
+                const setFileName = (name) => {
+                    const next = name || "No file selected";
+                    for (let i = 0; i < fileNameOriginals.length; i += 1) {
+                        fileNameOriginals[i].textContent = next;
+                    }
+                    if (fileNameClone) fileNameClone.textContent = next;
+                };
+
+                if (!file) {
+                    setFileName("No file selected");
+                    return;
+                }
+
+                setFileName(file.name || "No file selected");
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const dataUrl = typeof reader.result === "string" ? reader.result : "";
+                    if (!dataUrl) return;
+                    for (let i = 0; i < sourceOriginals.length; i += 1) {
+                        const sourceOriginal = sourceOriginals[i];
+                        sourceOriginal.value = dataUrl;
+                        if (typeof sourceOriginal.setAttribute === "function") {
+                            sourceOriginal.setAttribute("value", dataUrl);
+                        }
+                        sourceOriginal.dispatchEvent(new Event("input", { bubbles: true }));
+                        sourceOriginal.dispatchEvent(new Event("change", { bubbles: true }));
+                    }
+                    if (sourceClone) {
+                        sourceClone.value = dataUrl;
+                        if (typeof sourceClone.setAttribute === "function") {
+                            sourceClone.setAttribute("value", dataUrl);
+                        }
+                    }
+                    for (let i = 0; i < applyOriginals.length; i += 1) {
+                        const applyOriginal = applyOriginals[i];
+                        if (typeof applyOriginal?.click === "function") {
+                            applyOriginal.click();
+                        }
+                    }
+                    syncControlsMirrorToPreview();
+                };
+                reader.readAsDataURL(file);
+                return;
+            }
+
+            if (isMirrorCheckable(clone)) {
+                for (let i = 0; i < originals.length; i += 1) {
+                    const node = originals[i];
+                    if (typeof node.checked === "undefined") continue;
+                    node.checked = !!clone.checked;
+                    node.dispatchEvent(new Event(eventName, { bubbles: true }));
+                }
+            } else if (hasMirrorValue(clone)) {
+                for (let i = 0; i < originals.length; i += 1) {
+                    const node = originals[i];
+                    if (!hasMirrorValue(node)) continue;
+                    node.value = clone.value;
+                    node.dispatchEvent(new Event(eventName, { bubbles: true }));
+                }
+            } else {
+                return;
+            }
+        };
+
+        controlsTab.addEventListener("input", forwardValueEvent("input"));
+        controlsTab.addEventListener("change", forwardValueEvent("change"));
+        controlsTab.addEventListener("keydown", (event) => {
+            if (event.key !== "Enter") return;
+            const pair = resolvePair(event.target);
+            if (!pair) return;
+            const { clone, originals } = pair;
+            if (isMirrorFileInput(clone)) return;
+            for (let i = 0; i < originals.length; i += 1) {
+                const original = originals[i];
+                if (hasMirrorValue(clone) && hasMirrorValue(original)) {
+                    original.value = clone.value;
+                }
+                original.dispatchEvent(
+                    new KeyboardEvent("keydown", {
+                        key: "Enter",
+                        code: "Enter",
+                        bubbles: true,
+                        cancelable: true
+                    })
+                );
+            }
+        });
+
+        controlsTab.__playgroundControlsMirrorBound = true;
+    }
+
+    hideRelocatedPreviewControls();
+    syncControlsMirrorToPreview();
+}
+
 function renderPreview() {
     const resolved = resolvedBySet.get(currentSetId);
     if (!resolved) return;
@@ -1408,84 +1770,33 @@ function renderPreview() {
         setControlsPanelOpen(false);
         closeComponentInspector();
         const composed = buildComposedDocument(resolved);
-        // If the example provides footer controls, move them into the editor Controls tab
+        // If the example provides footer controls, clone non-timeline controls into the editor Controls tab.
         try {
-            // Move non-standard footer controls into the outer Controls tab,
-            // but keep standard timeline/player/footer elements in the preview.
             if (composed.hasFooterControls && typeof setTabContent === "function") {
-                // Split provided controls markup: keep standard '.controls' and '.readout' elements in the preview footer
-                // and move any other control blocks into the Controls tab.
                 const tpl = document.createElement("template");
                 tpl.innerHTML = composed.controlsForTab || "";
                 const frag = tpl.content;
-                const keepNodes = [];
                 const moveNodes = [];
                 Array.from(frag.childNodes).forEach((node) => {
                     if (node.nodeType !== 1) return; // ignore text/comments
-                    const cls = node.classList || null;
-                    const selector =
-                        ".timeline, .timeline-controls, #timeline, #timeline-controls, .controls, .readout, .controls-config, timeline-controls, timeline";
-                    const matchesSelf = node.matches && node.matches(selector);
-                    const containsTimeline =
-                        matchesSelf ||
-                        (node.querySelector &&
-                            node.querySelector(".timeline, .timeline-controls, #timeline, .controls") !== null);
-                    const keepCondition =
-                        (cls &&
-                            (cls.contains("controls") ||
-                                cls.contains("readout") ||
-                                cls.contains("controls-config") ||
-                                cls.contains("timeline") ||
-                                cls.contains("timeline-controls"))) ||
-                        node.id === "timeline" ||
-                        node.id === "timeline-controls" ||
-                        containsTimeline ||
-                        (node.querySelector && node.querySelector("[data-playground-keep-footer]"));
-                    if (keepCondition) {
-                        keepNodes.push(node.outerHTML);
-                    } else {
+                    if (!isTimelineControlNode(node)) {
                         moveNodes.push(node.outerHTML);
                     }
                 });
                 const controlsTabHtml = moveNodes.join("\n").trim();
-                const footerControlsHtml = keepNodes.join("\n").trim();
                 if (controlsTabHtml.length) {
-                    // Wrap moved controls in a Juice Forms container so component inputs
-                    // (input-text, input-select, etc.) are available. Also import the
-                    // Juice Forms runtime and call refresh so it enhances inserted markup.
-                    const wrapped =
-                        `<juice-forms><form id="playground-controls-form">${controlsTabHtml}</form></juice-forms>`;
-                    const script =
-                        `<script type="module">import('/forms/juice-forms.mjs').then(()=>{setTimeout(()=>{try{window.JUICE_FORMS&&window.JUICE_FORMS.refresh&&window.JUICE_FORMS.refresh();}catch(e){console.warn('JUICE_FORMS.refresh failed',e);}},50)}).catch(e=>console.warn('import juice-forms failed',e));<\/script>`;
-                    setTabContent("controls", wrapped + script);
+                    setTabContent("controls", `<section id="playground-tab-controls">${controlsTabHtml}</section>`);
                 } else if (typeof disableTab === "function") {
-                    // No extra controls -> disable the Controls tab
                     disableTab("controls");
                 }
-                else if (typeof disableTab === "function") disableTab("controls");
-                // Replace composed.controlsForTab with only the kept footer HTML for preview injection below
-                composed._footerControlsHtml = footerControlsHtml || "";
             } else if (typeof disableTab === "function") {
-                // no controls -> disable the controls tab
                 disableTab("controls");
             }
         } catch (_e) {
             // ignore errors manipulating outer UI
         }
         const finalHtml = rewriteHtml(composed.doc, composed.entryAbs, composed.inlineModules);
-        // When controls were provided, ensure only the standard footer parts remain in the preview.
-        let docToLoad = finalHtml;
-        if (composed.hasFooterControls) {
-            const footerKeep = composed._footerControlsHtml || "";
-            if (footerKeep.length) {
-                // Replace the #controls div content with the kept footer markup
-                docToLoad = finalHtml.replace(/(<div\s+id="controls"[^>]*>)[\s\S]*?(<\/div>)/i, `$1${footerKeep}$2`);
-            } else {
-                // remove the controls container entirely
-                docToLoad = finalHtml.replace(/<div\s+id="controls">[\s\S]*?<\/div>/i, "");
-            }
-        }
-        preview.srcdoc = docToLoad;
+        preview.srcdoc = finalHtml;
     } catch (error) {
         console.error(error);
         showPreviewError(error);
@@ -1499,6 +1810,7 @@ async function loadSet(setId) {
     selectedComponentPath = "";
     selectedComponentIndex = 0;
     clearTimeout(componentRefreshTimer);
+    clearInterval(controlsMirrorTimer);
     closeComponentInspector();
     setInfoPanelOpen(false);
     setControlsPanelOpen(false);
@@ -1622,27 +1934,12 @@ resetFilesButton?.addEventListener("click", () => {
 
 preview?.addEventListener("load", () => {
     bindPreviewChromeEvents();
+    hideRelocatedPreviewControls();
+    bindControlsMirror();
     refreshSceneComponents();
     refreshInfoReadout();
     if (selectedComponentTag) {
         renderComponentInspector();
-    }
-    // Auto-open controls for Particle World set so example footer controls are visible immediately.
-    try {
-        if (currentSetId === "particle_world") {
-            // Delay slightly to allow DOM composition inside the preview iframe.
-            setTimeout(() => {
-                try {
-                    setControlsPanelOpen(true);
-                    // If mask drawer exists, open mask panel too so mask UI is visible.
-                    setMaskPanelOpen(true);
-                } catch (_err) {
-                    // ignore failures
-                }
-            }, 120);
-        }
-    } catch (_e) {
-        // ignore
     }
 });
 

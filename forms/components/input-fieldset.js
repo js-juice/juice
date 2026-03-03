@@ -47,6 +47,7 @@ class InputFieldset extends HTMLElement {
         border: var(--input-border, 1px solid #c8c8c8);
         border-radius: 0.2rem;
         padding: 1rem;
+        padding-top: 0.5rem;
         }
 
         ::slotted(*) {

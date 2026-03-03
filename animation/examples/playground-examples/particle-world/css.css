@@ -28,6 +28,35 @@ particle-world {
     margin-bottom: 8px;
 }
 
+.controls-env {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 8px;
+    border: 1px solid #d2deef;
+    border-radius: 8px;
+    background: #f8fbff;
+}
+
+.controls-env h4 {
+    margin: 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #3b4a61;
+}
+
+.controls-env-row {
+    display: grid;
+    grid-template-columns: repeat(5, auto minmax(0, 1fr));
+    gap: 8px;
+    align-items: center;
+}
+
+.controls-env-row:last-child {
+    grid-template-columns: repeat(4, auto minmax(0, 1fr)) auto;
+}
+
 .controls-mask {
     display: grid;
     gap: 8px;
@@ -106,6 +135,7 @@ particle-world {
 }
 
 .controls-config input,
+.controls-env input,
 .controls-mask input,
 .controls-mask select {
     min-width: 0;
@@ -145,7 +175,13 @@ button {
     }
 
     .controls-config,
+    .controls-env,
     .controls-mask {
+        grid-template-columns: 1fr;
+    }
+
+    .controls-env-row,
+    .controls-env-row:last-child {
         grid-template-columns: 1fr;
     }
 

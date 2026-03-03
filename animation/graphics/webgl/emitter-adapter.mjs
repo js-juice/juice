@@ -146,10 +146,10 @@ export default class EmitterAdapter {
                         }
                         break;
                     case "states":
+                        data[cursor++] = pz;
                         data[cursor++] = 0;
-                        data[cursor++] = 0;
-                        data[cursor++] = Math.random();
-                        data[cursor++] = 0;
+                        data[cursor++] = px;
+                        data[cursor++] = py;
                         break;
                     case "sizes":
                         data[cursor++] = this.size;

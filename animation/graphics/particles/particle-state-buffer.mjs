@@ -602,6 +602,7 @@ class ParticleStateBuffer {
      * Loads an image and converts non-transparent pixels into normalized mask points.
      *
      * @param {string} source Image URL.
+     * @param {{preserveColor?:boolean,alphaThreshold?:number,contentBox?:object,position?:object,particleGap?:number,gap?:number}} [options={}]
      * @returns {Promise<number>} Mask index in `this.masks`.
      */
     loadMask(source, options = {}) {
@@ -623,9 +624,12 @@ class ParticleStateBuffer {
                 const mapped = [];
                 const preserveColor = options.preserveColor === true;
                 const alphaThreshold = Math.max(0, Math.min(255, Number(options.alphaThreshold) || 1));
+                const requestedGap = Number(options.particleGap ?? options.gap);
+                const particleGap = Number.isFinite(requestedGap) ? Math.max(0, Math.floor(requestedGap)) : 0;
+                const sampleStep = particleGap + 1;
                 // Iterate over every pixel
-                for (let y = 0; y < canvas.height; y++) {
-                    for (let x = 0; x < canvas.width; x++) {
+                for (let y = 0; y < canvas.height; y += sampleStep) {
+                    for (let x = 0; x < canvas.width; x += sampleStep) {
                         const index = (y * canvas.width + x) * 4; // Each pixel has 4 values (R, G, B, A)
                         // Check if the pixel is non-transparent (A > 0)
                         const alpha = pixels[index + 3];
@@ -685,7 +689,8 @@ class ParticleStateBuffer {
                             x: offsetX,
                             y: offsetY,
                             z: Number(position.z)
-                        }
+                        },
+                        particleGap
                     }
                 });
                 resolve(this.masks.length - 1);
@@ -759,6 +764,7 @@ class ParticleStateBuffer {
         const maskEntry = this._normalizeMaskEntry(this._resolveMask(maskIndex));
         const maskPoints = maskEntry.points;
         const maskColors = maskEntry.colors;
+        const keepMaskVelocity = options.keepMaskVelocity === true;
         const stateDefaults = {
             state: 0,
             age: 0,
@@ -846,14 +852,27 @@ class ParticleStateBuffer {
                 }
             }
 
-            this.states[i4] = Number(stateDefaults.state) || 0;
+            // Reserve state channels for home-position encoding used by GPU simulation.
+            // state.x = home.z, state.y = age, state.z = home.x, state.w = home.y.
+            this.states[i4] = this.positions[i3 + 2];
             this.states[i4 + 1] = Number(stateDefaults.age) || 0;
-            this.states[i4 + 2] = stateDefaults.random === null ? Math.random() : Number(stateDefaults.random) || 0;
-            this.states[i4 + 3] = 0;
+            this.states[i4 + 2] = this.positions[i3];
+            this.states[i4 + 3] = this.positions[i3 + 1];
 
-            this.velocities[i3] = randomBetween(-this.config.maxSpeed, this.config.maxSpeed);
-            this.velocities[i3 + 1] = randomBetween(-this.config.maxSpeed, this.config.maxSpeed);
-            this.velocities[i3 + 2] = 0;
+            if (maskPoints && !keepMaskVelocity) {
+                // Keep mask shapes stable unless explicitly opting into inherited/random velocity.
+                this.velocities[i3] = 0;
+                this.velocities[i3 + 1] = 0;
+                this.velocities[i3 + 2] = 0;
+            } else {
+                this.velocities[i3] = randomBetween(-this.config.maxSpeed, this.config.maxSpeed);
+                this.velocities[i3 + 1] = randomBetween(-this.config.maxSpeed, this.config.maxSpeed);
+                this.velocities[i3 + 2] = 0;
+            }
+            // "Home" for orbit eligibility/return behavior is the spawn position.
+            this.destinations[i3] = this.positions[i3];
+            this.destinations[i3 + 1] = this.positions[i3 + 1];
+            this.destinations[i3 + 2] = this.positions[i3 + 2];
             this.lifes[i] = Number(stateDefaults.life) || 0;
             this.colors[i4] = Number(stateDefaults.color?.[0] ?? 1);
             this.colors[i4 + 1] = Number(stateDefaults.color?.[1] ?? 1);
@@ -988,7 +1007,12 @@ class ParticleStateBuffer {
             this.velocities[i3] = -maxSpeed + 2 * maxSpeed * rng();
             this.velocities[i3 + 1] = -maxSpeed + 2 * maxSpeed * rng();
             this.velocities[i3 + 2] = -maxSpeed + 2 * maxSpeed * rng();
-            this.states[i4 + 2] = rng();
+            this.destinations[i3] = this.positions[i3];
+            this.destinations[i3 + 1] = this.positions[i3 + 1];
+            this.destinations[i3 + 2] = this.positions[i3 + 2];
+            this.states[i4] = this.positions[i3 + 2];
+            this.states[i4 + 2] = this.positions[i3];
+            this.states[i4 + 3] = this.positions[i3 + 1];
         }
 
         return this;
