@@ -25,6 +25,10 @@ class AnimationStats extends Component.HTMLElement {
         }
     };
 
+    /**
+     * Returns the current observed value.
+     * @returns {*} Current observed value.
+     */
     static get observed() {
         return {
             all: ["fps", "time", "inline"],
@@ -33,6 +37,11 @@ class AnimationStats extends Component.HTMLElement {
         };
     }
 
+    /**
+     * Executes html.
+     * @param {*} data - Parameter value.
+     * @returns {*} Result of html.
+     */
     static html(data = {}) {
         return `<ul id="list">
         <li>FPS: <span id="fps">0</span></li>
@@ -41,6 +50,10 @@ class AnimationStats extends Component.HTMLElement {
         </ul>`;
     }
 
+    /**
+     * Returns the current style value.
+     * @returns {*} Current style value.
+     */
     static get style() {
         return [
             {
@@ -94,6 +107,10 @@ class AnimationStats extends Component.HTMLElement {
         ];
     }
 
+    /**
+     * Returns the current styleUrls value.
+     * @returns {*} Current styleUrls value.
+     */
     static get styleUrls() {
         return [
             {
@@ -103,6 +120,10 @@ class AnimationStats extends Component.HTMLElement {
         ];
     }
 
+    /**
+     * Executes beforeCreate.
+     * @returns {*} Result of beforeCreate.
+     */
     beforeCreate() {
         this._lastSampleSeconds = Number.NEGATIVE_INFINITY;
         this._lastMemorySampleSeconds = Number.NEGATIVE_INFINITY;
@@ -112,6 +133,10 @@ class AnimationStats extends Component.HTMLElement {
         this.memoryInterval = 1;
     }
 
+    /**
+     * Handles firstconnect events.
+     * @returns {*} Result of onFirstConnect.
+     */
     onFirstConnect() {
         this._list = this.ref("list");
         this._nodes.fps = this.ref("fps");
@@ -122,12 +147,23 @@ class AnimationStats extends Component.HTMLElement {
         this.setStat("memory", "n/a");
     }
 
+    /**
+     * Executes shouldSample.
+     * @param {*} time - Parameter value.
+     * @returns {*} Result of shouldSample.
+     */
     shouldSample(time) {
         const seconds = Number(time?.seconds);
         if (!Number.isFinite(seconds)) return false;
         return seconds - this._lastSampleSeconds >= this.refreshInterval;
     }
 
+    /**
+     * Sets stat values.
+     * @param {*} key - Parameter value.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of setStat.
+     */
     setStat(key, value) {
         const normalized = String(value);
         if (this._values[key] === normalized) return false;
@@ -137,6 +173,12 @@ class AnimationStats extends Component.HTMLElement {
         return true;
     }
 
+    /**
+     * Executes addStat.
+     * @param {*} key - Parameter value.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of addStat.
+     */
     addStat(key, value) {
         if (!key) return;
         if (this._nodes[key]) {
@@ -171,6 +213,11 @@ class AnimationStats extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} time - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(time) {
         if (!this.shouldSample(time)) return false;
 

@@ -11,11 +11,20 @@ let playing = false;
 let direction = 1;
 let last = performance.now();
 
+/**
+ * Renders module output using the current state.
+ * @returns {*} Result of renderReadout.
+ */
 function renderReadout() {
     yawEl.textContent = Number(rocket.degrees || 0).toFixed(1);
     frameEl.textContent = String(rocket.frame || 0);
 }
 
+/**
+ * Executes tick.
+ * @param {*} now - Parameter value.
+ * @returns {*} Result of tick.
+ */
 function tick(now) {
     if (ready && playing && now - last >= 12) {
         last = now;

@@ -18,10 +18,23 @@ class GL {
         this._gl = null;
     }
 
+    /**
+     * Executes plane.
+     * @param {*} width - Parameter value.
+     * @param {*} height - Parameter value.
+     * @param {*} subdivisionsX - Parameter value.
+     * @param {*} subdivisionsY - Parameter value.
+     * @returns {*} Result of plane.
+     */
     plane(width, height, subdivisionsX, subdivisionsY) {
         return new Plane(width, height, subdivisionsX, subdivisionsY);
     }
 
+    /**
+     * Executes addPlane.
+     * @param {*} plane - Parameter value.
+     * @returns {*} Result of addPlane.
+     */
     addPlane(plane) {
         //Create Buffers
         const verticesBuffer = this._gl.createBuffer();
@@ -38,10 +51,21 @@ class GL {
         this._gl.bufferData(this._gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(plane.triangles), this._gl.STATIC_DRAW);
     }
 
+    /**
+     * Executes createShader.
+     * @param {*} type - Parameter value.
+     * @returns {*} Result of createShader.
+     */
     createShader(type) {
         return new Shader(type);
     }
 
+    /**
+     * Executes program.
+     * @param {*} vertexShader - Parameter value.
+     * @param {*} fragmentShader - Parameter value.
+     * @returns {*} Result of program.
+     */
     program(vertexShader, fragmentShader) {
         const { _gl: gl } = this;
 

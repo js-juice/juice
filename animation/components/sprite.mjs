@@ -58,6 +58,10 @@ export class AnimationSprite extends Component.HTMLElement {
         },
     };
 
+    /**
+     * Returns the current observed value.
+     * @returns {*} Current observed value.
+     */
     static get observed() {
         return {
             all: ["width", "height", "scale", "src", "frame", "frames", "tempo", "loop", "in", "out", "auto"],
@@ -66,6 +70,10 @@ export class AnimationSprite extends Component.HTMLElement {
         };
     }
 
+    /**
+     * Executes html.
+     * @returns {*} Result of html.
+     */
     static html() {
         return `
             <div id="spritesheet"></div>
@@ -75,6 +83,10 @@ export class AnimationSprite extends Component.HTMLElement {
         `;
     }
 
+    /**
+     * Returns the current style value.
+     * @returns {*} Current style value.
+     */
     static get style() {
         return [
             {
@@ -114,10 +126,19 @@ export class AnimationSprite extends Component.HTMLElement {
 
     views = {};
     sheet = null;
+    /**
+     * Executes hasExplicitAttribute.
+     * @param {*} name - Parameter value.
+     * @returns {*} Result of hasExplicitAttribute.
+     */
     hasExplicitAttribute(name) {
         return this.hasAttribute(name);
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @returns {*} Result of updateDisplaySize.
+     */
     updateDisplaySize() {
         const scale = this.scale > 0 ? this.scale : 1;
         const scaledWidth = this.width > 0 ? this.width * scale : 0;
@@ -128,6 +149,11 @@ export class AnimationSprite extends Component.HTMLElement {
         });
     }
 
+    /**
+     * Executes syncFromSheet.
+     * @param {*} sheet - Parameter value.
+     * @returns {*} Result of syncFromSheet.
+     */
     syncFromSheet(sheet) {
         if (!sheet) return;
 
@@ -148,6 +174,10 @@ export class AnimationSprite extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Handles firstconnect events.
+     * @returns {*} Result of onFirstConnect.
+     */
     onFirstConnect() {
         this.sheet = new SpriteSheet(this.width, this.height, this.ref("spritesheet"));
 
@@ -176,6 +206,11 @@ export class AnimationSprite extends Component.HTMLElement {
     dirty = false;
     paused = true;
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} data - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(data) {
         if (this.paused) return;
         this.time += data.delta;
@@ -188,6 +223,11 @@ export class AnimationSprite extends Component.HTMLElement {
             }
         }
     }
+    /**
+     * Renders output from current module state.
+     * @param {*} force - Parameter value.
+     * @returns {*} Result of render.
+     */
     render(force = false) {
         if (!force && (this.paused || !this.dirty)) return;
         this.sheet.render();
@@ -195,6 +235,10 @@ export class AnimationSprite extends Component.HTMLElement {
         this.dirty = false;
     }
 
+    /**
+     * Executes next.
+     * @returns {*} Result of next.
+     */
     next() {
         let next = this.frame + 1;
         if (next > this.out) {
@@ -204,6 +248,10 @@ export class AnimationSprite extends Component.HTMLElement {
         this.frame = next;
     }
 
+    /**
+     * Executes prev.
+     * @returns {*} Result of prev.
+     */
     prev() {
         let prev = this.frame - 1;
         if (prev < this.in) {
@@ -215,6 +263,14 @@ export class AnimationSprite extends Component.HTMLElement {
     activeLayers = [];
     layers = {};
 
+    /**
+     * Executes addSheet.
+     * @param {*} src - Parameter value.
+     * @param {*} width - Parameter value.
+     * @param {*} height - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of addSheet.
+     */
     addSheet(src, width, height, options = null) {
         if (width && typeof width === "object") {
             options = width;
@@ -227,6 +283,13 @@ export class AnimationSprite extends Component.HTMLElement {
         });
     }
 
+    /**
+     * Handles propertychanged events.
+     * @param {*} property - Parameter value.
+     * @param {*} old - Parameter value.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of onPropertyChanged.
+     */
     onPropertyChanged(property, old, value) {
         switch (property) {
             case "frame":

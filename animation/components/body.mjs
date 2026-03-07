@@ -29,6 +29,9 @@ function cssObjectToString(styles) {
         .join(";");
 }
 
+/**
+ * Represents the AnimationBody animation module class.
+ */
 export class AnimationBody extends Component.HTMLElement {
     static tag = "animation-body";
 
@@ -59,6 +62,10 @@ export class AnimationBody extends Component.HTMLElement {
         }
     };
 
+    /**
+     * Returns the current observed value.
+     * @returns {*} Current observed value.
+     */
     static get observed() {
         return {
             all: ["anchor", "x", "y", "z", "r", "rx", "ry", "rz", "scale", "vx", "vy", "width", "height", "debug"],
@@ -67,6 +74,10 @@ export class AnimationBody extends Component.HTMLElement {
         };
     }
 
+    /**
+     * Returns the current style value.
+     * @returns {*} Current style value.
+     */
     static get style() {
         return [
             {
@@ -194,6 +205,11 @@ export class AnimationBody extends Component.HTMLElement {
         ];
     }
 
+    /**
+     * Executes html.
+     * @param {*} data - Parameter value.
+     * @returns {*} Result of html.
+     */
     static html(data = {}) {
         return `
 
@@ -218,16 +234,32 @@ export class AnimationBody extends Component.HTMLElement {
 
     _offset = { x: 0, y: 0 };
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(options = {}) {
         super();
         this.options = options;
     }
 
+    /**
+     * Executes freezeAt.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @param {*} z - Parameter value.
+     * @returns {*} Result of freezeAt.
+     */
     freezeAt(x, y, z) {
         this.freeze = new Vector3D(x, y, z);
         this.position.set(x, y, z);
     }
 
+    /**
+     * Returns the current innerContentBox value.
+     * @returns {*} Current innerContentBox value.
+     */
     get innerContentBox() {
         const { width: w, height: h, scale, _anchor } = this;
         const width = w * scale;
@@ -246,6 +278,10 @@ export class AnimationBody extends Component.HTMLElement {
         };
     }
 
+    /**
+     * Returns the current bounds value.
+     * @returns {*} Current bounds value.
+     */
     get bounds() {
         const self = this;
         return {
@@ -260,6 +296,10 @@ export class AnimationBody extends Component.HTMLElement {
         };
     }
 
+    /**
+     * Executes beforeCreate.
+     * @returns {*} Result of beforeCreate.
+     */
     beforeCreate() {
         this.animationBody = true;
         this.visible = true;
@@ -297,6 +337,11 @@ export class AnimationBody extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Sets anchor values.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of setAnchor.
+     */
     setAnchor(value) {
         const parsed = parseAnchor(value);
         this._anchor = parsed;
@@ -308,11 +353,24 @@ export class AnimationBody extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Executes moveTo.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of moveTo.
+     */
     moveTo(x, y) {
         this.x = x;
         this.y = y;
     }
 
+    /**
+     * Handles propertychanged events.
+     * @param {*} property - Parameter value.
+     * @param {*} previous - Parameter value.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of onPropertyChanged.
+     */
     onPropertyChanged(property, previous, value) {
         if (this.debug) console.log(`[${this.constructor.name}] ${property}=${value}`);
         switch (property) {
@@ -325,6 +383,13 @@ export class AnimationBody extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Handles attributechanged events.
+     * @param {*} property - Parameter value.
+     * @param {*} prevous - Parameter value.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of onAttributeChanged.
+     */
     onAttributeChanged(property, prevous, value) {
         switch (property) {
             case "offset":
@@ -334,6 +399,10 @@ export class AnimationBody extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Executes isInViewport.
+     * @returns {*} Result of isInViewport.
+     */
     isInViewport() {
         if (!this.viewer) return true;
         const rect = this.getBoundingClientRect();
@@ -347,6 +416,11 @@ export class AnimationBody extends Component.HTMLElement {
         );
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} time - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(time) {
         this.visible = this.isInViewport();
 
@@ -442,6 +516,12 @@ export class AnimationBody extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Sets offset values.
+     * @param {*} left - Parameter value.
+     * @param {*} top - Parameter value.
+     * @returns {*} Result of setOffset.
+     */
     setOffset(left, top) {
         this.styles.update(":host", {
             top: top,
@@ -453,6 +533,10 @@ export class AnimationBody extends Component.HTMLElement {
         this._offset = { x: rect.left - parentRect.left, y: rect.top - parentRect.top };
     }
 
+    /**
+     * Executes absolutePosition.
+     * @returns {*} Result of absolutePosition.
+     */
     absolutePosition() {
         let x = this._offset.x;
         let y = this._offset.y;
@@ -509,6 +593,10 @@ export class AnimationBody extends Component.HTMLElement {
         return this._cachedViewerPos;
     }
 
+    /**
+     * Returns the current stage value.
+     * @returns {*} Current stage value.
+     */
     get stage() {
         return this.viewer?.stage;
     }
@@ -573,10 +661,18 @@ export class AnimationBody extends Component.HTMLElement {
         return { x, y };
     }
 
+    /**
+     * Executes topParent.
+     * @returns {*} Result of topParent.
+     */
     topParent() {
         return this.stack[this.stack.length - 1];
     }
 
+    /**
+     * Handles animationconnect events.
+     * @returns {*} Result of onAnimationConnect.
+     */
     onAnimationConnect() {
         this.parent = this.parentNode;
         let el = this;

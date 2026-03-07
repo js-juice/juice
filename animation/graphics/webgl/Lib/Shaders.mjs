@@ -61,6 +61,9 @@ x, y, z, w
 
 */
 
+/**
+ * Represents the Shaders animation module class.
+ */
 export class Shaders {
     static VERTEX_TYPE = ShaderTypes.VERTEX;
     static FRAGMENT_TYPE = ShaderTypes.FRAGMENT;
@@ -72,6 +75,11 @@ export class Shaders {
     varying = {};
     version = 2;
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} webgl - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(webgl) {
         this.webgl = webgl;
         this.gl = webgl.gl;
@@ -80,17 +88,33 @@ export class Shaders {
         this.fragment = new Shader(ShaderTypes.FRAGMENT, { webgl, version: this.version });
     }
 
+    /**
+     * Returns  values.
+     * @param {*} SHADER_TYPE - Parameter value.
+     * @returns {*} Result of get.
+     */
     get(SHADER_TYPE) {
         if (SHADER_TYPE === ShaderTypes.VERTEX) return this.vertex;
         if (SHADER_TYPE === ShaderTypes.FRAGMENT) return this.fragment;
     }
 
+    /**
+     * Handles program events.
+     * @param {*} program - Parameter value.
+     * @returns {*} Result of onProgram.
+     */
     onProgram(program) {
         this.program = program;
         this.vertex.onProgramLoaded(program);
         this.fragment.onProgramLoaded(program);
     }
 
+    /**
+     * Returns var values.
+     * @param {*} shader - Parameter value.
+     * @param {*} name - Parameter value.
+     * @returns {*} Result of getVar.
+     */
     getVar(shader, name) {}
 
     /**
@@ -101,6 +125,13 @@ export class Shaders {
         Texture coordinates
         Colors
         Scope: Attributes are only available in the vertex shader.
+     */
+    /**
+     * Executes addAttribute.
+     * @param {*} name - Parameter value.
+     * @param {*} type - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of addAttribute.
      */
     addAttribute(name, type, options) {
         this.vertex.addVariable("attribute", name, type, options);
@@ -118,6 +149,13 @@ export class Shaders {
         //this.fragment.addVariable("uniform", name, type, options);
     }
 
+    /**
+     * Executes addVarying.
+     * @param {*} name - Parameter value.
+     * @param {*} type - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of addVarying.
+     */
     addVarying(name, type, options) {
         this.vertex.addVariable("varying", name, type, options);
         this.fragment.addVariable("varying", name, type, options);
@@ -141,6 +179,11 @@ export class Shaders {
         };
     }
 
+    /**
+     * Executes bindProgram.
+     * @param {*} program - Parameter value.
+     * @returns {*} Result of bindProgram.
+     */
     bindProgram(program) {
         this.gl = program.gl;
         this.program = program;

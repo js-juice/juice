@@ -15,6 +15,11 @@ import AnimationValue from "./Value.mjs";
  * const scale = new Scale(1.5);
  */
 export class Scale extends AnimationValue {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(value) {
         super(value);
     }
@@ -32,6 +37,12 @@ export class Scale extends AnimationValue {
  * scale.x = 1.5;
  */
 export class Scale2D extends Float32Array {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(x = 1, y = 1) {
         super(2);
         this[0] = x;

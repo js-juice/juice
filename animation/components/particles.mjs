@@ -13,6 +13,10 @@ import Canvas from "../../core/Graphics/Canvas.mjs";
  * @extends Component.HTMLElement
  */
 class Particles extends Component.HTMLElement {
+    /**
+     * Returns the current config value.
+     * @returns {*} Current config value.
+     */
     static get config() {
         return {
             properties: {
@@ -22,10 +26,18 @@ class Particles extends Component.HTMLElement {
         };
     }
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @returns {*} Result of constructor.
+     */
     constructor() {
         super();
     }
 
+    /**
+     * Handles firstconnect events.
+     * @returns {*} Result of onFirstConnect.
+     */
     onFirstConnect() {
         this.canvas = new Canvas(this);
     }

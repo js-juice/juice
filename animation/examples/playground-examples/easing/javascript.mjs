@@ -51,6 +51,12 @@ if (!stage || !easingList) {
     if (stage.ready) bind();
 }
 
+/**
+ * Creates and returns row data.
+ * @param {*} name - Parameter value.
+ * @param {*} fn - Parameter value.
+ * @returns {*} Result of createRow.
+ */
 function createRow(name, fn) {
     const row = document.createElement("div");
     row.className = "easing-row";
@@ -78,6 +84,11 @@ function createRow(name, fn) {
     return { fn, track, dot, value };
 }
 
+/**
+ * Builds curve output data.
+ * @param {*} fn - Parameter value.
+ * @returns {*} Result of buildCurve.
+ */
 function buildCurve(fn) {
     const svgNS = "http://www.w3.org/2000/svg";
     const width = 120;

@@ -1,0 +1,3731 @@
+{
+  "generatedAt": "2026-03-07T11:37:05.311Z",
+  "source": "component-doc-comments",
+  "targetDirectory": "d:/js-juice/forms/components",
+  "componentCount": 15,
+  "components": [
+    {
+      "tag": "form-info",
+      "className": "FormInfo",
+      "file": "form-info.js",
+      "overview": "Form-level status panel that shows description text, aggregate validation messages, and form actions.",
+      "features": [
+        {
+          "name": "Renders error/warning/info message blocks with status icon switching.",
+          "description": ""
+        },
+        {
+          "name": "Aggregates per-field validation events into a field error list.",
+          "description": ""
+        },
+        {
+          "name": "Supports `undo` and `revert` actions when bound to a form history source.",
+          "description": ""
+        },
+        {
+          "name": "Auto-binds to the nearest `juice-forms`/`form` host or to an explicit target via `for`.",
+          "description": ""
+        }
+      ],
+      "attributes": [
+        {
+          "name": "description",
+          "type": null,
+          "description": "Inline descriptive text shown above message rows."
+        },
+        {
+          "name": "error",
+          "type": null,
+          "description": "Explicit override for form-level error message."
+        },
+        {
+          "name": "warning",
+          "type": null,
+          "description": "Explicit override for form-level warning message."
+        },
+        {
+          "name": "message",
+          "type": null,
+          "description": "Explicit override for neutral/information message."
+        },
+        {
+          "name": "for",
+          "type": null,
+          "description": "ID of a `juice-forms` element or native `form` to observe for validation events."
+        }
+      ],
+      "properties": [
+        {
+          "name": "error",
+          "description": "Getter/setter mapped to the `error` attribute."
+        },
+        {
+          "name": "warning",
+          "description": "Getter/setter mapped to the `warning` attribute."
+        },
+        {
+          "name": "message",
+          "description": "Getter/setter mapped to the `message` attribute."
+        }
+      ],
+      "example": "<form-info for=\"profileForm\" description=\"Profile settings are saved automatically.\"></form-info>",
+      "methods": [
+        {
+          "name": "constructor",
+          "signatureParams": [],
+          "description": "Initializes component state, DOM references, and default behavior.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "connectedCallback",
+          "signatureParams": [],
+          "description": "Runs setup logic when the element is connected to the document.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "attributeChangedCallback",
+          "signatureParams": [
+            "name",
+            "oldValue",
+            "newValue"
+          ],
+          "description": "Responds to observed attribute changes and synchronizes state.",
+          "params": [
+            {
+              "name": "name",
+              "type": "*",
+              "description": "Attribute or field name."
+            },
+            {
+              "name": "oldValue",
+              "type": "*",
+              "description": "Previous value."
+            },
+            {
+              "name": "newValue",
+              "type": "*",
+              "description": "Next value."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "hook",
+          "signatureParams": [
+            "action",
+            "fn"
+          ],
+          "description": "Registers an action callback for a named component action.",
+          "params": [
+            {
+              "name": "action",
+              "type": "*",
+              "description": "Action identifier."
+            },
+            {
+              "name": "fn",
+              "type": "*",
+              "description": "Callback function."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "bindForm",
+          "signatureParams": [
+            "form"
+          ],
+          "description": "Binds the component to a form instance and related integrations.",
+          "params": [
+            {
+              "name": "form",
+              "type": "*",
+              "description": "Form element or form-like host."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_resolveValidationSource",
+          "signatureParams": [
+            "source"
+          ],
+          "description": "Resolves effective validation source configuration.",
+          "params": [
+            {
+              "name": "source",
+              "type": "*",
+              "description": "Source element or input."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived value."
+          }
+        },
+        {
+          "name": "_tryAutoBindValidation",
+          "signatureParams": [
+            "force = false"
+          ],
+          "description": "Attempts to discover and bind the nearest validation controller.",
+          "params": [
+            {
+              "name": "force",
+              "type": "*",
+              "description": "Whether to force a full rebuild."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_bindValidationSource",
+          "signatureParams": [
+            "target"
+          ],
+          "description": "Subscribes to validation-source events and keeps validation state synchronized.",
+          "params": [
+            {
+              "name": "target",
+              "type": "*",
+              "description": "Target element receiving updates."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_primeValidationState",
+          "signatureParams": [],
+          "description": "Initializes validation UI state from current fields.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_normalizeState",
+          "signatureParams": [
+            "state"
+          ],
+          "description": "Normalizes state into a safe internal representation.",
+          "params": [
+            {
+              "name": "state",
+              "type": "*",
+              "description": "Input value for state."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived value."
+          }
+        },
+        {
+          "name": "_displayNameForField",
+          "signatureParams": [
+            "field",
+            "property"
+          ],
+          "description": "Returns the display label used for validation messages for a field.",
+          "params": [
+            {
+              "name": "field",
+              "type": "*",
+              "description": "Field element being processed."
+            },
+            {
+              "name": "property",
+              "type": "*",
+              "description": "Input value for property."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_setFieldValidationState",
+          "signatureParams": [
+            "field",
+            "detail = {}"
+          ],
+          "description": "Updates internal component state and applies side effects.",
+          "params": [
+            {
+              "name": "field",
+              "type": "*",
+              "description": "Field element being processed."
+            },
+            {
+              "name": "detail",
+              "type": "*",
+              "description": "Event detail payload."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_onValidationChange",
+          "signatureParams": [
+            "event"
+          ],
+          "description": "Handles validation change events and updates component state.",
+          "params": [
+            {
+              "name": "event",
+              "type": "*",
+              "description": "Event payload."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_syncFieldErrorList",
+          "signatureParams": [],
+          "description": "Synchronizes field error list between state, attributes, and UI.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_runAction",
+          "signatureParams": [
+            "action"
+          ],
+          "description": "Executes a registered action callback by action id.",
+          "params": [
+            {
+              "name": "action",
+              "type": "*",
+              "description": "Input value for action."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_syncView",
+          "signatureParams": [],
+          "description": "Synchronizes view between state, attributes, and UI.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "get error",
+          "signatureParams": [],
+          "description": "Returns the current error message.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Current error message."
+          }
+        },
+        {
+          "name": "set error",
+          "signatureParams": [
+            "value"
+          ],
+          "description": "Updates the `error` value.",
+          "params": [
+            {
+              "name": "value",
+              "type": "*",
+              "description": "Assigned value."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void"
+          }
+        },
+        {
+          "name": "get warning",
+          "signatureParams": [],
+          "description": "Returns the current warning message.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Current warning message."
+          }
+        },
+        {
+          "name": "set warning",
+          "signatureParams": [
+            "value"
+          ],
+          "description": "Updates the `warning` value.",
+          "params": [
+            {
+              "name": "value",
+              "type": "*",
+              "description": "Assigned value."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void"
+          }
+        },
+        {
+          "name": "get message",
+          "signatureParams": [],
+          "description": "Returns the current informational message.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Current informational message."
+          }
+        },
+        {
+          "name": "set message",
+          "signatureParams": [
+            "value"
+          ],
+          "description": "Updates the `message` value.",
+          "params": [
+            {
+              "name": "value",
+              "type": "*",
+              "description": "Assigned value."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void"
+          }
+        }
+      ]
+    },
+    {
+      "tag": "input-checkbox",
+      "className": "InputCheckbox",
+      "file": "input-checkbox.js",
+      "overview": "Styled checkbox input that preserves native checked/value semantics.",
+      "features": [
+        {
+          "name": "Custom visual checkbox rendering with native input state synchronization.",
+          "description": ""
+        },
+        {
+          "name": "Supports inline usage in row/group layouts.",
+          "description": ""
+        },
+        {
+          "name": "Participates in validation/status workflow inherited from InputComponent.",
+          "description": ""
+        }
+      ],
+      "attributes": [
+        {
+          "name": "bgcolor",
+          "type": null,
+          "description": "Optional custom background color for the checkbox shell."
+        },
+        {
+          "name": "checkcolor",
+          "type": null,
+          "description": "Optional custom checkmark color."
+        }
+      ],
+      "properties": [
+        {
+          "name": "--bgcolor",
+          "description": "Checked-state accent/background override."
+        },
+        {
+          "name": "--checked-border-color",
+          "description": "Optional checked border override."
+        }
+      ],
+      "example": "<input-checkbox name=\"subscribe\" label=\"Subscribe to updates\" value=\"yes\"></input-checkbox>",
+      "methods": [
+        {
+          "name": "get observedAttributes",
+          "signatureParams": [],
+          "description": "Lists attributes that are observed for runtime updates.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "List of observed attribute names."
+          }
+        },
+        {
+          "name": "get _styles",
+          "signatureParams": [],
+          "description": "Returns component-scoped style definitions used to generate CSS.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Style definition map used for generated component CSS."
+          }
+        },
+        {
+          "name": "_createNativeControl",
+          "signatureParams": [],
+          "description": "Creates the hidden native input used for form integration.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Configured native input element."
+          }
+        },
+        {
+          "name": "_renderDefault",
+          "signatureParams": [],
+          "description": "Builds the default dial DOM (SVG rings, knob, labels, value display).",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Rendered default dial container node."
+          }
+        },
+        {
+          "name": "_afterConnected",
+          "signatureParams": [],
+          "description": "Performs post-connect setup after the component has its default DOM nodes.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_syncVisualState",
+          "signatureParams": [],
+          "description": "Recomputes ring/progress/tick geometry and knob placement from current value state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        }
+      ]
+    },
+    {
+      "tag": "input-dial",
+      "className": "InputDialComponent",
+      "file": "input-dial.js",
+      "overview": "Rotary dial input with configurable sweep gap, anchor offset, ticks, labels, and progress visualization.",
+      "features": [
+        {
+          "name": "Pointer, wheel, and keyboard interaction support.",
+          "description": ""
+        },
+        {
+          "name": "Configurable arc geometry via `start-offset`, `end-offset`, and `offset`.",
+          "description": ""
+        },
+        {
+          "name": "Optional unbounded multi-turn mode when no min/max and no gap are defined.",
+          "description": ""
+        },
+        {
+          "name": "Supports option labels and explicit marker labels around the dial.",
+          "description": ""
+        }
+      ],
+      "attributes": [
+        {
+          "name": "step",
+          "type": null,
+          "description": "Increment/rounding interval."
+        },
+        {
+          "name": "decimals",
+          "type": null,
+          "description": "Decimal precision for rounded values."
+        },
+        {
+          "name": "offset",
+          "type": null,
+          "description": "Angular anchor for zero point (or gap center when a gap exists)."
+        },
+        {
+          "name": "rotation-value",
+          "type": null,
+          "description": "Units represented by one full turn in unbounded mode."
+        },
+        {
+          "name": "options",
+          "type": null,
+          "description": "Comma-delimited option labels used for tick labeling."
+        },
+        {
+          "name": "labels",
+          "type": null,
+          "description": "Extra labels in `value:Text` or `percent%:Text` format."
+        },
+        {
+          "name": "size",
+          "type": null,
+          "description": "Component pixel width."
+        }
+      ],
+      "properties": [
+        {
+          "name": "--jform-dial-progress",
+          "description": "Progress ring and active tick color."
+        },
+        {
+          "name": "--dial-knob-fill",
+          "description": "Dial knob fill color."
+        }
+      ],
+      "example": "<input-dial min=\"0\" max=\"100\" step=\"1\" offset=\"180\" start-offset=\"30\" end-offset=\"30\"></input-dial>",
+      "methods": [
+        {
+          "name": "constructor",
+          "signatureParams": [],
+          "description": "Initializes component state, DOM references, and default behavior.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "attributeChangedCallback",
+          "signatureParams": [
+            "name",
+            "oldValue",
+            "newValue"
+          ],
+          "description": "Responds to observed attribute changes and synchronizes state.",
+          "params": [
+            {
+              "name": "name",
+              "type": "*",
+              "description": "Attribute or field name."
+            },
+            {
+              "name": "oldValue",
+              "type": "*",
+              "description": "Previous value."
+            },
+            {
+              "name": "newValue",
+              "type": "*",
+              "description": "Next value."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "get _styles",
+          "signatureParams": [],
+          "description": "Returns component-scoped style definitions used to generate CSS.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Style definition map used for generated component CSS."
+          }
+        },
+        {
+          "name": "connectedCallback",
+          "signatureParams": [],
+          "description": "Runs setup logic when the element is connected to the document.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_normalizeAngle",
+          "signatureParams": [
+            "value"
+          ],
+          "description": "Normalizes a degree value into the `[0, 360)` range.",
+          "params": [
+            {
+              "name": "value",
+              "type": "*",
+              "description": "Raw value being normalized or assigned."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Normalized degree value in the inclusive range `[0, 360)`."
+          }
+        },
+        {
+          "name": "_syncDialArcConfigFromAttributes",
+          "signatureParams": [],
+          "description": "Reads dial arc-related attributes and updates start/sweep/gap configuration.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_syncRotationValueFromAttribute",
+          "signatureParams": [],
+          "description": "Reads `rotation-value` and updates unbounded rotation behavior.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_getRotationValue",
+          "signatureParams": [],
+          "description": "Returns how much value a full rotation represents.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Numeric value represented by one full rotation."
+          }
+        },
+        {
+          "name": "_hasConfiguredGap",
+          "signatureParams": [],
+          "description": "Returns whether the dial arc has a non-zero configured start or end gap.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Boolean indicator of whether a dial gap is configured."
+          }
+        },
+        {
+          "name": "_isUnboundedMode",
+          "signatureParams": [],
+          "description": "Returns whether the dial should accumulate value across rotations.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Boolean indicator of unbounded rotation mode."
+          }
+        },
+        {
+          "name": "_resolveDialArc",
+          "signatureParams": [],
+          "description": "Builds normalized arc geometry from start/end offset and anchor configuration.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Derived value."
+          }
+        },
+        {
+          "name": "_createNativeControl",
+          "signatureParams": [],
+          "description": "Creates the hidden native input used for form integration.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Configured native input element."
+          }
+        },
+        {
+          "name": "_renderDefault",
+          "signatureParams": [],
+          "description": "Builds the default dial DOM (SVG rings, knob, labels, value display).",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Rendered default dial container node."
+          }
+        },
+        {
+          "name": "_collectOptions",
+          "signatureParams": [],
+          "description": "Collects dial tick/label configuration from attributes or child options.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Normalized option/tick/label descriptors."
+          }
+        },
+        {
+          "name": "_getDialBounds",
+          "signatureParams": [],
+          "description": "Returns effective dial bounds based on min/max or default rotation range.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Dial bounds descriptor containing min and max values."
+          }
+        },
+        {
+          "name": "_valueToRatio",
+          "signatureParams": [
+            "value"
+          ],
+          "description": "Maps a numeric value into a normalized arc ratio between 0 and 1.",
+          "params": [
+            {
+              "name": "value",
+              "type": "*",
+              "description": "Raw value being normalized or assigned."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Normalized ratio in the inclusive range `[0, 1]`."
+          }
+        },
+        {
+          "name": "_appendDialLabel",
+          "signatureParams": [
+            "label",
+            "ratio",
+            "start",
+            "sweep"
+          ],
+          "description": "Creates and positions one dial label in the HTML overlay.",
+          "params": [
+            {
+              "name": "label",
+              "type": "*",
+              "description": "Label text or label descriptor."
+            },
+            {
+              "name": "ratio",
+              "type": "*",
+              "description": "Normalized position on the active arc."
+            },
+            {
+              "name": "start",
+              "type": "*",
+              "description": "Arc start angle in degrees."
+            },
+            {
+              "name": "sweep",
+              "type": "*",
+              "description": "Arc sweep in degrees."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Created label node, or `null` when skipped."
+          }
+        },
+        {
+          "name": "_renderTicksAndLabels",
+          "signatureParams": [],
+          "description": "Renders dial tick marks and label markers for the active arc.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_onPointerDown",
+          "signatureParams": [
+            "ev"
+          ],
+          "description": "Handles pointer down events and updates component state.",
+          "params": [
+            {
+              "name": "ev",
+              "type": "*",
+              "description": "Pointer/keyboard event payload."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_onPointerMove",
+          "signatureParams": [
+            "ev"
+          ],
+          "description": "Handles pointer move events and updates component state.",
+          "params": [
+            {
+              "name": "ev",
+              "type": "*",
+              "description": "Pointer/keyboard event payload."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_onPointerUp",
+          "signatureParams": [
+            "ev"
+          ],
+          "description": "Handles pointer up events and updates component state.",
+          "params": [
+            {
+              "name": "ev",
+              "type": "*",
+              "description": "Pointer/keyboard event payload."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_onWheel",
+          "signatureParams": [
+            "ev"
+          ],
+          "description": "Handles wheel events and updates component state.",
+          "params": [
+            {
+              "name": "ev",
+              "type": "*",
+              "description": "Pointer/keyboard event payload."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "disconnectedCallback",
+          "signatureParams": [],
+          "description": "Cleans up listeners and observers when the element is disconnected.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_onKeyDown",
+          "signatureParams": [
+            "ev"
+          ],
+          "description": "Handles key down events and updates component state.",
+          "params": [
+            {
+              "name": "ev",
+              "type": "*",
+              "description": "Pointer/keyboard event payload."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_stepBy",
+          "signatureParams": [
+            "dir"
+          ],
+          "description": "Applies a signed step increment and commits the resulting dial value.",
+          "params": [
+            {
+              "name": "dir",
+              "type": "*",
+              "description": "Signed direction (`-1` or `1`) for stepping."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_updateValueFromPointer",
+          "signatureParams": [
+            "ev"
+          ],
+          "description": "Projects pointer coordinates to the dial arc and commits the nearest stepped value.",
+          "params": [
+            {
+              "name": "ev",
+              "type": "*",
+              "description": "Pointer/keyboard event payload."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_clamp",
+          "signatureParams": [
+            "v"
+          ],
+          "description": "Clamps a value to the configured minimum/maximum range when bounds exist.",
+          "params": [
+            {
+              "name": "v",
+              "type": "*",
+              "description": "Numeric value candidate."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Clamped numeric value."
+          }
+        },
+        {
+          "name": "_roundToStep",
+          "signatureParams": [
+            "v"
+          ],
+          "description": "Rounds a value to the configured step and decimal precision.",
+          "params": [
+            {
+              "name": "v",
+              "type": "*",
+              "description": "Numeric value candidate."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Step-rounded numeric value."
+          }
+        },
+        {
+          "name": "_setNativeValue",
+          "signatureParams": [
+            "v",
+            "{ emitInput = false",
+            "emitChange = false } = {}"
+          ],
+          "description": "Updates internal component state and applies side effects.",
+          "params": [
+            {
+              "name": "v",
+              "type": "*",
+              "description": "Numeric value candidate."
+            },
+            {
+              "name": "param2",
+              "type": "*",
+              "description": "Options object controlling behavior."
+            },
+            {
+              "name": "emitChange",
+              "type": "*",
+              "description": "Whether to dispatch a `change` event after update."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_syncVisualState",
+          "signatureParams": [],
+          "description": "Recomputes ring/progress/tick geometry and knob placement from current value state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        }
+      ]
+    },
+    {
+      "tag": "input-direction",
+      "className": "InputDirectionComponent",
+      "file": "input-direction.js",
+      "overview": "3D unit-direction control with arcball interaction, SVG visualization, and axis value editing.",
+      "features": [
+        {
+          "name": "Drag-to-rotate arcball UI for directional vectors.",
+          "description": ""
+        },
+        {
+          "name": "Live axis readout and optional numeric axis editing mode.",
+          "description": ""
+        },
+        {
+          "name": "Serializes values to normalized `x,y,z` text for form submission.",
+          "description": ""
+        },
+        {
+          "name": "Supports default vector components via attributes.",
+          "description": ""
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "type": null,
+          "description": "Current direction as `x,y,z`."
+        }
+      ],
+      "properties": [
+        {
+          "name": "--direction-sphere-stroke",
+          "description": "Sphere outline color."
+        },
+        {
+          "name": "--direction-line-color",
+          "description": "Direction line color."
+        },
+        {
+          "name": "--direction-display-color",
+          "description": "Axis readout text color."
+        }
+      ],
+      "example": "<input-direction label=\"Light Direction\" default-x=\"0\" default-y=\"0.4\" default-z=\"-1\"></input-direction>",
+      "methods": [
+        {
+          "name": "constructor",
+          "signatureParams": [],
+          "description": "Initializes component state, DOM references, and default behavior.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "get _styles",
+          "signatureParams": [],
+          "description": "Returns component-scoped style definitions used to generate CSS.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Style definition map used for generated component CSS."
+          }
+        },
+        {
+          "name": "_renderDefault",
+          "signatureParams": [],
+          "description": "Builds the default dial DOM (SVG rings, knob, labels, value display).",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Rendered default dial container node."
+          }
+        },
+        {
+          "name": "_renderAxisDisplay",
+          "signatureParams": [],
+          "description": "Renders axis display UI content.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_renderAxisInputs",
+          "signatureParams": [],
+          "description": "Renders axis inputs UI content.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_afterConnected",
+          "signatureParams": [],
+          "description": "Performs post-connect setup after the component has its default DOM nodes.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_createNativeControl",
+          "signatureParams": [],
+          "description": "Creates the hidden native input used for form integration.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Configured native input element."
+          }
+        },
+        {
+          "name": "_syncSingleAttribute",
+          "signatureParams": [
+            "name"
+          ],
+          "description": "Synchronizes single attribute between state, attributes, and UI.",
+          "params": [
+            {
+              "name": "name",
+              "type": "*",
+              "description": "Attribute or field name."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_onNativeInputEvent",
+          "signatureParams": [],
+          "description": "Handles native input event events and updates component state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_onNativeChangeEvent",
+          "signatureParams": [],
+          "description": "Handles native change event events and updates component state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_syncVisualState",
+          "signatureParams": [],
+          "description": "Recomputes ring/progress/tick geometry and knob placement from current value state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_drawDirection",
+          "signatureParams": [],
+          "description": "Updates indicator geometry for the current direction vector.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_drawRings",
+          "signatureParams": [],
+          "description": "Draws base/progress rings for directional magnitude visualization.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_buildRingPath",
+          "signatureParams": [
+            "u",
+            "v"
+          ],
+          "description": "Builds an SVG arc path for a ring segment.",
+          "params": [
+            {
+              "name": "u",
+              "type": "*",
+              "description": "Input value for u."
+            },
+            {
+              "name": "v",
+              "type": "*",
+              "description": "Numeric value candidate."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "SVG path data string for the requested arc segment."
+          }
+        },
+        {
+          "name": "_bindCanvasEvents",
+          "signatureParams": [
+            "canvas"
+          ],
+          "description": "Attaches pointer/wheel/keyboard handlers to the canvas and related nodes.",
+          "params": [
+            {
+              "name": "canvas",
+              "type": "*",
+              "description": "Input value for canvas."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_bindAxisInputs",
+          "signatureParams": [],
+          "description": "Attaches input listeners for axis fields and forwards updates to vector state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_commitAxisInputs",
+          "signatureParams": [
+            "eventName"
+          ],
+          "description": "Reads axis sub-inputs, normalizes them, and commits to host value.",
+          "params": [
+            {
+              "name": "eventName",
+              "type": "*",
+              "description": "Input value for event name."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_syncAxisInputs",
+          "signatureParams": [],
+          "description": "Synchronizes axis inputs between state, attributes, and UI.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_syncAxisDisplay",
+          "signatureParams": [],
+          "description": "Synchronizes axis display between state, attributes, and UI.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_applyPointerRotation",
+          "signatureParams": [
+            "event",
+            "emitEventName"
+          ],
+          "description": "Applies pointer rotation to rendered output.",
+          "params": [
+            {
+              "name": "event",
+              "type": "*",
+              "description": "Event payload."
+            },
+            {
+              "name": "emitEventName",
+              "type": "*",
+              "description": "Input value for emit event name."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_commitVectorToHost",
+          "signatureParams": [
+            "eventName"
+          ],
+          "description": "Serializes current vector state into host/native value fields.",
+          "params": [
+            {
+              "name": "eventName",
+              "type": "*",
+              "description": "Input value for event name."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_projectPointerToArcball",
+          "signatureParams": [
+            "event"
+          ],
+          "description": "Projects pointer coordinates onto a virtual arcball for 3D direction control.",
+          "params": [
+            {
+              "name": "event",
+              "type": "*",
+              "description": "Event payload."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Projected unit vector on the arcball surface."
+          }
+        },
+        {
+          "name": "_setVectorFromExternal",
+          "signatureParams": [
+            "vector",
+            "{ syncNative = false",
+            "syncHost = false } = {}"
+          ],
+          "description": "Updates internal component state and applies side effects.",
+          "params": [
+            {
+              "name": "vector",
+              "type": "*",
+              "description": "Input value for vector."
+            },
+            {
+              "name": "param2",
+              "type": "*",
+              "description": "Options object controlling behavior."
+            },
+            {
+              "name": "syncHost",
+              "type": "*",
+              "description": "Input value for sync host."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_resolveDefaultVector",
+          "signatureParams": [],
+          "description": "Resolves effective default vector configuration.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Derived value."
+          }
+        },
+        {
+          "name": "_readNumberAttribute",
+          "signatureParams": [
+            "name",
+            "fallback"
+          ],
+          "description": "Reads a numeric attribute with fallback handling for invalid values.",
+          "params": [
+            {
+              "name": "name",
+              "type": "*",
+              "description": "Attribute or field name."
+            },
+            {
+              "name": "fallback",
+              "type": "*",
+              "description": "Fallback value used when input is invalid."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Parsed numeric value or provided fallback."
+          }
+        },
+        {
+          "name": "_vectorDistance",
+          "signatureParams": [
+            "a",
+            "b"
+          ],
+          "description": "Computes Euclidean distance between two vectors.",
+          "params": [
+            {
+              "name": "a",
+              "type": "*",
+              "description": "First vector/quaternion operand."
+            },
+            {
+              "name": "b",
+              "type": "*",
+              "description": "Second vector/quaternion operand."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Numeric Euclidean distance."
+          }
+        },
+        {
+          "name": "_normalizeVector",
+          "signatureParams": [
+            "value"
+          ],
+          "description": "Normalizes vector into a safe internal representation.",
+          "params": [
+            {
+              "name": "value",
+              "type": "*",
+              "description": "Raw value being normalized or assigned."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived value."
+          }
+        },
+        {
+          "name": "_dot",
+          "signatureParams": [
+            "a",
+            "b"
+          ],
+          "description": "Computes the dot product of two vectors.",
+          "params": [
+            {
+              "name": "a",
+              "type": "*",
+              "description": "First vector/quaternion operand."
+            },
+            {
+              "name": "b",
+              "type": "*",
+              "description": "Second vector/quaternion operand."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Numeric dot product."
+          }
+        },
+        {
+          "name": "_cross",
+          "signatureParams": [
+            "a",
+            "b"
+          ],
+          "description": "Computes the cross product of two vectors.",
+          "params": [
+            {
+              "name": "a",
+              "type": "*",
+              "description": "First vector/quaternion operand."
+            },
+            {
+              "name": "b",
+              "type": "*",
+              "description": "Second vector/quaternion operand."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Vector cross-product components."
+          }
+        },
+        {
+          "name": "_normalizeQuaternion",
+          "signatureParams": [
+            "q"
+          ],
+          "description": "Normalizes quaternion into a safe internal representation.",
+          "params": [
+            {
+              "name": "q",
+              "type": "*",
+              "description": "Quaternion used for vector rotation."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived value."
+          }
+        },
+        {
+          "name": "_multiplyQuaternion",
+          "signatureParams": [
+            "a",
+            "b"
+          ],
+          "description": "Multiplies two quaternions and returns the composed rotation.",
+          "params": [
+            {
+              "name": "a",
+              "type": "*",
+              "description": "First vector/quaternion operand."
+            },
+            {
+              "name": "b",
+              "type": "*",
+              "description": "Second vector/quaternion operand."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Quaternion components representing the composed rotation."
+          }
+        },
+        {
+          "name": "_quaternionFromUnitVectors",
+          "signatureParams": [
+            "from",
+            "to"
+          ],
+          "description": "Builds a quaternion that rotates one unit vector into another.",
+          "params": [
+            {
+              "name": "from",
+              "type": "*",
+              "description": "Input value for from."
+            },
+            {
+              "name": "to",
+              "type": "*",
+              "description": "Input value for to."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Quaternion rotating vector `a` into vector `b`."
+          }
+        },
+        {
+          "name": "_rotateVector",
+          "signatureParams": [
+            "v",
+            "q"
+          ],
+          "description": "Rotates a vector by a quaternion.",
+          "params": [
+            {
+              "name": "v",
+              "type": "*",
+              "description": "Numeric value candidate."
+            },
+            {
+              "name": "q",
+              "type": "*",
+              "description": "Quaternion used for vector rotation."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Rotated vector components."
+          }
+        },
+        {
+          "name": "_parseVector",
+          "signatureParams": [
+            "raw"
+          ],
+          "description": "Parses vector into normalized internal data.",
+          "params": [
+            {
+              "name": "raw",
+              "type": "*",
+              "description": "Input value for raw."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived value."
+          }
+        },
+        {
+          "name": "_serializeVector",
+          "signatureParams": [
+            "vector"
+          ],
+          "description": "Serializes vector coordinates into the component value format.",
+          "params": [
+            {
+              "name": "vector",
+              "type": "*",
+              "description": "Input value for vector."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Serialized vector string value."
+          }
+        },
+        {
+          "name": "_formatFloat",
+          "signatureParams": [
+            "value"
+          ],
+          "description": "Formats a float using component precision rules.",
+          "params": [
+            {
+              "name": "value",
+              "type": "*",
+              "description": "Raw value being normalized or assigned."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Formatted numeric string."
+          }
+        },
+        {
+          "name": "_makeSvgNode",
+          "signatureParams": [
+            "tag",
+            "attrs = {}"
+          ],
+          "description": "Creates an SVG element with provided attributes.",
+          "params": [
+            {
+              "name": "tag",
+              "type": "*",
+              "description": "Input value for tag."
+            },
+            {
+              "name": "attrs",
+              "type": "*",
+              "description": "Attribute map applied to a created node."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Created SVG element node."
+          }
+        }
+      ]
+    },
+    {
+      "tag": "input-fieldset",
+      "className": "InputFieldset",
+      "file": "input-fieldset.js",
+      "overview": "Lightweight grouping container that wraps slotted form controls in a native `fieldset`/`legend` shell.",
+      "features": [
+        {
+          "name": "Applies consistent bordered group styling to related inputs.",
+          "description": ""
+        },
+        {
+          "name": "Supports optional legend text through a `label` attribute.",
+          "description": ""
+        },
+        {
+          "name": "Mirrors disabled state to underlying `<fieldset>` behavior.",
+          "description": ""
+        }
+      ],
+      "attributes": [
+        {
+          "name": "label",
+          "type": null,
+          "description": "Text rendered in the legend."
+        },
+        {
+          "name": "disabled",
+          "type": null,
+          "description": "Disables the grouped controls by disabling the fieldset."
+        }
+      ],
+      "properties": [
+        {
+          "name": "--input-border",
+          "description": "Fieldset border style."
+        }
+      ],
+      "example": "<input-fieldset label=\"Address\"><input-text name=\"city\"></input-text></input-fieldset>",
+      "methods": [
+        {
+          "name": "constructor",
+          "signatureParams": [],
+          "description": "Initializes component state, DOM references, and default behavior.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "connectedCallback",
+          "signatureParams": [],
+          "description": "Runs setup logic when the element is connected to the document.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "attributeChangedCallback",
+          "signatureParams": [
+            "name",
+            "oldValue",
+            "newValue"
+          ],
+          "description": "Responds to observed attribute changes and synchronizes state.",
+          "params": [
+            {
+              "name": "name",
+              "type": "*",
+              "description": "Attribute or field name."
+            },
+            {
+              "name": "oldValue",
+              "type": "*",
+              "description": "Previous value."
+            },
+            {
+              "name": "newValue",
+              "type": "*",
+              "description": "Next value."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_renderWireframe",
+          "signatureParams": [],
+          "description": "Renders wireframe UI content.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        }
+      ]
+    },
+    {
+      "tag": "input-number",
+      "className": "InputNumber",
+      "file": "input-number.js",
+      "overview": "Numeric entry component with stepper controls, optional units, and precision support.",
+      "features": [
+        {
+          "name": "Pointer-driven increment/decrement steppers.",
+          "description": ""
+        },
+        {
+          "name": "Configurable step size and decimal precision.",
+          "description": ""
+        },
+        {
+          "name": "Optional units suffix rendered in the control chrome.",
+          "description": ""
+        }
+      ],
+      "attributes": [
+        {
+          "name": "step",
+          "type": null,
+          "description": "Increment/decrement amount for steppers and keyboard changes."
+        },
+        {
+          "name": "decimals",
+          "type": null,
+          "description": "Display/rounding precision for emitted values."
+        },
+        {
+          "name": "units",
+          "type": null,
+          "description": "Suffix text rendered to the right of the numeric input."
+        }
+      ],
+      "properties": [
+        {
+          "name": "--input-padding",
+          "description": "Inner native input spacing."
+        },
+        {
+          "name": "--input-height",
+          "description": "Height sync for stepper/label alignment."
+        },
+        {
+          "name": "--form-accent-color",
+          "description": "Hover accent for step controls."
+        },
+        {
+          "name": "--input-border-color",
+          "description": "Label-divider border color when using `label-placement=\"before:native\"`."
+        }
+      ],
+      "example": "<input-number label=\"Speed\" min=\"0\" max=\"240\" step=\"0.5\" decimals=\"1\" units=\"km/h\"></input-number>",
+      "methods": [
+        {
+          "name": "constructor",
+          "signatureParams": [],
+          "description": "Initializes component state, DOM references, and default behavior.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "get _styles",
+          "signatureParams": [],
+          "description": "Returns component-scoped style definitions used to generate CSS.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Style definition map used for generated component CSS."
+          }
+        },
+        {
+          "name": "connectedCallback",
+          "signatureParams": [],
+          "description": "Runs setup logic when the element is connected to the document.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_createNativeControl",
+          "signatureParams": [],
+          "description": "Creates the hidden native input used for form integration.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Configured native input element."
+          }
+        },
+        {
+          "name": "_stepValue",
+          "signatureParams": [
+            "step"
+          ],
+          "description": "Computes the next numeric value using step/min/max constraints.",
+          "params": [
+            {
+              "name": "step",
+              "type": "*",
+              "description": "Input value for step."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_bindStepers",
+          "signatureParams": [],
+          "description": "Attaches increment/decrement controls and keyboard shortcuts for stepping.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        }
+      ]
+    },
+    {
+      "tag": "input-radio",
+      "className": "InputRadio",
+      "file": "input-radio.js",
+      "overview": "Custom-styled radio input that preserves native radio semantics and group exclusivity.",
+      "features": [
+        {
+          "name": "Uses hidden native radio input for form compatibility.",
+          "description": ""
+        },
+        {
+          "name": "Enforces same-name mutual exclusion through sibling synchronization.",
+          "description": ""
+        },
+        {
+          "name": "Supports custom selected-state colors via CSS-variable-backed attributes.",
+          "description": ""
+        }
+      ],
+      "attributes": [
+        {
+          "name": "name",
+          "type": null,
+          "description": "Radio group name used for exclusive selection."
+        },
+        {
+          "name": "value",
+          "type": null,
+          "description": "Submitted value when selected."
+        },
+        {
+          "name": "checked",
+          "type": null,
+          "description": "Initial/current selected state."
+        },
+        {
+          "name": "bgcolor",
+          "type": null,
+          "description": "Optional accent color for checked visuals."
+        },
+        {
+          "name": "checkcolor",
+          "type": null,
+          "description": "Optional center mark color override."
+        }
+      ],
+      "properties": [
+        {
+          "name": "checked",
+          "description": "Getter/setter synchronized with the native radio state."
+        },
+        {
+          "name": "--bgcolor",
+          "description": "Checked accent color."
+        },
+        {
+          "name": "--checkcolor",
+          "description": "Checked indicator color."
+        }
+      ],
+      "example": "<input-radio name=\"theme\" value=\"dark\" label=\"Dark\" checked></input-radio>",
+      "methods": [
+        {
+          "name": "get observedAttributes",
+          "signatureParams": [],
+          "description": "Lists attributes that are observed for runtime updates.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "List of observed attribute names."
+          }
+        },
+        {
+          "name": "get _styles",
+          "signatureParams": [],
+          "description": "Returns component-scoped style definitions used to generate CSS.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Style definition map used for generated component CSS."
+          }
+        },
+        {
+          "name": "_createNativeControl",
+          "signatureParams": [],
+          "description": "Creates the hidden native input used for form integration.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Configured native input element."
+          }
+        },
+        {
+          "name": "_renderDefault",
+          "signatureParams": [],
+          "description": "Builds the default dial DOM (SVG rings, knob, labels, value display).",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Rendered default dial container node."
+          }
+        },
+        {
+          "name": "_afterConnected",
+          "signatureParams": [],
+          "description": "Performs post-connect setup after the component has its default DOM nodes.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_syncVisualState",
+          "signatureParams": [],
+          "description": "Recomputes ring/progress/tick geometry and knob placement from current value state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_onNativeChangeEvent",
+          "signatureParams": [],
+          "description": "Handles native change event events and updates component state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_uncheckSiblings",
+          "signatureParams": [],
+          "description": "Clears checked state from sibling radios in the same group.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "set checked",
+          "signatureParams": [
+            "value"
+          ],
+          "description": "Updates the `checked` value.",
+          "params": [
+            {
+              "name": "value",
+              "type": "*",
+              "description": "Assigned value."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void"
+          }
+        },
+        {
+          "name": "get checked",
+          "signatureParams": [],
+          "description": "Returns the current checked state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Boolean state value."
+          }
+        }
+      ]
+    },
+    {
+      "tag": "input-select",
+      "className": "InputSelect",
+      "file": "input-select.js",
+      "overview": "Select/dropdown component that supports both native `<select>` mode and custom listbox mode.",
+      "features": [
+        {
+          "name": "Reads options from child `<option>` nodes or an `options` attribute payload.",
+          "description": ""
+        },
+        {
+          "name": "Switches between native and custom rendering with `force-native`.",
+          "description": ""
+        },
+        {
+          "name": "Maintains form value synchronization and emits native-like input/change events.",
+          "description": ""
+        },
+        {
+          "name": "Automatically observes option-list mutations and re-renders.",
+          "description": ""
+        }
+      ],
+      "attributes": [
+        {
+          "name": "options",
+          "type": null,
+          "description": "JSON, object path, or CSV/colon syntax describing available options."
+        },
+        {
+          "name": "force-native",
+          "type": null,
+          "description": "Forces native `<select>` rendering instead of custom dropdown UI."
+        },
+        {
+          "name": "value",
+          "type": null,
+          "description": "Selected option value."
+        },
+        {
+          "name": "default",
+          "type": null,
+          "description": "Placeholder text used by custom dropdown mode."
+        }
+      ],
+      "properties": [
+        {
+          "name": "value",
+          "description": "Getter/setter for selected value across native/custom modes."
+        },
+        {
+          "name": "--form-accent-color",
+          "description": "Shared accent color fallback for selected and arrow states."
+        },
+        {
+          "name": "--select-arrow-color",
+          "description": "Arrow color for custom dropdown tab."
+        }
+      ],
+      "example": "<input-select label=\"Country\" options=\"US:United States,CA:Canada\"></input-select>",
+      "methods": [
+        {
+          "name": "constructor",
+          "signatureParams": [],
+          "description": "Initializes component state, DOM references, and default behavior.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "get _styles",
+          "signatureParams": [],
+          "description": "Returns component-scoped style definitions used to generate CSS.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Style definition map used for generated component CSS."
+          }
+        },
+        {
+          "name": "_useNativeMode",
+          "signatureParams": [],
+          "description": "Returns whether the select should delegate to native rendering mode.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Boolean state value."
+          }
+        },
+        {
+          "name": "_createNativeControl",
+          "signatureParams": [],
+          "description": "Creates the hidden native input used for form integration.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Configured native input element."
+          }
+        },
+        {
+          "name": "connectedCallback",
+          "signatureParams": [],
+          "description": "Runs setup logic when the element is connected to the document.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "disconnectedCallback",
+          "signatureParams": [],
+          "description": "Cleans up listeners and observers when the element is disconnected.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "attributeChangedCallback",
+          "signatureParams": [
+            "name",
+            "oldValue",
+            "newValue"
+          ],
+          "description": "Responds to observed attribute changes and synchronizes state.",
+          "params": [
+            {
+              "name": "name",
+              "type": "*",
+              "description": "Attribute or field name."
+            },
+            {
+              "name": "oldValue",
+              "type": "*",
+              "description": "Previous value."
+            },
+            {
+              "name": "newValue",
+              "type": "*",
+              "description": "Next value."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_afterConnected",
+          "signatureParams": [],
+          "description": "Performs post-connect setup after the component has its default DOM nodes.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_renderDefault",
+          "signatureParams": [],
+          "description": "Builds the custom dropdown list container for non-native mode.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_startOptionObserver",
+          "signatureParams": [],
+          "description": "Starts option observers so option list changes are reflected immediately.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_readOptions",
+          "signatureParams": [],
+          "description": "Builds normalized option data from configured sources.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Derived value."
+          }
+        },
+        {
+          "name": "_refreshOptions",
+          "signatureParams": [],
+          "description": "Rebuilds option UI and selection state from current option data.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_selectOptionByValue",
+          "signatureParams": [
+            "value"
+          ],
+          "description": "Selects and activates the option matching a value.",
+          "params": [
+            {
+              "name": "value",
+              "type": "*",
+              "description": "Raw value being normalized or assigned."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_expandOptionList",
+          "signatureParams": [],
+          "description": "Opens or closes the custom option list UI.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_bindCustomDropdownEvents",
+          "signatureParams": [],
+          "description": "Wires dropdown open/close, option click, and keyboard interactions.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_getFormValue",
+          "signatureParams": [],
+          "description": "Returns derived form value state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Derived value."
+          }
+        },
+        {
+          "name": "get value",
+          "signatureParams": [],
+          "description": "Returns the current component value.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Current value."
+          }
+        },
+        {
+          "name": "set value",
+          "signatureParams": [
+            "value"
+          ],
+          "description": "Updates the `value` value.",
+          "params": [
+            {
+              "name": "value",
+              "type": "*",
+              "description": "Assigned value."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void"
+          }
+        }
+      ]
+    },
+    {
+      "tag": "input-status",
+      "className": "InputStatus",
+      "file": "input-status.js",
+      "overview": "Animated status badge used by form components to show idle/info/warning/error/success states.",
+      "features": [
+        {
+          "name": "SVG icon animations for check, cross, warning, and info glyphs.",
+          "description": ""
+        },
+        {
+          "name": "Circular stroke/fill transition choreography between states.",
+          "description": ""
+        },
+        {
+          "name": "Configurable size and icon-only mode for compact layouts.",
+          "description": ""
+        },
+        {
+          "name": "Optional custom color override or auto-colored status mode.",
+          "description": ""
+        }
+      ],
+      "attributes": [
+        {
+          "name": "state",
+          "type": null,
+          "description": "One of `info`, `warning`, `error`/`x`, `success`, or empty for idle."
+        },
+        {
+          "name": "size",
+          "type": null,
+          "description": "Pixel size of the status badge."
+        },
+        {
+          "name": "icon-only",
+          "type": null,
+          "description": "Hides ring/fill and shows icon only."
+        },
+        {
+          "name": "colored",
+          "type": null,
+          "description": "Applies state color to icon in icon-only mode."
+        },
+        {
+          "name": "color",
+          "type": null,
+          "description": "Explicit icon color override in icon-only mode."
+        }
+      ],
+      "properties": [
+        {
+          "name": "size",
+          "description": "Getter/setter mapped to the `size` attribute."
+        },
+        {
+          "name": "state",
+          "description": "Getter/setter mapped to the `state` attribute."
+        }
+      ],
+      "example": "<input-status state=\"warning\" size=\"20\" colored></input-status>",
+      "methods": [
+        {
+          "name": "constructor",
+          "signatureParams": [],
+          "description": "Initializes component state, DOM references, and default behavior.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "connectedCallback",
+          "signatureParams": [],
+          "description": "Runs setup logic when the element is connected to the document.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "attributeChangedCallback",
+          "signatureParams": [
+            "name",
+            "oldValue",
+            "newValue"
+          ],
+          "description": "Responds to observed attribute changes and synchronizes state.",
+          "params": [
+            {
+              "name": "name",
+              "type": "*",
+              "description": "Attribute or field name."
+            },
+            {
+              "name": "oldValue",
+              "type": "*",
+              "description": "Previous value."
+            },
+            {
+              "name": "newValue",
+              "type": "*",
+              "description": "Next value."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_setStyle",
+          "signatureParams": [
+            "name",
+            "cssText"
+          ],
+          "description": "Updates internal component state and applies side effects.",
+          "params": [
+            {
+              "name": "name",
+              "type": "*",
+              "description": "Attribute or field name."
+            },
+            {
+              "name": "cssText",
+              "type": "*",
+              "description": "Input value for css text."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_clearStyle",
+          "signatureParams": [
+            "name"
+          ],
+          "description": "Clears previously applied status style tokens from the wrapper.",
+          "params": [
+            {
+              "name": "name",
+              "type": "*",
+              "description": "Attribute or field name."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_applyState",
+          "signatureParams": [
+            "state"
+          ],
+          "description": "Applies state to rendered output.",
+          "params": [
+            {
+              "name": "state",
+              "type": "*",
+              "description": "Input value for state."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_applySize",
+          "signatureParams": [],
+          "description": "Applies size to rendered output.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "get size",
+          "signatureParams": [],
+          "description": "Returns the configured component size.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Configured size value."
+          }
+        },
+        {
+          "name": "set size",
+          "signatureParams": [
+            "value"
+          ],
+          "description": "Updates the `size` value.",
+          "params": [
+            {
+              "name": "value",
+              "type": "*",
+              "description": "Assigned value."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void"
+          }
+        },
+        {
+          "name": "get state",
+          "signatureParams": [],
+          "description": "Returns the current status state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Current normalized status state."
+          }
+        },
+        {
+          "name": "set state",
+          "signatureParams": [
+            "value"
+          ],
+          "description": "Updates the `state` value.",
+          "params": [
+            {
+              "name": "value",
+              "type": "*",
+              "description": "Assigned value."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void"
+          }
+        }
+      ]
+    },
+    {
+      "tag": "input-text",
+      "className": "InputText",
+      "file": "input-text.js",
+      "overview": "Single-line text input built on InputComponent with native text semantics.",
+      "features": [
+        {
+          "name": "Form associated behavior via InputComponent.",
+          "description": ""
+        },
+        {
+          "name": "Validation/status rendering from base component pipeline.",
+          "description": ""
+        },
+        {
+          "name": "Configurable through shared base input attributes (`label`, `value`, `placeholder`, `validation`, etc).",
+          "description": ""
+        }
+      ],
+      "attributes": [],
+      "properties": [
+        {
+          "name": "--input-padding",
+          "description": "Local text input inner spacing."
+        }
+      ],
+      "example": "<input-text label=\"Username\" placeholder=\"Type username\" validation=\"required|min:3\"></input-text>",
+      "methods": [
+        {
+          "name": "get _styles",
+          "signatureParams": [],
+          "description": "Returns component-scoped style definitions used to generate CSS.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Style definition map used for generated component CSS."
+          }
+        },
+        {
+          "name": "_createNativeControl",
+          "signatureParams": [],
+          "description": "Creates the hidden native input used for form integration.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Configured native input element."
+          }
+        }
+      ]
+    },
+    {
+      "tag": "input-textarea",
+      "className": "InputTextarea",
+      "file": "input-textarea.js",
+      "overview": "Multi-line text input component for longer free-form text entry.",
+      "features": [
+        {
+          "name": "Uses InputComponent lifecycle, validation, and status UI.",
+          "description": ""
+        },
+        {
+          "name": "Native `<textarea>` control wrapped in Juice form styling/layout.",
+          "description": ""
+        },
+        {
+          "name": "Supports standard text validation rules through base validation pipeline.",
+          "description": ""
+        }
+      ],
+      "attributes": [],
+      "properties": [],
+      "example": "<input-textarea label=\"Bio\" rows=\"4\" placeholder=\"Tell us about yourself\"></input-textarea>",
+      "methods": [
+        {
+          "name": "constructor",
+          "signatureParams": [],
+          "description": "Initializes component state, DOM references, and default behavior.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_createNativeControl",
+          "signatureParams": [],
+          "description": "Creates the hidden native input used for form integration.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Configured native input element."
+          }
+        }
+      ]
+    },
+    {
+      "tag": "input-vector",
+      "className": "InputVectorComponent",
+      "file": "input-vector.js",
+      "overview": "Multi-axis numeric vector input that composes `input-number` controls for 2D/3D/4D values.",
+      "features": [
+        {
+          "name": "Supports configurable dimensionality via `dimentions` (2, 3, or 4 axes).",
+          "description": ""
+        },
+        {
+          "name": "Initializes values from `default-*` attributes.",
+          "description": ""
+        },
+        {
+          "name": "Emits axis-specific custom events (`input-x`, `input-y`, ...).",
+          "description": ""
+        },
+        {
+          "name": "Serializes vector values for form integration through InputComponent.",
+          "description": ""
+        }
+      ],
+      "attributes": [
+        {
+          "name": "dimentions",
+          "type": null,
+          "description": "Number of rendered axes (2/3/4)."
+        },
+        {
+          "name": "normalize",
+          "type": null,
+          "description": "Set to `false` to keep absolute values instead of unit normalization."
+        }
+      ],
+      "properties": [],
+      "example": "<input-vector dimentions=\"3\" default-x=\"0\" default-y=\"1\" default-z=\"0\"></input-vector>",
+      "methods": [
+        {
+          "name": "constructor",
+          "signatureParams": [],
+          "description": "Initializes component state, DOM references, and default behavior.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "get _styles",
+          "signatureParams": [],
+          "description": "Returns component-scoped style definitions used to generate CSS.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Style definition map used for generated component CSS."
+          }
+        },
+        {
+          "name": "_renderDefault",
+          "signatureParams": [],
+          "description": "Builds the default dial DOM (SVG rings, knob, labels, value display).",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Rendered default dial container node."
+          }
+        },
+        {
+          "name": "_afterConnected",
+          "signatureParams": [],
+          "description": "Performs post-connect setup after the component has its default DOM nodes.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_createNativeControl",
+          "signatureParams": [],
+          "description": "Creates the hidden native input used for form integration.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Configured native input element."
+          }
+        },
+        {
+          "name": "_syncSingleAttribute",
+          "signatureParams": [
+            "name"
+          ],
+          "description": "Synchronizes single attribute between state, attributes, and UI.",
+          "params": [
+            {
+              "name": "name",
+              "type": "*",
+              "description": "Attribute or field name."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_onNativeInputEvent",
+          "signatureParams": [],
+          "description": "Handles native input event events and updates component state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_onNativeChangeEvent",
+          "signatureParams": [],
+          "description": "Handles native change event events and updates component state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_setVectorFromExternal",
+          "signatureParams": [],
+          "description": "Updates internal component state and applies side effects.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_syncVisualState",
+          "signatureParams": [],
+          "description": "Recomputes ring/progress/tick geometry and knob placement from current value state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_bindAxisInputs",
+          "signatureParams": [],
+          "description": "Attaches input listeners for axis fields and forwards updates to vector state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_commitAxisInputs",
+          "signatureParams": [
+            "eventName"
+          ],
+          "description": "Reads axis sub-inputs, normalizes them, and commits to host value.",
+          "params": [
+            {
+              "name": "eventName",
+              "type": "*",
+              "description": "Input value for event name."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_resolveDefaultVector",
+          "signatureParams": [],
+          "description": "Resolves effective default vector configuration.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Derived value."
+          }
+        },
+        {
+          "name": "_readNumberAttribute",
+          "signatureParams": [
+            "name",
+            "fallback"
+          ],
+          "description": "Reads a numeric attribute with fallback handling for invalid values.",
+          "params": [
+            {
+              "name": "name",
+              "type": "*",
+              "description": "Attribute or field name."
+            },
+            {
+              "name": "fallback",
+              "type": "*",
+              "description": "Fallback value used when input is invalid."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Parsed numeric value or provided fallback."
+          }
+        },
+        {
+          "name": "_normalizeVector",
+          "signatureParams": [
+            "value"
+          ],
+          "description": "Normalizes vector into a safe internal representation.",
+          "params": [
+            {
+              "name": "value",
+              "type": "*",
+              "description": "Raw value being normalized or assigned."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived value."
+          }
+        },
+        {
+          "name": "_parseVector",
+          "signatureParams": [
+            "raw"
+          ],
+          "description": "Parses vector into normalized internal data.",
+          "params": [
+            {
+              "name": "raw",
+              "type": "*",
+              "description": "Input value for raw."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived value."
+          }
+        },
+        {
+          "name": "_serializeVector",
+          "signatureParams": [
+            "vector"
+          ],
+          "description": "Serializes vector coordinates into the component value format.",
+          "params": [
+            {
+              "name": "vector",
+              "type": "*",
+              "description": "Input value for vector."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Serialized vector string value."
+          }
+        },
+        {
+          "name": "_formatFloat",
+          "signatureParams": [
+            "value"
+          ],
+          "description": "Formats a float using component precision rules.",
+          "params": [
+            {
+              "name": "value",
+              "type": "*",
+              "description": "Raw value being normalized or assigned."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Formatted numeric string."
+          }
+        }
+      ]
+    },
+    {
+      "tag": "juice-form",
+      "className": "JuiceFormElement",
+      "file": "juice-form.js",
+      "overview": "Shadow-DOM form wrapper that hosts `<form-info>` and a slotted field container.",
+      "features": [
+        {
+          "name": "Creates an internal `<form>` with method/action/enctype forwarding.",
+          "description": ""
+        },
+        {
+          "name": "Provides built-in `<form-info>` status block above slotted fields.",
+          "description": ""
+        },
+        {
+          "name": "Encapsulates base layout/style within shadow DOM.",
+          "description": ""
+        }
+      ],
+      "attributes": [
+        {
+          "name": "method",
+          "type": null,
+          "description": "Forwarded to internal form method (`get` default)."
+        },
+        {
+          "name": "action",
+          "type": null,
+          "description": "Forwarded submit target URL."
+        },
+        {
+          "name": "enctype",
+          "type": null,
+          "description": "Forwarded form encoding type."
+        },
+        {
+          "name": "novalidate",
+          "type": null,
+          "description": "Forwarded native form validation toggle."
+        }
+      ],
+      "properties": [],
+      "example": "<juice-form method=\"post\" action=\"/api/profile\"><input-text name=\"name\"></input-text></juice-form>",
+      "methods": [
+        {
+          "name": "constructor",
+          "signatureParams": [],
+          "description": "Initializes component state, DOM references, and default behavior.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "connectedCallback",
+          "signatureParams": [],
+          "description": "Runs setup logic when the element is connected to the document.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_render",
+          "signatureParams": [],
+          "description": "Renders render UI content.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        }
+      ]
+    },
+    {
+      "tag": "juice-forms",
+      "className": "JuiceFormsElement",
+      "file": "juice-forms.js",
+      "overview": "Form host component that owns a real `<form>` element and applies preset-driven responsive layout metadata.",
+      "features": [
+        {
+          "name": "Auto-wraps children in an internal form while mirroring host attributes.",
+          "description": ""
+        },
+        {
+          "name": "Computes field spans/groups from config presets and field constraints.",
+          "description": ""
+        },
+        {
+          "name": "Applies responsive column count based on container width.",
+          "description": ""
+        },
+        {
+          "name": "Exposes native form methods/properties for integration.",
+          "description": ""
+        }
+      ],
+      "attributes": [],
+      "properties": [
+        {
+          "name": "form",
+          "description": "Internal native `<form>` element."
+        },
+        {
+          "name": "elements",
+          "description": "Internal form controls collection."
+        },
+        {
+          "name": "length",
+          "description": "Internal form controls length."
+        },
+        {
+          "name": "--juice-forms-gap",
+          "description": "Grid gap between fields."
+        },
+        {
+          "name": "--juice-forms-columns",
+          "description": "Active responsive column count."
+        },
+        {
+          "name": "--juice-field-span",
+          "description": "Per-field resolved column span."
+        },
+        {
+          "name": "--juice-group-start-gap",
+          "description": "Vertical spacing before a new field group."
+        }
+      ],
+      "example": "<juice-forms method=\"post\"><input-text name=\"email\"></input-text><input-textarea name=\"bio\"></input-textarea></juice-forms>",
+      "methods": [
+        {
+          "name": "connectedCallback",
+          "signatureParams": [],
+          "description": "Runs setup logic when the element is connected to the document.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "disconnectedCallback",
+          "signatureParams": [],
+          "description": "Cleans up listeners and observers when the element is disconnected.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_bindConfigEvents",
+          "signatureParams": [],
+          "description": "Wires config-change handlers that keep form layout synchronized.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_ensureStyleNode",
+          "signatureParams": [],
+          "description": "Creates or returns the style element used by the form wrapper.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_ensureFormNode",
+          "signatureParams": [],
+          "description": "Creates or returns the internal form node used by the wrapper.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_moveUnmanagedChildrenIntoForm",
+          "signatureParams": [],
+          "description": "Moves unassigned light-DOM children into the managed form container.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_syncFormAttributes",
+          "signatureParams": [],
+          "description": "Synchronizes form attributes between state, attributes, and UI.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_bindFormEvents",
+          "signatureParams": [],
+          "description": "Wires native form events and re-emits component-level events.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_startResizeObserver",
+          "signatureParams": [],
+          "description": "Starts the resize observer that keeps responsive layout values in sync.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_startObserver",
+          "signatureParams": [],
+          "description": "Starts mutation observers needed for runtime slot/child updates.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_getFormsConfig",
+          "signatureParams": [],
+          "description": "Returns derived forms config state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Derived value."
+          }
+        },
+        {
+          "name": "_collectLayoutItems",
+          "signatureParams": [],
+          "description": "Collects layout items from configured sources.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_getMergedPresets",
+          "signatureParams": [
+            "formsConfig"
+          ],
+          "description": "Returns derived merged presets state.",
+          "params": [
+            {
+              "name": "formsConfig",
+              "type": "*",
+              "description": "Input value for forms config."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived value."
+          }
+        },
+        {
+          "name": "_resolvePreset",
+          "signatureParams": [
+            "field",
+            "presets"
+          ],
+          "description": "Resolves effective preset configuration.",
+          "params": [
+            {
+              "name": "field",
+              "type": "*",
+              "description": "Field element being processed."
+            },
+            {
+              "name": "presets",
+              "type": "*",
+              "description": "Input value for presets."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived value."
+          }
+        },
+        {
+          "name": "_deriveSpanFromChars",
+          "signatureParams": [
+            "maxChars",
+            "layoutConfig"
+          ],
+          "description": "Derives a grid span estimate from configured character length.",
+          "params": [
+            {
+              "name": "maxChars",
+              "type": "*",
+              "description": "Input value for max chars."
+            },
+            {
+              "name": "layoutConfig",
+              "type": "*",
+              "description": "Input value for layout config."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_getDesiredSpan",
+          "signatureParams": [
+            "field",
+            "preset",
+            "layoutConfig"
+          ],
+          "description": "Returns derived desired span state.",
+          "params": [
+            {
+              "name": "field",
+              "type": "*",
+              "description": "Field element being processed."
+            },
+            {
+              "name": "preset",
+              "type": "*",
+              "description": "Input value for preset."
+            },
+            {
+              "name": "layoutConfig",
+              "type": "*",
+              "description": "Input value for layout config."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived value."
+          }
+        },
+        {
+          "name": "_setGroupMetadata",
+          "signatureParams": [
+            "items",
+            "groupsConfig",
+            "layoutConfig"
+          ],
+          "description": "Updates internal component state and applies side effects.",
+          "params": [
+            {
+              "name": "items",
+              "type": "*",
+              "description": "Input value for items."
+            },
+            {
+              "name": "groupsConfig",
+              "type": "*",
+              "description": "Input value for groups config."
+            },
+            {
+              "name": "layoutConfig",
+              "type": "*",
+              "description": "Input value for layout config."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_applyLayoutMetadata",
+          "signatureParams": [],
+          "description": "Applies layout metadata to rendered output.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_measureLength",
+          "signatureParams": [
+            "value",
+            "fallbackPx = 0"
+          ],
+          "description": "Measures rendered text length for auto-size/layout calculations.",
+          "params": [
+            {
+              "name": "value",
+              "type": "*",
+              "description": "Raw value being normalized or assigned."
+            },
+            {
+              "name": "fallbackPx",
+              "type": "*",
+              "description": "Input value for fallback px."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_applyResponsiveColumns",
+          "signatureParams": [],
+          "description": "Applies responsive columns to rendered output.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "submit",
+          "signatureParams": [],
+          "description": "Submits the underlying form.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "requestSubmit",
+          "signatureParams": [
+            "submitter"
+          ],
+          "description": "Requests a form submit, optionally with a submitter element.",
+          "params": [
+            {
+              "name": "submitter",
+              "type": "*",
+              "description": "Submit button/control used for requestSubmit."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "reset",
+          "signatureParams": [],
+          "description": "Resets the underlying form state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "checkValidity",
+          "signatureParams": [],
+          "description": "Checks the current validity state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Boolean validity result."
+          }
+        },
+        {
+          "name": "reportValidity",
+          "signatureParams": [],
+          "description": "Reports validity and returns whether the state is valid.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Boolean validity result."
+          }
+        },
+        {
+          "name": "get form",
+          "signatureParams": [],
+          "description": "Returns the associated native form element.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Associated form element or null."
+          }
+        },
+        {
+          "name": "get elements",
+          "signatureParams": [],
+          "description": "Returns the form control collection.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Form controls collection."
+          }
+        },
+        {
+          "name": "get length",
+          "signatureParams": [],
+          "description": "Returns the number of form controls.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Number of form controls."
+          }
+        }
+      ]
+    },
+    {
+      "tag": "option-group",
+      "className": "OptionGroup",
+      "file": "option-group.js",
+      "overview": "Declarative option-group wrapper that turns child `<option>` nodes into generated radio or checkbox controls.",
+      "features": [
+        {
+          "name": "Supports `radio` and `checkbox` generation modes.",
+          "description": ""
+        },
+        {
+          "name": "Keeps generated control state synchronized back to source options.",
+          "description": ""
+        },
+        {
+          "name": "Observes child option mutations and re-renders automatically.",
+          "description": ""
+        },
+        {
+          "name": "Optional visible group label with host styling hooks.",
+          "description": ""
+        }
+      ],
+      "attributes": [
+        {
+          "name": "mode",
+          "type": null,
+          "description": "`radio` or `checkbox` control generation mode."
+        },
+        {
+          "name": "name",
+          "type": null,
+          "description": "Group name applied to generated controls."
+        },
+        {
+          "name": "disabled",
+          "type": null,
+          "description": "Disables all generated controls."
+        },
+        {
+          "name": "label",
+          "type": null,
+          "description": "Group caption shown above options."
+        }
+      ],
+      "properties": [
+        {
+          "name": "styles",
+          "description": "Internal style map used to build shadow styles."
+        }
+      ],
+      "example": "<option-group mode=\"radio\" name=\"size\" label=\"Size\"><option value=\"s\">Small</option></option-group>",
+      "methods": [
+        {
+          "name": "get styles",
+          "signatureParams": [],
+          "description": "Returns the style map used to build component CSS.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Style definition map."
+          }
+        },
+        {
+          "name": "constructor",
+          "signatureParams": [],
+          "description": "Initializes component state, DOM references, and default behavior.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_ensureLabel",
+          "signatureParams": [],
+          "description": "Ensures label exists and is ready for use.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "connectedCallback",
+          "signatureParams": [],
+          "description": "Runs setup logic when the element is connected to the document.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "disconnectedCallback",
+          "signatureParams": [],
+          "description": "Cleans up listeners and observers when the element is disconnected.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "attributeChangedCallback",
+          "signatureParams": [
+            "name",
+            "oldValue",
+            "newValue"
+          ],
+          "description": "Responds to observed attribute changes and synchronizes state.",
+          "params": [
+            {
+              "name": "name",
+              "type": "*",
+              "description": "Attribute or field name."
+            },
+            {
+              "name": "oldValue",
+              "type": "*",
+              "description": "Previous value."
+            },
+            {
+              "name": "newValue",
+              "type": "*",
+              "description": "Next value."
+            }
+          ],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_startObserver",
+          "signatureParams": [],
+          "description": "Starts mutation observers needed for runtime slot/child updates.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_ensureGeneratedContainer",
+          "signatureParams": [],
+          "description": "Ensures generated container exists and is ready for use.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_hideOptionPlaceholders",
+          "signatureParams": [],
+          "description": "Hides placeholder options from rendered custom option lists.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Derived internal value or completion status."
+          }
+        },
+        {
+          "name": "_getSourceOptions",
+          "signatureParams": [],
+          "description": "Returns derived source options state.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "Derived value."
+          }
+        },
+        {
+          "name": "_renderGeneratedControls",
+          "signatureParams": [],
+          "description": "Renders generated controls UI content.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        },
+        {
+          "name": "_syncOptionsFromGenerated",
+          "signatureParams": [],
+          "description": "Synchronizes options from generated between state, attributes, and UI.",
+          "params": [],
+          "returns": {
+            "type": "*",
+            "description": "void."
+          }
+        }
+      ]
+    }
+  ]
+}

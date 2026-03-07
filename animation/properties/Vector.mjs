@@ -73,6 +73,11 @@ export class VectoX extends Float32Array {
         }
     }
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} args - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(...args) {
         let options = {};
         if (args[args.length - 1] instanceof Object) {
@@ -288,6 +293,13 @@ export class Vector2D extends Float32Array {
         return new this(arg1.x, arg1.y);
     }
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(x = 0, y = 0, options = {}) {
         super(2);
         this[0] = x;
@@ -322,6 +334,10 @@ export class Vector2D extends Float32Array {
         return [this[0], this[1]];
     }
 
+    /**
+     * Executes toObject.
+     * @returns {*} Result of toObject.
+     */
     toObject() {
         return { x: this[0], y: this[1] };
     }
@@ -756,6 +772,14 @@ export class Vector3D extends Float32Array {
         );
     }
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} arg1 - Parameter value.
+     * @param {*} arg2 - Parameter value.
+     * @param {*} arg3 - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(arg1 = 0, arg2 = 0, arg3 = 0, options = {}) {
         super(3);
 
@@ -872,6 +896,11 @@ export class Vector3D extends Float32Array {
         return this;
     }
 
+    /**
+     * Executes multiply.
+     * @param {*} scalar - Parameter value.
+     * @returns {*} Result of multiply.
+     */
     multiply(scalar) {
         if (this._freezable && this.frozen) return this;
         this[0] *= scalar;
@@ -915,6 +944,10 @@ export class Vector3D extends Float32Array {
         return Math.hypot(this[0], this[1], this[2]);
     }
 
+    /**
+     * Executes normalize.
+     * @returns {*} Result of normalize.
+     */
     normalize() {
         if (this._freezable && this.frozen) return this;
         let len = this.length();
@@ -1010,6 +1043,11 @@ export class Vector3D extends Float32Array {
         if (this._trackDirty) this.dirtyProperties.push(0, "x");
     }
 
+    /**
+     * Updates the y value.
+     * @param {*} y - Parameter value.
+     * @returns {*} void.
+     */
     set y(y) {
         // Fast path
         if (!this._freezable && !this._trackDirty) {
@@ -1023,6 +1061,11 @@ export class Vector3D extends Float32Array {
         if (this._trackDirty) this.dirtyProperties.push(1, "y");
     }
 
+    /**
+     * Updates the z value.
+     * @param {*} z - Parameter value.
+     * @returns {*} void.
+     */
     set z(z) {
         // Fast path
         if (!this._freezable && !this._trackDirty) {
@@ -1038,6 +1081,10 @@ export class Vector3D extends Float32Array {
 
     // === HISTORY METHODS ===
 
+    /**
+     * Executes save.
+     * @returns {*} Result of save.
+     */
     save() {
         if (!this._useHistory) return;
         this.last = this.saved;
@@ -1056,16 +1103,29 @@ export class Vector3D extends Float32Array {
         this.last = [this[0], this[1], this[2]];
     }
 
+    /**
+     * Returns changes values.
+     * @param {*} i - Parameter value.
+     * @returns {*} Result of getChanges.
+     */
     getChanges(i = 0) {
         if (!this._useHistory) return new Vector3D(0, 0, 0);
         return this.diff(this.history[i]);
     }
 
+    /**
+     * Returns the current delta value.
+     * @returns {*} Current delta value.
+     */
     get delta() {
         if (!this._useHistory) return new Vector3D(0, 0, 0);
         return this.diff(this.last);
     }
 
+    /**
+     * Executes savedDelta.
+     * @returns {*} Result of savedDelta.
+     */
     savedDelta() {
         if (!this._useHistory) return new Vector3D(0, 0, 0);
         return this.diff(this.saved);
@@ -1073,11 +1133,20 @@ export class Vector3D extends Float32Array {
 
     // === DIRTY TRACKING METHODS ===
 
+    /**
+     * Returns the current dirty value.
+     * @returns {*} Current dirty value.
+     */
     get dirty() {
         if (!this._trackDirty) return false;
         return this.dirtyProperties.length > 0;
     }
 
+    /**
+     * Executes isDirty.
+     * @param {*} props - Parameter value.
+     * @returns {*} Result of isDirty.
+     */
     isDirty(...props) {
         if (!this._trackDirty) return false;
         if (props.length) {
@@ -1086,6 +1155,11 @@ export class Vector3D extends Float32Array {
         return this.dirty;
     }
 
+    /**
+     * Executes clean.
+     * @param {*} props - Parameter value.
+     * @returns {*} Result of clean.
+     */
     clean(...props) {
         if (!this._trackDirty) return;
         if (props.length) {
@@ -1098,6 +1172,11 @@ export class Vector3D extends Float32Array {
 
     // === FREEZE METHODS ===
 
+    /**
+     * Executes freeze.
+     * @param {*} shouldFreeze - Parameter value.
+     * @returns {*} Result of freeze.
+     */
     freeze(shouldFreeze = true) {
         if (this._freezable) {
             this.frozen = shouldFreeze;
@@ -1398,6 +1477,11 @@ export class Vector4D extends Float32Array {
         return this;
     }
 
+    /**
+     * Executes multiply.
+     * @param {*} scalar - Parameter value.
+     * @returns {*} Result of multiply.
+     */
     multiply(scalar) {
         if (this._freezable && this.frozen) return this;
         this[0] *= scalar;
@@ -1408,14 +1492,27 @@ export class Vector4D extends Float32Array {
         return this;
     }
 
+    /**
+     * Executes dot.
+     * @param {*} v - Parameter value.
+     * @returns {*} Result of dot.
+     */
     dot(v) {
         return this[0] * v[0] + this[1] * v[1] + this[2] * v[2] + this[3] * v[3];
     }
 
+    /**
+     * Executes length.
+     * @returns {*} Result of length.
+     */
     length() {
         return Math.hypot(this[0], this[1], this[2], this[3]);
     }
 
+    /**
+     * Executes normalize.
+     * @returns {*} Result of normalize.
+     */
     normalize() {
         if (this._freezable && this.frozen) return this;
         let len = this.length();
@@ -1642,6 +1739,11 @@ export class Vector4D extends Float32Array {
         return this.dirtyProperties.length > 0;
     }
 
+    /**
+     * Executes isDirty.
+     * @param {*} props - Parameter value.
+     * @returns {*} Result of isDirty.
+     */
     isDirty(...props) {
         if (!this._trackDirty) return false;
         if (props.length) {
@@ -1650,6 +1752,11 @@ export class Vector4D extends Float32Array {
         return this.dirty;
     }
 
+    /**
+     * Executes clean.
+     * @param {*} props - Parameter value.
+     * @returns {*} Result of clean.
+     */
     clean(...props) {
         if (!this._trackDirty) return;
         if (props.length) {
@@ -1662,6 +1769,11 @@ export class Vector4D extends Float32Array {
 
     // === FREEZE METHODS ===
 
+    /**
+     * Executes freeze.
+     * @param {*} shouldFreeze - Parameter value.
+     * @returns {*} Result of freeze.
+     */
     freeze(shouldFreeze = true) {
         if (this._freezable) {
             this.frozen = shouldFreeze;
@@ -1789,14 +1901,32 @@ export class Vector4D extends Float32Array {
     }
 }
 
+/**
+ * Represents the AnimationVector2D animation module class.
+ */
 class AnimationVector2D extends Vector2D {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} arg1 - Parameter value.
+     * @param {*} arg2 - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(arg1, arg2, options = {}) {
         super(arg1, arg2, options);
         this.velocity = new Vector2D();
     }
 }
 
+/**
+ * Represents the Vector animation module class.
+ */
 class Vector {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} args - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(...args) {
         if (args.length === 1) {
             if (typeof args[0] === "string") {

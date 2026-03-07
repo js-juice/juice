@@ -17,6 +17,9 @@ const PIXEL_STORE_METHODS = {
     UNPACK_COLORSPACE_CONVERSION_WEBGL: true,
 };
 
+/**
+ * Represents the WebGL animation module class.
+ */
 class WebGL extends EventEmitter {
     static Shaders = Shaders;
     static VariableTypes = VariableTypes;
@@ -32,6 +35,14 @@ class WebGL extends EventEmitter {
     postSetup = [];
     renderSetup = [];
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} parent - Parameter value.
+     * @param {*} width - Parameter value.
+     * @param {*} height - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(parent, width = null, height = null, options = {}) {
         super();
         if (parent instanceof HTMLCanvasElement) {
@@ -50,30 +61,66 @@ class WebGL extends EventEmitter {
         this.initialize();
     }
 
+    /**
+     * Executes addPreSetupOperation.
+     * @param {*} op - Parameter value.
+     * @param {*} args - Parameter value.
+     * @returns {*} Result of addPreSetupOperation.
+     */
     addPreSetupOperation(op, ...args) {
         this.preSetup.push([op, args]);
     }
 
+    /**
+     * Executes addPostSetupOperation.
+     * @param {*} op - Parameter value.
+     * @param {*} args - Parameter value.
+     * @returns {*} Result of addPostSetupOperation.
+     */
     addPostSetupOperation(op, ...args) {
         this.postSetup.push([op, args]);
     }
 
+    /**
+     * Executes addRenderOperation.
+     * @param {*} op - Parameter value.
+     * @param {*} args - Parameter value.
+     * @returns {*} Result of addRenderOperation.
+     */
     addRenderOperation(op, ...args) {
         this.renderSetup.push([op, args]);
     }
 
+    /**
+     * Executes runOperations.
+     * @param {*} type - Parameter value.
+     * @returns {*} Result of runOperations.
+     */
     runOperations(type) {
         this[type + "Setup"].forEach(([op, args = []]) => {
             op(this.gl, ...args);
         });
     }
 
+    /**
+     * Executes createTexture.
+     * @param {*} image - Parameter value.
+     * @returns {*} Result of createTexture.
+     */
     createTexture(image) {
         const texture = new Texture(image, this.gl);
         this.textures.push(texture);
         return texture;
     }
 
+    /**
+     * Executes normalize.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @param {*} z - Parameter value.
+     * @param {*} w - Parameter value.
+     * @returns {*} Result of normalize.
+     */
     normalize(x, y, z, w) {
         const aspect = this.canvas.width / this.canvas.height;
         const normal = [];
@@ -91,11 +138,19 @@ class WebGL extends EventEmitter {
         return normal;
     }
 
+    /**
+     * Executes transformFeedback.
+     * @returns {*} Result of transformFeedback.
+     */
     transformFeedback() {
         const { gl } = this;
         return new TransformFeedback();
     }
 
+    /**
+     * Executes build.
+     * @returns {*} Result of build.
+     */
     build() {
         const { shaders, gl } = this;
         const { vertex, fragment } = shaders.build();
@@ -129,6 +184,10 @@ class WebGL extends EventEmitter {
         return this.program;
     }
 
+    /**
+     * Executes initialize.
+     * @returns {*} Result of initialize.
+     */
     initialize() {
         if (!this.canvas) {
             this.canvas = document.createElement("canvas");

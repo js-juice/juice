@@ -1,3 +1,40 @@
+
+
+/**
+ * AUTODOC:START
+ * Component: <juice-forms>
+ * Class: JuiceFormsElement
+ * Overview: Form host component that owns a real `<form>` element and applies preset-driven responsive layout metadata.
+ *
+ * Features:
+ * - Auto-wraps children in an internal form while mirroring host attributes.
+ * - Computes field spans/groups from config presets and field constraints.
+ * - Applies responsive column count based on container width.
+ * - Exposes native form methods/properties for integration.
+ *
+ * Example:
+ * `<juice-forms method="post"><input-text name="email"></input-text><input-textarea name="bio"></input-textarea></juice-forms>`
+ *
+ * Attribute Reference:
+ * - Host form attributes (for example `method`, `action`, `novalidate`) are forwarded to the internal form.
+ * - Field-level attributes such as `span`, `group`, and `preset` participate in layout resolution.
+ *
+ * Property Reference:
+ * - `form`: Internal native `<form>` element.
+ * - `elements`: Internal form controls collection.
+ * - `length`: Internal form controls length.
+ *
+ * CSS Variables:
+ * - `--juice-forms-gap`: Grid gap between fields.
+ * - `--juice-forms-columns`: Active responsive column count.
+ * - `--juice-field-span`: Per-field resolved column span.
+ * - `--juice-group-start-gap`: Vertical spacing before a new field group.
+ *
+ * Part Names:
+ * - None.
+ * AUTODOC:END
+ */
+
 import { getJuiceConfig } from "../../config/juice-config.mjs";
 import {
     layout as DEFAULT_LAYOUT_PRESET,
@@ -132,6 +169,11 @@ function findPresetByKey(presets, key) {
 }
 
 class JuiceFormsElement extends HTMLElement {
+    // TODO(refactor): Split observer wiring, layout resolution, and responsive sizing into separate collaborators.
+    /**
+        * Initializes component state, DOM references, and default behavior.
+     * @returns {*} void.
+     */
     constructor() {
         super();
         this._form = null;
@@ -145,6 +187,10 @@ class JuiceFormsElement extends HTMLElement {
         this._layoutConfig = { ...LAYOUT_DEFAULTS };
     }
 
+    /**
+     * Runs setup logic when the element is connected to the document.
+     * @returns {*} void.
+     */
     connectedCallback() {
         this._ensureStyleNode();
         this._ensureFormNode();
@@ -157,6 +203,10 @@ class JuiceFormsElement extends HTMLElement {
         this._applyLayoutMetadata();
     }
 
+    /**
+     * Cleans up listeners and observers when the element is disconnected.
+     * @returns {*} void.
+     */
     disconnectedCallback() {
         if (this._hostObserver) this._hostObserver.disconnect();
         if (this._formObserver) this._formObserver.disconnect();
@@ -169,6 +219,10 @@ class JuiceFormsElement extends HTMLElement {
         }
     }
 
+    /**
+       * Wires config-change handlers that keep form layout synchronized.
+     * @returns {*} void.
+     */
     _bindConfigEvents() {
         if (this._onJuiceConfigChange) return;
         this._onJuiceConfigChange = () => {
@@ -177,6 +231,10 @@ class JuiceFormsElement extends HTMLElement {
         document.addEventListener("juice:configchange", this._onJuiceConfigChange);
     }
 
+    /**
+      * Creates or returns the style element used by the form wrapper.
+     * @returns {*} void.
+     */
     _ensureStyleNode() {
         if (this._style && this._style.isConnected) return;
 
@@ -221,6 +279,10 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         this._style = style;
     }
 
+    /**
+      * Creates or returns the internal form node used by the wrapper.
+     * @returns {*} void.
+     */
     _ensureFormNode() {
         if (this._form && this._form.isConnected) return;
 
@@ -238,6 +300,10 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         this._form.classList.add(INTERNAL_FORM_CLASS);
     }
 
+    /**
+      * Moves unassigned light-DOM children into the managed form container.
+     * @returns {*} Derived internal value or completion status.
+     */
     _moveUnmanagedChildrenIntoForm() {
         if (!this._form) return;
 
@@ -249,6 +315,10 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         }
     }
 
+    /**
+      * Synchronizes form attributes between state, attributes, and UI.
+     * @returns {*} void.
+     */
     _syncFormAttributes() {
         if (!this._form) return;
 
@@ -274,6 +344,10 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         });
     }
 
+    /**
+       * Wires native form events and re-emits component-level events.
+     * @returns {*} void.
+     */
     _bindFormEvents() {
         if (!this._form || this._form.__juiceFormsBound) return;
 
@@ -292,6 +366,10 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         this._form.__juiceFormsBound = true;
     }
 
+    /**
+      * Starts the resize observer that keeps responsive layout values in sync.
+     * @returns {*} void.
+     */
     _startResizeObserver() {
         if (!this._form) return;
         if (this._resizeObserver) this._resizeObserver.disconnect();
@@ -310,6 +388,10 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         window.addEventListener("resize", this._onWindowResize);
     }
 
+    /**
+      * Starts mutation observers needed for runtime slot/child updates.
+     * @returns {*} void.
+     */
     _startObserver() {
         if (this._hostObserver) this._hostObserver.disconnect();
         if (this._formObserver) this._formObserver.disconnect();
@@ -384,6 +466,10 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         });
     }
 
+    /**
+      * Returns derived forms config state.
+     * @returns {*} Derived value.
+     */
     _getFormsConfig() {
         const formsConfig = getJuiceConfig("forms");
         return isPlainObject(formsConfig) ? formsConfig : {};
@@ -402,16 +488,31 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         };
     }
 
+    /**
+      * Collects layout items from configured sources.
+     * @returns {*} Derived internal value or completion status.
+     */
     _collectLayoutItems() {
         if (!this._form) return [];
         return Array.from(this._form.children).filter((child) => child instanceof HTMLElement);
     }
 
+    /**
+      * Returns derived merged presets state.
+     * @param {*} formsConfig - Input value for forms config.
+     * @returns {*} Derived value.
+     */
     _getMergedPresets(formsConfig) {
         const configured = isPlainObject(formsConfig.presets) ? formsConfig.presets : {};
         return { ...DEFAULT_LAYOUT_FIELD_PRESETS, ...configured };
     }
 
+    /**
+      * Resolves effective preset configuration.
+     * @param {*} field - Field element being processed.
+     * @param {*} presets - Input value for presets.
+     * @returns {*} Derived value.
+     */
     _resolvePreset(field, presets) {
         const fieldName = normalizeFieldName(field.getAttribute("name"));
         const explicitPreset = normalizeFieldName(field.getAttribute("preset"));
@@ -440,6 +541,12 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         return null;
     }
 
+    /**
+      * Derives a grid span estimate from configured character length.
+     * @param {*} maxChars - Input value for max chars.
+     * @param {*} layoutConfig - Input value for layout config.
+     * @returns {*} Derived internal value or completion status.
+     */
     _deriveSpanFromChars(maxChars, layoutConfig) {
         if (!Number.isFinite(maxChars) || maxChars <= 0) return null;
         const padded = maxChars + layoutConfig.spanPaddingChars;
@@ -447,6 +554,13 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         return Math.max(1, Math.min(layoutConfig.maxColumns, span));
     }
 
+    /**
+      * Returns derived desired span state.
+     * @param {*} field - Field element being processed.
+     * @param {*} preset - Input value for preset.
+     * @param {*} layoutConfig - Input value for layout config.
+     * @returns {*} Derived value.
+     */
     _getDesiredSpan(field, preset, layoutConfig) {
         const tag = field.tagName.toLowerCase();
         if (field.hasAttribute("stacked")) return "full";
@@ -470,6 +584,13 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         return 1;
     }
 
+    /**
+     * Updates internal component state and applies side effects.
+     * @param {*} items - Input value for items.
+     * @param {*} groupsConfig - Input value for groups config.
+     * @param {*} layoutConfig - Input value for layout config.
+     * @returns {*} Derived internal value or completion status.
+     */
     _setGroupMetadata(items, groupsConfig, layoutConfig) {
         let previousGroup = "";
         for (let i = 0; i < items.length; i += 1) {
@@ -494,6 +615,10 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         }
     }
 
+    /**
+      * Applies layout metadata to rendered output.
+     * @returns {*} void.
+     */
     _applyLayoutMetadata() {
         if (!this._form || this._isApplyingLayout) return;
         this._isApplyingLayout = true;
@@ -545,6 +670,12 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         }
     }
 
+    /**
+      * Measures rendered text length for auto-size/layout calculations.
+     * @param {*} value - Raw value being normalized or assigned.
+     * @param {*} fallbackPx - Input value for fallback px.
+     * @returns {*} Derived internal value or completion status.
+     */
     _measureLength(value, fallbackPx = 0) {
         if (!this._form) return fallbackPx;
         if (typeof value === "number") return value;
@@ -566,6 +697,10 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         return Number.isFinite(numeric) ? numeric : fallbackPx;
     }
 
+    /**
+      * Applies responsive columns to rendered output.
+     * @returns {*} void.
+     */
     _applyResponsiveColumns() {
         if (!this._form) return;
         const layout = this._layoutConfig || LAYOUT_DEFAULTS;
@@ -604,36 +739,69 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         }
     }
 
+    /**
+      * Submits the underlying form.
+     * @returns {*} void.
+     */
     submit() {
         if (this._form) this._form.submit();
     }
 
+    /**
+      * Requests a form submit, optionally with a submitter element.
+     * @param {*} submitter - Submit button/control used for requestSubmit.
+     * @returns {*} void.
+     */
     requestSubmit(submitter) {
         if (this._form && this._form.requestSubmit) {
             this._form.requestSubmit(submitter);
         }
     }
 
+    /**
+      * Resets the underlying form state.
+     * @returns {*} void.
+     */
     reset() {
         if (this._form) this._form.reset();
     }
 
+    /**
+      * Checks the current validity state.
+     * @returns {*} Boolean validity result.
+     */
     checkValidity() {
         return this._form ? this._form.checkValidity() : true;
     }
 
+    /**
+      * Reports validity and returns whether the state is valid.
+     * @returns {*} Boolean validity result.
+     */
     reportValidity() {
         return this._form ? this._form.reportValidity() : true;
     }
 
+    /**
+        * Returns the associated native form element.
+     * @returns {*} Associated form element or null.
+     */
     get form() {
         return this._form;
     }
 
+    /**
+        * Returns the form control collection.
+     * @returns {*} Form controls collection.
+     */
     get elements() {
         return this._form ? this._form.elements : null;
     }
 
+    /**
+        * Returns the number of form controls.
+     * @returns {*} Number of form controls.
+     */
     get length() {
         return this._form ? this._form.length : 0;
     }

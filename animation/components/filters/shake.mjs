@@ -17,6 +17,10 @@ class ShakeFilter extends CameraFilter {
         duration: 0,
     };
 
+    /**
+     * Executes apply.
+     * @returns {*} Result of apply.
+     */
     apply() {}
 }
 

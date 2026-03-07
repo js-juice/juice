@@ -8,6 +8,9 @@ const urls = {
     rocketSprite: new URL("../../assets/rocket-yaw-sheet-med.png", import.meta.url).href
 };
 
+/**
+ * Represents the RocketSprite animation module class.
+ */
 class RocketSprite extends AnimationSprite {
     static tag = "rocket-sprite";
 
@@ -15,6 +18,10 @@ class RocketSprite extends AnimationSprite {
     spriteSrc = urls.rocketSprite;
     _sheetLoaded = false;
 
+    /**
+     * Executes beforeCreate.
+     * @returns {*} Result of beforeCreate.
+     */
     beforeCreate() {
         this.width = 265;
         this.height = 600;
@@ -36,6 +43,10 @@ class RocketSprite extends AnimationSprite {
         this.porthole = porthole;
     }
 
+    /**
+     * Handles firstconnect events.
+     * @returns {*} Result of onFirstConnect.
+     */
     onFirstConnect() {
         this.width = 265;
         this.height = 600;

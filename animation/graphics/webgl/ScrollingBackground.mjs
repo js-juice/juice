@@ -53,14 +53,27 @@ const fragmentShaderSource = `
     }
 `;
 
+/**
+ * Executes nearestPowerOfTwo.
+ * @param {*} n - Parameter value.
+ * @returns {*} Result of nearestPowerOfTwo.
+ */
 function nearestPowerOfTwo(n) {
     return Math.pow(2, Math.ceil(Math.log2(n)));
 }
 
+/**
+ * Executes isPowerOf2.
+ * @param {*} value - Parameter value.
+ * @returns {*} Result of isPowerOf2.
+ */
 function isPowerOf2(value) {
     return (value & (value - 1)) === 0;
 }
 
+/**
+ * Represents the ScrollingBackground animation module class.
+ */
 class ScrollingBackground {
     locations = {};
 
@@ -116,16 +129,34 @@ class ScrollingBackground {
         this.initialize();
     }
 
+    /**
+     * Executes move.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of move.
+     */
     move(x, y) {
         this.offsetX += x;
         this.offsetY += y;
     }
 
+    /**
+     * Sets  values.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of set.
+     */
     set(x, y) {
         this.offsetX = x;
         this.offsetY = y;
     }
 
+    /**
+     * Sets uptexture values.
+     * @param {*} canvas - Parameter value.
+     * @param {*} unit - Parameter value.
+     * @returns {*} Result of setupTexture.
+     */
     setupTexture(canvas, unit) {
         const { gl } = this;
         const texture = gl.createTexture();
@@ -140,6 +171,12 @@ class ScrollingBackground {
         return texture;
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(x, y) {
         this.offsetX = x;
         this.offsetY = y;
@@ -175,6 +212,10 @@ class ScrollingBackground {
      */
     build() {}
 
+    /**
+     * Executes initialize.
+     * @returns {*} Result of initialize.
+     */
     initialize() {
         const self = this;
 

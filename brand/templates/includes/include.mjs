@@ -65,3 +65,12 @@ async function renderInclude(host) {
 
 const includeHosts = Array.from(document.querySelectorAll(`[${INCLUDE_ATTR}]`));
 await Promise.all(includeHosts.map((host) => renderInclude(host)));
+
+const codeScript = document.createElement("script");
+codeScript.type = "module";
+codeScript.src = "/core/HTML/Code.js";
+document.head.appendChild(codeScript);
+
+codeScript.onload = () => {
+    CodeHighlighter.install();
+};

@@ -1,10 +1,21 @@
+/**
+ * Represents the ExampleCodeBox animation module class.
+ */
 class ExampleCodeBox extends HTMLElement {
     static tag = "example-code-box";
 
+    /**
+     * Returns the current observedAttributes value.
+     * @returns {*} Current observedAttributes value.
+     */
     static get observedAttributes() {
         return ["title", "src", "lang", "open"];
     }
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @returns {*} Result of constructor.
+     */
     constructor() {
         super();
         this.attachShadow({ mode: "open" });
@@ -12,6 +23,10 @@ class ExampleCodeBox extends HTMLElement {
         this._render();
     }
 
+    /**
+     * Executes connectedCallback.
+     * @returns {*} Result of connectedCallback.
+     */
     connectedCallback() {
         this._syncTitle();
         this._syncLanguage();
@@ -19,6 +34,11 @@ class ExampleCodeBox extends HTMLElement {
         this._load();
     }
 
+    /**
+     * Executes attributeChangedCallback.
+     * @param {*} name - Parameter value.
+     * @returns {*} Result of attributeChangedCallback.
+     */
     attributeChangedCallback(name) {
         if (!this.shadowRoot) return;
         if (name === "title") this._syncTitle();
@@ -27,15 +47,28 @@ class ExampleCodeBox extends HTMLElement {
         if (name === "src") this._load();
     }
 
+    /**
+     * Updates the code value.
+     * @param {*} value - Parameter value.
+     * @returns {*} void.
+     */
     set code(value) {
         this._code = typeof value === "string" ? value : "";
         this._codeNode.textContent = this._code;
     }
 
+    /**
+     * Returns the current code value.
+     * @returns {*} Current code value.
+     */
     get code() {
         return this._code;
     }
 
+    /**
+     * Implements internal _render behavior.
+     * @returns {*} Result of _render.
+     */
     _render() {
         this.shadowRoot.innerHTML = `
             <style>
@@ -90,16 +123,28 @@ class ExampleCodeBox extends HTMLElement {
         this._codeNode = this.shadowRoot.querySelector("code");
     }
 
+    /**
+     * Implements internal _syncTitle behavior.
+     * @returns {*} Result of _syncTitle.
+     */
     _syncTitle() {
         const title = this.getAttribute("title") || "View Code";
         this._summary.textContent = title;
     }
 
+    /**
+     * Implements internal _syncLanguage behavior.
+     * @returns {*} Result of _syncLanguage.
+     */
     _syncLanguage() {
         const lang = this.getAttribute("lang") || "js";
         this._codeNode.className = `language-${lang}`;
     }
 
+    /**
+     * Implements internal _syncOpen behavior.
+     * @returns {*} Result of _syncOpen.
+     */
     _syncOpen() {
         if (this.hasAttribute("open")) {
             this._details.setAttribute("open", "");
@@ -108,6 +153,10 @@ class ExampleCodeBox extends HTMLElement {
         }
     }
 
+    /**
+     * Implements internal _load behavior.
+     * @returns {*} Result of _load.
+     */
     async _load() {
         const src = this.getAttribute("src");
         if (!src) return;

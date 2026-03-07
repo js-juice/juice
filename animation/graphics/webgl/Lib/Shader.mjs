@@ -24,6 +24,9 @@ export const ShaderTypes = {
     },
 };
 
+/**
+ * Represents the Shader animation module class.
+ */
 export class Shader {
     /**
      * @type {WebGLRenderingContext}
@@ -81,6 +84,12 @@ export class Shader {
         }
     }
 
+    /**
+     * Executes addStructure.
+     * @param {*} name - Parameter value.
+     * @param {*} properties - Parameter value.
+     * @returns {*} Result of addStructure.
+     */
     addStructure(name, properties) {
         const props = [];
         for (let prop in properties) {
@@ -108,6 +117,11 @@ export class Shader {
         this.allowedQualifiers = ["in", "out", "inout", "uniform"];
     }
 
+    /**
+     * Handles programloaded events.
+     * @param {*} program - Parameter value.
+     * @returns {*} Result of onProgramLoaded.
+     */
     onProgramLoaded(program) {
         console.log(`Shader.onProgramLoaded called with program ${program}`);
         this.program = program;
@@ -123,10 +137,25 @@ export class Shader {
         }
     }
 
+    /**
+     * Executes addFunction.
+     * @param {*} returnType - Parameter value.
+     * @param {*} name - Parameter value.
+     * @param {*} args - Parameter value.
+     * @param {*} code - Parameter value.
+     * @returns {*} Result of addFunction.
+     */
     addFunction(returnType, name, args, code) {
         this.builder.addFunction(returnType, name, args, code);
     }
 
+    /**
+     * Executes createUniformBuffer.
+     * @param {*} name - Parameter value.
+     * @param {*} properties - Parameter value.
+     * @param {*} allocation - Parameter value.
+     * @returns {*} Result of createUniformBuffer.
+     */
     createUniformBuffer(name, properties, allocation = "std430") {
         const { gl } = this;
         let size = 0;
@@ -305,6 +334,11 @@ export class Shader {
 
     head = [];
 
+    /**
+     * Executes addHeadItem.
+     * @param {*} item - Parameter value.
+     * @returns {*} Result of addHeadItem.
+     */
     addHeadItem(item) {
         if (typeof item == "string") {
             this.head.push(item);

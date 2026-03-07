@@ -49,6 +49,11 @@ class AnimationTime {
     /** @type {string} Time units */
     units = "ms";
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(options = {}) {
         this.options = options;
         if (options.units) this.units = options.units;

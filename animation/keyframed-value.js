@@ -1,10 +1,25 @@
 import * as Easing from "./easing.mjs";
 
+/**
+ * Represents the KeyFramedValue animation module class.
+ */
 class KeyFramedValue {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} keyframes - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(keyframes) {
         this.keyframes = keyframes;
     }
 
+    /**
+     * Executes keyFrame.
+     * @param {*} percentage - Parameter value.
+     * @param {*} value - Parameter value.
+     * @param {*} easing - Parameter value.
+     * @returns {*} Result of keyFrame.
+     */
     keyFrame(percentage, value, easing = "linear") {
         if (Easing[easing] === undefined && typeof easing !== "function") {
             console.warn(`Easing function "${easing}" not found. Defaulting to linear.`);
@@ -15,6 +30,11 @@ class KeyFramedValue {
         this.keyframes.sort((a, b) => a.percentage - b.percentage);
     }
 
+    /**
+     * Executes compile.
+     * @param {*} opts - Parameter value.
+     * @returns {*} Result of compile.
+     */
     compile(opts) {
         const duration = opts.duration || null;
         const frames = opts.frames || null;

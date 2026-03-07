@@ -45,6 +45,10 @@ export class AnimationComponent extends Component.HTMLElement {
         }
     };
 
+    /**
+     * Returns the current observed value.
+     * @returns {*} Current observed value.
+     */
     static get observed() {
         return {
             all: ["anchor", "x", "y", "z", "r", "rx", "ry", "rz", "scale", "vx", "vy", "width", "height", "debug"],
@@ -53,6 +57,10 @@ export class AnimationComponent extends Component.HTMLElement {
         };
     }
 
+    /**
+     * Executes beforeCreate.
+     * @returns {*} Result of beforeCreate.
+     */
     beforeCreate() {
         this.animationBody = true;
         this.visible = true;

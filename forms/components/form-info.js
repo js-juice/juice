@@ -1,8 +1,54 @@
+
+
+/**
+ * AUTODOC:START
+ * Component: <form-info>
+ * Class: FormInfo
+ * Overview: Form-level status panel that shows description text, aggregate validation messages, and form actions.
+ *
+ * Features:
+ * - Renders error/warning/info message blocks with status icon switching.
+ * - Aggregates per-field validation events into a field error list.
+ * - Supports `undo` and `revert` actions when bound to a form history source.
+ * - Auto-binds to the nearest `juice-forms`/`form` host or to an explicit target via `for`.
+ *
+ * Example:
+ * `<form-info for="profileForm" description="Profile settings are saved automatically."></form-info>`
+ *
+ * Attribute Reference:
+ * - `description`: Inline descriptive text shown above message rows.
+ * - `error`: Explicit override for form-level error message.
+ * - `warning`: Explicit override for form-level warning message.
+ * - `message`: Explicit override for neutral/information message.
+ * - `for`: ID of a `juice-forms` element or native `form` to observe for validation events.
+ *
+ * Property Reference:
+ * - `error`: Getter/setter mapped to the `error` attribute.
+ * - `warning`: Getter/setter mapped to the `warning` attribute.
+ * - `message`: Getter/setter mapped to the `message` attribute.
+ *
+ * CSS Variables:
+ * - None.
+ *
+ * Part Names:
+ * - None.
+ * AUTODOC:END
+ */
+
 class FormInfo extends HTMLElement {
+    // TODO(refactor): Split validation aggregation/state management into a dedicated helper to reduce class size.
+    /**
+     * Lists attributes that are observed for runtime updates.
+     * @returns {*} List of observed attribute names.
+     */
     static get observedAttributes() {
         return ["error", "warning", "message", "description", "for"];
     }
 
+    /**
+        * Initializes component state, DOM references, and default behavior.
+     * @returns {*} void.
+     */
     constructor() {
         super();
         this._shadow = this.attachShadow({ mode: "open" });
@@ -215,6 +261,10 @@ class FormInfo extends HTMLElement {
         }
     }
 
+    /**
+     * Runs setup logic when the element is connected to the document.
+     * @returns {*} void.
+     */
     connectedCallback() {
         const actionButtons = this._shadow.querySelectorAll("[data-action]");
         for (let i = 0; i < actionButtons.length; i += 1) {
@@ -226,6 +276,13 @@ class FormInfo extends HTMLElement {
         this._syncView();
     }
 
+    /**
+     * Responds to observed attribute changes and synchronizes state.
+     * @param {*} name - Attribute or field name.
+     * @param {*} oldValue - Previous value.
+     * @param {*} newValue - Next value.
+     * @returns {*} void.
+     */
     attributeChangedCallback(name, oldValue, newValue) {
         if (oldValue === newValue) return;
         if (name === "description") {
@@ -242,12 +299,23 @@ class FormInfo extends HTMLElement {
         this._syncView();
     }
 
+    /**
+      * Registers an action callback for a named component action.
+     * @param {*} action - Action identifier.
+     * @param {*} fn - Callback function.
+     * @returns {*} void.
+     */
     hook(action, fn) {
         if (typeof fn === "function") {
             this._hooks[action] = fn;
         }
     }
 
+    /**
+      * Binds the component to a form instance and related integrations.
+     * @param {*} form - Form element or form-like host.
+     * @returns {*} void.
+     */
     bindForm(form) {
         this._form = form;
         const history = form && form.history;
@@ -265,6 +333,11 @@ class FormInfo extends HTMLElement {
         this._bindValidationSource(validationSource);
     }
 
+    /**
+      * Resolves effective validation source configuration.
+     * @param {*} source - Source element or input.
+     * @returns {*} Derived value.
+     */
     _resolveValidationSource(source) {
         if (!source) return null;
         if (source instanceof HTMLFormElement) return source;
@@ -284,6 +357,11 @@ class FormInfo extends HTMLElement {
         return null;
     }
 
+    /**
+      * Attempts to discover and bind the nearest validation controller.
+     * @param {*} force - Whether to force a full rebuild.
+     * @returns {*} Derived internal value or completion status.
+     */
     _tryAutoBindValidation(force = false) {
         if (this._validationTarget && !force) return;
         let target = null;
@@ -305,6 +383,11 @@ class FormInfo extends HTMLElement {
         }
     }
 
+    /**
+       * Subscribes to validation-source events and keeps validation state synchronized.
+     * @param {*} target - Target element receiving updates.
+     * @returns {*} void.
+     */
     _bindValidationSource(target) {
         if (this._validationTarget === target) return;
 
@@ -323,6 +406,10 @@ class FormInfo extends HTMLElement {
         }
     }
 
+    /**
+      * Initializes validation UI state from current fields.
+     * @returns {*} Derived internal value or completion status.
+     */
     _primeValidationState() {
         if (!this._validationTarget) return;
         const fields = this._validationTarget.querySelectorAll(
@@ -345,6 +432,11 @@ class FormInfo extends HTMLElement {
         this._syncFieldErrorList();
     }
 
+    /**
+      * Normalizes state into a safe internal representation.
+     * @param {*} state - Input value for state.
+     * @returns {*} Derived value.
+     */
     _normalizeState(state) {
         const normalized = String(state || "").toLowerCase();
         if (normalized === "invalid") return "invalid";
@@ -353,12 +445,24 @@ class FormInfo extends HTMLElement {
         return "none";
     }
 
+    /**
+      * Returns the display label used for validation messages for a field.
+     * @param {*} field - Field element being processed.
+     * @param {*} property - Input value for property.
+     * @returns {*} Derived internal value or completion status.
+     */
     _displayNameForField(field, property) {
         const fallback = property || "Field";
         if (!field || typeof field.getAttribute !== "function") return fallback;
         return field.getAttribute("label") || field.getAttribute("name") || fallback;
     }
 
+    /**
+     * Updates internal component state and applies side effects.
+     * @param {*} field - Field element being processed.
+     * @param {*} detail - Event detail payload.
+     * @returns {*} Derived internal value or completion status.
+     */
     _setFieldValidationState(field, detail = {}) {
         const property = String(
             detail.property ||
@@ -387,6 +491,11 @@ class FormInfo extends HTMLElement {
         }
     }
 
+    /**
+      * Handles validation change events and updates component state.
+     * @param {*} event - Event payload.
+     * @returns {*} void.
+     */
     _onValidationChange(event) {
         const field = event.target;
         const detail = event.detail || {};
@@ -394,6 +503,10 @@ class FormInfo extends HTMLElement {
         this._syncFieldErrorList();
     }
 
+    /**
+      * Synchronizes field error list between state, attributes, and UI.
+     * @returns {*} void.
+     */
     _syncFieldErrorList() {
         const list = this._refs["field-error-list"];
         if (!list) return;
@@ -448,6 +561,11 @@ class FormInfo extends HTMLElement {
         this._syncView();
     }
 
+    /**
+        * Executes a registered action callback by action id.
+     * @param {*} action - Input value for action.
+     * @returns {*} void.
+     */
     _runAction(action) {
         if (!this._form) return;
 
@@ -470,6 +588,10 @@ class FormInfo extends HTMLElement {
         }
     }
 
+    /**
+      * Synchronizes view between state, attributes, and UI.
+     * @returns {*} void.
+     */
     _syncView() {
         const error = this.getAttribute("error") || this._managedMessages.error;
         const warning = this.getAttribute("warning") || this._managedMessages.warning;
@@ -497,28 +619,55 @@ class FormInfo extends HTMLElement {
         }
     }
 
+    /**
+        * Returns the current error message.
+     * @returns {*} Current error message.
+     */
     get error() {
         return this.getAttribute("error");
     }
 
+    /**
+     * Updates the `error` value.
+     * @param {*} value - Assigned value.
+     * @returns {*} void
+     */
     set error(value) {
         if (value == null || value === "") this.removeAttribute("error");
         else this.setAttribute("error", value);
     }
 
+    /**
+        * Returns the current warning message.
+     * @returns {*} Current warning message.
+     */
     get warning() {
         return this.getAttribute("warning");
     }
 
+    /**
+     * Updates the `warning` value.
+     * @param {*} value - Assigned value.
+     * @returns {*} void
+     */
     set warning(value) {
         if (value == null || value === "") this.removeAttribute("warning");
         else this.setAttribute("warning", value);
     }
 
+    /**
+        * Returns the current informational message.
+     * @returns {*} Current informational message.
+     */
     get message() {
         return this.getAttribute("message");
     }
 
+    /**
+     * Updates the `message` value.
+     * @param {*} value - Assigned value.
+     * @returns {*} void
+     */
     set message(value) {
         if (value == null || value === "") this.removeAttribute("message");
         else this.setAttribute("message", value);

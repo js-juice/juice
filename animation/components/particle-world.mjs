@@ -24,6 +24,9 @@ const PARTICLE_CONFIG = {
     }
 };
 
+/**
+ * Represents the ParticleWorldComponent animation module class.
+ */
 class ParticleWorldComponent extends Component.HTMLElement {
     static tag = "particle-world";
 
@@ -42,12 +45,20 @@ class ParticleWorldComponent extends Component.HTMLElement {
         }
     };
 
+    /**
+     * Returns the current observed value.
+     * @returns {*} Current observed value.
+     */
     static get observed() {
         return {
             all: ["width", "height", "renderer"]
         };
     }
 
+    /**
+     * Returns the current style value.
+     * @returns {*} Current style value.
+     */
     static get style() {
         return [
             {
@@ -65,6 +76,10 @@ class ParticleWorldComponent extends Component.HTMLElement {
         ];
     }
 
+    /**
+     * Executes html.
+     * @returns {*} Result of html.
+     */
     static html() {
         if (this.hasAttribute("renderer")) {
             this.renderer = this.getAttribute("renderer");

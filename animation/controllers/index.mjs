@@ -26,12 +26,21 @@ export class ThrottleController {
         this.update(0);
     }
 
+    /**
+     * Executes press.
+     * @param {*} amount - Parameter value.
+     * @returns {*} Result of press.
+     */
     press(amount = 1) {
         // debug("pressing throttle");
         this.amount = Math.min(amount, 1);
         this.isPressed = true;
     }
 
+    /**
+     * Executes release.
+     * @returns {*} Result of release.
+     */
     release() {
         /// debug("releasing throttle");
         this.isPressed = false;
@@ -39,6 +48,11 @@ export class ThrottleController {
         this.acceleration = 0;
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} delta - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(delta) {
         if (this.isPressed) {
             //  console.log("throttle pressed");
@@ -62,9 +76,19 @@ rampValue: number - the unclamped value of the ramp
 
 */
 
+/**
+ * Represents the Ramp animation module class.
+ */
 export class Ramp {
     min;
     max;
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} multiplier - Parameter value.
+     * @param {*} accumulatorMax - Parameter value.
+     * @param {*} drection - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(multiplier = 0.01, accumulatorMax = 1, drection = 1) {
         this.accumulator = 0;
         this.multiplier = multiplier;
@@ -73,24 +97,47 @@ export class Ramp {
         this.value = 0;
     }
 
+    /**
+     * Executes start.
+     * @returns {*} Result of start.
+     */
     start() {
         this.started = true;
     }
 
+    /**
+     * Executes stop.
+     * @returns {*} Result of stop.
+     */
     stop() {
         this.started = false;
     }
 
+    /**
+     * Executes reset.
+     * @returns {*} Result of reset.
+     */
     reset() {
         this.value = 0;
         this.maxed = false;
     }
 
+    /**
+     * Executes clamp.
+     * @param {*} min - Parameter value.
+     * @param {*} max - Parameter value.
+     * @returns {*} Result of clamp.
+     */
     clamp(min, max) {
         this.min = min;
         this.max = max;
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} delta - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(delta) {
         if (this.maxed) return;
 
@@ -112,21 +159,50 @@ export class Ramp {
     }
 }
 
+/**
+ * Represents the RampUp animation module class.
+ */
 export class RampUp extends Ramp {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} accumulator - Parameter value.
+     * @param {*} max - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(accumulator, max = 1) {
         super(accumulator, max, 0, 1);
     }
 }
 
+/**
+ * Represents the RampDown animation module class.
+ */
 export class RampDown extends Ramp {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} accumulator - Parameter value.
+     * @param {*} min - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(accumulator, min = 0) {
         super(accumulator, max, min, -1);
     }
 }
 
+/**
+ * Represents the RampedValue animation module class.
+ */
 export class RampedValue {
     direction = 0;
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} value - Parameter value.
+     * @param {*} acceleration - Parameter value.
+     * @param {*} deceleration - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(value = 0, acceleration, deceleration, options = {}) {
         this.acceleration = acceleration;
         this.deceleration = deceleration;
@@ -135,10 +211,19 @@ export class RampedValue {
         this.value = value;
     }
 
+    /**
+     * Executes reset.
+     * @returns {*} Result of reset.
+     */
     reset() {
         this.value = 0;
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} delta - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(delta) {
         if (direction == 1) {
             this.value += delta;
@@ -152,9 +237,16 @@ export class RampedValue {
         }
     }
 
+    /**
+     * Returns the current value value.
+     * @returns {*} Current value value.
+     */
     get value() {
         return this._value;
     }
 }
 
+/**
+ * Represents the RampController animation module class.
+ */
 class RampController {}

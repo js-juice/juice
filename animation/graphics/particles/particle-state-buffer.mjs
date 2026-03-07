@@ -36,6 +36,11 @@ const DEFAULT_INTERLEAVED_LAYOUT = [
     "transitions"
 ];
 
+/**
+ * Executes seededRandom.
+ * @param {*} seed - Parameter value.
+ * @returns {*} Result of seededRandom.
+ */
 function seededRandom(seed) {
     let state = seed >>> 0;
     return () => {

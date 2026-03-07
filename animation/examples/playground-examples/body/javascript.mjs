@@ -1,3 +1,7 @@
+/**
+ * @file examples/playground-examples/body/javascript.mjs
+ * @description Animation module.
+ */
 import "../../../components/body.mjs";
 import "../../../components/stage.mjs";
 import "../../../components/timeline-controls.mjs";

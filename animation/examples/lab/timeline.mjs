@@ -1,3 +1,7 @@
+/**
+ * @file examples/lab/timeline.mjs
+ * @description Animation module.
+ */
 import { Timeline } from "../../index.mjs";
 
 const CYCLE_MS = 4000;

@@ -203,19 +203,43 @@ if (!stage || !editor || !codeEl || !cssInput || !copyButton || !linearDot || !c
     if (stage.ready) bind();
 }
 
+/**
+ * Executes moveDot.
+ * @param {*} dot - Parameter value.
+ * @param {*} value - Parameter value.
+ * @returns {*} Result of moveDot.
+ */
 function moveDot(dot, value) {
     const maxX = Math.max(0, dot.parentElement.clientWidth - dot.offsetWidth - 2);
     dot.style.transform = `translateX(${(maxX * value).toFixed(2)}px)`;
 }
 
+/**
+ * Executes clamp.
+ * @param {*} value - Parameter value.
+ * @param {*} min - Parameter value.
+ * @param {*} max - Parameter value.
+ * @returns {*} Result of clamp.
+ */
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
 
+/**
+ * Executes clamp01.
+ * @param {*} value - Parameter value.
+ * @returns {*} Result of clamp01.
+ */
 function clamp01(value) {
     return clamp(value, 0, 1);
 }
 
+/**
+ * Executes findInsertIndex.
+ * @param {*} points - Parameter value.
+ * @param {*} x - Parameter value.
+ * @returns {*} Result of findInsertIndex.
+ */
 function findInsertIndex(points, x) {
     for (let i = 1; i < points.length; i += 1) {
         if (x < points[i].x) return i;
@@ -223,6 +247,12 @@ function findInsertIndex(points, x) {
     return -1;
 }
 
+/**
+ * Executes pointerToPoint.
+ * @param {*} event - Parameter value.
+ * @param {*} svg - Parameter value.
+ * @returns {*} Result of pointerToPoint.
+ */
 function pointerToPoint(event, svg) {
     const rect = svg.getBoundingClientRect();
     const xPx = ((event.clientX - rect.left) / rect.width) * VIEWBOX_WIDTH;
@@ -232,6 +262,11 @@ function pointerToPoint(event, svg) {
     return { x, y };
 }
 
+/**
+ * Executes toSvgPoint.
+ * @param {*} point - Parameter value.
+ * @returns {*} Result of toSvgPoint.
+ */
 function toSvgPoint(point) {
     return {
         x: PAD_X + point.x * PLOT_WIDTH,
@@ -239,16 +274,33 @@ function toSvgPoint(point) {
     };
 }
 
+/**
+ * Creates and returns svgelement data.
+ * @param {*} tag - Parameter value.
+ * @param {*} attrs - Parameter value.
+ * @returns {*} Result of createSvgElement.
+ */
 function createSvgElement(tag, attrs = {}) {
     const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
     Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
     return el;
 }
 
+/**
+ * Executes tangentDirection.
+ * @param {*} point - Parameter value.
+ * @returns {*} Result of tangentDirection.
+ */
 function tangentDirection(point) {
     return point.id === "end" ? -1 : 1;
 }
 
+/**
+ * Executes tangentHandlePoint.
+ * @param {*} point - Parameter value.
+ * @param {*} slope - Parameter value.
+ * @returns {*} Result of tangentHandlePoint.
+ */
 function tangentHandlePoint(point, slope) {
     const dir = tangentDirection(point);
     const available = dir > 0 ? 1 - point.x : point.x;
@@ -259,6 +311,11 @@ function tangentHandlePoint(point, slope) {
     return { x, y };
 }
 
+/**
+ * Builds editorsvg output data.
+ * @param {*} svg - Parameter value.
+ * @returns {*} Result of buildEditorSvg.
+ */
 function buildEditorSvg(svg) {
     svg.innerHTML = "";
 
@@ -295,6 +352,13 @@ function buildEditorSvg(svg) {
     return { controlPath, curve, handleLayer };
 }
 
+/**
+ * Executes syncEditorSvg.
+ * @param {*} svgState - Parameter value.
+ * @param {*} points - Parameter value.
+ * @param {*} tangentById - Parameter value.
+ * @returns {*} Result of syncEditorSvg.
+ */
 function syncEditorSvg(svgState, points, tangentById) {
     const controlPath = points
         .map((point, index) => {
@@ -353,6 +417,13 @@ function syncEditorSvg(svgState, points, tangentById) {
     }
 }
 
+/**
+ * Executes sampleCustomEase.
+ * @param {*} points - Parameter value.
+ * @param {*} tangentById - Parameter value.
+ * @param {*} t - Parameter value.
+ * @returns {*} Result of sampleCustomEase.
+ */
 function sampleCustomEase(points, tangentById, t) {
     if (t <= points[0].x) return points[0].y;
     if (t >= points[points.length - 1].x) return points[points.length - 1].y;
@@ -378,6 +449,11 @@ function sampleCustomEase(points, tangentById, t) {
     return points[points.length - 1].y;
 }
 
+/**
+ * Executes computeAutoTangents.
+ * @param {*} points - Parameter value.
+ * @returns {*} Result of computeAutoTangents.
+ */
 function computeAutoTangents(points) {
     const count = points.length;
     if (count < 2) return [0];
@@ -411,6 +487,12 @@ function computeAutoTangents(points) {
     return m;
 }
 
+/**
+ * Executes seedTangents.
+ * @param {*} points - Parameter value.
+ * @param {*} tangentById - Parameter value.
+ * @returns {*} Result of seedTangents.
+ */
 function seedTangents(points, tangentById) {
     const auto = computeAutoTangents(points);
     for (let i = 0; i < points.length; i += 1) {
@@ -418,6 +500,12 @@ function seedTangents(points, tangentById) {
     }
 }
 
+/**
+ * Builds csslinearfunction output data.
+ * @param {*} points - Parameter value.
+ * @param {*} tangentById - Parameter value.
+ * @returns {*} Result of buildCssLinearFunction.
+ */
 function buildCssLinearFunction(points, tangentById) {
     const samples = 18;
     const stops = [];

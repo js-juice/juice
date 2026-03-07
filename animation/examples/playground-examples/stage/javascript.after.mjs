@@ -1,3 +1,7 @@
+/**
+ * @file examples/playground-examples/stage/javascript.after.mjs
+ * @description Animation module.
+ */
 const stage = document.getElementById("stage");
 const timelineControls = document.getElementById("timeline-controls");
 const state = document.getElementById("state");

@@ -111,6 +111,12 @@ export function pathDataToBezier(pathData) {
 }
 
 // Convert a line segment to a degenerate cubic Bezier curve
+/**
+ * Executes convertLineToBezier.
+ * @param {*} start - Parameter value.
+ * @param {*} end - Parameter value.
+ * @returns {*} Result of convertLineToBezier.
+ */
 function convertLineToBezier(start, end) {
     return {
         type: "C",
@@ -122,6 +128,13 @@ function convertLineToBezier(start, end) {
 }
 
 // Convert a quadratic Bezier curve to cubic
+/**
+ * Executes convertQuadraticToCubic.
+ * @param {*} start - Parameter value.
+ * @param {*} control - Parameter value.
+ * @param {*} end - Parameter value.
+ * @returns {*} Result of convertQuadraticToCubic.
+ */
 function convertQuadraticToCubic(start, control, end) {
     let control1 = {
         x: start.x + (2 / 3) * (control.x - start.x),
@@ -141,6 +154,18 @@ function convertQuadraticToCubic(start, control, end) {
 }
 
 // Convert an arc to cubic Bezier curves
+/**
+ * Executes convertArcToCubic.
+ * @param {*} start - Parameter value.
+ * @param {*} param2 - Parameter value.
+ * @param {*} ry - Parameter value.
+ * @param {*} xAxisRotation - Parameter value.
+ * @param {*} largeArcFlag - Parameter value.
+ * @param {*} sweepFlag - Parameter value.
+ * @param {*} x - Parameter value.
+ * @param {*} y] - Parameter value.
+ * @returns {*} Result of convertArcToCubic.
+ */
 function convertArcToCubic(start, [rx, ry, xAxisRotation, largeArcFlag, sweepFlag, x, y]) {
     // Implementation of SVG arc to cubic Bezier conversion
     // This is complex math and typically relies on established algorithms

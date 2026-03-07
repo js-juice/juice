@@ -1,6 +1,12 @@
 import "../../../components/particle-world.mjs";
 import "../../../../forms/juice-forms.mjs";
 
+/**
+ * Executes resolveElement.
+ * @param {*} id - Parameter value.
+ * @param {*} preferredContainers - Parameter value.
+ * @returns {*} Result of resolveElement.
+ */
 function resolveElement(id, preferredContainers = []) {
     for (let i = 0; i < preferredContainers.length; i += 1) {
         const container = document.getElementById(preferredContainers[i]);
@@ -84,12 +90,24 @@ const maskRuntime = {
     syncMaskAlignmentInputs: null
 };
 
+/**
+ * Executes invokeMaskRuntime.
+ * @param {*} action - Parameter value.
+ * @param {*} args - Parameter value.
+ * @returns {*} Result of invokeMaskRuntime.
+ */
 function invokeMaskRuntime(action, ...args) {
     const fn = maskRuntime[action];
     if (typeof fn !== "function") return;
     return fn(...args);
 }
 
+/**
+ * Creates and returns maskfieldsetmarkup data.
+ * @param {*} suffix - Parameter value.
+ * @param {*} index - Parameter value.
+ * @returns {*} Result of createMaskFieldsetMarkup.
+ */
 function createMaskFieldsetMarkup(suffix = "", index = 1) {
     const label = index === 1 ? "Mask" : `Mask ${index}`;
     return `
@@ -127,6 +145,10 @@ function createMaskFieldsetMarkup(suffix = "", index = 1) {
     </input-fieldset>`;
 }
 
+/**
+ * Creates and returns maskpanelmarkup data.
+ * @returns {*} Result of createMaskPanelMarkup.
+ */
 function createMaskPanelMarkup() {
     return `
 <div class="controls-mask">
@@ -140,6 +162,11 @@ function createMaskPanelMarkup() {
 `;
 }
 
+/**
+ * Executes resolveMaskControls.
+ * @param {*} suffix - Parameter value.
+ * @returns {*} Result of resolveMaskControls.
+ */
 function resolveMaskControls(suffix = "") {
     const id = (name) => `${name}${suffix}`;
     return {
@@ -165,12 +192,23 @@ function resolveMaskControls(suffix = "") {
     };
 }
 
+/**
+ * Executes syncSingleMaskAlignmentInputs.
+ * @param {*} controls - Parameter value.
+ * @returns {*} Result of syncSingleMaskAlignmentInputs.
+ */
 function syncSingleMaskAlignmentInputs(controls) {
     const isCustom = (controls?.alignInput?.value || "center") === "custom";
     if (controls?.alignXInput) controls.alignXInput.disabled = !isCustom;
     if (controls?.alignYInput) controls.alignYInput.disabled = !isCustom;
 }
 
+/**
+ * Executes bindMaskControlEvents.
+ * @param {*} controls - Parameter value.
+ * @param {*} param2 - Parameter value.
+ * @returns {*} Result of bindMaskControlEvents.
+ */
 function bindMaskControlEvents(controls, { addMode = "apply" } = {}) {
     if (!controls) return;
     const runtimeAction = addMode === "add" ? "addMaskSource" : "applyMaskSource";
@@ -295,6 +333,10 @@ function bindMaskControlEvents(controls, { addMode = "apply" } = {}) {
     syncSingleMaskAlignmentInputs(controls);
 }
 
+/**
+ * Sets upmaskpanel values.
+ * @returns {*} Result of setupMaskPanel.
+ */
 function setupMaskPanel() {
     // Support both playground drawer containers and direct controls.html markup.
     const panel =

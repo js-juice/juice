@@ -14,6 +14,13 @@ import VariableBase from "./VariableBase.mjs";
  */
 class OutputAttribute extends VariableBase {
     static index = -1;
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} name - Parameter value.
+     * @param {*} type - Parameter value.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(name, type, value) {
         super("out", name, type, value);
     }

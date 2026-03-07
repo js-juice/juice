@@ -15,10 +15,21 @@ import { checkGLError } from "../Lib/Helper.mjs";
  * @extends VariableBase
  */
 export class Attribute extends VariableBase {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} name - Parameter value.
+     * @param {*} type - Parameter value.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(name, type, value) {
         super("in", name, type, value);
     }
 
+    /**
+     * Returns the current location value.
+     * @returns {*} Current location value.
+     */
     get location() {
         if (!this.program || !this.gl) return null;
         if (this._location) return this._location;
@@ -26,11 +37,19 @@ export class Attribute extends VariableBase {
         return this._location;
     }
 
+    /**
+     * Executes createBuffer.
+     * @returns {*} Result of createBuffer.
+     */
     createBuffer() {
         const { gl } = this;
         this.buffer = gl.createBuffer();
     }
 
+    /**
+     * Executes upload.
+     * @returns {*} Result of upload.
+     */
     upload() {
         const { gl, settings } = this;
         if (this._value === undefined || !this._location) return;
@@ -43,6 +62,10 @@ export class Attribute extends VariableBase {
         checkGLError(this.gl);
     }
 
+    /**
+     * Executes download.
+     * @returns {*} Result of download.
+     */
     download() {
         const downloaded = new Float32Array(this.length * this.settings.args);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);

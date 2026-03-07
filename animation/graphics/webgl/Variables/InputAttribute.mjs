@@ -14,12 +14,21 @@ import VariableBase from "./VariableBase.mjs";
  */
 class InputAttribute extends VariableBase {
     static index = -1;
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} args - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(...args) {
         super("in", ...args);
         this.constructor.index++;
         this.index = this.constructor.index;
     }
 
+    /**
+     * Executes lookupLocation.
+     * @returns {*} Result of lookupLocation.
+     */
     lookupLocation() {
         if (!this.bound) return;
         const { gl } = this;
@@ -27,6 +36,10 @@ class InputAttribute extends VariableBase {
         return this.location;
     }
 
+    /**
+     * Executes upload.
+     * @returns {*} Result of upload.
+     */
     upload() {
         const { settings, gl } = this;
         if (!this.buffer) this.createBuffer();
@@ -40,6 +53,10 @@ class InputAttribute extends VariableBase {
         //gl.bindBuffer(gl.ARRAY_BUFFER, null);
     }
 
+    /**
+     * Executes download.
+     * @returns {*} Result of download.
+     */
     download() {
         const { settings, gl } = this;
         const data = new Float32Array(this._value.length);
@@ -49,6 +66,10 @@ class InputAttribute extends VariableBase {
         return data;
     }
 
+    /**
+     * Executes bindBuffer.
+     * @returns {*} Result of bindBuffer.
+     */
     bindBuffer() {
         const { settings, gl } = this;
         if (!this.buffer) this.createBuffer();
@@ -60,6 +81,10 @@ class InputAttribute extends VariableBase {
         console.log("Input Buffer Bound", this.name);
     }
 
+    /**
+     * Executes createBuffer.
+     * @returns {*} Result of createBuffer.
+     */
     createBuffer() {
         const { settings, gl } = this;
         console.log("CREATE BUFFERS", this.name);
@@ -77,6 +102,10 @@ class InputAttribute extends VariableBase {
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
     }
 
+    /**
+     * Handles bound events.
+     * @returns {*} Result of onBound.
+     */
     onBound() {
         if (!this.buffer) {
             this.createBuffer();

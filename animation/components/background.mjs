@@ -2,6 +2,9 @@ import { type } from "../../core/Util/Core.mjs";
 import Component from "../../ui/component.mjs";
 import { Vector3D } from "../properties/Vector.mjs";
 
+/**
+ * Represents the Background animation module class.
+ */
 class Background extends Component.HTMLElement {
     static tag = "animation-background";
     static config = {
@@ -16,12 +19,20 @@ class Background extends Component.HTMLElement {
         }
     };
 
+    /**
+     * Returns the current observed value.
+     * @returns {*} Current observed value.
+     */
     static get observed() {
         return {
             all: ["placement", "x", "y", "z", "width", "height", "factor"]
         };
     }
 
+    /**
+     * Returns the current style value.
+     * @returns {*} Current style value.
+     */
     static get style() {
         return [
             {
@@ -52,16 +63,30 @@ class Background extends Component.HTMLElement {
         ];
     }
 
+    /**
+     * Executes html.
+     * @param {*} data - Parameter value.
+     * @returns {*} Result of html.
+     */
     static html(data = {}) {
         return `<div id="background" style="width: ${data.width}px; height: ${data.height}px;"><slot></slot></div>`;
     }
 
+    /**
+     * Executes beforeCreate.
+     * @returns {*} Result of beforeCreate.
+     */
     beforeCreate() {
         this.position = new Vector3D(0, 0, 0, { history: 3 });
         this.stage = null;
         this.backgroundElement = null;
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} time - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(time) {
         if (!this.stage || !this.backgroundElement) return;
 
@@ -81,6 +106,11 @@ class Background extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Renders output from current module state.
+     * @param {*} time - Parameter value.
+     * @returns {*} Result of render.
+     */
     render(time) {
         if (!this.backgroundElement || !this.position.dirty) return;
 
@@ -96,11 +126,19 @@ class Background extends Component.HTMLElement {
         this.position.save();
     }
 
+    /**
+     * Handles children events.
+     * @returns {*} Result of onChildren.
+     */
     onChildren() {
         // Store reference to the background container
         this.backgroundElement = this.ref("background");
     }
 
+    /**
+     * Handles firstconnect events.
+     * @returns {*} Result of onFirstConnect.
+     */
     onFirstConnect() {
         const stage = this.closest("animation-stage");
         if (stage) {

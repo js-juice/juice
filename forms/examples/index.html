@@ -32,14 +32,196 @@
             </div>
 
             <div class="container padding:1o5">
-                <div id="content" class="shell">
+                <div id="content" class="">
 
 
-                    <section class="card">
+                    <section class="card form-example">
                         <h2>Form Info Demo</h2>
                         <form-info id="formInfoDemo" for="demoForm">
                             Make changes to the form above. Undo/Revert actions appear when history has steps.
                         </form-info>
+                        <footer>
+                            <a href="./docs/form-info.html?component=form-info">View Docs</a>
+                        </footer>
+                    </section>
+
+                    <section class="card form-example">
+                        <h2>Input Status Demo</h2>
+                        <div class="status-toolbar">
+                            <div id="statusPreviewWrap" class="status-preview">
+                                <input-status id="statusDemo" size="42" state="idle"></input-status>
+                                <span>default</span>
+                            </div>
+                            <div class="control-group">
+                                <button type="button" data-status-mode="default">Default</button>
+                                <button type="button" data-status-mode="icon-only-colored">Icon Only Colored</button>
+                            </div>
+                            <div class="control-group">
+                                <button type="button" data-status-surface="light">Light Surface</button>
+                                <button type="button" data-status-surface="dark">Dark Surface</button>
+                            </div>
+                            <button type="button" id="cycleStatus">Cycle Status</button>
+
+                            <span id="statusLabel">idle | mode: default</span>
+
+                        </div>
+                        <footer>
+                            <a href="./docs/form-info.html?component=input-status">View Docs</a>
+                        </footer>
+                    </section>
+
+                    <section class="card form-example">
+                        <h2>Text Input Component</h2>
+                        <input-text id="textInputDemo" label="Text Input" placeholder="Type something..."
+                            required></input-text>
+                        <pre>
+                            <code class="language-html">
+                                &lt;input-text label="Text Input" placeholder="Type something..."&gt;&lt;/input-text&gt;
+                            </code>
+                        </pre>
+                        <footer>
+                            <a href="./docs/form-info.html?component=input-text">View Docs</a>
+                        </footer>
+                    </section>
+
+
+                    <section class="card form-example">
+                        <h2>Textarea Input Component</h2>
+                        <input-textarea id="textareaInputDemo" label="Textarea Input" placeholder="Type something..."
+                            required></input-textarea>
+                        <pre>
+                            <code class="language-html">
+                                &lt;input-textarea label="Textarea Input" placeholder="Type something..."&gt;&lt;/input-textarea&gt;
+                            </code>
+                        </pre>
+                        <footer>
+                            <a href="./docs/form-info.html?component=input-textarea">View Docs</a>
+                        </footer>
+                    </section>
+
+                    <section class="card form-example">
+                        <h2>Number Input Component</h2>
+                        <input-number id="numberInputDemo" label="Number Input" placeholder="Type a number..."
+                            required></input-number>
+                        <pre>
+                            <code class="language-html">
+                                &lt;input-number label="Number Input" placeholder="Type a number..."&gt;&lt;/input-number&gt;
+                            </code>
+                        </pre>
+                        <footer>
+                            <a href="./docs/form-info.html?component=input-number">View Docs</a>
+                        </footer>
+                    </section>
+
+                    <section class="card form-example">
+                        <h2>Select Input Component</h2>
+                        <input-select id="selectInputDemo" label="Select Input" placeholder="Choose an option..."
+                            required>
+                            <option value="">Choose an option...</option>
+                            <option value="option1">Option 1</option>
+                            <option value="option2">Option 2</option>
+                            <option value="option3">Option 3</option>
+                        </input-select>
+                        <pre>
+                            <code class="language-html">
+                                &lt;input-select label="Select Input" placeholder="Choose an option..."&gt;
+                                    &lt;option value=""&gt;Choose an option...&lt;/option&gt;
+                                    &lt;option value="option1"&gt;Option 1&lt;/option&gt;
+                                    &lt;option value="option2"&gt;Option 2&lt;/option&gt;
+                                    &lt;option value="option3"&gt;Option 3&lt;/option&gt;
+                                &lt;/input-select&gt;
+                            </code>
+                        </pre>
+                        <footer>
+                            <a href="./docs/form-info.html?component=input-select">View Docs</a>
+                        </footer>
+                    </section>
+
+                    <section class="card form-example">
+                        <h2>Checkbox Input Component</h2>
+                        <option-group label="Checkbox Group">
+                            <input-checkbox name="checkboxGroup" label="Checkbox 1" value="1" inline></input-checkbox>
+                            <input-checkbox name="checkboxGroup" label="Checkbox 2" value="2" inline></input-checkbox>
+                            <input-checkbox name="checkboxGroup" label="Checkbox 3" value="3" inline></input-checkbox>
+                        </option-group>
+                        <pre>
+                            <code class="language-html">
+                                &lt;option-group label="Checkbox Group"&gt;
+                                    &lt;input-checkbox name="checkboxGroup" label="Checkbox 1" value="1" inline&gt;&lt;/input-checkbox&gt;
+                                    &lt;input-checkbox name="checkboxGroup" label="Checkbox 2" value="2" inline&gt;&lt;/input-checkbox&gt;
+                                    &lt;input-checkbox name="checkboxGroup" label="Checkbox 3" value="3" inline&gt;&lt;/input-checkbox&gt;
+                                &lt;/option-group&gt;
+                            </code>
+                        </pre>
+                        <footer>
+                            <a href="./docs/form-info.html?component=input-checkbox">View Docs</a>
+                        </footer>
+                    </section>
+
+                    <section class="card form-example">
+                        <h2>Radio Input Component</h2>
+                        <option-group label="Radio Group">
+                            <input-radio name="radioGroup" label="Radio 1" value="1" inline></input-radio>
+                            <input-radio name="radioGroup" label="Radio 2" value="2" inline></input-radio>
+                            <input-radio name="radioGroup" label="Radio 3" value="3" inline></input-radio>
+                        </option-group>
+
+                        <pre>
+                            <code class="language-html">
+                                &lt;option-group label="Radio Group"&gt;
+                                    &lt;input-radio name="radioGroup" label="Radio 1" value="1" inline&gt;&lt;/input-radio&gt;
+                                    &lt;input-radio name="radioGroup" label="Radio 2" value="2" inline&gt;&lt;/input-radio&gt;
+                                    &lt;input-radio name="radioGroup" label="Radio 3" value="3" inline&gt;&lt;/input-radio&gt;
+                                &lt;/option-group&gt;    
+                            </code> 
+                        </pre>
+                        <footer>
+                            <a href="./docs/form-info.html?component=input-radio">View Docs</a>
+                        </footer>
+                    </section>
+
+
+                    <section class="card form-example">
+                        <h2>Dial Input Component</h2>
+                        <input-dial id="dialInputDemo" start-offset="30" end-offset="60" offset="180"
+                            rotation-value="100" labels="0:Min,25:Q1,50:Mid,75:Q3,100:Max" label="Dial Input"
+                            placeholder="Type a dial..." required></input-dial>
+                        <pre>
+                            <code class="language-html">
+                                &lt;input-dial start-offset="30" end-offset="60" offset="180" rotation-value="100" labels="0:Min,25:Q1,50:Mid,75:Q3,100:Max" label="Dial Input" placeholder="Type a dial..."&gt;&lt;/input-dial&gt;
+                            </code>
+                        </pre>
+                        <footer>
+                            <a href="./docs/form-info.html?component=input-dial">View Docs</a>
+                        </footer>
+                    </section>
+
+                    <section class="card form-example">
+                        <h2>Vector Input Component</h2>
+                        <input-vector id="vectorInputDemo" dimentions="3" label="Vector Input"
+                            placeholder="Type a vector..." required></input-vector>
+                        <pre>
+                            <code class="language-html">
+                                &lt;input-vector label="Vector Input" placeholder="Type a vector..."&gt;&lt;/input-vector&gt;
+                            </code>
+                        </pre>
+                        <footer>
+                            <a href="./docs/form-info.html?component=input-vector">View Docs</a>
+                        </footer>
+                    </section>
+
+                    <section class="card form-example">
+                        <h2>Vector Direction Input Component</h2>
+                        <input-direction id="directionInputDemo" label="Vector Direction Input"
+                            placeholder="Type a direction..." required></input-direction>
+                        <pre>
+                            <code class="language-html">
+                                &lt;input-direction label="Vector Direction Input" placeholder="Type a direction..."&gt;&lt;/input-direction&gt;
+                            </code>
+                        </pre>
+                        <footer>
+                            <a href="./docs/form-info.html?component=input-direction">View Docs</a>
+                        </footer>
                     </section>
 
                     <hr class="panel-divider" />
@@ -59,15 +241,15 @@
                             </div>
                             <div>
                                 <input-select name="country" default="Choose Country" label="Country"
-                                    options="usa:USA, canada:Canada, mexico:Mexico"></input-select>
+                                    options="usa:USA, canada:Canada, mexico:Mexico" required></input-select>
                             </div>
                             <input-fieldset label="Favorite Color">
                                 <input-radio name="color" label="Red" value="red"></input-radio>
                                 <input-radio name="color" label="Green" value="green"></input-radio>
                                 <input-radio name="color" label="Blue" value="blue"></input-radio>
                             </input-fieldset>
-                            <input-textarea name="bio" label="Bio" placeholder="Tell us about yourself"
-                                rows="4"></input-textarea>
+                            <input-textarea name="bio" label="Bio" placeholder="Tell us about yourself" rows="4"
+                                required></input-textarea>
                             <div class="button-row">
                                 <button type="button" id="dump">Dump values</button>
                             </div>
@@ -77,25 +259,7 @@
 
                     <hr class="panel-divider" />
 
-                    <section class="card">
-                        <h2>Input Status Demo</h2>
-                        <div class="status-toolbar">
-                            <div id="statusPreviewWrap" class="status-preview">
-                                <input-status id="statusDemo" size="42" state="idle"></input-status>
-                                <span>default</span>
-                            </div>
-                            <div class="control-group">
-                                <button type="button" data-status-mode="default">Default</button>
-                                <button type="button" data-status-mode="icon-only-colored">Icon Only Colored</button>
-                            </div>
-                            <div class="control-group">
-                                <button type="button" data-status-surface="light">Light Surface</button>
-                                <button type="button" data-status-surface="dark">Dark Surface</button>
-                            </div>
-                            <button type="button" id="cycleStatus">Cycle Status</button>
-                            <span id="statusLabel">idle | mode: default</span>
-                        </div>
-                    </section>
+
 
 
                 </div>

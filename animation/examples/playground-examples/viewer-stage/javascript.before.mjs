@@ -1,6 +1,9 @@
 import "../../../components/viewer.mjs";
 import AnimationStage from "../../../components/stage.mjs";
 
+/**
+ * Represents the DemoMovingStage animation module class.
+ */
 class DemoMovingStage extends AnimationStage {
     static tag = "demo-moving-stage";
 
@@ -16,6 +19,10 @@ class DemoMovingStage extends AnimationStage {
     stageTiltDeg = 0;
     autoSize = true;
 
+    /**
+     * Handles firstconnect events.
+     * @returns {*} Result of onFirstConnect.
+     */
     onFirstConnect() {
         super.onFirstConnect?.();
         this.probe = this.querySelector(".probe");
@@ -25,6 +32,11 @@ class DemoMovingStage extends AnimationStage {
         window.addEventListener("resize", this._onResize);
     }
 
+    /**
+     * Handles viewerconnect events.
+     * @param {*} viewer - Parameter value.
+     * @returns {*} Result of onViewerConnect.
+     */
     onViewerConnect(viewer) {
         super.onViewerConnect?.(viewer);
         this._fitScene();
@@ -36,6 +48,10 @@ class DemoMovingStage extends AnimationStage {
         }
     }
 
+    /**
+     * Handles disconnect events.
+     * @returns {*} Result of onDisconnect.
+     */
     onDisconnect() {
         if (this._onResize) {
             window.removeEventListener("resize", this._onResize);
@@ -43,6 +59,13 @@ class DemoMovingStage extends AnimationStage {
         super.onDisconnect?.();
     }
 
+    /**
+     * Handles propertychanged events.
+     * @param {*} property - Parameter value.
+     * @param {*} previous - Parameter value.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of onPropertyChanged.
+     */
     onPropertyChanged(property, previous, value) {
         super.onPropertyChanged?.(property, previous, value);
 
@@ -57,6 +80,10 @@ class DemoMovingStage extends AnimationStage {
         }
     }
 
+    /**
+     * Implements internal _fitScene behavior.
+     * @returns {*} Result of _fitScene.
+     */
     _fitScene() {
         const host = this.viewer || this.parentElement;
         if (!host) return;
@@ -78,6 +105,12 @@ class DemoMovingStage extends AnimationStage {
         this._syncViewerBounds(viewWidth, viewHeight);
     }
 
+    /**
+     * Implements internal _syncViewerBounds behavior.
+     * @param {*} viewWidth - Parameter value.
+     * @param {*} viewHeight - Parameter value.
+     * @returns {*} Result of _syncViewerBounds.
+     */
     _syncViewerBounds(viewWidth = null, viewHeight = null) {
         if (!this.viewer) return;
         const bounds = this.viewer.getBoundingClientRect();
@@ -96,6 +129,10 @@ class DemoMovingStage extends AnimationStage {
         };
     }
 
+    /**
+     * Implements internal _sampleProbe behavior.
+     * @returns {*} Result of _sampleProbe.
+     */
     _sampleProbe() {
         const xAmplitude = Math.max(60, this.worldWidth * 0.3);
         const yAmplitude = Math.max(40, this.worldHeight * 0.2);
@@ -103,12 +140,20 @@ class DemoMovingStage extends AnimationStage {
         this.localY = Math.sin(this.phase * 1.8) * yAmplitude;
     }
 
+    /**
+     * Implements internal _sampleStageMotion behavior.
+     * @returns {*} Result of _sampleStageMotion.
+     */
     _sampleStageMotion() {
         this.stageDriftX = Math.sin(this.phase * 0.55) * 10;
         this.stageDriftY = Math.cos(this.phase * 0.43) * 7;
         this.stageTiltDeg = Math.sin(this.phase * 0.37) * 0.9;
     }
 
+    /**
+     * Implements internal _bindAnimators behavior.
+     * @returns {*} Result of _bindAnimators.
+     */
     _bindAnimators() {
         if (this._animatorsBound) return;
         this._animatorsBound = true;

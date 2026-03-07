@@ -5,6 +5,11 @@ import { fileURLToPath } from "node:url";
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT = path.join(SCRIPT_DIR, "component-manifest.json");
 
+/**
+ * Executes walk.
+ * @param {*} dir - Parameter value.
+ * @returns {*} Result of walk.
+ */
 function walk(dir) {
     const items = fs.readdirSync(dir, { withFileTypes: true });
     const files = [];
@@ -21,6 +26,14 @@ function walk(dir) {
     return files;
 }
 
+/**
+ * Executes findBlock.
+ * @param {*} source - Parameter value.
+ * @param {*} startPattern - Parameter value.
+ * @param {*} openChar - Parameter value.
+ * @param {*} closeChar - Parameter value.
+ * @returns {*} Result of findBlock.
+ */
 function findBlock(source, startPattern, openChar = "{", closeChar = "}") {
     const start = source.indexOf(startPattern);
     if (start === -1) return null;
@@ -44,6 +57,14 @@ function findBlock(source, startPattern, openChar = "{", closeChar = "}") {
     return null;
 }
 
+/**
+ * Executes findBalancedBlock.
+ * @param {*} source - Parameter value.
+ * @param {*} openIndex - Parameter value.
+ * @param {*} openChar - Parameter value.
+ * @param {*} closeChar - Parameter value.
+ * @returns {*} Result of findBalancedBlock.
+ */
 function findBalancedBlock(source, openIndex, openChar = "{", closeChar = "}") {
     if (openIndex === -1 || source[openIndex] !== openChar) return null;
     let depth = 0;
@@ -62,6 +83,12 @@ function findBalancedBlock(source, openIndex, openChar = "{", closeChar = "}") {
     return null;
 }
 
+/**
+ * Parses input values for imports behavior.
+ * @param {*} source - Parameter value.
+ * @param {*} filePath - Parameter value.
+ * @returns {*} Result of parseImports.
+ */
 function parseImports(source, filePath) {
     const imports = {};
     const regex = /import\s+([\s\S]*?)\s+from\s+["']([^"']+)["'];/g;
@@ -112,6 +139,11 @@ function parseImports(source, filePath) {
     return imports;
 }
 
+/**
+ * Parses input values for classheaderfortag behavior.
+ * @param {*} source - Parameter value.
+ * @returns {*} Result of parseClassHeaderForTag.
+ */
 function parseClassHeaderForTag(source) {
     const tagIndex = source.indexOf("static tag");
     const classRegex = /^\s*(?:export\s+)?class\s+([A-Za-z_$][\w$]*)(?:\s+extends\s+([^{\n]+))?\s*\{/gm;

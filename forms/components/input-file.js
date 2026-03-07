@@ -1,3 +1,37 @@
+/**
+ * AUTODOC:START
+ * Component: <input-file>
+ * Class: InputFileComponent
+ * Overview: Styled file-picker trigger built on InputComponent that proxies clicks to a hidden native file input.
+ *
+ * Features:
+ * - Reuses button-like label/icon rendering for file selection UX.
+ * - Supports single or multiple file selection.
+ * - Mirrors accept/name/disabled semantics to the underlying file input.
+ * - Emits button-click style events for host orchestration.
+ *
+ * Example:
+ * `<input-file label="Upload" accept=".png,.jpg" multiple></input-file>`
+ *
+ * Attribute Reference:
+ * - `accept`: File MIME/extensions filter.
+ * - `multiple`: Enables multi-file selection.
+ * - `label`, `icon`, `bgcolor`, `color`: Visual trigger customization.
+ * - `name`, `disabled`, `aria-label`: Native input semantics.
+ *
+ * Property Reference:
+ * - `disabled`: Getter/setter for disabled state.
+ * - `click()`: Programmatic trigger click.
+ *
+ * CSS Variables:
+ * - `--input-border-radius`: Trigger button corner radius.
+ * - `--input-button-bgcolor`, `--input-button-color`: Trigger button theme colors.
+ *
+ * Part Names:
+ * - `button`: Inner trigger button element.
+ * AUTODOC:END
+ */
+
 import InputComponent from "./input-component.js";
 import { getJuiceConfig } from "../../config/juice-config.mjs";
 

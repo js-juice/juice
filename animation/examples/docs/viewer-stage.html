@@ -1,86 +1,16 @@
 <!doctype html>
 <html lang="en">
-
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <title>Viewer + Stage Example Docs</title>
-        <link rel="stylesheet" href="../../../brand/templates/css/default.css" />
-        <link rel="stylesheet" href="../../../brand/templates/css/juice.css" />
-        <link rel="stylesheet" href="../../../brand/templates/css/pages.css" />
-        <style>
-            .doc {
-                max-width: 980px;
-                margin: 0 auto;
-            }
-
-            .doc section {
-                margin: 14px 0;
-                padding: 12px;
-                border: 1px solid #d7e2f2;
-                border-radius: 10px;
-                background: #fff;
-            }
-
-            .doc h2 {
-                margin: 0 0 8px;
-                font-size: 18px;
-            }
-
-            .doc code {
-                font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-            }
-
-            .doc ul {
-                margin: 0;
-                padding-left: 18px;
-            }
-
-            .doc li {
-                margin: 4px 0;
-            }
-        </style>
+        <title>Redirecting to Viewer Docs</title>
+        <script>
+            const params = new URLSearchParams(window.location.search);
+            params.set("file", "components/viewer.mjs");
+            window.location.replace(`./module-docs.html?${params.toString()}`);
+        </script>
     </head>
-
-    <body class="docs-page docs-page--forms">
-
-        <main>
-            <div class="container padding:1o5 doc">
-                <p><a href="../playground.html">Back to Playground</a> | <a href="./index.html">All Example Docs</a></p>
-                <h1>Viewer + Stage Example Docs</h1>
-                <section>
-                    <h2>Class Stack</h2>
-                    <ul>
-                        <li><code>AnimationViewer</code>: timeline owner and camera host.</li>
-                        <li><code>AnimationStage</code>: world space, anchor, bounds, transform target.</li>
-                        <li><code>Camera</code>: follow target and bound clamping.</li>
-                        <li><code>AnimationBodyTarget</code>: plain DOM animator wrapper for probe motion.</li>
-                        <li><code>AnimationMinimap</code>: preview overlay with stage/view/dot projection.</li>
-                    </ul>
-                </section>
-                <section>
-                    <h2>Primary Methods</h2>
-                    <ul>
-                        <li><code>viewer.follow(target)</code>: camera tracks target position.</li>
-                        <li><code>stage.addAnimator(animator)</code>: animator registration with stage/viewer timeline.
-                        </li>
-                        <li><code>body.setPosition(x, y)</code>, <code>body.setVelocity(x, y)</code>,
-                            <code>body.setUpdate(fn)</code>.</li>
-                        <li><code>camera.update(time)</code>: reads target and clamps camera to min/max.</li>
-                    </ul>
-                </section>
-                <section>
-                    <h2>Technical Behavior</h2>
-                    <ul>
-                        <li>Viewer centers stage host; stage anchor offset is applied inside stage scene root.</li>
-                        <li>Camera position is translated into stage transform using viewer center + stage anchor.</li>
-                        <li>Stage bounds lock camera-following motion to scene limits.</li>
-                        <li>Minimap scales world coordinates into a fixed-size overlay map.</li>
-                    </ul>
-                </section>
-            </div>
-        </main>
-        <script type="module" src="../../../brand/templates/includes/include.mjs"></script>
+    <body>
+        <p>Redirecting to viewer module docs...</p>
     </body>
-
 </html>

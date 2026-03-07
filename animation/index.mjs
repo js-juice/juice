@@ -1,3 +1,7 @@
+/**
+ * @file index.mjs
+ * @description Animation module.
+ */
 export { default as Timeline } from "./timeline.mjs";
 export { default as AnimationTime } from "./time.mjs";
 export { parseAnchorPosition, parseAnchor } from "./anchor.mjs";

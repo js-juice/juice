@@ -1,3 +1,7 @@
+/**
+ * @file properties/index.mjs
+ * @description Animation module.
+ */
 import AnimationValue from "./Value.mjs";
 import Rotation, { Rotation2D, Rotation3D } from "./Rotation.mjs";
 import { Vector2D, Vector3D, Vector4D } from "./Vector.mjs";

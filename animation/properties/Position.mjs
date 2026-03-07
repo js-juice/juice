@@ -16,6 +16,13 @@ import { Vector2D, Vector3D } from "./Vector.mjs";
  * const pos = new Position2D(100, 200);
  */
 export class Position2D extends Vector2D {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(x = 0, y = 0, options = { history: 3 }) {
         super(x, y, options);
     }
@@ -38,6 +45,14 @@ export const Position = Position2D;
  * const pos = new Position3D(100, 200, 50);
  */
 export class Position3D extends Vector3D {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @param {*} z - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(x = 0, y = 0, z = 0, options = { history: 3 }) {
         super(x, y, z, options);
     }

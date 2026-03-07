@@ -22,20 +22,43 @@ class Program {
         this.build();
     }
 
+    /**
+     * Executes attribLocation.
+     * @param {*} name - Parameter value.
+     * @returns {*} Result of attribLocation.
+     */
     attribLocation(name) {
         const { gl } = this;
         return gl.getAttribLocation(this.native, name);
     }
 
+    /**
+     * Executes uniformLocation.
+     * @param {*} name - Parameter value.
+     * @returns {*} Result of uniformLocation.
+     */
     uniformLocation(name) {
         const { gl } = this;
         return gl.getUniformLocation(this.native, name);
     }
 
+    /**
+     * Executes buffer.
+     * @param {*} name - Parameter value.
+     * @returns {*} Result of buffer.
+     */
     buffer(name) {
         return this.buffers[name];
     }
 
+    /**
+     * Executes createBuffer.
+     * @param {*} name - Parameter value.
+     * @param {*} TYPE - Parameter value.
+     * @param {*} value - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of createBuffer.
+     */
     createBuffer(name, TYPE, value, options = { usage: "STATIC_DRAW" }) {
         const { gl } = this;
         const buffer = gl.createBuffer();
@@ -45,6 +68,10 @@ class Program {
         return buffer;
     }
 
+    /**
+     * Executes build.
+     * @returns {*} Result of build.
+     */
     build() {
         const gl = this.gl;
 

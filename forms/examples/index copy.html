@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Forms Examples</title>
+        <link rel="stylesheet" href="../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/juice.css" />
+        <link rel="stylesheet" href="../../brand/templates/css/pages.css" />
+        <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet" />
+        <script type="module" src="../juice-forms-setup.mjs"></script>
+        <script type="module" src="../juice-forms.mjs"></script>
+    </head>
+
+    <body class="docs-page docs-page--forms">
+        <header>
+            <div class="container flex-h flex-grow" style="flex:0 1 auto;">
+                <div class="branding">
+                    <a href="">
+                        <img src="../../brand/logo-long.svg" alt="JS Juice" />
+                    </a>
+                </div>
+                <div data-include="../../brand/templates/includes/nav.html" data-nav-base="../../">
+                </div>
+            </div>
+        </header>
+        <main>
+            <div id="hero" class="container padding:1o5">
+                <h1 id="page-title">Custom Input Components Demo</h1>
+                <p>Examples for `input-*`, `input-status`, and `form-info` behaviors in Juice Forms.</p>
+            </div>
+
+            <div class="container padding:1o5">
+                <div id="content" class="shell">
+
+
+                    <section class="card">
+                        <h2>Form Info Demo</h2>
+                        <form-info id="formInfoDemo" for="demoForm">
+                            Make changes to the form above. Undo/Revert actions appear when history has steps.
+                        </form-info>
+                    </section>
+
+                    <hr class="panel-divider" />
+
+                    <section class="card">
+                        <h2>Input Components</h2>
+                        <juice-form id="demoForm" class="form-example">
+                            <input-text name="username" label="Username" placeholder="Type name" required
+                                validation="min:3|max:20|a-z0-9"></input-text>
+
+
+                            <input-number name="number_between_1_100" label="Number between 1 and 100" value="50"
+                                required validation="min:1|max:100"></input-number>
+
+                            <div>
+                                <input-checkbox name="subscribe" label="Subscribe" value="yes"></input-checkbox>
+                            </div>
+                            <div>
+                                <input-select name="country" default="Choose Country" label="Country"
+                                    options="usa:USA, canada:Canada, mexico:Mexico"></input-select>
+                            </div>
+                            <input-fieldset label="Favorite Color">
+                                <input-radio name="color" label="Red" value="red"></input-radio>
+                                <input-radio name="color" label="Green" value="green"></input-radio>
+                                <input-radio name="color" label="Blue" value="blue"></input-radio>
+                            </input-fieldset>
+                            <input-textarea name="bio" label="Bio" placeholder="Tell us about yourself"
+                                rows="4"></input-textarea>
+                            <div class="button-row">
+                                <button type="button" id="dump">Dump values</button>
+                            </div>
+                        </juice-form>
+                        <pre id="out"></pre>
+                    </section>
+
+                    <hr class="panel-divider" />
+
+                    <section class="card">
+                        <h2>Input Status Demo</h2>
+                        <div class="status-toolbar">
+                            <div id="statusPreviewWrap" class="status-preview">
+                                <input-status id="statusDemo" size="42" state="idle"></input-status>
+                                <span>default</span>
+                            </div>
+                            <div class="control-group">
+                                <button type="button" data-status-mode="default">Default</button>
+                                <button type="button" data-status-mode="icon-only-colored">Icon Only Colored</button>
+                            </div>
+                            <div class="control-group">
+                                <button type="button" data-status-surface="light">Light Surface</button>
+                                <button type="button" data-status-surface="dark">Dark Surface</button>
+                            </div>
+                            <button type="button" id="cycleStatus">Cycle Status</button>
+                            <span id="statusLabel">idle | mode: default</span>
+                        </div>
+                    </section>
+
+
+                </div>
+            </div>
+        </main>
+
+        <script>
+            document.getElementById("dump").addEventListener("click", () => {
+                const form = document.getElementById("demoForm");
+                const out = {};
+                const fields = form.querySelectorAll(
+                    "input-text,input-textarea,input-select,input-number,input-checkbox,input-radio"
+                );
+
+                fields.forEach((field) => {
+                    const name = field.getAttribute("name");
+                    if (!name) return;
+
+                    const tag = field.tagName.toLowerCase();
+                    if (tag === "input-checkbox") {
+                        out[name] = !!field.checked;
+                        return;
+                    }
+
+                    if (tag === "input-radio") {
+                        if (!(name in out)) out[name] = null;
+                        if (field.checked) out[name] = field.value;
+                        return;
+                    }
+
+                    out[name] = field.value;
+                });
+
+                document.getElementById("out").textContent = JSON.stringify(out, null, 2);
+            });
+
+            const statusStates = ["idle", "info", "warning", "error", "success"];
+            const statusEl = document.getElementById("statusDemo");
+            const statusLabel = document.getElementById("statusLabel");
+            const statusPreviewWrap = document.getElementById("statusPreviewWrap");
+            const modeButtons = document.querySelectorAll("[data-status-mode]");
+            const surfaceButtons = document.querySelectorAll("[data-status-surface]");
+            let statusIndex = 0;
+            let statusMode = "default";
+            let statusSurface = "neutral";
+
+            function applyMode(mode) {
+                statusMode = mode;
+                statusEl.removeAttribute("icon-only");
+                statusEl.removeAttribute("colored");
+                statusPreviewWrap.style.backgroundColor = "transparent";
+                statusPreviewWrap.style.color = "inherit";
+
+                if (mode === "icon-only") {
+                    statusEl.setAttribute("icon-only", "");
+                } else if (mode === "icon-only-colored") {
+                    statusEl.setAttribute("icon-only", "");
+                    statusEl.setAttribute("colored", "");
+                    statusSurface = "neutral";
+                } else if (mode === "default") {
+                    statusSurface = "neutral";
+                }
+
+                if (statusSurface === "dark") {
+                    statusPreviewWrap.style.backgroundColor = "#2f2f33";
+                    statusPreviewWrap.style.color = "#f3f3f3";
+                } else if (statusSurface === "light") {
+                    statusPreviewWrap.style.backgroundColor = "#f6f6f6";
+                    statusPreviewWrap.style.color = "#222222";
+                } else {
+                    statusPreviewWrap.style.backgroundColor = "transparent";
+                    statusPreviewWrap.style.color = "inherit";
+                }
+            }
+
+            function applySurface(surface) {
+                statusSurface = surface;
+                statusMode = "icon-only";
+                statusEl.removeAttribute("colored");
+                statusEl.setAttribute("icon-only", "");
+                if (surface === "dark") {
+                    statusPreviewWrap.style.backgroundColor = "#2f2f33";
+                    statusPreviewWrap.style.color = "#f3f3f3";
+                } else {
+                    statusPreviewWrap.style.backgroundColor = "#f6f6f6";
+                    statusPreviewWrap.style.color = "#222222";
+                }
+            }
+
+            function updateStatusLabel(state) {
+                statusLabel.textContent = `${state} | mode: ${statusMode} | surface: ${statusSurface}`;
+            }
+
+            modeButtons.forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    applyMode(btn.getAttribute("data-status-mode"));
+                    updateStatusLabel(statusStates[statusIndex]);
+                });
+            });
+
+            surfaceButtons.forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    applySurface(btn.getAttribute("data-status-surface"));
+                    updateStatusLabel(statusStates[statusIndex]);
+                });
+            });
+
+            applyMode("default");
+
+            document.getElementById("cycleStatus").addEventListener("click", () => {
+                statusIndex = (statusIndex + 1) % statusStates.length;
+                const state = statusStates[statusIndex];
+                statusEl.setAttribute("state", state);
+                updateStatusLabel(state);
+            });
+
+            setInterval(() => {
+                statusIndex = (statusIndex + 1) % statusStates.length;
+                const state = statusStates[statusIndex];
+                statusEl.setAttribute("state", state);
+                updateStatusLabel(state);
+            }, 3000);
+
+            async function setupFormInfoHistoryDemo() {
+                await customElements.whenDefined("form-info");
+
+                const formInfoEl = document.getElementById("formInfoDemo");
+                const formEl = document.getElementById("demoForm");
+                if (!formInfoEl || !formEl || typeof formInfoEl.bindForm !== "function") return;
+
+                const formFields = Array.from(
+                    formEl.querySelectorAll(
+                        "input-text,input-checkbox,input-select,input-number,input-radio,input-textarea"
+                    )
+                );
+
+                function captureSnapshot() {
+                    return formFields.map((field, index) => ({
+                        index,
+                        value: field.value,
+                        checked: "checked" in field ? !!field.checked : null
+                    }));
+                }
+
+                function snapshotsEqual(a, b) {
+                    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+                    for (let i = 0; i < a.length; i += 1) {
+                        if (a[i].value !== b[i].value || a[i].checked !== b[i].checked) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
+                let isApplyingSnapshot = false;
+                let lastSnapshot = captureSnapshot();
+
+                function applySnapshot(snapshot) {
+                    if (!Array.isArray(snapshot)) return;
+                    isApplyingSnapshot = true;
+                    snapshot.forEach((entry) => {
+                        const field = formFields[entry.index];
+                        if (!field) return;
+                        if ("checked" in field) field.checked = !!entry.checked;
+                        if (field.value !== entry.value) field.value = entry.value;
+                    });
+                    isApplyingSnapshot = false;
+                }
+
+                const historyListeners = {
+                    notEmpty: [],
+                    empty: []
+                };
+
+                const demoHistory = {
+                    stack: [],
+                    on(event, fn) {
+                        if (!historyListeners[event]) return;
+                        historyListeners[event].push(fn);
+                    },
+                    emit(event) {
+                        if (!historyListeners[event]) return;
+                        historyListeners[event].forEach((fn) => fn());
+                    },
+                    push(snapshot) {
+                        if (!Array.isArray(snapshot)) return;
+                        this.stack.push(snapshot);
+                        if (this.stack.length === 1) this.emit("notEmpty");
+                    },
+                    undo() {
+                        if (!this.stack.length) return;
+                        applySnapshot(this.stack.pop());
+                        lastSnapshot = captureSnapshot();
+                        if (!this.stack.length) this.emit("empty");
+                    },
+                    reset() {
+                        this.stack = [];
+                        this.emit("empty");
+                    }
+                };
+
+                const demoFormAdapter = {
+                    form: formEl,
+                    default: captureSnapshot(),
+                    history: demoHistory,
+                    undo() {
+                        this.history.undo();
+                    },
+                    fill(snapshot) {
+                        applySnapshot(snapshot);
+                        lastSnapshot = captureSnapshot();
+                    }
+                };
+
+                formInfoEl.bindForm(demoFormAdapter);
+                formInfoEl.setAttribute("message", "History is enabled for this demo form.");
+
+                formFields.forEach((field) => {
+                    field.addEventListener("input", () => {
+                        if (isApplyingSnapshot) return;
+                        const nextSnapshot = captureSnapshot();
+                        if (!snapshotsEqual(nextSnapshot, lastSnapshot)) {
+                            demoHistory.push(lastSnapshot);
+                            lastSnapshot = nextSnapshot;
+                        }
+                    });
+                });
+            }
+
+            setupFormInfoHistoryDemo();
+        </script>
+        <script type="module" src="../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

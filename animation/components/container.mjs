@@ -36,6 +36,10 @@ class AnimationContainer extends Component.HTMLElement {
         },
     };
 
+    /**
+     * Returns the current observed value.
+     * @returns {*} Current observed value.
+     */
     static get observed() {
         return {
             all: ["width", "height", "x", "y", "z", "anchor"],
@@ -44,6 +48,10 @@ class AnimationContainer extends Component.HTMLElement {
         };
     }
 
+    /**
+     * Returns the current style value.
+     * @returns {*} Current style value.
+     */
     static get style() {
         return [
             {
@@ -63,10 +71,20 @@ class AnimationContainer extends Component.HTMLElement {
         ];
     }
 
+    /**
+     * Executes html.
+     * @param {*} data - Parameter value.
+     * @returns {*} Result of html.
+     */
     static html(data = {}) {
         return `<slot></slot>`;
     }
 
+    /**
+     * Sets anchor values.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of setAnchor.
+     */
     setAnchor(value) {
         const parsed = parseAnchor(value);
         this._anchor = parsed;
@@ -76,12 +94,23 @@ class AnimationContainer extends Component.HTMLElement {
         this.ref("html").style.setProperty("--anchor-y", `${parsed.y * 100}%`);
     }
 
+    /**
+     * Executes beforeCreate.
+     * @returns {*} Result of beforeCreate.
+     */
     beforeCreate() {
         this.animationBody = true;
         this.rotation = new Rotation(0);
         this.position = new Vector3D(0, 0, 0);
     }
 
+    /**
+     * Handles propertychanged events.
+     * @param {*} property - Parameter value.
+     * @param {*} prevous - Parameter value.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of onPropertyChanged.
+     */
     onPropertyChanged(property, prevous, value) {
         switch (property) {
             case "width":
@@ -97,10 +126,23 @@ class AnimationContainer extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @returns {*} Result of update.
+     */
     update() {}
 
+    /**
+     * Renders output from current module state.
+     * @returns {*} Result of render.
+     */
     render() {}
 
+    /**
+     * Handles customchildready events.
+     * @param {*} child - Parameter value.
+     * @returns {*} Result of onCustomChildReady.
+     */
     onCustomChildReady(child) {
         /// if (!child) return;
         console.log("child connected", child, child.animate);

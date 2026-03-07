@@ -15,11 +15,22 @@ class Stroke {
     color = null;
     width = 0;
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} color - Parameter value.
+     * @param {*} width - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(color, width) {
         this.color = color;
         this.width = width;
     }
 
+    /**
+     * Executes apply.
+     * @param {*} ctx - Parameter value.
+     * @returns {*} Result of apply.
+     */
     apply(ctx) {
         ctx.strokeStyle = this.color;
         ctx.lineWidth = this.width;
@@ -27,8 +38,17 @@ class Stroke {
     }
 }
 
+/**
+ * Represents the Shape animation module class.
+ */
 export class Shape extends Asset {
     type = "shape";
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(x, y) {
         super();
         this.x = x;
@@ -42,6 +62,11 @@ export class Shape extends Asset {
         this.rotation = 0;
     }
 
+    /**
+     * Executes prepareDraw.
+     * @param {*} ctx - Parameter value.
+     * @returns {*} Result of prepareDraw.
+     */
     prepareDraw(ctx) {
         if (this.rotation) {
             ctx.save();
@@ -50,6 +75,11 @@ export class Shape extends Asset {
         }
     }
 
+    /**
+     * Executes finalizeDraw.
+     * @param {*} ctx - Parameter value.
+     * @returns {*} Result of finalizeDraw.
+     */
     finalizeDraw(ctx) {
         if (this.fill) {
             ctx.fillStyle = this.fill;
@@ -65,6 +95,11 @@ export class Shape extends Asset {
         }
     }
 
+    /**
+     * Executes draw.
+     * @param {*} ctx - Parameter value.
+     * @returns {*} Result of draw.
+     */
     draw(ctx) {
         this.prepareDraw(ctx);
 
@@ -73,7 +108,17 @@ export class Shape extends Asset {
     }
 }
 
+/**
+ * Represents the Circle animation module class.
+ */
 export class Circle extends Asset {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @param {*} radius - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(x, y, radius) {
         super();
         this._x = x;
@@ -82,12 +127,28 @@ export class Circle extends Asset {
         this.fill = null;
     }
 
+    /**
+     * Executes draw.
+     * @param {*} ctx - Parameter value.
+     * @returns {*} Result of draw.
+     */
     draw(ctx) {
         ctx.arc(this._x, this._y, this._radius, 0, Math.PI * 2, false);
     }
 }
 
+/**
+ * Represents the Rectangle animation module class.
+ */
 export class Rectangle extends Asset {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @param {*} width - Parameter value.
+     * @param {*} height - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(x, y, width, height) {
         super();
         this._x = x;
@@ -97,13 +158,34 @@ export class Rectangle extends Asset {
     }
 }
 
+/**
+ * Represents the Square animation module class.
+ */
 export class Square extends Rectangle {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @param {*} size - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(x, y, size) {
         super(x, y, size, size);
     }
 }
 
+/**
+ * Represents the Ellipse animation module class.
+ */
 export class Ellipse extends Asset {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @param {*} width - Parameter value.
+     * @param {*} height - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(x, y, width, height) {
         super();
         this._x = x;
@@ -113,7 +195,18 @@ export class Ellipse extends Asset {
     }
 }
 
+/**
+ * Represents the Line animation module class.
+ */
 export class Line extends Asset {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @param {*} x2 - Parameter value.
+     * @param {*} y2 - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(x, y, x2, y2) {
         super();
         this._x = x;
@@ -123,7 +216,20 @@ export class Line extends Asset {
     }
 }
 
+/**
+ * Represents the Triangle animation module class.
+ */
 export class Triangle extends Asset {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @param {*} x2 - Parameter value.
+     * @param {*} y2 - Parameter value.
+     * @param {*} x3 - Parameter value.
+     * @param {*} y3 - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(x, y, x2, y2, x3, y3) {
         super();
         this._x = x;

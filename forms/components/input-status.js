@@ -1,8 +1,53 @@
+
+
+/**
+ * AUTODOC:START
+ * Component: <input-status>
+ * Class: InputStatus
+ * Overview: Animated status badge used by form components to show idle/info/warning/error/success states.
+ *
+ * Features:
+ * - SVG icon animations for check, cross, warning, and info glyphs.
+ * - Circular stroke/fill transition choreography between states.
+ * - Configurable size and icon-only mode for compact layouts.
+ * - Optional custom color override or auto-colored status mode.
+ *
+ * Example:
+ * `<input-status state="warning" size="20" colored></input-status>`
+ *
+ * Attribute Reference:
+ * - `state`: One of `info`, `warning`, `error`/`x`, `success`, or empty for idle.
+ * - `size`: Pixel size of the status badge.
+ * - `icon-only`: Hides ring/fill and shows icon only.
+ * - `colored`: Applies state color to icon in icon-only mode.
+ * - `color`: Explicit icon color override in icon-only mode.
+ *
+ * Property Reference:
+ * - `size`: Getter/setter mapped to the `size` attribute.
+ * - `state`: Getter/setter mapped to the `state` attribute.
+ *
+ * CSS Variables:
+ * - None.
+ *
+ * Part Names:
+ * - None.
+ * AUTODOC:END
+ */
+
 class InputStatus extends HTMLElement {
+    // TODO(refactor): Separate template rendering from style/state mutation to reduce method density.
+    /**
+     * Lists attributes that are observed for runtime updates.
+     * @returns {*} List of observed attribute names.
+     */
     static get observedAttributes() {
         return ["size", "state", "icon-only", "color", "colored"];
     }
 
+    /**
+        * Initializes component state, DOM references, and default behavior.
+     * @returns {*} void.
+     */
     constructor() {
         super();
         this._shadow = this.attachShadow({ mode: "open" });
@@ -174,6 +219,10 @@ class InputStatus extends HTMLElement {
         }
     }
 
+    /**
+     * Runs setup logic when the element is connected to the document.
+     * @returns {*} void.
+     */
     connectedCallback() {
         if (!this.hasAttribute("size")) this.size = 40;
         this._clearStyle("color");
@@ -189,6 +238,13 @@ class InputStatus extends HTMLElement {
         this._applyState(this.state);
     }
 
+    /**
+     * Responds to observed attribute changes and synchronizes state.
+     * @param {*} name - Attribute or field name.
+     * @param {*} oldValue - Previous value.
+     * @param {*} newValue - Next value.
+     * @returns {*} void.
+     */
     attributeChangedCallback(name, oldValue, newValue) {
         if (oldValue === newValue) return;
         if (name === "size") this._applySize();
@@ -197,16 +253,32 @@ class InputStatus extends HTMLElement {
         }
     }
 
+    /**
+     * Updates internal component state and applies side effects.
+     * @param {*} name - Attribute or field name.
+     * @param {*} cssText - Input value for css text.
+     * @returns {*} Derived internal value or completion status.
+     */
     _setStyle(name, cssText) {
         const styleEl = this._styleBuckets.get(name);
         if (!styleEl) return;
         styleEl.textContent = cssText || "";
     }
 
+    /**
+       * Clears previously applied status style tokens from the wrapper.
+     * @param {*} name - Attribute or field name.
+     * @returns {*} void.
+     */
     _clearStyle(name) {
         this._setStyle(name, "");
     }
 
+    /**
+      * Applies state to rendered output.
+     * @param {*} state - Input value for state.
+     * @returns {*} void.
+     */
     _applyState(state) {
         if (this._colorTimer) clearTimeout(this._colorTimer);
         if (this._graphicTimer) clearTimeout(this._graphicTimer);
@@ -295,6 +367,10 @@ class InputStatus extends HTMLElement {
         }, ICON_OUT_MS);
     }
 
+    /**
+      * Applies size to rendered output.
+     * @returns {*} void.
+     */
     _applySize() {
         const safeTotalLength = (element, fallback) => {
             if (!element || typeof element.getTotalLength !== "function") return fallback;
@@ -375,21 +451,39 @@ class InputStatus extends HTMLElement {
         this._refs.wrapper.classList.add("ready");
     }
 
+    /**
+        * Returns the configured component size.
+     * @returns {*} Configured size value.
+     */
     get size() {
         const raw = parseInt(this.getAttribute("size") || "40", 10);
         return Number.isFinite(raw) && raw > 0 ? raw : 40;
     }
 
+    /**
+     * Updates the `size` value.
+     * @param {*} value - Assigned value.
+     * @returns {*} void
+     */
     set size(value) {
         const n = parseInt(value, 10);
         if (!Number.isFinite(n) || n <= 0) return;
         this.setAttribute("size", `${n}`);
     }
 
+    /**
+        * Returns the current status state.
+     * @returns {*} Current normalized status state.
+     */
     get state() {
         return (this.getAttribute("state") || "").toLowerCase();
     }
 
+    /**
+     * Updates the `state` value.
+     * @param {*} value - Assigned value.
+     * @returns {*} void
+     */
     set state(value) {
         if (!value) {
             this.removeAttribute("state");

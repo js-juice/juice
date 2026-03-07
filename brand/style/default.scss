@@ -20,6 +20,22 @@
     @return $n * 1rem;
 }
 
+@function em($n) {
+    @return $n * 1em;
+}
+
+@function px($n) {
+    @return $n * 1px;
+}
+
+@function vw($n) {
+    @return $n * 1vw;
+}
+
+@function vh($n) {
+    @return $n * 1vh;
+}
+
 $sides: (top, right, bottom, left);
 
 $breakpoints: (
@@ -54,6 +70,20 @@ $breakpoints: (
     }
 }
 
+.margin\:auto {
+    margin: auto;
+}
+
+.margin\:horizontal\:auto {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.margin\:vertical\:auto {
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
 @each $side in $sides {
     @for $i from 0 through 40 {
         .margin\:#{$side}\:#{str-replace(#{$i * 0.1}, ".", "o")} {
@@ -65,6 +95,12 @@ $breakpoints: (
 @for $i from 1 through 100 {
     .w\:#{$i} {
         width: percent($i);
+    }
+}
+
+@for $i from 1 through 100 {
+    .w\:#{$i*5}px {
+        width: px($i * 5);
     }
 }
 
@@ -360,6 +396,40 @@ $align-map: (
  * 
 */
 
+.row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    &.nowrap {
+        flex-wrap: nowrap;
+    }
+    &.cols\:1 {
+        > * {
+            flex: 0 1 auto;
+            width: 100%;
+            margin: 0;
+        }
+    }
+    &.cols\:2 {
+        > * {
+            flex: 0 1 auto;
+            width: 50%;
+            margin: 0;
+        }
+    }
+    &.cols\:3 {
+        > * {
+            flex: 0 1 33.3333%;
+        }
+    }
+}
+
+@for $i from 0 through 40 {
+    .gap\:#{str-replace(#{$i * 0.1}, ".", "o")} {
+        gap: rem($i * 0.1);
+    }
+}
+
 a.button {
     display: inline-block;
     padding: 0.65rem 1rem;
@@ -389,6 +459,18 @@ a.button {
             border: 1px solid map.get($color-map, "white");
         }
     }
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.text-right {
+    text-align: right;
 }
 
 .absolute {

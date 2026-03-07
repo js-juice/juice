@@ -39,6 +39,9 @@ const fragmentShaderSource = `
     }
 `;
 
+/**
+ * Represents the SpriteSheet animation module class.
+ */
 class SpriteSheet {
     sheets = [];
 
@@ -94,12 +97,24 @@ class SpriteSheet {
         this.initialize();
     }
 
+    /**
+     * Executes toPositiveNumber.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of toPositiveNumber.
+     */
     toPositiveNumber(value) {
         const numeric = Number(value);
         if (!Number.isFinite(numeric) || numeric <= 0) return 0;
         return numeric;
     }
 
+    /**
+     * Executes normalizeSheetArgs.
+     * @param {*} frameWidth - Parameter value.
+     * @param {*} frameHeight - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of normalizeSheetArgs.
+     */
     normalizeSheetArgs(frameWidth, frameHeight, options) {
         if (frameWidth && typeof frameWidth === "object") {
             options = frameWidth;
@@ -116,6 +131,12 @@ class SpriteSheet {
         };
     }
 
+    /**
+     * Executes resize.
+     * @param {*} width - Parameter value.
+     * @param {*} height - Parameter value.
+     * @returns {*} Result of resize.
+     */
     resize(width, height) {
         const { gl, canvas } = this;
         if (!gl || !canvas) return;
@@ -133,6 +154,14 @@ class SpriteSheet {
         this.rendered = {};
     }
 
+    /**
+     * Executes addSheet.
+     * @param {*} source - Parameter value.
+     * @param {*} frameWidth - Parameter value.
+     * @param {*} frameHeight - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of addSheet.
+     */
     addSheet(source, frameWidth = null, frameHeight = null, options = null) {
         const { gl } = this;
         if (!gl) return Promise.reject(new Error("WebGL context unavailable"));
@@ -189,6 +218,12 @@ class SpriteSheet {
         });
     }
 
+    /**
+     * Executes useSheet.
+     * @param {*} index - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of useSheet.
+     */
     useSheet(index, options = null) {
         const { gl } = this;
         const sheet = this.sheets[index];
@@ -213,6 +248,12 @@ class SpriteSheet {
         return sheet;
     }
 
+    /**
+     * Executes move.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of move.
+     */
     move(x, y) {
         if (!this.sheet) return;
         this.offsetX += x / this.sheet.width;
@@ -220,6 +261,12 @@ class SpriteSheet {
         this.dirty = true;
     }
 
+    /**
+     * Sets  values.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of set.
+     */
     set(x, y) {
         if (!this.sheet) return;
         this.offsetX = x / this.sheet.width;
@@ -227,12 +274,24 @@ class SpriteSheet {
         this.dirty = true;
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(x, y) {
         this.offsetX = x;
         this.offsetY = y;
         this.dirty = true;
     }
 
+    /**
+     * Sets column values.
+     * @param {*} column - Parameter value.
+     * @param {*} row - Parameter value.
+     * @returns {*} Result of setColumn.
+     */
     setColumn(column, row = 0) {
         if (!this.sheet) return;
         column = ((column % this.sheet.columns) + this.sheet.columns) % this.sheet.columns;
@@ -242,6 +301,11 @@ class SpriteSheet {
         this.dirty = true;
     }
 
+    /**
+     * Updates the frame value.
+     * @param {*} f - Parameter value.
+     * @returns {*} void.
+     */
     set frame(f) {
         if (!this.sheet) return;
         const frameCount = this.sheet.frameCount || this.sheet.columns * this.sheet.rows;
@@ -255,10 +319,19 @@ class SpriteSheet {
         this.render();
     }
 
+    /**
+     * Returns the current frame value.
+     * @returns {*} Current frame value.
+     */
     get frame() {
         return this._frame;
     }
 
+    /**
+     * Executes play.
+     * @param {*} speed - Parameter value.
+     * @returns {*} Result of play.
+     */
     play(speed) {
         this.playing = true;
         if (this.sheet && this.sheet.frameCount) {
@@ -269,6 +342,10 @@ class SpriteSheet {
         }, speed * 1000);
     }
 
+    /**
+     * Executes stop.
+     * @returns {*} Result of stop.
+     */
     stop() {
         clearTimeout(this.playTO);
         this.playTO = null;
@@ -294,6 +371,10 @@ class SpriteSheet {
         gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
 
+    /**
+     * Executes initialize.
+     * @returns {*} Result of initialize.
+     */
     initialize() {
         const canvas = document.createElement("canvas");
         canvas.width = this.width;
@@ -377,6 +458,10 @@ class SpriteSheet {
         if (this.onready) this.onready();
     }
 
+    /**
+     * Executes dispose.
+     * @returns {*} Result of dispose.
+     */
     dispose() {
         this.stop();
         const { gl, program } = this;

@@ -7,14 +7,30 @@
 import { Position } from "./properties/Position.mjs";
 import { parseAnchor } from "./anchor.mjs";
 
+/**
+ * Executes clamp.
+ * @param {*} value - Parameter value.
+ * @param {*} min - Parameter value.
+ * @param {*} max - Parameter value.
+ * @returns {*} Result of clamp.
+ */
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
 
+/**
+ * Represents the AnimationBody animation module class.
+ */
 class AnimationBody {
     animate = true;
     animationBody = true;
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} element - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(element, options = {}) {
         this.element = null;
         this.stage = options.stage || null;
@@ -44,6 +60,11 @@ class AnimationBody {
         this.syncOrigin();
     }
 
+    /**
+     * Executes attach.
+     * @param {*} element - Parameter value.
+     * @returns {*} Result of attach.
+     */
     attach(element) {
         this.element = element || null;
         if (!this.element) return this;
@@ -59,12 +80,21 @@ class AnimationBody {
         return this;
     }
 
+    /**
+     * Sets stage values.
+     * @param {*} stage - Parameter value.
+     * @returns {*} Result of setStage.
+     */
     setStage(stage) {
         this.stage = stage || null;
         this.syncOrigin();
         return this;
     }
 
+    /**
+     * Executes syncSize.
+     * @returns {*} Result of syncSize.
+     */
     syncSize() {
         if (!this.element) return this;
         const rect = this.element.getBoundingClientRect();
@@ -74,6 +104,11 @@ class AnimationBody {
         return this;
     }
 
+    /**
+     * Sets anchor values.
+     * @param {*} anchor - Parameter value.
+     * @returns {*} Result of setAnchor.
+     */
     setAnchor(anchor) {
         const parsed = parseAnchor(anchor || "center center");
         this._anchorSpec = parsed;
@@ -81,35 +116,73 @@ class AnimationBody {
         return this;
     }
 
+    /**
+     * Executes moveTo.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of moveTo.
+     */
     moveTo(x, y) {
         this.position.set(Number(x) || 0, Number(y) || 0);
         return this;
     }
 
+    /**
+     * Sets position values.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of setPosition.
+     */
     setPosition(x, y) {
         return this.moveTo(x, y);
     }
 
+    /**
+     * Executes move.
+     * @param {*} dx - Parameter value.
+     * @param {*} dy - Parameter value.
+     * @returns {*} Result of move.
+     */
     move(dx, dy) {
         this.position.add(Number(dx) || 0, Number(dy) || 0);
         return this;
     }
 
+    /**
+     * Sets velocity values.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of setVelocity.
+     */
     setVelocity(x = 0, y = 0) {
         this.velocity.set(Number(x) || 0, Number(y) || 0);
         return this;
     }
 
+    /**
+     * Sets update values.
+     * @param {*} fn - Parameter value.
+     * @returns {*} Result of setUpdate.
+     */
     setUpdate(fn) {
         this.onUpdate = typeof fn === "function" ? fn : null;
         return this;
     }
 
+    /**
+     * Sets render values.
+     * @param {*} fn - Parameter value.
+     * @returns {*} Result of setRender.
+     */
     setRender(fn) {
         this.onRender = typeof fn === "function" ? fn : null;
         return this;
     }
 
+    /**
+     * Executes syncOrigin.
+     * @returns {*} Result of syncOrigin.
+     */
     syncOrigin() {
         // Stage already applies anchor offset at the host/html level.
         // Keep DOM body coordinates in stage world space without a second anchor subtraction.
@@ -117,6 +190,11 @@ class AnimationBody {
         return this;
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} time - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(time) {
         this._resolveStage();
         if (this.onUpdate) {
@@ -140,6 +218,10 @@ class AnimationBody {
         }
     }
 
+    /**
+     * Renders output from current module state.
+     * @returns {*} Result of render.
+     */
     render() {
         if (!this.element || !this.manageStyles) return;
 
@@ -155,6 +237,10 @@ class AnimationBody {
         }
     }
 
+    /**
+     * Implements internal _syncAnchorPoint behavior.
+     * @returns {*} Result of _syncAnchorPoint.
+     */
     _syncAnchorPoint() {
         const width = this.size.width || 0;
         const height = this.size.height || 0;
@@ -162,6 +248,12 @@ class AnimationBody {
         this.anchorPoint.y = this._anchorValueToPixels(this._anchorSpec.y, height);
     }
 
+    /**
+     * Implements internal _anchorValueToPixels behavior.
+     * @param {*} value - Parameter value.
+     * @param {*} axisSize - Parameter value.
+     * @returns {*} Result of _anchorValueToPixels.
+     */
     _anchorValueToPixels(value, axisSize) {
         if (typeof value === "number") return value * axisSize;
         if (typeof value !== "string") return 0;
@@ -179,6 +271,10 @@ class AnimationBody {
         return Number.isFinite(num) ? num : 0;
     }
 
+    /**
+     * Implements internal _resolveStage behavior.
+     * @returns {*} Result of _resolveStage.
+     */
     _resolveStage() {
         if (this.stage) return this.stage;
         if (this.viewer?.stage) {

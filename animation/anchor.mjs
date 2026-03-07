@@ -39,6 +39,11 @@ export function parseAnchorPosition(position) {
     }
 }
 
+/**
+ * Parses input values for anchor behavior.
+ * @param {*} position - Parameter value.
+ * @returns {*} Result of parseAnchor.
+ */
 export function parseAnchor(position) {
     if (typeof position === "string") {
         const [x, y] = position.split(" ");

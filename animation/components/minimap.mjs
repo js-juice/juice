@@ -6,10 +6,23 @@
 
 import Component from "../../ui/component.mjs";
 
+/**
+ * Executes clamp.
+ * @param {*} value - Parameter value.
+ * @param {*} min - Parameter value.
+ * @param {*} max - Parameter value.
+ * @returns {*} Result of clamp.
+ */
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
 
+/**
+ * Executes toNumber.
+ * @param {*} value - Parameter value.
+ * @param {*} fallback - Parameter value.
+ * @returns {*} Result of toNumber.
+ */
 function toNumber(value, fallback = 0) {
     const n = Number(value);
     return Number.isFinite(n) ? n : fallback;
@@ -29,6 +42,9 @@ const INTERNAL_IDS = new Set([
     "meta"
 ]);
 
+/**
+ * Represents the AnimationMinimap animation module class.
+ */
 class AnimationMinimap extends Component.HTMLElement {
     static tag = "animation-minimap";
 
@@ -44,12 +60,20 @@ class AnimationMinimap extends Component.HTMLElement {
         }
     };
 
+    /**
+     * Returns the current observed value.
+     * @returns {*} Current observed value.
+     */
     static get observed() {
         return {
             all: ["viewer", "stage", "padding", "mapstyle", "metadata", "width", "height"]
         };
     }
 
+    /**
+     * Returns the current style value.
+     * @returns {*} Current style value.
+     */
     static get style() {
         return [
             {
@@ -210,6 +234,10 @@ class AnimationMinimap extends Component.HTMLElement {
         ];
     }
 
+    /**
+     * Executes html.
+     * @returns {*} Result of html.
+     */
     static html() {
         return `
         <div id="label">Mini Map</div>
@@ -227,6 +255,10 @@ class AnimationMinimap extends Component.HTMLElement {
         `;
     }
 
+    /**
+     * Executes beforeCreate.
+     * @returns {*} Result of beforeCreate.
+     */
     beforeCreate() {
         this._raf = 0;
         this._viewerEl = null;
@@ -241,6 +273,10 @@ class AnimationMinimap extends Component.HTMLElement {
         };
     }
 
+    /**
+     * Handles firstconnect events.
+     * @returns {*} Result of onFirstConnect.
+     */
     onFirstConnect() {
         this.ref("html").classList.add(`mapstyle-${this.mapstyle}`);
         this._applyHostSize();
@@ -249,6 +285,11 @@ class AnimationMinimap extends Component.HTMLElement {
         this._startLoop();
     }
 
+    /**
+     * Handles propertychanged events.
+     * @param {*} property - Parameter value.
+     * @returns {*} Result of onPropertyChanged.
+     */
     onPropertyChanged(property) {
         if (property === "viewer" || property === "stage") {
             this._bindTargets();
@@ -261,11 +302,19 @@ class AnimationMinimap extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Handles disconnect events.
+     * @returns {*} Result of onDisconnect.
+     */
     onDisconnect() {
         this._stopLoop();
         this._unbindViewerEvents();
     }
 
+    /**
+     * Implements internal _startLoop behavior.
+     * @returns {*} Result of _startLoop.
+     */
     _startLoop() {
         if (this._raf) return;
         const tick = () => {
@@ -276,18 +325,30 @@ class AnimationMinimap extends Component.HTMLElement {
         this._raf = globalThis.requestAnimationFrame(tick);
     }
 
+    /**
+     * Implements internal _stopLoop behavior.
+     * @returns {*} Result of _stopLoop.
+     */
     _stopLoop() {
         if (!this._raf) return;
         globalThis.cancelAnimationFrame(this._raf);
         this._raf = 0;
     }
 
+    /**
+     * Implements internal _unbindViewerEvents behavior.
+     * @returns {*} Result of _unbindViewerEvents.
+     */
     _unbindViewerEvents() {
         if (this._viewerEl) {
             this._viewerEl.removeEventListener("stageconnect", this._onStageConnect);
         }
     }
 
+    /**
+     * Implements internal _bindTargets behavior.
+     * @returns {*} Result of _bindTargets.
+     */
     _bindTargets() {
         const nextViewer = this._resolveViewer();
         if (nextViewer !== this._viewerEl) {
@@ -305,6 +366,12 @@ class AnimationMinimap extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Implements internal _queryDeepInScope behavior.
+     * @param {*} scope - Parameter value.
+     * @param {*} predicate - Parameter value.
+     * @returns {*} Result of _queryDeepInScope.
+     */
     _queryDeepInScope(scope, predicate) {
         if (!scope) return null;
 
@@ -342,6 +409,11 @@ class AnimationMinimap extends Component.HTMLElement {
         return null;
     }
 
+    /**
+     * Implements internal _isValidSelector behavior.
+     * @param {*} selector - Parameter value.
+     * @returns {*} Result of _isValidSelector.
+     */
     _isValidSelector(selector) {
         if (typeof selector !== "string") return false;
         const trimmed = selector.trim();
@@ -354,6 +426,12 @@ class AnimationMinimap extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Implements internal _safeQuery behavior.
+     * @param {*} scope - Parameter value.
+     * @param {*} selector - Parameter value.
+     * @returns {*} Result of _safeQuery.
+     */
     _safeQuery(scope, selector) {
         if (!scope || !this._isValidSelector(selector)) return null;
         try {
@@ -363,6 +441,12 @@ class AnimationMinimap extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Implements internal _safeMatches behavior.
+     * @param {*} node - Parameter value.
+     * @param {*} selector - Parameter value.
+     * @returns {*} Result of _safeMatches.
+     */
     _safeMatches(node, selector) {
         if (!node || typeof node.matches !== "function") return false;
         if (!this._isValidSelector(selector)) return false;
@@ -373,6 +457,12 @@ class AnimationMinimap extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Implements internal _queryBySelectorDeep behavior.
+     * @param {*} query - Parameter value.
+     * @param {*} scopes - Parameter value.
+     * @returns {*} Result of _queryBySelectorDeep.
+     */
     _queryBySelectorDeep(query, scopes = []) {
         if (!this._isValidSelector(query)) return null;
         const predicate = (node) => this._safeMatches(node, query);
@@ -383,6 +473,10 @@ class AnimationMinimap extends Component.HTMLElement {
         return null;
     }
 
+    /**
+     * Implements internal _resolveViewer behavior.
+     * @returns {*} Result of _resolveViewer.
+     */
     _resolveViewer() {
         const explicitViewer = this._asElement(this.viewer, "animation-viewer");
         if (explicitViewer) return explicitViewer;
@@ -404,6 +498,10 @@ class AnimationMinimap extends Component.HTMLElement {
         );
     }
 
+    /**
+     * Implements internal _resolveStage behavior.
+     * @returns {*} Result of _resolveStage.
+     */
     _resolveStage() {
         const explicitStage = this._asElement(this.stage, "animation-stage");
         if (explicitStage) return explicitStage;
@@ -432,6 +530,12 @@ class AnimationMinimap extends Component.HTMLElement {
         );
     }
 
+    /**
+     * Implements internal _asElement behavior.
+     * @param {*} value - Parameter value.
+     * @param {*} expectedTag - Parameter value.
+     * @returns {*} Result of _asElement.
+     */
     _asElement(value, expectedTag = "") {
         if (!value || typeof value !== "object") return null;
         if (value.nodeType !== 1) return null;
@@ -440,6 +544,11 @@ class AnimationMinimap extends Component.HTMLElement {
         return tagName === expectedTag ? value : null;
     }
 
+    /**
+     * Implements internal _asSelector behavior.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of _asSelector.
+     */
     _asSelector(value) {
         if (typeof value !== "string") return "";
         const trimmed = value.trim();
@@ -457,6 +566,12 @@ class AnimationMinimap extends Component.HTMLElement {
         return trimmed;
     }
 
+    /**
+     * Implements internal _queryTargetInScope behavior.
+     * @param {*} ref - Parameter value.
+     * @param {*} fallbackTag - Parameter value.
+     * @returns {*} Result of _queryTargetInScope.
+     */
     _queryTargetInScope(ref, fallbackTag) {
         const direct = this._asElement(ref);
         if (direct) return direct;
@@ -499,6 +614,11 @@ class AnimationMinimap extends Component.HTMLElement {
         return null;
     }
 
+    /**
+     * Implements internal _getStageSceneRoot behavior.
+     * @param {*} stage - Parameter value.
+     * @returns {*} Result of _getStageSceneRoot.
+     */
     _getStageSceneRoot(stage) {
         if (!stage) return null;
         if (typeof stage.ref === "function") {
@@ -508,6 +628,11 @@ class AnimationMinimap extends Component.HTMLElement {
         return stage.shadowRoot?.getElementById?.("html") || stage;
     }
 
+    /**
+     * Implements internal _toCssSize behavior.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of _toCssSize.
+     */
     _toCssSize(value) {
         if (value === null || value === undefined) return "";
         if (typeof value === "number" && Number.isFinite(value)) return `${value}px`;
@@ -519,6 +644,10 @@ class AnimationMinimap extends Component.HTMLElement {
         return trimmed;
     }
 
+    /**
+     * Implements internal _applyHostSize behavior.
+     * @returns {*} Result of _applyHostSize.
+     */
     _applyHostSize() {
         const width = this._toCssSize(this.width);
         const height = this._toCssSize(this.height);
@@ -530,10 +659,18 @@ class AnimationMinimap extends Component.HTMLElement {
         else this.style.removeProperty("height");
     }
 
+    /**
+     * Implements internal _metadataEnabled behavior.
+     * @returns {*} Result of _metadataEnabled.
+     */
     _metadataEnabled() {
         return ![false, "false", 0, "0", null, undefined].includes(this.metadata);
     }
 
+    /**
+     * Implements internal _applyMetadataVisibility behavior.
+     * @returns {*} Result of _applyMetadataVisibility.
+     */
     _applyMetadataVisibility() {
         const meta = this.ref("meta");
         if (!meta) return;
@@ -541,6 +678,16 @@ class AnimationMinimap extends Component.HTMLElement {
         if (!this._metadataEnabled()) meta.textContent = "";
     }
 
+    /**
+     * Implements internal _readViewRect behavior.
+     * @param {*} viewer - Parameter value.
+     * @param {*} stage - Parameter value.
+     * @param {*} viewerWidth - Parameter value.
+     * @param {*} viewerHeight - Parameter value.
+     * @param {*} stageWidth - Parameter value.
+     * @param {*} stageHeight - Parameter value.
+     * @returns {*} Result of _readViewRect.
+     */
     _readViewRect(viewer, stage, viewerWidth, viewerHeight, stageWidth, stageHeight) {
         const camera = viewer.camera;
         const width = Math.max(1, Math.min(stageWidth, toNumber(camera?.width, viewerWidth)));
@@ -568,6 +715,12 @@ class AnimationMinimap extends Component.HTMLElement {
         };
     }
 
+    /**
+     * Implements internal _isIgnoredTarget behavior.
+     * @param {*} target - Parameter value.
+     * @param {*} stage - Parameter value.
+     * @returns {*} Result of _isIgnoredTarget.
+     */
     _isIgnoredTarget(target, stage) {
         if (!target || target === stage || target === this || target === this._viewerEl || target === this._stageEl)
             return true;
@@ -590,6 +743,10 @@ class AnimationMinimap extends Component.HTMLElement {
         return false;
     }
 
+    /**
+     * Implements internal _renderPreview behavior.
+     * @returns {*} Result of _renderPreview.
+     */
     _renderPreview() {
         const viewer = this._viewerEl;
         const stage = this._stageEl;
@@ -692,6 +849,11 @@ class AnimationMinimap extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Implements internal _collectTargets behavior.
+     * @param {*} stage - Parameter value.
+     * @returns {*} Result of _collectTargets.
+     */
     _collectTargets(stage) {
         const seen = new Set();
         const result = [];
@@ -714,6 +876,12 @@ class AnimationMinimap extends Component.HTMLElement {
         return result;
     }
 
+    /**
+     * Implements internal _getWorldPosition behavior.
+     * @param {*} target - Parameter value.
+     * @param {*} stageSceneRoot - Parameter value.
+     * @returns {*} Result of _getWorldPosition.
+     */
     _getWorldPosition(target, stageSceneRoot) {
         if (!target) return null;
 
@@ -752,6 +920,9 @@ if (!customElements.get(AnimationMinimap.tag)) {
     customElements.define(AnimationMinimap.tag, AnimationMinimap);
 }
 
+/**
+ * Represents the AnimationPreview animation module class.
+ */
 class AnimationPreview extends AnimationMinimap {
     static tag = "animation-preview";
 }

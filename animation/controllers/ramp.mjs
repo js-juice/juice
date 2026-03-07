@@ -17,6 +17,13 @@ export class Accumulator {
     index = -1;
     value = 0;
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} increment - Parameter value.
+     * @param {*} value - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(increment, value, options = {}) {
         if (typeof increment == "function") {
             this.fn = increment.bind(this);
@@ -29,6 +36,10 @@ export class Accumulator {
         if (options.increment) this.increment = options.increment;
     }
 
+    /**
+     * Executes step.
+     * @returns {*} Result of step.
+     */
     step() {
         if (this.increment) {
             return this.value + this.increment;
@@ -36,21 +47,39 @@ export class Accumulator {
         this.index++;
     }
 
+    /**
+     * Executes add.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of add.
+     */
     add(value) {
         this.value += value;
         if (this.max && this.value > this.max) this.value = this.max;
     }
 
+    /**
+     * Executes multiply.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of multiply.
+     */
     multiply(value) {
         this.value *= value;
         if (this.max && this.value > this.max) this.value = this.max;
     }
 
+    /**
+     * Executes reset.
+     * @returns {*} Result of reset.
+     */
     reset() {
         this.value = 0;
         this.index = 0;
     }
 
+    /**
+     * Executes next.
+     * @returns {*} Result of next.
+     */
     next() {
         this.index++;
         if (this.fn) {
@@ -61,6 +90,10 @@ export class Accumulator {
         return this.valueOf();
     }
 
+    /**
+     * Executes valueOf.
+     * @returns {*} Result of valueOf.
+     */
     valueOf() {
         return this.value;
     }
@@ -74,6 +107,9 @@ acc.next();
 console.log(acc);
 */
 
+/**
+ * Represents the Ramp animation module class.
+ */
 export class Ramp {
     easing = Easing.linear;
     time = {
@@ -89,6 +125,12 @@ export class Ramp {
     defaultValue = 0;
     active = false;
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} value - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(value, options = {}) {
         if (value) {
             this.value = value;
@@ -98,6 +140,11 @@ export class Ramp {
         this.setOptions(options);
     }
 
+    /**
+     * Sets options values.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of setOptions.
+     */
     setOptions(options) {
         if (options.curve) {
             this.curve = options.curve;
@@ -113,6 +160,11 @@ export class Ramp {
         if (options.direction) this.direction = options.direction;
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} delta - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(delta) {
         this.time.current += delta;
         if (this.time.start) {

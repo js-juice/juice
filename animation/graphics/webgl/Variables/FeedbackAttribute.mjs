@@ -12,12 +12,22 @@ import VariableBase from "./VariableBase.mjs";
  * @extends VariableBase
  */
 class FeedbackAttribute extends VariableBase {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} args - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(...args) {
         super("in", ...args);
         this.LOCATION_LOOKUP = "getAttribLocation";
         this.children = [];
     }
 
+    /**
+     * Executes define.
+     * @param {*} builder - Parameter value.
+     * @returns {*} Result of define.
+     */
     define(builder) {
         const { settings, gl } = this;
         builder.define(
@@ -28,6 +38,10 @@ class FeedbackAttribute extends VariableBase {
         builder.define("out", this.name + "Out", this.type);
     }
 
+    /**
+     * Returns the current definition value.
+     * @returns {*} Current definition value.
+     */
     get definition() {
         return (
             (this._locationId !== null ? `layout(location = ${this._locationId}) ` : "") +
@@ -37,10 +51,19 @@ class FeedbackAttribute extends VariableBase {
         );
     }
 
+    /**
+     * Executes addChild.
+     * @param {*} attribute - Parameter value.
+     * @returns {*} Result of addChild.
+     */
     addChild(attribute) {
         this.children.push(attribute);
     }
 
+    /**
+     * Executes upload.
+     * @returns {*} Result of upload.
+     */
     upload() {
         const { settings, gl } = this;
         if (!this.buffer) this.createBuffers();
@@ -50,6 +73,10 @@ class FeedbackAttribute extends VariableBase {
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
     }
 
+    /**
+     * Executes download.
+     * @returns {*} Result of download.
+     */
     download() {
         const { settings, gl } = this;
         const data = new Float32Array(this._value.length);
@@ -58,6 +85,10 @@ class FeedbackAttribute extends VariableBase {
         return data;
     }
 
+    /**
+     * Executes attachCaptureBuffer.
+     * @returns {*} Result of attachCaptureBuffer.
+     */
     attachCaptureBuffer() {
         const { gl, index = 0, name } = this;
         gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, index, this.buffer.write);
@@ -65,10 +96,18 @@ class FeedbackAttribute extends VariableBase {
         }
     }
 
+    /**
+     * Executes unbindBuffer.
+     * @returns {*} Result of unbindBuffer.
+     */
     unbindBuffer() {
         gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
     }
 
+    /**
+     * Executes createBuffers.
+     * @returns {*} Result of createBuffers.
+     */
     createBuffers() {
         console.log("CREATE BUFFERS", this.name);
         const { settings, gl } = this;
@@ -109,6 +148,10 @@ class FeedbackAttribute extends VariableBase {
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
     }
 
+    /**
+     * Executes swapBuffers.
+     * @returns {*} Result of swapBuffers.
+     */
     swapBuffers() {
         const { settings, gl } = this;
         if (!this.buffer) return;
@@ -118,6 +161,10 @@ class FeedbackAttribute extends VariableBase {
         this.buffer.write = temp;
     }
 
+    /**
+     * Handles bound events.
+     * @returns {*} Result of onBound.
+     */
     onBound() {
         console.log("onBound", this.name);
         if (!this.buffer) {
@@ -125,6 +172,11 @@ class FeedbackAttribute extends VariableBase {
         }
     }
 
+    /**
+     * Executes resizeBuffers.
+     * @param {*} newItemCount - Parameter value.
+     * @returns {*} Result of resizeBuffers.
+     */
     resizeBuffers(newItemCount) {
         const { settings, gl } = this;
         if (!this.buffer) {

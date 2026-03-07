@@ -27,6 +27,10 @@ class HistoryValue {
         if (v !== undefined && v !== null) this._value = v;
     }
 
+    /**
+     * Returns the current history value.
+     * @returns {*} Current history value.
+     */
     get history() {
         const options = this.options.history || {};
         return {
@@ -39,11 +43,21 @@ class HistoryValue {
         };
     }
 
+    /**
+     * Returns historicvalue values.
+     * @param {*} i - Parameter value.
+     * @returns {*} Result of getHistoricValue.
+     */
     getHistoricValue(i) {
         if (i === undefined) i = 0;
         return this.history[i];
     }
 
+    /**
+     * Sets historicvalue values.
+     * @param {*} v - Parameter value.
+     * @returns {*} Result of setHistoricValue.
+     */
     setHistoricValue(v) {
         this.history.unshift(v);
         if (this.HISTORY_LENGTH) {

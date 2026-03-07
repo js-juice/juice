@@ -1,3 +1,31 @@
+/**
+ * AUTODOC:START
+ * Component: <input-buttonbar>
+ * Class: InputButtonBarComponent
+ * Overview: Horizontal button-group container that normalizes border radii for adjacent slotted buttons.
+ *
+ * Features:
+ * - Presents slotted buttons in a compact row.
+ * - Applies first/last-child rounded corners for grouped appearance.
+ * - Supports both native `button` and `<input-button>` children.
+ *
+ * Example:
+ * `<input-buttonbar><input-button label="Cancel"></input-button><input-button label="Save"></input-button></input-buttonbar>`
+ *
+ * Attribute Reference:
+ * - No component-specific attributes.
+ *
+ * Property Reference:
+ * - Slot-based API only; no custom public properties.
+ *
+ * CSS Variables:
+ * - `--form-border-radius`: First/last button corner radius.
+ *
+ * Part Names:
+ * - None.
+ * AUTODOC:END
+ */
+
 import { getJuiceConfig } from "../../config/juice-config.mjs";
 
 class InputButtonBarComponent extends HTMLElement {

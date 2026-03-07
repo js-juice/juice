@@ -11,6 +11,14 @@ import { mat4 } from "../matrix/mat4.mjs";
  * @class PerspectiveProjection
  */
 class PerspectiveProjection {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} fov - Parameter value.
+     * @param {*} aspect - Parameter value.
+     * @param {*} near - Parameter value.
+     * @param {*} far - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(fov, aspect, near, far) {
         this.fov = fov;
         this.aspect = aspect;
@@ -19,6 +27,10 @@ class PerspectiveProjection {
         this.matrix = this.getMatrix();
     }
 
+    /**
+     * Returns matrix values.
+     * @returns {*} Result of getMatrix.
+     */
     getMatrix() {
         const fieldOfView = (this.fov * Math.PI) / 180; // Field of View in radians
         const aspectRatio = this.aspect;
@@ -31,6 +43,11 @@ class PerspectiveProjection {
         return projectionMatrix;
     }
 
+    /**
+     * Returns boundsatdepth values.
+     * @param {*} depth - Parameter value.
+     * @returns {*} Result of getBoundsAtDepth.
+     */
     getBoundsAtDepth(depth) {
         const { fov: fovY, aspect: aspectRatio, near, far } = this;
 

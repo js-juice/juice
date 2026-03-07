@@ -10,6 +10,8 @@ import "./components/input-status.js";
 import "./components/option-group.js";
 import "./components/juice-forms.js";
 import "./components/input-direction.js";
+import "./components/input-dial.js";
+import "./components/input-vector.js";
 import "./components/form-info.js";
 import "./components/input-fieldset.js";
 

@@ -1,3 +1,41 @@
+
+
+/**
+ * AUTODOC:START
+ * Component: <input-select>
+ * Class: InputSelect
+ * Overview: Select/dropdown component that supports both native `<select>` mode and custom listbox mode.
+ *
+ * Features:
+ * - Reads options from child `<option>` nodes or an `options` attribute payload.
+ * - Switches between native and custom rendering with `force-native`.
+ * - Maintains form value synchronization and emits native-like input/change events.
+ * - Automatically observes option-list mutations and re-renders.
+ *
+ * Example:
+ * `<input-select label="Country" options="US:United States,CA:Canada"></input-select>`
+ *
+ * Attribute Reference:
+ * - `options`: JSON, object path, or CSV/colon syntax describing available options.
+ * - `force-native`: Forces native `<select>` rendering instead of custom dropdown UI.
+ * - `value`: Selected option value.
+ * - `default`: Placeholder text used by custom dropdown mode.
+ *
+ * Property Reference:
+ * - `value`: Getter/setter for selected value across native/custom modes.
+ *
+ * CSS Variables:
+ * - `--form-accent-color`: Shared accent color fallback for selected and arrow states.
+ * - `--select-arrow-color`: Arrow color for custom dropdown tab.
+ * - `--selected-option-bg`, `--selected-option-color`: Selected option colors in custom list mode.
+ * - `--input-border-radius`, `--input-height`: Control radius and dropdown vertical alignment.
+ * - Inherits shared InputComponent variables.
+ *
+ * Part Names:
+ * - `input-wrapper` (inherited from InputComponent).
+ * AUTODOC:END
+ */
+
 import InputComponent from "./input-component.js";
 
 /**
@@ -58,10 +96,19 @@ function parseSelectOptions(options) {
 }
 
 class InputSelect extends InputComponent {
+    // TODO(refactor): Consolidate option-source parsing and dropdown interaction state into dedicated helpers.
+    /**
+     * Lists attributes that are observed for runtime updates.
+     * @returns {*} List of observed attribute names.
+     */
     static get observedAttributes() {
         return [...super.observedAttributes, "options", "force-native"];
     }
 
+    /**
+        * Initializes component state, DOM references, and default behavior.
+     * @returns {*} void.
+     */
     constructor() {
         super({ _layout: "label:input:>:native:status:div.tab:<:validation" });
         this.inputType = "select";
@@ -73,6 +120,10 @@ class InputSelect extends InputComponent {
         this._customBoundList = null;
     }
 
+    /**
+       * Returns component-scoped style definitions used to generate CSS.
+     * @returns {*} Style definition map used for generated component CSS.
+     */
     get _styles() {
         return {
             ":host": {
@@ -157,10 +208,18 @@ class InputSelect extends InputComponent {
         };
     }
 
+    /**
+      * Returns whether the select should delegate to native rendering mode.
+     * @returns {*} Boolean state value.
+     */
     _useNativeMode() {
         return this.hasAttribute("force-native");
     }
 
+    /**
+      * Creates the hidden native input used for form integration.
+     * @returns {*} Configured native input element.
+     */
     _createNativeControl() {
         if (this._useNativeMode()) {
             return document.createElement("select");
@@ -178,22 +237,36 @@ class InputSelect extends InputComponent {
         return input;
     }
 
+    /**
+     * Runs setup logic when the element is connected to the document.
+     * @returns {*} void.
+     */
     connectedCallback() {
         super.connectedCallback();
         this._startOptionObserver();
     }
 
+    /**
+     * Cleans up listeners and observers when the element is disconnected.
+     * @returns {*} void.
+     */
     disconnectedCallback() {
         super.disconnectedCallback();
         if (this._optionObserver) this._optionObserver.disconnect();
     }
 
+    /**
+     * Responds to observed attribute changes and synchronizes state.
+     * @param {*} name - Attribute or field name.
+     * @param {*} oldValue - Previous value.
+     * @param {*} newValue - Next value.
+     * @returns {*} void.
+     */
     attributeChangedCallback(name, oldValue, newValue) {
         if (name === "force-native" && oldValue !== newValue) {
             this._replaceNativeControl(this._createNativeControl());
             this._renderTemplateOrDefault();
-            this._refreshOptions();
-            this._bindCustomDropdownEvents();
+            this._afterConnected();
             return;
         }
 
@@ -217,11 +290,19 @@ class InputSelect extends InputComponent {
         }
     }
 
+    /**
+      * Performs post-connect setup after the component has its default DOM nodes.
+     * @returns {*} void.
+     */
     _afterConnected() {
         this._refreshOptions();
         this._bindCustomDropdownEvents();
     }
 
+    /**
+      * Builds the custom dropdown list container for non-native mode.
+     * @returns {*} void.
+     */
     _renderDefault() {
         if (this._optionList && this._optionList.parentNode) {
             this._optionList.parentNode.removeChild(this._optionList);
@@ -235,22 +316,26 @@ class InputSelect extends InputComponent {
         this._wireframe.root.appendChild(this._optionList);
     }
 
+    /**
+      * Starts option observers so option list changes are reflected immediately.
+     * @returns {*} void.
+     */
     _startOptionObserver() {
         if (this._optionObserver) this._optionObserver.disconnect();
         this._optionObserver = new MutationObserver(() => this._refreshOptions());
         this._optionObserver.observe(this, { childList: true, subtree: false });
     }
 
-    _readOptionsFromChildren() {
-        return Array.from(this.querySelectorAll(":scope > option")).map((option) => ({
+    /**
+      * Builds normalized option data from configured sources.
+     * @returns {*} Derived value.
+     */
+    _readOptions() {
+        const childOptions = Array.from(this.querySelectorAll(":scope > option")).map((option) => ({
             value: option.value || option.textContent.trim(),
             label: option.textContent.trim(),
             selected: option.hasAttribute("selected")
         }));
-    }
-
-    _readOptions() {
-        const childOptions = this._readOptionsFromChildren();
         if (childOptions.length) return childOptions;
 
         if (this.hasAttribute("options")) {
@@ -259,6 +344,10 @@ class InputSelect extends InputComponent {
         return [];
     }
 
+    /**
+      * Rebuilds option UI and selection state from current option data.
+     * @returns {*} void.
+     */
     _refreshOptions() {
         let maxLen = 0;
         this._options = this._readOptions();
@@ -317,6 +406,11 @@ class InputSelect extends InputComponent {
         }
     }
 
+    /**
+      * Selects and activates the option matching a value.
+     * @param {*} value - Raw value being normalized or assigned.
+     * @returns {*} void.
+     */
     _selectOptionByValue(value) {
         const option = this._options.find((o) => o.value === value);
         if (!option) return;
@@ -340,10 +434,19 @@ class InputSelect extends InputComponent {
         }
     }
 
+    /**
+      * Opens or closes the custom option list UI.
+     * @returns {*} void.
+     */
     _expandOptionList() {
         console.log("_expandOptionList");
         if (!this._optionList) return;
-        if (this._optionList) this._optionList.classList.add("open");
+        if (this.expanded) {
+            this._optionList.classList.remove("open");
+            this.expanded = false;
+            return;
+        }
+        this._optionList.classList.add("open");
         const rect = this.getBoundingClientRect();
         const listRect = this._optionList.getBoundingClientRect();
         const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
@@ -360,17 +463,21 @@ class InputSelect extends InputComponent {
             this._optionList.style.top = "auto";
             this._optionList.style.bottom = "var(--input-height)";
         }
-
+        this.expanded = true;
         console.log(rect, viewportHeight, listRect);
     }
 
+    /**
+       * Wires dropdown open/close, option click, and keyboard interactions.
+     * @returns {*} void.
+     */
     _bindCustomDropdownEvents() {
         if (this._useNativeMode() || !this._dom.native || !this._optionList) return;
         if (this._customBoundNative === this._dom.native && this._customBoundList === this._optionList) return;
         this._customBoundNative = this._dom.native;
         this._customBoundList = this._optionList;
 
-        this._dom.native.addEventListener("click", () => {
+        this._wireframe.input.addEventListener("click", () => {
             this._expandOptionList();
         });
 
@@ -398,6 +505,10 @@ class InputSelect extends InputComponent {
         });
     }
 
+    /**
+      * Returns derived form value state.
+     * @returns {*} Derived value.
+     */
     _getFormValue() {
         if (this._useNativeMode()) {
             return super._getFormValue();
@@ -405,6 +516,10 @@ class InputSelect extends InputComponent {
         return this.selected && typeof this.selected.value === "string" ? this.selected.value : "";
     }
 
+    /**
+        * Returns the current component value.
+     * @returns {*} Current value.
+     */
     get value() {
         if (this._useNativeMode()) {
             return super.value;
@@ -412,6 +527,11 @@ class InputSelect extends InputComponent {
         return this.selected && typeof this.selected.value === "string" ? this.selected.value : "";
     }
 
+    /**
+     * Updates the `value` value.
+     * @param {*} value - Assigned value.
+     * @returns {*} void
+     */
     set value(value) {
         if (this._useNativeMode()) {
             super.value = value;

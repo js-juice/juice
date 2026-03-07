@@ -35,6 +35,10 @@ class Body2D extends Component.HTMLElement {
         },
     };
 
+    /**
+     * Returns the current observed value.
+     * @returns {*} Current observed value.
+     */
     static get observed() {
         return {
             all: ["width", "height", "x", "y", "r", "vx", "vy", "anchor"],
@@ -43,6 +47,10 @@ class Body2D extends Component.HTMLElement {
         };
     }
 
+    /**
+     * Returns the current style value.
+     * @returns {*} Current style value.
+     */
     static get style() {
         return [
             {
@@ -62,6 +70,11 @@ class Body2D extends Component.HTMLElement {
         ];
     }
 
+    /**
+     * Executes html.
+     * @param {*} data - Parameter value.
+     * @returns {*} Result of html.
+     */
     static html(data = {}) {
         return `<slot></slot>`;
     }
@@ -71,10 +84,21 @@ class Body2D extends Component.HTMLElement {
 
     dialation = 1;
 
+    /**
+     * Updates the polorVelocity value.
+     * @param {*} velocity - Parameter value.
+     * @returns {*} void.
+     */
     set polorVelocity(velocity) {
         this.polorControl(velocity, this.rotation.value);
     }
 
+    /**
+     * Executes polorControl.
+     * @param {*} velocity - Parameter value.
+     * @param {*} angle - Parameter value.
+     * @returns {*} Result of polorControl.
+     */
     polorControl(velocity, angle) {
         if (!angle) {
             angle = this.rotation.value;
@@ -83,6 +107,10 @@ class Body2D extends Component.HTMLElement {
         this.velocity.y = velocity * Math.sin(angle);
     }
 
+    /**
+     * Executes beforeCreate.
+     * @returns {*} Result of beforeCreate.
+     */
     beforeCreate() {
         this.rotation = new Rotation(0);
         this.rotation.OFFSET = 90;
@@ -122,6 +150,11 @@ class Body2D extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Sets anchor values.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of setAnchor.
+     */
     setAnchor(value) {
         const parsed = parseAnchor(value);
         this._anchor = parsed;
@@ -131,21 +164,47 @@ class Body2D extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Executes move.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of move.
+     */
     move(x, y) {
         this.position.add(x, y);
     }
 
+    /**
+     * Executes moveTo.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of moveTo.
+     */
     moveTo(x, y) {
         this.position.set(x, y);
     }
 
+    /**
+     * Executes movePolor.
+     * @param {*} dist - Parameter value.
+     * @param {*} angle - Parameter value.
+     * @returns {*} Result of movePolor.
+     */
     movePolor(dist, angle) {
         this.position.x.value += dist * Math.cos(angle);
         this.position.y.value += dist * Math.sin(angle);
     }
 
+    /**
+     * Handles firstconnect events.
+     * @returns {*} Result of onFirstConnect.
+     */
     onFirstConnect() {}
 
+    /**
+     * Updates internal state from incoming values.
+     * @returns {*} Result of update.
+     */
     update() {
         if (this.beforeUpdate()) {
             this.beforeUpdate();
@@ -156,12 +215,21 @@ class Body2D extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Renders output from current module state.
+     * @returns {*} Result of render.
+     */
     render() {
         if (this.beforeRender) {
             this.beforeRender();
         }
     }
 
+    /**
+     * Handles children events.
+     * @param {*} children - Parameter value.
+     * @returns {*} Result of onChildren.
+     */
     onChildren(children) {
         children.forEach((child) => {
             if (child.animate) {
@@ -170,6 +238,13 @@ class Body2D extends Component.HTMLElement {
         });
     }
 
+    /**
+     * Handles propertychanged events.
+     * @param {*} property - Parameter value.
+     * @param {*} prevous - Parameter value.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of onPropertyChanged.
+     */
     onPropertyChanged(property, prevous, value) {
         console.log(this.root, property, value);
         switch (property) {

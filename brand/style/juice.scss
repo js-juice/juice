@@ -1,8 +1,21 @@
+@import url("../fonts/webfonts/stylesheet.css");
+
+:root {
+    --color-orange: #f77700;
+    --color-dark-grey: #48484a;
+    --color-lt-grey: #dde3e6;
+    --select-arrow-color: #48484a;
+    --form-label-color: var(--color-dark-grey);
+    --jform-dial-progress: var(--color-orange);
+}
+
 * {
     box-sizing: border-box;
 }
 
 html {
+    font-size: 14px;
+    font-family: "Segoe UI", Arial, sans-serif;
 }
 
 body {
@@ -76,89 +89,86 @@ body > header > .container nav {
 #nav {
     display: flex;
     align-items: center;
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     min-width: 0;
+    margin-right: 100px;
 }
 
 #nav > * {
     width: 100%;
+    height: 100%;
+    position: relative;
 }
 
 .repo-nav {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
     justify-content: flex-start;
     flex-wrap: nowrap;
-
+    position: relative;
     white-space: nowrap;
-    padding: 0 0.4rem;
+    padding: 0;
     width: 100%;
-
-    .repo-nav-group {
+    height: 100%;
+    border-left: 1px solid #d2d2d2;
+    ul {
+        display: flex;
+        align-items: center;
+        height: 100%;
         position: relative;
-        display: inline-block;
-        flex: 0 0 auto;
-    }
-
-    .repo-nav-group > summary {
+        padding: 0;
+        margin: 0;
         list-style: none;
-        cursor: pointer;
-        color: #2f3340;
-        font-size: 0.82rem;
-        border: 1px solid transparent;
-        border-radius: 7px;
-        padding: 0.25rem 0.45rem;
-        font-family: "Segoe UI", Arial, sans-serif;
-        user-select: none;
-    }
+        li {
+            position: relative;
+            flex: 0 0 auto;
+            display: flex;
+            height: 100%;
+            align-items: center;
+            border-right: 1px solid #d2d2d2;
+            padding: 0 1rem;
+            cursor: pointer;
+            a {
+                font-size: 0.8rem;
+                font-family: "Segoe UI", Arial, sans-serif;
+            }
 
-    .repo-nav-group > summary::-webkit-details-marker {
-        display: none;
-    }
+            .dd-menu {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                min-width: 180px;
+                background: #ffffff;
+                border: 1px solid #d2d2d2;
+                border-top: 4px solid var(--color-orange);
+                box-shadow: 0 12px 26px rgba(12, 23, 46, 0.12);
+                padding: 0.25rem;
+                z-index: 200;
+                a {
+                    display: block;
+                    text-decoration: none;
+                    color: #2f3340;
+                    font-size: 0.8rem;
+                    border: 1px solid transparent;
+                    border-radius: 7px;
+                    padding: 0.35rem 0.45rem;
+                    font-family: "Segoe UI", Arial, sans-serif;
+                }
 
-    .repo-nav-group > summary::marker {
-        content: "";
-    }
+                a:hover {
+                    border-color: #d2d2d2;
+                    background: #f2f2f2;
+                }
+            }
 
-    .repo-nav-group[open] > summary,
-    .repo-nav-group > summary:hover {
-        border-color: #d2d2d2;
-        background: #f2f2f2;
-    }
-
-    .repo-nav-group > .repo-nav-menu {
-        display: none;
-        position: absolute;
-        top: calc(100% + 8px);
-        left: 0;
-        min-width: 180px;
-        background: #ffffff;
-        border: 1px solid #d2d2d2;
-        border-radius: 8px;
-        box-shadow: 0 12px 26px rgba(12, 23, 46, 0.12);
-        padding: 0.25rem;
-        z-index: 200;
-    }
-
-    .repo-nav-group[open] > .repo-nav-menu {
-        display: block;
-    }
-
-    a {
-        display: block;
-        text-decoration: none;
-        color: #2f3340;
-        font-size: 0.8rem;
-        border: 1px solid transparent;
-        border-radius: 7px;
-        padding: 0.35rem 0.45rem;
-        font-family: "Segoe UI", Arial, sans-serif;
-    }
-
-    a:hover {
-        border-color: #d2d2d2;
-        background: #f2f2f2;
+            &:hover {
+                background: #f2f2f2;
+                .dd-menu {
+                    display: block;
+                }
+            }
+        }
     }
 
     a.is-active {
@@ -176,7 +186,7 @@ body > header > .container nav {
 
 body > main {
     margin-top: 60px;
-    padding: 20px;
+    padding: 0;
 }
 
 #hero {
@@ -199,14 +209,22 @@ body > main {
     border: 1px solid #d2d2d2;
     background-color: #fff;
     padding: 20px;
+    position: relative;
+    width: 100%;
+}
+
+a {
+    color: var(--color-orange);
+    text-decoration: none;
+    font-family: "Segoe UI", Arial, sans-serif;
 }
 
 h1,
 h2,
 h3,
 h4 {
-    font-family: "Cubano", sans-serif !important;
-    font-weight: normal !important;
+    font-family: "Inter", sans-serif;
+    font-weight: normal;
 }
 
 h1 {
@@ -218,4 +236,11 @@ h2 {
     font-size: 2em;
     margin-top: 0.5em;
     margin-bottom: 0.5em;
+}
+
+code {
+}
+
+.form-example {
+    width: 100%;
 }

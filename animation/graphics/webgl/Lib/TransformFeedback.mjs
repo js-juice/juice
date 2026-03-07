@@ -24,6 +24,12 @@ class TransformFeedback {
     _variables = {};
     _uniforms = {};
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} points - Parameter value.
+     * @param {*} gl - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(points, gl) {
         this.gl = gl;
         this.points = points;
@@ -34,22 +40,50 @@ class TransformFeedback {
         this.initialize();
     }
 
+    /**
+     * Executes buffer.
+     * @param {*} name - Parameter value.
+     * @returns {*} Result of buffer.
+     */
     buffer(name) {
         return this._variables[name].buffer.read;
     }
 
+    /**
+     * Executes uniform.
+     * @param {*} name - Parameter value.
+     * @returns {*} Result of uniform.
+     */
     uniform(name) {
         return this._uniforms[name];
     }
 
+    /**
+     * Executes addStruct.
+     * @param {*} args - Parameter value.
+     * @returns {*} Result of addStruct.
+     */
     addStruct(...args) {
         this.builder.addStruct(...args);
     }
 
+    /**
+     * Executes addFunction.
+     * @param {*} args - Parameter value.
+     * @returns {*} Result of addFunction.
+     */
     addFunction(...args) {
         this.builder.addFunction(...args);
     }
 
+    /**
+     * Executes addUniform.
+     * @param {*} name - Parameter value.
+     * @param {*} type - Parameter value.
+     * @param {*} value - Parameter value.
+     * @param {*} rest - Parameter value.
+     * @returns {*} Result of addUniform.
+     */
     addUniform(name, type, value, ...rest) {
         const uniform = new Uniform(name, type, value, ...rest);
         uniform.define(this.builder);
@@ -57,6 +91,14 @@ class TransformFeedback {
         return uniform;
     }
 
+    /**
+     * Executes addVariable.
+     * @param {*} name - Parameter value.
+     * @param {*} type - Parameter value.
+     * @param {*} data - Parameter value.
+     * @param {*} rest - Parameter value.
+     * @returns {*} Result of addVariable.
+     */
     addVariable(name, type, data = [], ...rest) {
         this.vIndex++;
         const variable = new FeedbackAttribute(name, type, data, ...rest);
@@ -67,14 +109,28 @@ class TransformFeedback {
         return variable;
     }
 
+    /**
+     * Executes var.
+     * @param {*} name - Parameter value.
+     * @returns {*} Result of var.
+     */
     var(name) {
         return this._variables[name];
     }
 
+    /**
+     * Sets script values.
+     * @param {*} script - Parameter value.
+     * @returns {*} Result of setScript.
+     */
     setScript(script) {
         this.builder.addMain(script);
     }
 
+    /**
+     * Executes applyDownStreamData.
+     * @returns {*} Result of applyDownStreamData.
+     */
     applyDownStreamData() {
         this.gl.bindVertexArray(null);
         Object.keys(this._variables).forEach((name) => {
@@ -92,6 +148,10 @@ class TransformFeedback {
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
     }
 
+    /**
+     * Executes build.
+     * @returns {*} Result of build.
+     */
     build() {
         const { gl } = this;
         const vertexSource = this.builder.build();
@@ -196,6 +256,12 @@ class TransformFeedback {
         this.transformFeedback = gl.createTransformFeedback();
     }
 
+    /**
+     * Executes createShader.
+     * @param {*} type - Parameter value.
+     * @param {*} source - Parameter value.
+     * @returns {*} Result of createShader.
+     */
     createShader(type, source) {
         const { setting, gl } = this;
         // console.log(source);
@@ -210,6 +276,11 @@ class TransformFeedback {
         return shader;
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} deltaTime - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(deltaTime) {
         if (!this.program) return;
         const { gl } = this;
@@ -270,6 +341,10 @@ class TransformFeedback {
         // Bind input (read) and output (write) buffers
     }
 
+    /**
+     * Executes initialize.
+     * @returns {*} Result of initialize.
+     */
     initialize() {
         const { gl } = this;
         this.builder = new ShaderBuilder(this.version);

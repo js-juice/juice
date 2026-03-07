@@ -31,6 +31,12 @@ export class Rotation extends AnimationValue {
     LOOP = true;
     STEP = 0.001;
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} value - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(value, options = {}) {
         super(value || 0, options);
         this.OFFSET = options.offset || this.OFFSET;
@@ -138,6 +144,12 @@ export class Rotation extends AnimationValue {
  * @param {number} [y=0] - Y-axis rotation
  */
 export class Rotation2D {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(x = 0, y = 0) {
         this.x = new Rotation(x);
         this.y = new Rotation(y);
@@ -162,6 +174,14 @@ export class Rotation3D extends Float32Array {
     /** @type {Array<string>} Dirty tracking array */
     dirt = [];
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @param {*} z - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(x = 0, y = 0, z = 0, options = {}) {
         super(3);
         this.OFFSET = { x: 0, y: 0, z: 0 };
@@ -272,6 +292,11 @@ export class Rotation3D extends Float32Array {
         return this.dirt.length > 0;
     }
 
+    /**
+     * Executes isDirty.
+     * @param {*} axis - Parameter value.
+     * @returns {*} Result of isDirty.
+     */
     isDirty(axis) {
         return this.dirt.includes(axis);
     }

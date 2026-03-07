@@ -1,1 +1,0 @@
-      txt.split(/\r?\n/).forEach((ln,i)=

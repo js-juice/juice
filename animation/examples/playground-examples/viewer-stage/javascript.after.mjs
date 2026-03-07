@@ -1,3 +1,7 @@
+/**
+ * @file examples/playground-examples/viewer-stage/javascript.after.mjs
+ * @description Animation module.
+ */
 const stage = document.getElementById("stage");
 const viewer = document.getElementById("viewer");
 const autoSizeButton = document.getElementById("stage-autosize");

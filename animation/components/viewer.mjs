@@ -37,12 +37,20 @@ export class AnimationViewer extends Component.HTMLElement {
         }
     };
 
+    /**
+     * Returns the current observed value.
+     * @returns {*} Current observed value.
+     */
     static get observed() {
         return {
             all: ["width", "height", "fps", "state", "follow", "debug", "stats"]
         };
     }
 
+    /**
+     * Returns the current style value.
+     * @returns {*} Current style value.
+     */
     static get style() {
         return [
             {
@@ -85,6 +93,11 @@ export class AnimationViewer extends Component.HTMLElement {
         ];
     }
 
+    /**
+     * Executes html.
+     * @param {*} data - Parameter value.
+     * @returns {*} Result of html.
+     */
     static html(data = {}) {
         return `
         ${this.stats ? `<animation-stats></animation-stats>` : ""}
@@ -100,6 +113,10 @@ export class AnimationViewer extends Component.HTMLElement {
     index = [];
     animatedAssets = [];
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @returns {*} Result of constructor.
+     */
     constructor() {
         super();
         this.camera = new Camera(this);
@@ -118,10 +135,20 @@ export class AnimationViewer extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Returns the current center value.
+     * @returns {*} Current center value.
+     */
     get center() {
         return { x: this.width / 2, y: this.height / 2 };
     }
 
+    /**
+     * Handles resize events.
+     * @param {*} w - Parameter value.
+     * @param {*} h - Parameter value.
+     * @returns {*} Result of onResize.
+     */
     onResize(w, h) {
         this.width = w;
         this.height = h;
@@ -130,6 +157,11 @@ export class AnimationViewer extends Component.HTMLElement {
 
     changes = {};
 
+    /**
+     * Handles stageconnect events.
+     * @param {*} stage - Parameter value.
+     * @returns {*} Result of onStageConnect.
+     */
     onStageConnect(stage) {
         this.stage = stage;
 
@@ -157,6 +189,11 @@ export class AnimationViewer extends Component.HTMLElement {
         this.dispatchEvent(new CustomEvent("stageconnect", { detail: { stage } }));
     }
 
+    /**
+     * Implements internal _tryAttachStageCandidate behavior.
+     * @param {*} stageCandidate - Parameter value.
+     * @returns {*} Result of _tryAttachStageCandidate.
+     */
     _tryAttachStageCandidate(stageCandidate) {
         if (!stageCandidate) return;
         if (this.stage === stageCandidate) return;
@@ -183,10 +220,20 @@ export class AnimationViewer extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Handles targetconnect events.
+     * @param {*} target - Parameter value.
+     * @returns {*} Result of onTargetConnect.
+     */
     onTargetConnect(target) {
         this.target = target;
     }
 
+    /**
+     * Handles children events.
+     * @param {*} children - Parameter value.
+     * @returns {*} Result of onChildren.
+     */
     onChildren(children) {
         if (children) {
             children.forEach((asset) => {
@@ -200,6 +247,11 @@ export class AnimationViewer extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Handles customchildready events.
+     * @param {*} child - Parameter value.
+     * @returns {*} Result of onCustomChildReady.
+     */
     onCustomChildReady(child) {
         if (child.animate) {
         }
@@ -207,6 +259,11 @@ export class AnimationViewer extends Component.HTMLElement {
 
     cache = { stage_rect: "" };
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} time - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(time) {
         if (!this.debug) return;
 
@@ -236,10 +293,19 @@ export class AnimationViewer extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Renders output from current module state.
+     * @returns {*} Result of render.
+     */
     render() {
         this.camera.render();
     }
 
+    /**
+     * Handles customchildconnect events.
+     * @param {*} child - Parameter value.
+     * @returns {*} Result of onCustomChildConnect.
+     */
     onCustomChildConnect(child) {
         if (child.hasAttribute("noanimate")) {
             return false;
@@ -259,16 +325,31 @@ export class AnimationViewer extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} time - Parameter value.
+     * @returns {*} Result of updateCamera.
+     */
     updateCamera(time) {
         this.camera.update(time);
     }
 
+    /**
+     * Executes follow.
+     * @param {*} target - Parameter value.
+     * @returns {*} Result of follow.
+     */
     follow(target) {
         this.following = target;
         this.camera.follow(target);
     }
 
     animations = [];
+    /**
+     * Handles assetadded events.
+     * @param {*} asset - Parameter value.
+     * @returns {*} Result of onAssetAdded.
+     */
     onAssetAdded(asset) {
         if (!asset || this.animatedAssets.includes(asset)) return asset;
 
@@ -292,12 +373,23 @@ export class AnimationViewer extends Component.HTMLElement {
         return asset;
     }
 
+    /**
+     * Handles propertychanged events.
+     * @param {*} property - Parameter value.
+     * @param {*} previous - Parameter value.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of onPropertyChanged.
+     */
     onPropertyChanged(property, previous, value) {
         if (property === "fps" && this.timeline) {
             this.timeline.fps = value;
         }
     }
 
+    /**
+     * Handles firstconnect events.
+     * @returns {*} Result of onFirstConnect.
+     */
     onFirstConnect() {
         const { width, height } = this.getBoundingClientRect();
         this.width = width;
@@ -328,6 +420,10 @@ export class AnimationViewer extends Component.HTMLElement {
         this.timelineReady = true;
     }
 
+    /**
+     * Handles disconnect events.
+     * @returns {*} Result of onDisconnect.
+     */
     onDisconnect() {
         if (this.stage && this.stage.onViewerDisconnect) {
             this.stage.onViewerDisconnect(this);
@@ -338,6 +434,10 @@ export class AnimationViewer extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Handles timelineready events.
+     * @returns {*} Result of onTimelineReady.
+     */
     onTimelineReady() {
         return true;
     }
@@ -347,6 +447,12 @@ export class AnimationViewer extends Component.HTMLElement {
      */
 
     namedLayers = {};
+    /**
+     * Executes addLayer.
+     * @param {*} name - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of addLayer.
+     */
     addLayer(name, options = {}) {
         const layers = this.layers;
         const index = options.index ?? layers.length;
@@ -365,16 +471,33 @@ export class AnimationViewer extends Component.HTMLElement {
         return layer;
     }
 
+    /**
+     * Executes appendLayer.
+     * @param {*} name - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of appendLayer.
+     */
     appendLayer(name, options = {}) {
         options.index = this.layers.length;
         return this.addLayer(name, options);
     }
 
+    /**
+     * Executes prependLayer.
+     * @param {*} name - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of prependLayer.
+     */
     prependLayer(name, options = {}) {
         options.index = 0;
         return this.addLayer(name, options);
     }
 
+    /**
+     * Executes layer.
+     * @param {*} indexOrName - Parameter value.
+     * @returns {*} Result of layer.
+     */
     layer(indexOrName = 0) {
         if (typeof indexOrName == "string") {
             return this.namedLayers[indexOrName];

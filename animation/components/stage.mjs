@@ -37,12 +37,20 @@ class AnimationStage extends Component.HTMLElement {
         }
     };
 
+    /**
+     * Returns the current observed value.
+     * @returns {*} Current observed value.
+     */
     static get observed() {
         return {
             all: ["debug", "background", "width", "height", "friction", "gravity", "state", "fps", "x", "y", "anchor"]
         };
     }
 
+    /**
+     * Returns the current style value.
+     * @returns {*} Current style value.
+     */
     static get style() {
         return [
             {
@@ -126,6 +134,11 @@ class AnimationStage extends Component.HTMLElement {
         ];
     }
 
+    /**
+     * Executes html.
+     * @param {*} data - Parameter value.
+     * @returns {*} Result of html.
+     */
     static html(data = {}) {
         return `
         <slot ></slot>
@@ -136,6 +149,10 @@ class AnimationStage extends Component.HTMLElement {
         `;
     }
 
+    /**
+     * Executes beforeCreate.
+     * @returns {*} Result of beforeCreate.
+     */
     beforeCreate() {
         this.position = new Position(0, 0, { history: 3, trackDirty: true });
         this.anchorPoint = { x: 0, y: 0 };
@@ -145,6 +162,10 @@ class AnimationStage extends Component.HTMLElement {
         };
     }
 
+    /**
+     * Returns the current dimentions value.
+     * @returns {*} Current dimentions value.
+     */
     get dimentions() {
         const { width, height } = this.ref("html").getBoundingClientRect();
         return { width, height };
@@ -157,24 +178,51 @@ class AnimationStage extends Component.HTMLElement {
     localTimeline = null;
     viewer = null;
 
+    /**
+     * Returns the current hasViewerTimeline value.
+     * @returns {*} Current hasViewerTimeline value.
+     */
     get hasViewerTimeline() {
         return !!(this.viewer && this.viewer.timeline);
     }
 
+    /**
+     * Returns the current timeline value.
+     * @returns {*} Current timeline value.
+     */
     get timeline() {
         return this.hasViewerTimeline ? this.viewer.timeline : this.localTimeline;
     }
 
+    /**
+     * Executes moveTo.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of moveTo.
+     */
     moveTo(x, y) {
         this.position.set(x, y);
         this._clampPositionToBounds();
     }
 
+    /**
+     * Executes move.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of move.
+     */
     move(x, y) {
         this.position.add(x, y);
         this._clampPositionToBounds();
     }
 
+    /**
+     * Handles attributechanged events.
+     * @param {*} property - Parameter value.
+     * @param {*} prevous - Parameter value.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of onAttributeChanged.
+     */
     onAttributeChanged(property, prevous, value) {
         if (!this.root) return;
 
@@ -197,6 +245,13 @@ class AnimationStage extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Handles propertychanged events.
+     * @param {*} property - Parameter value.
+     * @param {*} prevous - Parameter value.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of onPropertyChanged.
+     */
     onPropertyChanged(property, prevous, value) {
         switch (property) {
             case "fps":
@@ -219,6 +274,12 @@ class AnimationStage extends Component.HTMLElement {
 
     backgrounds = [];
 
+    /**
+     * Executes addBackground.
+     * @param {*} element - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of addBackground.
+     */
     addBackground(element, options = {}) {
         if (options.placement === "parallax") {
             this.ref("parallax").appendChild(element);
@@ -232,6 +293,11 @@ class AnimationStage extends Component.HTMLElement {
         });
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} time - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(time) {
         this._clampPositionToBounds();
 
@@ -244,6 +310,11 @@ class AnimationStage extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Renders output from current module state.
+     * @param {*} data - Parameter value.
+     * @returns {*} Result of render.
+     */
     render(data) {
         this._clampPositionToBounds();
         if (this.position.dirty) {
@@ -260,6 +331,11 @@ class AnimationStage extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Handles customchildready events.
+     * @param {*} child - Parameter value.
+     * @returns {*} Result of onCustomChildReady.
+     */
     onCustomChildReady(child) {
         if (!child || !child.animate) return;
         this.animatorChildren.add(child);
@@ -275,6 +351,11 @@ class AnimationStage extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Executes addAnimator.
+     * @param {*} animator - Parameter value.
+     * @returns {*} Result of addAnimator.
+     */
     addAnimator(animator) {
         if (!animator) return;
         const canAnimate =
@@ -299,6 +380,11 @@ class AnimationStage extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Sets anchor values.
+     * @param {*} anchorPosition - Parameter value.
+     * @returns {*} Result of setAnchor.
+     */
     setAnchor(anchorPosition) {
         const { x, y } = parseAnchor(anchorPosition || this.getAttribute("anchor") || "left top");
         const { width: stageWidth, height: stageHeight } = this._stageSize();
@@ -310,6 +396,10 @@ class AnimationStage extends Component.HTMLElement {
         this._refreshPlacement();
     }
 
+    /**
+     * Handles firstconnect events.
+     * @returns {*} Result of onFirstConnect.
+     */
     onFirstConnect() {
         if (this.hasAttribute("parallax")) {
             this.parallax = true;
@@ -330,6 +420,11 @@ class AnimationStage extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Handles viewerconnect events.
+     * @param {*} viewer - Parameter value.
+     * @returns {*} Result of onViewerConnect.
+     */
     onViewerConnect(viewer) {
         if (this.viewer && this._viewerResizeHandler) {
             this.viewer.removeEventListener("resize", this._viewerResizeHandler);
@@ -346,6 +441,11 @@ class AnimationStage extends Component.HTMLElement {
         this.classList.add("viewer-connected");
     }
 
+    /**
+     * Handles viewerdisconnect events.
+     * @param {*} viewer - Parameter value.
+     * @returns {*} Result of onViewerDisconnect.
+     */
     onViewerDisconnect(viewer = null) {
         if (viewer && this.viewer !== viewer) return;
         if (this.viewer && this._viewerResizeHandler) {
@@ -359,6 +459,10 @@ class AnimationStage extends Component.HTMLElement {
         this._syncTimelineOwner();
     }
 
+    /**
+     * Handles disconnect events.
+     * @returns {*} Result of onDisconnect.
+     */
     onDisconnect() {
         if (this.viewer && this._viewerResizeHandler) {
             this.viewer.removeEventListener("resize", this._viewerResizeHandler);
@@ -367,6 +471,10 @@ class AnimationStage extends Component.HTMLElement {
         this._stopLocalTimeline();
     }
 
+    /**
+     * Implements internal _createLocalTimeline behavior.
+     * @returns {*} Result of _createLocalTimeline.
+     */
     _createLocalTimeline() {
         if (this.localTimeline) return this.localTimeline;
 
@@ -387,6 +495,10 @@ class AnimationStage extends Component.HTMLElement {
         return timeline;
     }
 
+    /**
+     * Implements internal _stopLocalTimeline behavior.
+     * @returns {*} Result of _stopLocalTimeline.
+     */
     _stopLocalTimeline() {
         if (!this.localTimeline) return;
         const old = this.localTimeline;
@@ -401,6 +513,10 @@ class AnimationStage extends Component.HTMLElement {
         });
     }
 
+    /**
+     * Implements internal _bindAnimatorsToViewer behavior.
+     * @returns {*} Result of _bindAnimatorsToViewer.
+     */
     _bindAnimatorsToViewer() {
         if (!this.viewer) return;
         this.animatorChildren.forEach((child) => {
@@ -410,6 +526,10 @@ class AnimationStage extends Component.HTMLElement {
         });
     }
 
+    /**
+     * Implements internal _syncTimelineOwner behavior.
+     * @returns {*} Result of _syncTimelineOwner.
+     */
     _syncTimelineOwner() {
         if (this.hasViewerTimeline) {
             this._stopLocalTimeline();
@@ -419,6 +539,12 @@ class AnimationStage extends Component.HTMLElement {
         this._createLocalTimeline();
     }
 
+    /**
+     * Implements internal _anchorValueToPixels behavior.
+     * @param {*} value - Parameter value.
+     * @param {*} axisSize - Parameter value.
+     * @returns {*} Result of _anchorValueToPixels.
+     */
     _anchorValueToPixels(value, axisSize) {
         if (typeof value === "number") return value * axisSize;
         if (typeof value !== "string") return 0;
@@ -436,6 +562,12 @@ class AnimationStage extends Component.HTMLElement {
         return Number.isFinite(parsedNumber) ? parsedNumber : 0;
     }
 
+    /**
+     * Implements internal _setDimensionVar behavior.
+     * @param {*} axis - Parameter value.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of _setDimensionVar.
+     */
     _setDimensionVar(axis, value) {
         const attrValue = this.getAttribute(axis);
         const source = typeof attrValue === "string" && attrValue.trim().length ? attrValue : value;
@@ -456,6 +588,10 @@ class AnimationStage extends Component.HTMLElement {
         this._refreshPlacement();
     }
 
+    /**
+     * Implements internal _viewerSize behavior.
+     * @returns {*} Result of _viewerSize.
+     */
     _viewerSize() {
         if (!this.viewer) return { width: 0, height: 0 };
         const rect = this.viewer.getBoundingClientRect();
@@ -465,6 +601,12 @@ class AnimationStage extends Component.HTMLElement {
         };
     }
 
+    /**
+     * Implements internal _valueToSceneCoordinate behavior.
+     * @param {*} value - Parameter value.
+     * @param {*} axisSize - Parameter value.
+     * @returns {*} Result of _valueToSceneCoordinate.
+     */
     _valueToSceneCoordinate(value, axisSize) {
         const numericValue = Number(value);
         if (!Number.isFinite(numericValue)) return 0;
@@ -472,6 +614,11 @@ class AnimationStage extends Component.HTMLElement {
         return numericValue;
     }
 
+    /**
+     * Implements internal _getConfiguredAxisValue behavior.
+     * @param {*} axis - Parameter value.
+     * @returns {*} Result of _getConfiguredAxisValue.
+     */
     _getConfiguredAxisValue(axis) {
         const raw = this.getAttribute(axis);
         if (raw === null) return null;
@@ -485,6 +632,11 @@ class AnimationStage extends Component.HTMLElement {
         return Number.isFinite(numeric) ? numeric : null;
     }
 
+    /**
+     * Implements internal _syncPositionFromViewer behavior.
+     * @param {*} values - Parameter value.
+     * @returns {*} Result of _syncPositionFromViewer.
+     */
     _syncPositionFromViewer(values = {}) {
         if (!this.viewer) return;
         const { width: stageWidth, height: stageHeight } = this._stageSize();
@@ -494,6 +646,10 @@ class AnimationStage extends Component.HTMLElement {
         this.position.y = yValue === null ? 0 : this._valueToSceneCoordinate(yValue, stageHeight);
     }
 
+    /**
+     * Implements internal _syncBounds behavior.
+     * @returns {*} Result of _syncBounds.
+     */
     _syncBounds() {
         const { width: stageWidth, height: stageHeight } = this._stageSize();
         const anchorX = this.anchorPoint?.x || 0;
@@ -532,6 +688,10 @@ class AnimationStage extends Component.HTMLElement {
         this._syncCameraBounds();
     }
 
+    /**
+     * Implements internal _stageSize behavior.
+     * @returns {*} Result of _stageSize.
+     */
     _stageSize() {
         const html = this.ref?.("html");
         if (html && typeof html.getBoundingClientRect === "function") {
@@ -572,6 +732,10 @@ class AnimationStage extends Component.HTMLElement {
         };
     }
 
+    /**
+     * Implements internal _clampPositionToBounds behavior.
+     * @returns {*} Result of _clampPositionToBounds.
+     */
     _clampPositionToBounds() {
         if (!this.bounds || !this.position) return;
         const min = this.bounds.min || {};
@@ -582,6 +746,11 @@ class AnimationStage extends Component.HTMLElement {
         if (typeof max.y === "number" && this.position.y > max.y) this.position.y = max.y;
     }
 
+    /**
+     * Implements internal _refreshPlacement behavior.
+     * @param {*} values - Parameter value.
+     * @returns {*} Result of _refreshPlacement.
+     */
     _refreshPlacement(values = {}) {
         if (!this.viewer) return;
         this._syncBounds();
@@ -590,6 +759,10 @@ class AnimationStage extends Component.HTMLElement {
         this._applyPositionToDOM();
     }
 
+    /**
+     * Implements internal _applyPositionToDOM behavior.
+     * @returns {*} Result of _applyPositionToDOM.
+     */
     _applyPositionToDOM() {
         if (!this.viewer) return;
         const { width: viewerWidth, height: viewerHeight } = this._viewerSize();
@@ -602,6 +775,10 @@ class AnimationStage extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Implements internal _syncCameraBounds behavior.
+     * @returns {*} Result of _syncCameraBounds.
+     */
     _syncCameraBounds() {
         if (!this.viewer || !this.viewer.camera || !this.bounds) return;
         const camera = this.viewer.camera;
@@ -620,6 +797,10 @@ class AnimationStage extends Component.HTMLElement {
         camera.max.y = cameraOffsetY - this.bounds.min.y;
     }
 
+    /**
+     * Implements internal _findViewerHost behavior.
+     * @returns {*} Result of _findViewerHost.
+     */
     _findViewerHost() {
         let node = this;
         while (node) {

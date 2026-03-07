@@ -31,7 +31,7 @@ const SETS = {
     stage: {
         label: "Stage",
         dir: "./playground-examples/stage",
-        docs: "./docs/stage.html",
+        docs: "./docs/module-docs.html?file=components/stage.mjs",
         files: {
             html: "html.html",
             css: "css.css",
@@ -43,7 +43,7 @@ const SETS = {
     viewer_stage: {
         label: "Viewer + Stage",
         dir: "./playground-examples/viewer-stage",
-        docs: "./docs/viewer-stage.html",
+        docs: "./docs/module-docs.html?file=components/viewer.mjs",
         files: {
             html: "html.html",
             css: "css.css",
@@ -57,7 +57,7 @@ const SETS = {
     sprite_base: {
         label: "Sprite Base",
         dir: "./playground-examples/sprite-base",
-        docs: "./docs/sprite-base.html",
+        docs: "./docs/module-docs.html?file=components/sprite.mjs",
         files: {
             html: "html.html",
             css: "css.css",
@@ -69,7 +69,7 @@ const SETS = {
     sprite_extended: {
         label: "Sprite Extended",
         dir: "./playground-examples/sprite-extended",
-        docs: "./docs/sprite-extended.html",
+        docs: "./docs/module-docs.html?file=examples/rocket-sprite.mjs",
         files: {
             html: "html.html",
             css: "css.css",
@@ -81,7 +81,7 @@ const SETS = {
     body: {
         label: "Body",
         dir: "./playground-examples/body",
-        docs: "./docs/body.html",
+        docs: "./docs/module-docs.html?file=components/body.mjs",
         files: {
             html: "html.html",
             css: "css.css",
@@ -93,7 +93,7 @@ const SETS = {
     timeline: {
         label: "Timeline",
         dir: "./playground-examples/timeline",
-        docs: "./docs/timeline.html",
+        docs: "./docs/module-docs.html?file=timeline.mjs",
         files: {
             html: "html.html",
             css: "css.css",
@@ -105,7 +105,7 @@ const SETS = {
     easing: {
         label: "Easing",
         dir: "./playground-examples/easing",
-        docs: "./docs/easing.html",
+        docs: "./docs/module-docs.html?file=easing.mjs",
         files: {
             html: "html.html",
             css: "css.css",
@@ -117,7 +117,7 @@ const SETS = {
     custom_easing: {
         label: "Custom Easing",
         dir: "./playground-examples/custom-easing",
-        docs: "./docs/custom-easing.html",
+        docs: "./docs/module-docs.html?file=path-to-bezier.mjs",
         files: {
             html: "html.html",
             css: "css.css",
@@ -129,7 +129,7 @@ const SETS = {
     particle_world: {
         label: "Particle World",
         dir: "./playground-examples/particle-world",
-        docs: "./docs/particle-world.html",
+        docs: "./docs/module-docs.html?file=components/particle-world.mjs",
         files: {
             html: "html.html",
             css: "css.css",
@@ -141,7 +141,7 @@ const SETS = {
     emitter: {
         label: "Emitter",
         dir: "./playground-examples/emitter",
-        docs: "./docs/emitter.html",
+        docs: "./docs/module-docs.html?file=particles/emitter.mjs",
         files: {
             html: "html.html",
             css: "css.css",
@@ -181,10 +181,22 @@ const resolvedBySet = new Map();
 const FILE_TABS = ["html", "controls", "javascript", "css", "readme", "docs"];
 const EDITABLE_TABS = new Set(["html", "controls", "javascript", "css"]);
 
+/**
+ * Sets path values.
+ * @param {*} set - Parameter value.
+ * @param {*} file - Parameter value.
+ * @returns {*} Result of setPath.
+ */
 function setPath(set, file) {
     return `${set.dir}/${file}`;
 }
 
+/**
+ * Executes stripInjectedDevScripts.
+ * @param {*} html - Parameter value.
+ * @param {*} options - Parameter value.
+ * @returns {*} Result of stripInjectedDevScripts.
+ */
 function stripInjectedDevScripts(html, options = {}) {
     const { aggressiveInline = false } = options;
     let out = html;
@@ -209,6 +221,12 @@ function stripInjectedDevScripts(html, options = {}) {
     return out;
 }
 
+/**
+ * Executes rewriteJsImports.
+ * @param {*} code - Parameter value.
+ * @param {*} baseAbs - Parameter value.
+ * @returns {*} Result of rewriteJsImports.
+ */
 function rewriteJsImports(code, baseAbs) {
     const rewriteSpec = (spec) => {
         if (!spec.startsWith(".") && !spec.startsWith("/")) return spec;
@@ -228,6 +246,13 @@ function rewriteJsImports(code, baseAbs) {
     return out;
 }
 
+/**
+ * Executes rewriteHtml.
+ * @param {*} html - Parameter value.
+ * @param {*} entryAbs - Parameter value.
+ * @param {*} inlineModules - Parameter value.
+ * @returns {*} Result of rewriteHtml.
+ */
 function rewriteHtml(html, entryAbs, inlineModules) {
     const baseHref = new URL(".", entryAbs).href;
     const previewCssHref = new URL("../../../../brand/templates/css/playground-preview.css", entryAbs).href;
@@ -286,6 +311,11 @@ window.addEventListener('unhandledrejection', function(e){
     return out;
 }
 
+/**
+ * Executes splitPreviewLayout.
+ * @param {*} html - Parameter value.
+ * @returns {*} Result of splitPreviewLayout.
+ */
 function splitPreviewLayout(html) {
     const template = document.createElement("template");
     template.innerHTML = html || "";
@@ -313,6 +343,11 @@ function splitPreviewLayout(html) {
     };
 }
 
+/**
+ * Executes splitFooterDrawerSections.
+ * @param {*} footerRaw - Parameter value.
+ * @returns {*} Result of splitFooterDrawerSections.
+ */
 function splitFooterDrawerSections(footerRaw) {
     const footerText = typeof footerRaw === "string" ? footerRaw : String(footerRaw ?? "");
     const template = document.createElement("template");
@@ -340,6 +375,11 @@ function splitFooterDrawerSections(footerRaw) {
     };
 }
 
+/**
+ * Executes sanitizeMaskMarkup.
+ * @param {*} markup - Parameter value.
+ * @returns {*} Result of sanitizeMaskMarkup.
+ */
 function sanitizeMaskMarkup(markup) {
     const text = typeof markup === "string" ? markup : String(markup ?? "");
     if (!text.trim().length) return "";
@@ -386,6 +426,11 @@ function sanitizeMaskMarkup(markup) {
     return String(fragment.innerHTML || "").trim();
 }
 
+/**
+ * Executes pathLanguage.
+ * @param {*} path - Parameter value.
+ * @returns {*} Result of pathLanguage.
+ */
 function pathLanguage(path) {
     if (path.endsWith(".html")) return "html";
     if (path.endsWith(".css")) return "css";
@@ -394,10 +439,19 @@ function pathLanguage(path) {
     return "javascript";
 }
 
+/**
+ * Executes escapeHtml.
+ * @param {*} text - Parameter value.
+ * @returns {*} Result of escapeHtml.
+ */
 function escapeHtml(text) {
     return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
+/**
+ * Returns previewui values.
+ * @returns {*} Result of getPreviewUi.
+ */
 function getPreviewUi() {
     const doc = preview?.contentDocument;
     if (!doc) return null;
@@ -419,6 +473,11 @@ function getPreviewUi() {
     };
 }
 
+/**
+ * Sets footerpanelopen values.
+ * @param {*} panel - Parameter value.
+ * @returns {*} Result of setFooterPanelOpen.
+ */
 function setFooterPanelOpen(panel) {
     const ui = getPreviewUi();
     if (!ui?.footerEl) return;
@@ -447,14 +506,28 @@ function setFooterPanelOpen(panel) {
     }
 }
 
+/**
+ * Sets controlspanelopen values.
+ * @param {*} open - Parameter value.
+ * @returns {*} Result of setControlsPanelOpen.
+ */
 function setControlsPanelOpen(open) {
     setFooterPanelOpen(open ? "controls" : "");
 }
 
+/**
+ * Sets maskpanelopen values.
+ * @param {*} open - Parameter value.
+ * @returns {*} Result of setMaskPanelOpen.
+ */
 function setMaskPanelOpen(open) {
     setFooterPanelOpen(open ? "mask" : "");
 }
 
+/**
+ * Executes bindPreviewChromeEvents.
+ * @returns {*} Result of bindPreviewChromeEvents.
+ */
 function bindPreviewChromeEvents() {
     const ui = getPreviewUi();
     if (!ui || ui.doc.__playgroundChromeBound) return;
@@ -501,6 +574,10 @@ function bindPreviewChromeEvents() {
     });
 }
 
+/**
+ * Executes loadComponentManifest.
+ * @returns {*} Result of loadComponentManifest.
+ */
 async function loadComponentManifest() {
     try {
         const response = await fetch("../components/component-manifest.json", { cache: "no-store" });
@@ -515,6 +592,11 @@ async function loadComponentManifest() {
     }
 }
 
+/**
+ * Executes sourceTabLabel.
+ * @param {*} path - Parameter value.
+ * @returns {*} Result of sourceTabLabel.
+ */
 function sourceTabLabel(path) {
     if (path === currentSetFiles?.html?.path) return "html";
     if (path === currentSetFiles?.controls?.path) return "controls";
@@ -523,16 +605,34 @@ function sourceTabLabel(path) {
     return path;
 }
 
+/**
+ * Executes isNumberType.
+ * @param {*} type - Parameter value.
+ * @returns {*} Result of isNumberType.
+ */
 function isNumberType(type) {
     return type === "number" || type === "int";
 }
 
+/**
+ * Executes escapeAttributeValue.
+ * @param {*} value - Parameter value.
+ * @returns {*} Result of escapeAttributeValue.
+ */
 function escapeAttributeValue(value) {
     return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll('"', "&quot;");
 }
 
+/**
+ * Executes attributeSelectOptions.
+ * @param {*} tag - Parameter value.
+ * @param {*} attrName - Parameter value.
+ * @param {*} currentValue - Parameter value.
+ * @param {*} defaultValue - Parameter value.
+ * @returns {*} Result of attributeSelectOptions.
+ */
 function attributeSelectOptions(tag, attrName, currentValue, defaultValue) {
     const perAttribute = {
         state: ["initial", "active", "inactive", "complete", "actve", "inactve"],
@@ -572,10 +672,23 @@ function attributeSelectOptions(tag, attrName, currentValue, defaultValue) {
     return out;
 }
 
+/**
+ * Executes useSuggestedInput.
+ * @param {*} attr - Parameter value.
+ * @returns {*} Result of useSuggestedInput.
+ */
 function useSuggestedInput(attr) {
     return String(attr?.name || "").toLowerCase() === "anchor";
 }
 
+/**
+ * Updates module state from runtime inputs.
+ * @param {*} openTag - Parameter value.
+ * @param {*} attributeName - Parameter value.
+ * @param {*} type - Parameter value.
+ * @param {*} value - Parameter value.
+ * @returns {*} Result of updateOpenTagAttribute.
+ */
 function updateOpenTagAttribute(openTag, attributeName, type, value) {
     const closeMatch = openTag.match(/\s*\/?>$/);
     if (!closeMatch) return openTag;
@@ -608,6 +721,16 @@ function updateOpenTagAttribute(openTag, attributeName, type, value) {
     return `${head}${nextAttr}${close}`;
 }
 
+/**
+ * Updates module state from runtime inputs.
+ * @param {*} sourceText - Parameter value.
+ * @param {*} tag - Parameter value.
+ * @param {*} index - Parameter value.
+ * @param {*} attributeName - Parameter value.
+ * @param {*} type - Parameter value.
+ * @param {*} value - Parameter value.
+ * @returns {*} Result of updateTagAttributeInSource.
+ */
 function updateTagAttributeInSource(sourceText, tag, index, attributeName, type, value) {
     const escapedTag = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const regex = new RegExp(`<${escapedTag}\\b[^>]*>`, "gi");
@@ -627,6 +750,12 @@ function updateTagAttributeInSource(sourceText, tag, index, attributeName, type,
     return sourceText;
 }
 
+/**
+ * Parses input values for sourcecomponents behavior.
+ * @param {*} path - Parameter value.
+ * @param {*} sourceText - Parameter value.
+ * @returns {*} Result of parseSourceComponents.
+ */
 function parseSourceComponents(path, sourceText) {
     const tags = componentManifest.componentsByTag || {};
     if (!path || !sourceText || !Object.keys(tags).length) return [];
@@ -664,6 +793,10 @@ function parseSourceComponents(path, sourceText) {
     return components;
 }
 
+/**
+ * Executes collectSceneComponents.
+ * @returns {*} Result of collectSceneComponents.
+ */
 function collectSceneComponents() {
     if (!currentSetFiles) return [];
     const files = [currentSetFiles.html, currentSetFiles.controls].filter(Boolean);
@@ -678,6 +811,10 @@ function collectSceneComponents() {
     return out;
 }
 
+/**
+ * Executes queueComponentRefresh.
+ * @returns {*} Result of queueComponentRefresh.
+ */
 function queueComponentRefresh() {
     clearTimeout(componentRefreshTimer);
     componentRefreshTimer = setTimeout(() => {
@@ -685,6 +822,10 @@ function queueComponentRefresh() {
     }, 110);
 }
 
+/**
+ * Executes refreshSceneComponents.
+ * @returns {*} Result of refreshSceneComponents.
+ */
 function refreshSceneComponents() {
     sceneComponents = collectSceneComponents();
     renderComponentButtons();
@@ -695,6 +836,10 @@ function refreshSceneComponents() {
     refreshInfoReadout();
 }
 
+/**
+ * Returns componentselection values.
+ * @returns {*} Result of getComponentSelection.
+ */
 function getComponentSelection() {
     const instances = sceneComponents.filter((item) => item.tag === selectedComponentTag);
     if (!instances.length) return { instances, selected: null };
@@ -711,6 +856,10 @@ function getComponentSelection() {
     return { instances, selected };
 }
 
+/**
+ * Renders module output using the current state.
+ * @returns {*} Result of renderComponentButtons.
+ */
 function renderComponentButtons() {
     const host = document.querySelector('.tab-content[data-tab="controls"] #playground-component-buttons');
     if (!host) return;
@@ -750,6 +899,11 @@ function renderComponentButtons() {
     }
 }
 
+/**
+ * Sets infopanelopen values.
+ * @param {*} open - Parameter value.
+ * @returns {*} Result of setInfoPanelOpen.
+ */
 function setInfoPanelOpen(open) {
     const ui = getPreviewUi();
     if (!ui?.infoPanelEl) {
@@ -774,11 +928,21 @@ function setInfoPanelOpen(open) {
     }
 }
 
+/**
+ * Executes formatNumber.
+ * @param {*} value - Parameter value.
+ * @param {*} digits - Parameter value.
+ * @returns {*} Result of formatNumber.
+ */
 function formatNumber(value, digits = 2) {
     const n = Number(value);
     return Number.isFinite(n) ? n.toFixed(digits) : "n/a";
 }
 
+/**
+ * Builds inforeadout output data.
+ * @returns {*} Result of buildInfoReadout.
+ */
 function buildInfoReadout() {
     const lines = [];
     const setLabel = SETS[currentSetId]?.label || currentSetId;
@@ -853,12 +1017,20 @@ function buildInfoReadout() {
     return lines.join("\n");
 }
 
+/**
+ * Executes refreshInfoReadout.
+ * @returns {*} Result of refreshInfoReadout.
+ */
 function refreshInfoReadout() {
     const ui = getPreviewUi();
     if (!ui?.infoReadoutEl) return;
     ui.infoReadoutEl.textContent = buildInfoReadout();
 }
 
+/**
+ * Executes closeComponentInspector.
+ * @returns {*} Result of closeComponentInspector.
+ */
 function closeComponentInspector() {
     const ui = getPreviewUi();
     if (!ui?.inspectorOverlayEl) return;
@@ -868,6 +1040,11 @@ function closeComponentInspector() {
     renderComponentButtons();
 }
 
+/**
+ * Executes openComponentInspector.
+ * @param {*} tag - Parameter value.
+ * @returns {*} Result of openComponentInspector.
+ */
 function openComponentInspector(tag) {
     selectedComponentTag = tag;
     const selected = sceneComponents.find((item) => item.tag === tag);
@@ -883,6 +1060,12 @@ function openComponentInspector(tag) {
     renderComponentInspector();
 }
 
+/**
+ * Executes writeSource.
+ * @param {*} path - Parameter value.
+ * @param {*} nextText - Parameter value.
+ * @returns {*} Result of writeSource.
+ */
 function writeSource(path, nextText) {
     const current = sources.get(path) || "";
     if (current === nextText) return;
@@ -896,6 +1079,16 @@ function writeSource(path, nextText) {
     }
 }
 
+/**
+ * Sets componentattribute values.
+ * @param {*} path - Parameter value.
+ * @param {*} tag - Parameter value.
+ * @param {*} index - Parameter value.
+ * @param {*} attributeName - Parameter value.
+ * @param {*} type - Parameter value.
+ * @param {*} value - Parameter value.
+ * @returns {*} Result of setComponentAttribute.
+ */
 function setComponentAttribute(path, tag, index, attributeName, type, value) {
     const sourceText = sources.get(path) || "";
     const updated = updateTagAttributeInSource(sourceText, tag, index, attributeName, type, value);
@@ -903,6 +1096,10 @@ function setComponentAttribute(path, tag, index, attributeName, type, value) {
     writeSource(path, updated);
 }
 
+/**
+ * Renders module output using the current state.
+ * @returns {*} Result of renderComponentInspector.
+ */
 function renderComponentInspector() {
     const ui = getPreviewUi();
     if (!ui?.inspectorBodyEl || !ui.inspectorTitleEl || !ui.inspectorSubtitleEl || !ui.doc) return;
@@ -1108,6 +1305,10 @@ function renderComponentInspector() {
     }
 }
 
+/**
+ * Renders module output using the current state.
+ * @returns {*} Result of renderFiles.
+ */
 function renderFiles() {
     fileList.innerHTML = "";
     if (!currentSetFiles) return;
@@ -1129,6 +1330,11 @@ function renderFiles() {
     }
 }
 
+/**
+ * Executes switchFile.
+ * @param {*} key - Parameter value.
+ * @returns {*} Result of switchFile.
+ */
 function switchFile(key) {
     if (!currentSetFiles || !currentSetFiles[key]) return;
     currentFileKey = key;
@@ -1168,6 +1374,10 @@ function switchFile(key) {
     renderPreview();
 }
 
+/**
+ * Executes disposeModels.
+ * @returns {*} Result of disposeModels.
+ */
 function disposeModels() {
     for (const model of models.values()) {
         model.dispose();
@@ -1175,6 +1385,10 @@ function disposeModels() {
     models.clear();
 }
 
+/**
+ * Executes queueRender.
+ * @returns {*} Result of queueRender.
+ */
 function queueRender() {
     clearTimeout(renderTimer);
     renderTimer = setTimeout(() => {
@@ -1182,6 +1396,12 @@ function queueRender() {
     }, 220);
 }
 
+/**
+ * Executes fetchText.
+ * @param {*} path - Parameter value.
+ * @param {*} options - Parameter value.
+ * @returns {*} Result of fetchText.
+ */
 async function fetchText(path, options = {}) {
     const { sanitizeHtml = false, aggressiveInline = true } = options;
     const response = await fetch(path, { cache: "no-store" });
@@ -1194,6 +1414,14 @@ async function fetchText(path, options = {}) {
     return text;
 }
 
+/**
+ * Executes resolveExact.
+ * @param {*} set - Parameter value.
+ * @param {*} file - Parameter value.
+ * @param {*} options - Parameter value.
+ * @param {*} required - Parameter value.
+ * @returns {*} Result of resolveExact.
+ */
 async function resolveExact(set, file, options = {}, required = false) {
     if (!file) return null;
     const path = setPath(set, file);
@@ -1205,6 +1433,11 @@ async function resolveExact(set, file, options = {}, required = false) {
     return null;
 }
 
+/**
+ * Executes resolveSetFiles.
+ * @param {*} set - Parameter value.
+ * @returns {*} Result of resolveSetFiles.
+ */
 async function resolveSetFiles(set) {
     const files = set.files || {};
     const htmlMain = await resolveExact(
@@ -1254,6 +1487,11 @@ async function resolveSetFiles(set) {
     };
 }
 
+/**
+ * Builds composeddocument output data.
+ * @param {*} resolved - Parameter value.
+ * @returns {*} Result of buildComposedDocument.
+ */
 function buildComposedDocument(resolved) {
     const htmlMainPath = resolved.html.main.path;
     const htmlMain = sources.get(htmlMainPath) || "";
@@ -1364,6 +1602,11 @@ ${scriptTags.join("\n")}
     };
 }
 
+/**
+ * Renders module output using the current state.
+ * @param {*} markdownText - Parameter value.
+ * @returns {*} Result of renderMarkdownHtml.
+ */
 function renderMarkdownHtml(markdownText) {
     const markdown = markdownText || "";
     const codeBlocks = [];
@@ -1448,6 +1691,11 @@ function renderMarkdownHtml(markdownText) {
 </style>${html}`;
 }
 
+/**
+ * Renders module output using the current state.
+ * @param {*} markdownText - Parameter value.
+ * @returns {*} Result of renderReadmePanel.
+ */
 function renderReadmePanel(markdownText) {
     if (!readmeViewEl) return;
     const docsHref = SETS[currentSetId]?.docs || "./docs/index.html";
@@ -1456,6 +1704,11 @@ function renderReadmePanel(markdownText) {
         `<div class="readme-doc-link"><a href="${docsHref}" target="_blank" rel="noopener noreferrer">Open full docs page</a></div>`;
 }
 
+/**
+ * Executes showPreviewError.
+ * @param {*} error - Parameter value.
+ * @returns {*} Result of showPreviewError.
+ */
 function showPreviewError(error) {
     const message = escapeHtml(error?.message || String(error));
     preview.srcdoc = `<!doctype html><html><body style="margin:0;padding:12px;background:#1a0f0f;color:#ffd7d7;font:13px/1.4 monospace;"><h3 style="margin-top:0;">Preview Error</h3><pre>${message}</pre></body></html>`;
@@ -1463,6 +1716,11 @@ function showPreviewError(error) {
 
 let controlsMirrorTimer = null;
 
+/**
+ * Executes isTimelineControlNode.
+ * @param {*} node - Parameter value.
+ * @returns {*} Result of isTimelineControlNode.
+ */
 function isTimelineControlNode(node) {
     if (!node || node.nodeType !== 1) return false;
     const selector = ".timeline, .timeline-controls, #timeline, #timeline-controls, timeline-controls, timeline";
@@ -1477,6 +1735,10 @@ function isTimelineControlNode(node) {
     );
 }
 
+/**
+ * Executes hideRelocatedPreviewControls.
+ * @returns {*} Result of hideRelocatedPreviewControls.
+ */
 function hideRelocatedPreviewControls() {
     const previewDoc = preview?.contentDocument;
     if (!previewDoc) return;
@@ -1496,17 +1758,32 @@ function hideRelocatedPreviewControls() {
     }
 }
 
+/**
+ * Returns mirrorcontroltype values.
+ * @param {*} node - Parameter value.
+ * @returns {*} Result of getMirrorControlType.
+ */
 function getMirrorControlType(node) {
     if (!node) return "";
     const attrType = typeof node.getAttribute === "function" ? node.getAttribute("type") : "";
     return String(attrType || node.type || "").toLowerCase();
 }
 
+/**
+ * Executes isMirrorFileInput.
+ * @param {*} node - Parameter value.
+ * @returns {*} Result of isMirrorFileInput.
+ */
 function isMirrorFileInput(node) {
     const tag = String(node?.tagName || "").toLowerCase();
     return tag === "input" && getMirrorControlType(node) === "file";
 }
 
+/**
+ * Executes isMirrorCheckable.
+ * @param {*} node - Parameter value.
+ * @returns {*} Result of isMirrorCheckable.
+ */
 function isMirrorCheckable(node) {
     const type = getMirrorControlType(node);
     if (type === "checkbox" || type === "radio") return true;
@@ -1515,15 +1792,29 @@ function isMirrorCheckable(node) {
     return false;
 }
 
+/**
+ * Executes hasMirrorValue.
+ * @param {*} node - Parameter value.
+ * @returns {*} Result of hasMirrorValue.
+ */
 function hasMirrorValue(node) {
     return !!node && typeof node.value !== "undefined";
 }
 
+/**
+ * Returns mirrormasksuffix values.
+ * @param {*} id - Parameter value.
+ * @returns {*} Result of getMirrorMaskSuffix.
+ */
 function getMirrorMaskSuffix(id = "") {
     const match = String(id).match(/^mask-file(.*)$/);
     return match ? match[1] : "";
 }
 
+/**
+ * Executes syncControlsMirrorToPreview.
+ * @returns {*} Result of syncControlsMirrorToPreview.
+ */
 function syncControlsMirrorToPreview() {
     const previewDoc = preview?.contentDocument;
     if (!previewDoc) return;
@@ -1582,6 +1873,10 @@ function syncControlsMirrorToPreview() {
     }
 }
 
+/**
+ * Executes bindControlsMirror.
+ * @returns {*} Result of bindControlsMirror.
+ */
 function bindControlsMirror() {
     clearInterval(controlsMirrorTimer);
     const previewDoc = preview?.contentDocument;
@@ -1761,6 +2056,10 @@ function bindControlsMirror() {
     syncControlsMirrorToPreview();
 }
 
+/**
+ * Renders module output using the current state.
+ * @returns {*} Result of renderPreview.
+ */
 function renderPreview() {
     const resolved = resolvedBySet.get(currentSetId);
     if (!resolved) return;
@@ -1803,6 +2102,11 @@ function renderPreview() {
     }
 }
 
+/**
+ * Executes loadSet.
+ * @param {*} setId - Parameter value.
+ * @returns {*} Result of loadSet.
+ */
 async function loadSet(setId) {
     currentSetId = setId;
     const set = SETS[setId];
@@ -1883,6 +2187,10 @@ async function loadSet(setId) {
     refreshSceneComponents();
 }
 
+/**
+ * Executes initSetOptions.
+ * @returns {*} Result of initSetOptions.
+ */
 function initSetOptions() {
     const ids = Object.keys(SETS);
     for (let i = 0; i < ids.length; i += 1) {
@@ -1895,6 +2203,10 @@ function initSetOptions() {
     setSelect.value = currentSetId;
 }
 
+/**
+ * Executes resetCurrentSet.
+ * @returns {*} Result of resetCurrentSet.
+ */
 function resetCurrentSet() {
     for (const [path, original] of originalSources.entries()) {
         sources.set(path, original);
@@ -2018,6 +2330,11 @@ Array.from(p1tabs || []).forEach((tab) => {
     });
 });
 
+/**
+ * Executes disableTab.
+ * @param {*} tabName - Parameter value.
+ * @returns {*} Result of disableTab.
+ */
 function disableTab(tabName) {
     const tab = document.querySelector(`#panel-1-tabs li[data-tab="${tabName}"]`);
     if (tab) {
@@ -2037,6 +2354,12 @@ function disableTab(tabName) {
     }
 }
 
+/**
+ * Sets tabcontent values.
+ * @param {*} tabName - Parameter value.
+ * @param {*} content - Parameter value.
+ * @returns {*} Result of setTabContent.
+ */
 function setTabContent(tabName, content) {
     const tabEl = document.querySelector(`#panel-1-tabs li[data-tab="${tabName}"]`);
     if (tabEl.hasAttribute("disabled")) {

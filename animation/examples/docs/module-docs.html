@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Animation Module Docs</title>
+        <link rel="stylesheet" href="../../../brand/templates/css/default.css" />
+        <link rel="stylesheet" href="../../../brand/templates/css/juice.css" />
+        <link rel="stylesheet" href="../../../brand/templates/css/pages.css" />
+        <style>
+            .docs-grid {
+                display: grid;
+                gap: 1rem;
+            }
+
+            .doc-controls {
+                display: grid;
+                grid-template-columns: 1fr auto auto;
+                gap: 0.75rem;
+                align-items: end;
+            }
+
+            .doc-controls label {
+                display: grid;
+                gap: 0.35rem;
+                font-size: 0.9rem;
+            }
+
+            .doc-controls input,
+            .doc-controls button {
+                min-height: 2.25rem;
+            }
+
+            .doc-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 0.5rem;
+            }
+
+            .doc-table th,
+            .doc-table td {
+                border: 1px solid #d7d7d7;
+                padding: 0.42rem 0.55rem;
+                text-align: left;
+                vertical-align: top;
+                font-size: 0.91rem;
+            }
+
+            .doc-table th {
+                background: #f3f5f7;
+                font-weight: 600;
+            }
+
+            .chip-list {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.4rem;
+            }
+
+            .chip {
+                border: 1px solid #d6d6d6;
+                background: #fbfbfb;
+                border-radius: 999px;
+                padding: 0.2rem 0.55rem;
+                font-size: 0.82rem;
+            }
+
+            .module-button {
+                border: 1px solid #d6d6d6;
+                background: #fbfbfb;
+                border-radius: 999px;
+                padding: 0.2rem 0.55rem;
+                font-size: 0.82rem;
+                cursor: pointer;
+            }
+
+            .module-button.is-active {
+                border-color: #0a5ad0;
+                background: #e8f0ff;
+            }
+
+            .muted {
+                color: #6b6b6b;
+                font-size: 0.92rem;
+            }
+
+            .code-block {
+                background: #0f1115;
+                color: #e9edf3;
+                border-radius: 8px;
+                padding: 0.8rem;
+                overflow-x: auto;
+                margin-top: 0.5rem;
+            }
+        </style>
+    </head>
+
+    <body class="docs-page docs-page--forms" data-source-root="../../"
+        data-default-file="components/stage.mjs" data-entry-file="index.mjs">
+        <header>
+            <div class="container flex-h flex-grow" style="flex:0 1 auto;">
+                <div class="branding">
+                    <a href="">
+                        <img src="../../../brand/logo-long.svg" alt="JS Juice" />
+                    </a>
+                </div>
+                <div data-include="../../../brand/templates/includes/nav.html" data-nav-base="../../../"></div>
+            </div>
+        </header>
+        <main>
+            <div class="container padding:1o5">
+                <p><a href="../playground.html">Back to Playground</a> | <a href="./index.html">Docs Hub</a></p>
+                <h1 id="page-title">Animation Module Documentation</h1>
+                <p id="page-subtitle" class="muted">Single-page docs viewer generated from in-file JSDoc.</p>
+            </div>
+
+            <div class="container padding:1o5">
+                <div id="content" class="docs-grid">
+                    <section class="card">
+                        <h3>Module Index</h3>
+                        <p class="muted"><span id="doc-module-count">0</span> modules discovered from <code>index.mjs</code>.</p>
+                        <div id="doc-module-list" class="chip-list"></div>
+                    </section>
+
+                    <section class="card">
+                        <h3>Load Module</h3>
+                        <div class="doc-controls">
+                            <label for="file-input">
+                                Module file
+                                <input id="file-input" list="file-list" placeholder="components/stage.mjs" />
+                                <datalist id="file-list"></datalist>
+                            </label>
+                            <button id="load-doc-button" type="button">Load</button>
+                            <button id="copy-link-button" type="button">Copy Link</button>
+                        </div>
+                        <p id="doc-source" class="muted" aria-live="polite"></p>
+                    </section>
+
+                    <section class="card">
+                        <h3>Overview</h3>
+                        <div id="doc-overview"></div>
+                    </section>
+
+                    <section class="card">
+                        <h3>Features</h3>
+                        <div id="doc-features"></div>
+                    </section>
+
+                    <section class="card">
+                        <h3>Exports</h3>
+                        <div id="doc-exports"></div>
+                    </section>
+
+                    <section class="card">
+                        <h3>Custom Elements</h3>
+                        <div id="doc-elements"></div>
+                    </section>
+
+                    <section class="card">
+                        <h3>Attributes</h3>
+                        <div id="doc-attributes"></div>
+                    </section>
+
+                    <section class="card">
+                        <h3>Properties</h3>
+                        <div id="doc-properties"></div>
+                    </section>
+
+                    <section class="card">
+                        <h3>CSS Variables</h3>
+                        <div id="doc-css-variables"></div>
+                    </section>
+
+                    <section class="card">
+                        <h3>Part Names</h3>
+                        <div id="doc-parts"></div>
+                    </section>
+
+                    <section class="card">
+                        <h3>Public Methods</h3>
+                        <div id="doc-public-methods"></div>
+                    </section>
+
+                    <section class="card">
+                        <h3>Private Methods</h3>
+                        <div id="doc-private-methods"></div>
+                    </section>
+
+                    <section class="card">
+                        <h3>Source Snippet</h3>
+                        <pre class="code-block"><code id="doc-source-snippet"></code></pre>
+                    </section>
+                </div>
+            </div>
+        </main>
+        <script type="module" src="./animation-doc-template.mjs"></script>
+        <script type="module" src="../../../brand/templates/includes/include.mjs"></script>
+    </body>
+
+</html>

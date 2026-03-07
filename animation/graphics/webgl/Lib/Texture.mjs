@@ -26,6 +26,12 @@ class Texture extends Emitter {
         return new Texture(image);
     }
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} image - Parameter value.
+     * @param {*} gl - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(image, gl = Texture.context) {
         super();
         this.image = image;
@@ -34,6 +40,10 @@ class Texture extends Emitter {
         this.initialize();
     }
 
+    /**
+     * Executes initialize.
+     * @returns {*} Result of initialize.
+     */
     initialize() {
         const { gl } = this;
         const texture = gl.createTexture();

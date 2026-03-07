@@ -101,7 +101,17 @@ Float32Array.prototype.get = function (i = 0, n = 0) {
   return this.slice(i, i + n);
 };
 
+/**
+ * Represents the PropsArray animation module class.
+ */
 class PropsArray {
+  /**
+   * Initializes class state and runtime dependencies.
+   * @param {*} count - Parameter value.
+   * @param {*} props - Parameter value.
+   * @param {*} type - Parameter value.
+   * @returns {*} Result of constructor.
+   */
   constructor(count = 0, props = [], type = "float") {
     this.count = count;
     this.props = props;
@@ -111,18 +121,44 @@ class PropsArray {
         ? new Float32Array(count * props.length)
         : new Uint32Array(count * props.length);
   }
+  /**
+   * Returns the current length value.
+   * @returns {*} Current length value.
+   */
   get length() {
     return this.values.length;
   }
+  /**
+   * Sets  values.
+   * @param {*} a - Parameter value.
+   * @param {*} i - Parameter value.
+   * @returns {*} Result of set.
+   */
   set(a = [], i = 0) {
     this.values.set(a, i);
   }
+  /**
+   * Sets map values.
+   * @param {*} o - Parameter value.
+   * @param {*} i - Parameter value.
+   * @returns {*} Result of setMap.
+   */
   setMap(o = {}, i = 0) {
     this.set(Object.values(o), i);
   }
+  /**
+   * Returns  values.
+   * @param {*} i - Parameter value.
+   * @returns {*} Result of get.
+   */
   get(i = 0) {
     return this.values.get(i, this.spread);
   }
+  /**
+   * Returns map values.
+   * @param {*} i - Parameter value.
+   * @returns {*} Result of getMap.
+   */
   getMap(i = 0) {
     return this.get(i).reduce((r, v, i) => {
       r[this.props[i]] = v;
@@ -130,6 +166,11 @@ class PropsArray {
       return r;
     }, {});
   }
+  /**
+   * Executes forEach.
+   * @param {*} cb - Parameter value.
+   * @returns {*} Result of forEach.
+   */
   forEach(cb) {
     let i = 0;
 
@@ -137,6 +178,11 @@ class PropsArray {
       cb(this.get(i), i, this);
     }
   }
+  /**
+   * Executes map.
+   * @param {*} cb - Parameter value.
+   * @returns {*} Result of map.
+   */
   map(cb) {
     let i = 0;
 
@@ -153,6 +199,12 @@ class PropsArray {
   }
 }
 
+/**
+ * Creates and returns offscreencanvas data.
+ * @param {*} width - Parameter value.
+ * @param {*} height - Parameter value.
+ * @returns {*} Result of createOffscreenCanvas.
+ */
 function createOffscreenCanvas(width, height) {
   let _canvas;
 
@@ -165,6 +217,12 @@ function createOffscreenCanvas(width, height) {
   return _canvas;
 }
 
+/**
+ * Creates and returns canvas data.
+ * @param {*} width - Parameter value.
+ * @param {*} height - Parameter value.
+ * @returns {*} Result of createCanvas.
+ */
 function createCanvas(width, height) {
   const canvas = document.createElement("canvas");
 
@@ -193,6 +251,12 @@ function createOffscreenContext2D(
   );
 }
 
+/**
+ * Creates and returns renderingcontext data.
+ * @param {*} width - Parameter value.
+ * @param {*} height - Parameter value.
+ * @returns {*} Result of createRenderingContext.
+ */
 function createRenderingContext(width, height) {
   const contextAttributes = {
     alpha: true,

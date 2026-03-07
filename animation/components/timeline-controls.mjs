@@ -6,21 +6,41 @@
 
 import Component from "../../ui/component.mjs";
 
+/**
+ * Executes nowMS.
+ * @returns {*} Result of nowMS.
+ */
 function nowMS() {
     return globalThis.performance && typeof globalThis.performance.now === "function"
         ? globalThis.performance.now()
         : Date.now();
 }
 
+/**
+ * Executes clamp.
+ * @param {*} value - Parameter value.
+ * @param {*} min - Parameter value.
+ * @param {*} max - Parameter value.
+ * @returns {*} Result of clamp.
+ */
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
 
+/**
+ * Executes toNumber.
+ * @param {*} value - Parameter value.
+ * @param {*} fallback - Parameter value.
+ * @returns {*} Result of toNumber.
+ */
 function toNumber(value, fallback = 0) {
     const n = Number(value);
     return Number.isFinite(n) ? n : fallback;
 }
 
+/**
+ * Represents the AnimationTimelineControls animation module class.
+ */
 class AnimationTimelineControls extends Component.HTMLElement {
     static tag = "animation-timeline-controls";
 
@@ -36,12 +56,20 @@ class AnimationTimelineControls extends Component.HTMLElement {
         }
     };
 
+    /**
+     * Returns the current observed value.
+     * @returns {*} Current observed value.
+     */
     static get observed() {
         return {
             all: ["timeline", "viewer", "stage", "speed", "minspeed", "maxspeed", "stepspeed"]
         };
     }
 
+    /**
+     * Returns the current style value.
+     * @returns {*} Current style value.
+     */
     static get style() {
         return [
             {
@@ -116,6 +144,10 @@ class AnimationTimelineControls extends Component.HTMLElement {
         ];
     }
 
+    /**
+     * Executes html.
+     * @returns {*} Result of html.
+     */
     static html() {
         return `
             <div id="panel">
@@ -141,12 +173,20 @@ class AnimationTimelineControls extends Component.HTMLElement {
         `;
     }
 
+    /**
+     * Executes beforeCreate.
+     * @returns {*} Result of beforeCreate.
+     */
     beforeCreate() {
         this._timeline = null;
         this._watchTO = 0;
         this._watchMS = 120;
     }
 
+    /**
+     * Handles firstconnect events.
+     * @returns {*} Result of onFirstConnect.
+     */
     onFirstConnect() {
         this._applySpeedRange();
         this._bindTimeline();
@@ -155,10 +195,19 @@ class AnimationTimelineControls extends Component.HTMLElement {
         this._startWatcher();
     }
 
+    /**
+     * Handles disconnect events.
+     * @returns {*} Result of onDisconnect.
+     */
     onDisconnect() {
         this._stopWatcher();
     }
 
+    /**
+     * Handles propertychanged events.
+     * @param {*} property - Parameter value.
+     * @returns {*} Result of onPropertyChanged.
+     */
     onPropertyChanged(property) {
         if (property === "timeline" || property === "viewer" || property === "stage") {
             this._bindTimeline(true);
@@ -169,6 +218,10 @@ class AnimationTimelineControls extends Component.HTMLElement {
         }
     }
 
+    /**
+     * Implements internal _startWatcher behavior.
+     * @returns {*} Result of _startWatcher.
+     */
     _startWatcher() {
         if (this._watchTO) return;
         this._watchTO = setInterval(() => {
@@ -178,18 +231,33 @@ class AnimationTimelineControls extends Component.HTMLElement {
         }, this._watchMS);
     }
 
+    /**
+     * Implements internal _stopWatcher behavior.
+     * @returns {*} Result of _stopWatcher.
+     */
     _stopWatcher() {
         if (!this._watchTO) return;
         clearInterval(this._watchTO);
         this._watchTO = 0;
     }
 
+    /**
+     * Implements internal _asElement behavior.
+     * @param {*} value - Parameter value.
+     * @param {*} tag - Parameter value.
+     * @returns {*} Result of _asElement.
+     */
     _asElement(value, tag = "") {
         if (!value || typeof value !== "object" || value.nodeType !== 1) return null;
         if (!tag) return value;
         return value.tagName?.toLowerCase?.() === tag ? value : null;
     }
 
+    /**
+     * Implements internal _resolveSelector behavior.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of _resolveSelector.
+     */
     _resolveSelector(value) {
         if (typeof value !== "string") return "";
         const text = value.trim();
@@ -197,6 +265,11 @@ class AnimationTimelineControls extends Component.HTMLElement {
         return text;
     }
 
+    /**
+     * Implements internal _query behavior.
+     * @param {*} selector - Parameter value.
+     * @returns {*} Result of _query.
+     */
     _query(selector) {
         if (!selector) return null;
         const root = typeof this.getRootNode === "function" ? this.getRootNode() : null;
@@ -207,6 +280,11 @@ class AnimationTimelineControls extends Component.HTMLElement {
         return document.querySelector(selector);
     }
 
+    /**
+     * Implements internal _queryFromRef behavior.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of _queryFromRef.
+     */
     _queryFromRef(value) {
         const selector = this._resolveSelector(value);
         if (!selector) return null;
@@ -222,6 +300,10 @@ class AnimationTimelineControls extends Component.HTMLElement {
         return this._query(selector) || this._query(`#${selector}`);
     }
 
+    /**
+     * Implements internal _resolveViewer behavior.
+     * @returns {*} Result of _resolveViewer.
+     */
     _resolveViewer() {
         const direct = this._asElement(this.viewer, "animation-viewer");
         if (direct) return direct;
@@ -230,6 +312,10 @@ class AnimationTimelineControls extends Component.HTMLElement {
         return this.closest("animation-viewer") || document.querySelector("animation-viewer");
     }
 
+    /**
+     * Implements internal _resolveStage behavior.
+     * @returns {*} Result of _resolveStage.
+     */
     _resolveStage() {
         const direct = this._asElement(this.stage, "animation-stage");
         if (direct) return direct;
@@ -242,6 +328,10 @@ class AnimationTimelineControls extends Component.HTMLElement {
         return this.closest("animation-stage") || document.querySelector("animation-stage");
     }
 
+    /**
+     * Implements internal _resolveTimeline behavior.
+     * @returns {*} Result of _resolveTimeline.
+     */
     _resolveTimeline() {
         const directTimeline = this.timeline;
         if (directTimeline && typeof directTimeline === "object" && typeof directTimeline.play === "function") {
@@ -261,6 +351,11 @@ class AnimationTimelineControls extends Component.HTMLElement {
         return null;
     }
 
+    /**
+     * Implements internal _bindTimeline behavior.
+     * @param {*} force - Parameter value.
+     * @returns {*} Result of _bindTimeline.
+     */
     _bindTimeline(force = false) {
         const next = this._resolveTimeline();
         if (!force && next === this._timeline) return this._timeline;
@@ -270,14 +365,26 @@ class AnimationTimelineControls extends Component.HTMLElement {
         return this._timeline;
     }
 
+    /**
+     * Implements internal _speedInput behavior.
+     * @returns {*} Result of _speedInput.
+     */
     _speedInput() {
         return this.ref("speed");
     }
 
+    /**
+     * Implements internal _reverseInput behavior.
+     * @returns {*} Result of _reverseInput.
+     */
     _reverseInput() {
         return this.ref("reverse");
     }
 
+    /**
+     * Implements internal _currentSpeed behavior.
+     * @returns {*} Result of _currentSpeed.
+     */
     _currentSpeed() {
         const input = this._speedInput();
         const fromInput = toNumber(input?.value, NaN);
@@ -287,6 +394,10 @@ class AnimationTimelineControls extends Component.HTMLElement {
         return 1;
     }
 
+    /**
+     * Implements internal _applySpeedRange behavior.
+     * @returns {*} Result of _applySpeedRange.
+     */
     _applySpeedRange() {
         const input = this._speedInput();
         if (!input) return;
@@ -298,6 +409,12 @@ class AnimationTimelineControls extends Component.HTMLElement {
         input.step = String(step);
     }
 
+    /**
+     * Implements internal _applySpeed behavior.
+     * @param {*} absSpeed - Parameter value.
+     * @param {*} updateInput - Parameter value.
+     * @returns {*} Result of _applySpeed.
+     */
     _applySpeed(absSpeed, updateInput = false) {
         const timeline = this._timeline || this._bindTimeline();
         if (!timeline) return;
@@ -323,6 +440,10 @@ class AnimationTimelineControls extends Component.HTMLElement {
         this._renderStatus();
     }
 
+    /**
+     * Implements internal _syncSpeedUI behavior.
+     * @returns {*} Result of _syncSpeedUI.
+     */
     _syncSpeedUI() {
         const timeline = this._timeline;
         const speedLabel = this.ref("speed-value");
@@ -335,12 +456,22 @@ class AnimationTimelineControls extends Component.HTMLElement {
         if (speedLabel) speedLabel.textContent = `${abs.toFixed(2)}x`;
     }
 
+    /**
+     * Implements internal _frameDurationMS behavior.
+     * @param {*} timeline - Parameter value.
+     * @returns {*} Result of _frameDurationMS.
+     */
     _frameDurationMS(timeline) {
         const fps = Number(timeline?.fps);
         if (Number.isFinite(fps) && fps > 0) return 1000 / fps;
         return 1000 / 60;
     }
 
+    /**
+     * Implements internal _step behavior.
+     * @param {*} direction - Parameter value.
+     * @returns {*} Result of _step.
+     */
     _step(direction = 1) {
         const timeline = this._timeline || this._bindTimeline();
         if (!timeline) return;
@@ -369,6 +500,11 @@ class AnimationTimelineControls extends Component.HTMLElement {
         this._renderStatus();
     }
 
+    /**
+     * Implements internal _emitAction behavior.
+     * @param {*} action - Parameter value.
+     * @returns {*} Result of _emitAction.
+     */
     _emitAction(action) {
         this.dispatchEvent(
             new CustomEvent("timeline-action", {
@@ -380,6 +516,10 @@ class AnimationTimelineControls extends Component.HTMLElement {
         );
     }
 
+    /**
+     * Implements internal _renderStatus behavior.
+     * @returns {*} Result of _renderStatus.
+     */
     _renderStatus() {
         const status = this.ref("status");
         if (!status) return;
@@ -395,6 +535,10 @@ class AnimationTimelineControls extends Component.HTMLElement {
         status.textContent = `${running ? "playing" : "paused"} | ${reverse} | t=${seconds.toFixed(3)}s`;
     }
 
+    /**
+     * Handles play events.
+     * @returns {*} Result of onPlay.
+     */
     onPlay() {
         const timeline = this._timeline || this._bindTimeline();
         if (!timeline || typeof timeline.play !== "function") return;
@@ -404,6 +548,10 @@ class AnimationTimelineControls extends Component.HTMLElement {
         this._emitAction("play");
     }
 
+    /**
+     * Handles pause events.
+     * @returns {*} Result of onPause.
+     */
     onPause() {
         const timeline = this._timeline || this._bindTimeline();
         if (!timeline || typeof timeline.pause !== "function") return;
@@ -413,6 +561,10 @@ class AnimationTimelineControls extends Component.HTMLElement {
         this._emitAction("pause");
     }
 
+    /**
+     * Handles reset events.
+     * @returns {*} Result of onReset.
+     */
     onReset() {
         const timeline = this._timeline || this._bindTimeline();
         if (!timeline || typeof timeline.reset !== "function") return;
@@ -421,22 +573,42 @@ class AnimationTimelineControls extends Component.HTMLElement {
         this._emitAction("reset");
     }
 
+    /**
+     * Handles stepforward events.
+     * @returns {*} Result of onStepForward.
+     */
     onStepForward() {
         this._step(1);
         this._emitAction("step-forward");
     }
 
+    /**
+     * Handles stepback events.
+     * @returns {*} Result of onStepBack.
+     */
     onStepBack() {
         this._step(-1);
         this._emitAction("step-back");
     }
 
+    /**
+     * Handles speedinput events.
+     * @param {*} event - Parameter value.
+     * @param {*} input - Parameter value.
+     * @returns {*} Result of onSpeedInput.
+     */
     onSpeedInput(event, input) {
         const value = toNumber(input?.value ?? event?.target?.value, 1);
         this._applySpeed(value);
         this._emitAction("speed");
     }
 
+    /**
+     * Handles reversechange events.
+     * @param {*} event - Parameter value.
+     * @param {*} input - Parameter value.
+     * @returns {*} Result of onReverseChange.
+     */
     onReverseChange(event, input) {
         const reverse = !!(input?.checked ?? event?.target?.checked);
         const timeline = this._timeline || this._bindTimeline();
@@ -455,6 +627,9 @@ if (!customElements.get(AnimationTimelineControls.tag)) {
     customElements.define(AnimationTimelineControls.tag, AnimationTimelineControls);
 }
 
+/**
+ * Represents the TimelineControls animation module class.
+ */
 class TimelineControls extends AnimationTimelineControls {
     static tag = "timeline-controls";
 }

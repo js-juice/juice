@@ -12,6 +12,12 @@ export function isPowerOf2(value) {
     return (value & (value - 1)) == 0;
 }
 
+/**
+ * Executes loadTexture.
+ * @param {*} gl - Parameter value.
+ * @param {*} url - Parameter value.
+ * @returns {*} Result of loadTexture.
+ */
 export function loadTexture(gl, url) {
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -48,6 +54,13 @@ export function loadTexture(gl, url) {
     });
 }
 
+/**
+ * Creates and returns program data.
+ * @param {*} gl - Parameter value.
+ * @param {*} vertexShaderSource - Parameter value.
+ * @param {*} fragmentShaderSource - Parameter value.
+ * @returns {*} Result of createProgram.
+ */
 export function createProgram(gl, vertexShaderSource, fragmentShaderSource) {
     const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
     const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
@@ -63,6 +76,13 @@ export function createProgram(gl, vertexShaderSource, fragmentShaderSource) {
     return program;
 }
 
+/**
+ * Creates and returns shader data.
+ * @param {*} gl - Parameter value.
+ * @param {*} type - Parameter value.
+ * @param {*} source - Parameter value.
+ * @returns {*} Result of createShader.
+ */
 export function createShader(gl, type, source) {
     const shader = gl.createShader(type);
     gl.shaderSource(shader, source);
@@ -75,6 +95,12 @@ export function createShader(gl, type, source) {
     return shader;
 }
 
+/**
+ * Creates and returns texture data.
+ * @param {*} gl - Parameter value.
+ * @param {*} image - Parameter value.
+ * @returns {*} Result of createTexture.
+ */
 export function createTexture(gl, image) {
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -86,6 +112,11 @@ export function createTexture(gl, image) {
     return texture;
 }
 
+/**
+ * Executes loadJSON.
+ * @param {*} url - Parameter value.
+ * @returns {*} Result of loadJSON.
+ */
 export function loadJSON(url) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -105,6 +136,11 @@ export function loadJSON(url) {
     });
 }
 
+/**
+ * Executes loadText.
+ * @param {*} url - Parameter value.
+ * @returns {*} Result of loadText.
+ */
 export function loadText(url) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -124,6 +160,12 @@ export function loadText(url) {
     });
 }
 
+/**
+ * Executes checkGLError.
+ * @param {*} gl - Parameter value.
+ * @param {*} operation - Parameter value.
+ * @returns {*} Result of checkGLError.
+ */
 export function checkGLError(gl, operation) {
     const error = gl.getError();
     if (error !== gl.NO_ERROR) {

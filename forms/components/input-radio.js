@@ -1,15 +1,63 @@
+
+
+/**
+ * AUTODOC:START
+ * Component: <input-radio>
+ * Class: InputRadio
+ * Overview: Custom-styled radio input that preserves native radio semantics and group exclusivity.
+ *
+ * Features:
+ * - Uses hidden native radio input for form compatibility.
+ * - Enforces same-name mutual exclusion through sibling synchronization.
+ * - Supports custom selected-state colors via CSS-variable-backed attributes.
+ *
+ * Example:
+ * `<input-radio name="theme" value="dark" label="Dark" checked></input-radio>`
+ *
+ * Attribute Reference:
+ * - `name`: Radio group name used for exclusive selection.
+ * - `value`: Submitted value when selected.
+ * - `checked`: Initial/current selected state.
+ * - `bgcolor`: Optional accent color for checked visuals.
+ * - `checkcolor`: Optional center mark color override.
+ *
+ * Property Reference:
+ * - `checked`: Getter/setter synchronized with the native radio state.
+ *
+ * CSS Variables:
+ * - `--bgcolor`: Checked accent color.
+ * - `--checkcolor`: Checked indicator color.
+ * - Inherits shared InputComponent variables.
+ *
+ * Part Names:
+ * - `input-wrapper` (inherited from InputComponent).
+ * AUTODOC:END
+ */
+
 import InputComponent from "./input-component.js";
 
 class InputRadio extends InputComponent {
+    /**
+        * Initializes component state, DOM references, and default behavior.
+     * @returns {*} void.
+     */
     constructor() {
         super({ _layout: "label:>:input:<" });
         this.inputType = "radio";
     }
 
+    /**
+     * Lists attributes that are observed for runtime updates.
+     * @returns {*} List of observed attribute names.
+     */
     static get observedAttributes() {
         return [...super.observedAttributes, "bgcolor", "checkcolor"];
     }
 
+    /**
+       * Returns component-scoped style definitions used to generate CSS.
+     * @returns {*} Style definition map used for generated component CSS.
+     */
     get _styles() {
         return {
             ":host": {
@@ -101,6 +149,10 @@ class InputRadio extends InputComponent {
         };
     }
 
+    /**
+      * Creates the hidden native input used for form integration.
+     * @returns {*} Configured native input element.
+     */
     _createNativeControl() {
         const input = document.createElement("input");
         input.type = "radio";
@@ -109,6 +161,10 @@ class InputRadio extends InputComponent {
         return input;
     }
 
+    /**
+      * Builds the default dial DOM (SVG rings, knob, labels, value display).
+     * @returns {*} Rendered default dial container node.
+     */
     _renderDefault() {
         const wrapper = this._wireframe.input;
         if (!wrapper) return;
@@ -127,6 +183,10 @@ class InputRadio extends InputComponent {
         this._syncVisualState();
     }
 
+    /**
+      * Performs post-connect setup after the component has its default DOM nodes.
+     * @returns {*} void.
+     */
     _afterConnected() {
         if (!this._dom.default) {
             this._renderDefault();
@@ -135,6 +195,10 @@ class InputRadio extends InputComponent {
         this._ensureDefaultMountedInInputContainer();
     }
 
+    /**
+      * Recomputes ring/progress/tick geometry and knob placement from current value state.
+     * @returns {*} void.
+     */
     _syncVisualState() {
         if (!this._dom.default) {
             this._renderDefault();
@@ -150,11 +214,19 @@ class InputRadio extends InputComponent {
         this.setAttribute("role", "radio");
     }
 
+    /**
+      * Handles native change event events and updates component state.
+     * @returns {*} void.
+     */
     _onNativeChangeEvent() {
         if (!this.checked) return;
         this._uncheckSiblings();
     }
 
+    /**
+       * Clears checked state from sibling radios in the same group.
+     * @returns {*} Derived internal value or completion status.
+     */
     _uncheckSiblings() {
         const name = this.getAttribute("name");
         if (!name) return;
@@ -169,11 +241,20 @@ class InputRadio extends InputComponent {
         }
     }
 
+    /**
+     * Updates the `checked` value.
+     * @param {*} value - Assigned value.
+     * @returns {*} void
+     */
     set checked(value) {
         super.checked = value;
         if (value) this._uncheckSiblings();
     }
 
+    /**
+        * Returns the current checked state.
+     * @returns {*} Boolean state value.
+     */
     get checked() {
         return super.checked;
     }

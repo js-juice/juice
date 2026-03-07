@@ -32,12 +32,20 @@ export class AnimationLayer extends Component.HTMLElement {
         },
     };
 
+    /**
+     * Returns the current observed value.
+     * @returns {*} Current observed value.
+     */
     static get observed() {
         return {
             all: ["width", "height", "debug"],
         };
     }
 
+    /**
+     * Returns the current style value.
+     * @returns {*} Current style value.
+     */
     static get style() {
         return [
             {
@@ -51,12 +59,20 @@ export class AnimationLayer extends Component.HTMLElement {
         ];
     }
 
+    /**
+     * Executes html.
+     * @returns {*} Result of html.
+     */
     static html() {
         return `<slot></slot>`;
     }
 
     viewer;
 
+    /**
+     * Handles firstconnect events.
+     * @returns {*} Result of onFirstConnect.
+     */
     onFirstConnect() {
         this.viewer = this.parentNode;
         this.type = "dom";
@@ -76,6 +92,11 @@ export class AnimationLayer extends Component.HTMLElement {
         this.setup();
     }
 
+    /**
+     * Handles children events.
+     * @param {*} children - Parameter value.
+     * @returns {*} Result of onChildren.
+     */
     onChildren(children) {
         console.log("LAYER CHILDREN", children);
         children.forEach((child) => {
@@ -85,10 +106,24 @@ export class AnimationLayer extends Component.HTMLElement {
         });
     }
 
+    /**
+     * Sets up values.
+     * @returns {*} Result of setup.
+     */
     setup() {}
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} time - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(time) {}
 
+    /**
+     * Renders output from current module state.
+     * @param {*} time - Parameter value.
+     * @returns {*} Result of render.
+     */
     render(time) {}
 }
 

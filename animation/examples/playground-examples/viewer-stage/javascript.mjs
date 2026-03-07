@@ -6,6 +6,10 @@ const stage = document.getElementById("stage");
 const viewer = document.getElementById("viewer");
 const probe = document.getElementById("probe");
 
+/**
+ * Executes initFollowDemo.
+ * @returns {*} Result of initFollowDemo.
+ */
 function initFollowDemo() {
     if (!stage || !probe || stage._probeFollowBound) return;
     stage._probeFollowBound = true;

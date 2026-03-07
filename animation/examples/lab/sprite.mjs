@@ -20,12 +20,21 @@ let rocketPlaying = false;
 let rocketDirection = 1;
 let rocketLast = performance.now();
 
+/**
+ * Renders module output using the current state.
+ * @returns {*} Result of render.
+ */
 function render() {
     baseFrameEl.textContent = String(baseFrame);
     rocketYawEl.textContent = Number(rocket.degrees || 0).toFixed(1);
     rocketFrameEl.textContent = String(rocket.frame || 0);
 }
 
+/**
+ * Executes tick.
+ * @param {*} now - Parameter value.
+ * @returns {*} Result of tick.
+ */
 function tick(now) {
     if (baseReady && basePlaying && now - baseLast >= 1000 / 12) {
         baseLast = now;

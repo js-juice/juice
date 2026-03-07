@@ -15,23 +15,44 @@ import { checkGLError } from "../Lib/Helper.mjs";
  * @private
  */
 class Attribute extends VariableBase {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} args - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(...args) {
         super("attribute", ...args);
         this.constructor.index++;
     }
 }
 
+/**
+ * Represents the Uniform animation module class.
+ */
 export class Uniform extends VariableBase {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} args - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(...args) {
         super("uniform", ...args);
         this.constructor.index++;
     }
 
+    /**
+     * Executes download.
+     * @returns {*} Result of download.
+     */
     download() {
         if (!this.location) return;
         return this.gl.getUniform(this.program, this.location);
     }
 
+    /**
+     * Executes upload.
+     * @returns {*} Result of upload.
+     */
     upload() {
         const { gl, program, name, settings } = this;
         if (!program) return false;
@@ -79,21 +100,45 @@ export class Uniform extends VariableBase {
     }
 }
 
+/**
+ * Represents the Varying animation module class.
+ */
 class Varying extends VariableBase {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} args - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(...args) {
         super("varying", ...args);
         this.constructor.index++;
     }
 }
 
+/**
+ * Represents the InputAttribute animation module class.
+ */
 class InputAttribute extends Attribute {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} args - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(...args) {
         super("in", ...args);
         this.constructor.index++;
     }
 }
 
+/**
+ * Represents the OutputAttribute animation module class.
+ */
 class OutputAttribute extends Attribute {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} args - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(...args) {
         super("out", ...args);
         this.constructor.index++;

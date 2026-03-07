@@ -13,7 +13,11 @@ function buildVirtualElement(vElement) {
         } else if (attr === "class") {
             el.className = attributes[attr];
         } else if (attr === "style") {
-            Object.assign(el.style, attributes[attr]);
+            if (typeof attributes[attr] === "string") {
+                el.style.cssText = attributes[attr];
+            } else {
+                Object.assign(el.style, attributes[attr]);
+            }
         } else {
             el.setAttribute(attr, attributes[attr]);
         }
@@ -51,9 +55,25 @@ export function render(props) {
             }
         } else if (typeof props === "string") {
             const createElementFromToken = (token) => {
-                const parsed = String(token || "")
-                    .trim()
-                    .match(/^([a-z0-9-]+)(#[a-zA-Z0-9_-]+)?((\.[a-zA-Z0-9_-]+)*)$/i);
+                let str = String(token || "").trim();
+                let styleString = null;
+                let bracketAttrs = null;
+
+                // Extract brace shorthand: div{color:red}
+                const braceMatch = str.match(/\{([\s\S]*?)\}$/);
+                if (braceMatch) {
+                    styleString = braceMatch[1].trim();
+                    str = str.slice(0, braceMatch.index).trim();
+                }
+
+                // Extract bracketed attrs: div[style=color:red id=foo]
+                const brMatch = str.match(/\[([\s\S]*?)\]$/);
+                if (brMatch) {
+                    bracketAttrs = brMatch[1].trim();
+                    str = str.slice(0, brMatch.index).trim();
+                }
+
+                const parsed = str.match(/^([a-z0-9-]+)(#[a-zA-Z0-9_-]+)?((\.[a-zA-Z0-9_-]+)*)$/i);
                 const tag = (parsed && parsed[1]) || "div";
                 const node = document.createElement(tag);
                 if (parsed && parsed[2]) {
@@ -65,6 +85,42 @@ export function render(props) {
                         .filter(Boolean)
                         .forEach((className) => node.classList.add(className));
                 }
+
+                if (styleString) {
+                    node.style.cssText = styleString;
+                }
+
+                if (bracketAttrs) {
+                    bracketAttrs.split(/\s+/).forEach((pair) => {
+                        if (!pair) return;
+                        const eq = pair.indexOf("=");
+                        if (eq > 0) {
+                            const key = pair.slice(0, eq);
+                            let val = pair.slice(eq + 1);
+                            if (
+                                (val.startsWith('"') && val.endsWith('"')) ||
+                                (val.startsWith("'") && val.endsWith("'"))
+                            ) {
+                                val = val.slice(1, -1);
+                            }
+                            if (key === "style") {
+                                node.style.cssText = val;
+                            } else if (key === "id") {
+                                node.id = val;
+                            } else if (key === "class") {
+                                val.split(".")
+                                    .filter(Boolean)
+                                    .forEach((c) => node.classList.add(c));
+                            } else {
+                                node.setAttribute(key, val);
+                            }
+                        } else {
+                            // treat bare token as a class
+                            node.classList.add(pair);
+                        }
+                    });
+                }
+
                 return node;
             };
 
@@ -123,6 +179,40 @@ export function render(props) {
     } else {
         element = props;
         props = {};
+    }
+
+    // If props provides attributes, events, or children, apply them to the created element
+    if (props && typeof props === "object") {
+        const attributes = props.attributes || props.attrs || props.props || {};
+        for (let attr in attributes) {
+            if (attr === "id") {
+                element.id = attributes[attr];
+            } else if (attr === "class") {
+                element.className = attributes[attr];
+            } else if (attr === "style") {
+                if (typeof attributes[attr] === "string") {
+                    element.style.cssText = attributes[attr];
+                } else {
+                    Object.assign(element.style, attributes[attr]);
+                }
+            } else {
+                element.setAttribute(attr, attributes[attr]);
+            }
+        }
+
+        if (props.events) {
+            for (let ev in props.events) {
+                element.addEventListener(ev, props.events[ev]);
+            }
+        }
+
+        if (props.children && Array.isArray(props.children)) {
+            props.children.forEach((child) => {
+                element.appendChild(render(child));
+            });
+        } else if (props.child) {
+            element.appendChild(render(props.child));
+        }
     }
 
     return element;

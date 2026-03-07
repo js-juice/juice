@@ -1,3 +1,38 @@
+/**
+ * AUTODOC:START
+ * Component: <input-button>
+ * Class: InputButtonComponent
+ * Overview: Form-aware button component with configurable label/icon styling and action event dispatching.
+ *
+ * Features:
+ * - Supports icon slot or icon attribute rendering.
+ * - Emits `input-button-click` and optional `input-button-action` custom events.
+ * - Mirrors common button attributes (`type`, `name`, `value`, `disabled`, `aria-label`).
+ * - Uses global forms theme config for default colors.
+ *
+ * Example:
+ * `<input-button label="Save" action="saveProfile" icon="💾" type="submit"></input-button>`
+ *
+ * Attribute Reference:
+ * - `label`: Visible button text.
+ * - `icon`: Text/icon glyph shown before label.
+ * - `action`: Action identifier emitted in event payload.
+ * - `bgcolor`, `color`: Button color overrides.
+ * - `disabled`, `type`, `name`, `value`, `aria-label`: Native-like button semantics.
+ *
+ * Property Reference:
+ * - `disabled`: Getter/setter for disabled host state.
+ * - `click()`: Programmatic click passthrough.
+ *
+ * CSS Variables:
+ * - `--input-border-radius`: Button corner radius.
+ * - `--input-button-bgcolor`, `--input-button-color`: Button theme colors.
+ *
+ * Part Names:
+ * - `button`: Inner native button element.
+ * AUTODOC:END
+ */
+
 import { getJuiceConfig } from "../../config/juice-config.mjs";
 
 class InputButtonComponent extends HTMLElement {

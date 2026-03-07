@@ -113,6 +113,14 @@ export default class Tween extends EventEmitter {
  * @param {Function} [easingFunction=Easing.linear] - Easing function
  */
 class TweenObject extends EventEmitter {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} startValue - Parameter value.
+     * @param {*} endValue - Parameter value.
+     * @param {*} duration - Parameter value.
+     * @param {*} easingFunction - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(startValue, endValue, duration, easingFunction = Easing.linear) {
         super();
         this.tweens = [];
@@ -122,6 +130,10 @@ class TweenObject extends EventEmitter {
         }
     }
 
+    /**
+     * Executes start.
+     * @returns {*} Result of start.
+     */
     start() {
         this.tweens.forEach((tween) => tween.start());
     }

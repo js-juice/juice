@@ -1,69 +1,16 @@
 <!doctype html>
 <html lang="en">
-
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <title>Body Example Docs</title>
-        <link rel="stylesheet" href="../../../brand/templates/css/default.css" />
-        <link rel="stylesheet" href="../../../brand/templates/css/juice.css" />
-        <link rel="stylesheet" href="../../../brand/templates/css/pages.css" />
-        <style>
-            .doc { max-width: 980px; margin: 0 auto; }
-            .doc section { margin: 14px 0; padding: 12px; border: 1px solid #d7e2f2; border-radius: 10px; background: #fff; }
-            .doc h2 { margin: 0 0 8px; font-size: 18px; }
-            .doc code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-            .doc ul { margin: 0; padding-left: 18px; }
-            .doc li { margin: 4px 0; }
-        </style>
+        <title>Redirecting to Body Docs</title>
+        <script>
+            const params = new URLSearchParams(window.location.search);
+            params.set("file", "components/body.mjs");
+            window.location.replace(`./module-docs.html?${params.toString()}`);
+        </script>
     </head>
-
-    <body class="docs-page docs-page--forms">
-        <header>
-            <div class="container flex-h flex-grow" style="flex:0 1 auto;">
-                <div class="branding"><a href=""><img src="../../../brand/logo-long.svg" alt="JS Juice" /></a></div>
-                <div data-include="../../../brand/templates/includes/nav.html" data-nav-base="../../../"></div>
-            </div>
-        </header>
-        <main>
-            <div class="container padding:1o5 doc">
-                <p><a href="../playground.html">Back to Playground</a> | <a href="./index.html">All Example Docs</a></p>
-                <h1>Body Example Docs</h1>
-                <section>
-                    <h2>Core Class</h2>
-                    <ul>
-                        <li><code>animation/components/body.mjs</code> exports <code>AnimationBody</code>.</li>
-                        <li>Combines position, velocity, rotation, anchor, and scale into CSS-variable-based rendering.</li>
-                    </ul>
-                </section>
-                <section>
-                    <h2>Primary Methods</h2>
-                    <ul>
-                        <li><code>setAnchor(value)</code>: parse and apply anchor ratios.</li>
-                        <li><code>moveTo(x, y)</code>: set body position directly.</li>
-                        <li><code>freezeAt(x, y, z)</code>: set frozen position for tracking modes.</li>
-                        <li><code>viewerPosition()</code>, <code>getStagePosition()</code>, <code>relativePosition(el)</code>.</li>
-                    </ul>
-                </section>
-                <section>
-                    <h2>Important Properties</h2>
-                    <ul>
-                        <li><code>position</code>, <code>velocity</code>, <code>rotation</code>, <code>scale</code>.</li>
-                        <li><code>width</code>, <code>height</code>, <code>anchor</code>, <code>debug</code>.</li>
-                        <li><code>worldPosition</code>: synchronized with runtime movement for camera/follow logic.</li>
-                    </ul>
-                </section>
-                <section>
-                    <h2>Technical Notes</h2>
-                    <ul>
-                        <li>Update step mutates state; render step writes batched style variables.</li>
-                        <li>Viewport visibility checks avoid unnecessary render writes when off-screen.</li>
-                        <li>Debug mode updates runtime stat labels on the anchor marker.</li>
-                    </ul>
-                </section>
-            </div>
-        </main>
-        <script type="module" src="../../../brand/templates/includes/include.mjs"></script>
+    <body>
+        <p>Redirecting to body module docs...</p>
     </body>
-
 </html>

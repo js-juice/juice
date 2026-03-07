@@ -20,6 +20,10 @@ const caf =
     (typeof root.mozCancelAnimationFrame === "function" && root.mozCancelAnimationFrame.bind(root)) ||
     ((requestID) => clearTimeout(requestID));
 
+/**
+ * Executes nowMS.
+ * @returns {*} Result of nowMS.
+ */
 function nowMS() {
     if (root.performance && typeof root.performance.now === "function") {
         return root.performance.now();
@@ -46,12 +50,22 @@ class Ticker {
     /** @type {AnimationTime} Time tracking instance */
     time = new AnimationTime();
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} timelines - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(...timelines) {
         this.timelines = timelines;
         this._frameHandle = null;
         this._tick = this._tick.bind(this);
     }
 
+    /**
+     * Implements internal _tick behavior.
+     * @param {*} ms - Parameter value.
+     * @returns {*} Result of _tick.
+     */
     _tick(ms) {
         if (!this.active) return;
         this.ms = ms;
@@ -162,6 +176,12 @@ class Timeline {
         renderers: []
     };
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} scope - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(scope = this, options = {}) {
         if (scope) this.scope = scope;
         this.options = options;
@@ -197,6 +217,11 @@ class Timeline {
         if (!options.defer) this.start();
     }
 
+    /**
+     * Executes debug.
+     * @param {*} parent - Parameter value.
+     * @returns {*} Result of debug.
+     */
     debug(parent = document.body) {
         if (!this._stats) {
             this._stats = document.createElementNS("http://www.w3.org/1999/xhtml", "animation-stats");
@@ -204,6 +229,10 @@ class Timeline {
         }
     }
 
+    /**
+     * Implements internal _hasWork behavior.
+     * @returns {*} Result of _hasWork.
+     */
     _hasWork() {
         return !!(
             this._update ||
@@ -214,6 +243,10 @@ class Timeline {
         );
     }
 
+    /**
+     * Implements internal _syncActivity behavior.
+     * @returns {*} Result of _syncActivity.
+     */
     _syncActivity() {
         const isStopped = !!(this.time && this.time.stopped);
         const shouldRun = this.started && !this.paused && !isStopped && this._hasWork();
@@ -230,6 +263,10 @@ class Timeline {
         return true;
     }
 
+    /**
+     * Executes start.
+     * @returns {*} Result of start.
+     */
     start() {
         this.started = true;
         this.paused = false;
@@ -237,20 +274,37 @@ class Timeline {
         this._syncActivity();
     }
 
+    /**
+     * Executes cancel.
+     * @returns {*} Result of cancel.
+     */
     cancel() {
         this._complete = true;
         this.active = false;
     }
 
+    /**
+     * Executes reset.
+     * @returns {*} Result of reset.
+     */
     reset() {
         this.time.reset();
     }
 
+    /**
+     * Executes pause.
+     * @returns {*} Result of pause.
+     */
     pause() {
         this.paused = true;
         this.active = false;
     }
 
+    /**
+     * Sets timescale values.
+     * @param {*} value - Parameter value.
+     * @returns {*} Result of setTimeScale.
+     */
     setTimeScale(value = 1) {
         const next = Number(value);
         if (!Number.isFinite(next) || next === 0) return this;
@@ -259,6 +313,11 @@ class Timeline {
         return this;
     }
 
+    /**
+     * Sets reverse values.
+     * @param {*} reverse - Parameter value.
+     * @returns {*} Result of setReverse.
+     */
     setReverse(reverse = true) {
         const speed = Math.abs(this.timeScale) || 1;
         this.timeScale = reverse ? -speed : speed;
@@ -266,14 +325,28 @@ class Timeline {
         return this;
     }
 
+    /**
+     * Returns the current reverse value.
+     * @returns {*} Current reverse value.
+     */
     get reverse() {
         return this.timeScale < 0;
     }
 
+    /**
+     * Updates the reverse value.
+     * @param {*} value - Parameter value.
+     * @returns {*} void.
+     */
     set reverse(value) {
         this.setReverse(Boolean(value));
     }
 
+    /**
+     * Executes play.
+     * @param {*} duration - Parameter value.
+     * @returns {*} Result of play.
+     */
     play(duration) {
         if (!this.started) this.start();
         if (this.time && this.time.stopped) this.time.stopped = false;
@@ -282,10 +355,19 @@ class Timeline {
         if (duration) setTimeout(() => this.pause(), duration);
     }
 
+    /**
+     * Returns the current active value.
+     * @returns {*} Current active value.
+     */
     get active() {
         return this._active;
     }
 
+    /**
+     * Updates the active value.
+     * @param {*} active - Parameter value.
+     * @returns {*} void.
+     */
     set active(active) {
         if (active && !this._active) {
             this._active = active;
@@ -295,26 +377,51 @@ class Timeline {
         }
     }
 
+    /**
+     * Updates the render value.
+     * @param {*} fn - Parameter value.
+     * @returns {*} void.
+     */
     set render(fn) {
         this._render = typeof fn === "function" ? fn.bind(this.scope) : null;
         this._syncActivity();
     }
 
+    /**
+     * Updates the update value.
+     * @param {*} fn - Parameter value.
+     * @returns {*} void.
+     */
     set update(fn) {
         this._update = typeof fn === "function" ? fn.bind(this.scope) : null;
         this._syncActivity();
     }
 
+    /**
+     * Updates the complete value.
+     * @param {*} fn - Parameter value.
+     * @returns {*} void.
+     */
     set complete(fn) {
         this._complete = fn.bind(this.scope);
     }
 
+    /**
+     * Executes afterUpdate.
+     * @param {*} fn - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of afterUpdate.
+     */
     afterUpdate(fn, options = {}) {
         if (typeof fn !== "function") return;
         this._afterUpdate.push({ fn, scope: this.scope, ...options });
         this._syncActivity();
     }
 
+    /**
+     * Implements internal _executeAfterUpdate behavior.
+     * @returns {*} Result of _executeAfterUpdate.
+     */
     _executeAfterUpdate() {
         const hooks = this._afterUpdate;
         for (let i = 0; i < hooks.length; i += 1) {
@@ -327,6 +434,11 @@ class Timeline {
         }
     }
 
+    /**
+     * Executes addUpdate.
+     * @param {*} fn - Parameter value.
+     * @returns {*} Result of addUpdate.
+     */
     addUpdate(fn) {
         if (typeof fn !== "function") return;
         const updaters = this.animators.updaters;
@@ -336,6 +448,11 @@ class Timeline {
         this._syncActivity();
     }
 
+    /**
+     * Executes addRender.
+     * @param {*} fn - Parameter value.
+     * @returns {*} Result of addRender.
+     */
     addRender(fn) {
         if (typeof fn !== "function") return;
         const renderers = this.animators.renderers;
@@ -345,6 +462,11 @@ class Timeline {
         this._syncActivity();
     }
 
+    /**
+     * Executes addAnimator.
+     * @param {*} animator - Parameter value.
+     * @returns {*} Result of addAnimator.
+     */
     addAnimator(animator) {
         animator._timeline = this;
         const scope = animator.scope || animator;
@@ -362,6 +484,11 @@ class Timeline {
         this._syncActivity();
     }
 
+    /**
+     * Executes tick.
+     * @param {*} ms - Parameter value.
+     * @returns {*} Result of tick.
+     */
     tick(ms) {
         if (this.paused) return;
         if (!this._hasWork()) {

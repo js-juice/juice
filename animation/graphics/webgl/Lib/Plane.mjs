@@ -9,6 +9,14 @@
  * @class Plane
  */
 class Plane {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} width - Parameter value.
+     * @param {*} height - Parameter value.
+     * @param {*} subdivisionsX - Parameter value.
+     * @param {*} subdivisionsY - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(width, height, subdivisionsX, subdivisionsY) {
         this.width = width;
         this.height = height;
@@ -25,6 +33,10 @@ class Plane {
         this.generate();
     }
 
+    /**
+     * Executes generateVertices.
+     * @returns {*} Result of generateVertices.
+     */
     generateVertices() {
         const xStep = this.width / this.subdivisionsX;
         const yStep = this.height / this.subdivisionsY;
@@ -36,6 +48,10 @@ class Plane {
         }
     }
 
+    /**
+     * Executes generateUvs.
+     * @returns {*} Result of generateUvs.
+     */
     generateUvs() {
         for (let y = 0; y <= this.subdivisionsY; y++) {
             for (let x = 0; x <= this.subdivisionsX; x++) {
@@ -44,6 +60,10 @@ class Plane {
         }
     }
 
+    /**
+     * Executes generateTriangles.
+     * @returns {*} Result of generateTriangles.
+     */
     generateTriangles() {
         for (let y = 0; y < this.subdivisionsY; y++) {
             for (let x = 0; x < this.subdivisionsX; x++) {
@@ -61,6 +81,10 @@ class Plane {
         }
     }
 
+    /**
+     * Executes generateNormals.
+     * @returns {*} Result of generateNormals.
+     */
     generateNormals() {
         for (let y = 0; y <= this.subdivisionsY; y++) {
             for (let x = 0; x <= this.subdivisionsX; x++) {
@@ -69,6 +93,10 @@ class Plane {
         }
     }
 
+    /**
+     * Executes generateColors.
+     * @returns {*} Result of generateColors.
+     */
     generateColors() {
         for (let y = 0; y <= this.subdivisionsY; y++) {
             for (let x = 0; x <= this.subdivisionsX; x++) {
@@ -77,6 +105,10 @@ class Plane {
         }
     }
 
+    /**
+     * Executes compile.
+     * @returns {*} Result of compile.
+     */
     compile() {
         return {
             vertices: this.vertices,
@@ -87,6 +119,10 @@ class Plane {
         };
     }
 
+    /**
+     * Executes generate.
+     * @returns {*} Result of generate.
+     */
     generate() {
         this.generateVertices();
         this.generateUvs();

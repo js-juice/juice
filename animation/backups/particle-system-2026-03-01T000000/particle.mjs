@@ -17,6 +17,18 @@
  * @param {boolean} [useDOM=false] - Whether to render using DOM elements
  */
 class Particle {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @param {*} velocityX - Parameter value.
+     * @param {*} velocityY - Parameter value.
+     * @param {*} size - Parameter value.
+     * @param {*} lifespan - Parameter value.
+     * @param {*} forces - Parameter value.
+     * @param {*} useDOM - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(x, y, velocityX, velocityY, size, lifespan, forces = [], useDOM = false) {
         this.x = x;
         this.y = y;
@@ -43,6 +55,11 @@ class Particle {
         }
     }
 
+    /**
+     * Executes applyForces.
+     * @param {*} deltaTime - Parameter value.
+     * @returns {*} Result of applyForces.
+     */
     applyForces(deltaTime) {
         this.forces.forEach((force) => {
             this.velocityX += force.x * deltaTime;
@@ -50,6 +67,11 @@ class Particle {
         });
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} deltaTime - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(deltaTime) {
         // Apply forces to the particle
         this.applyForces(deltaTime);
@@ -66,12 +88,21 @@ class Particle {
         this.age += deltaTime;
     }
 
+    /**
+     * Renders output from current module state.
+     * @returns {*} Result of renderDom.
+     */
     renderDom() {
         if (this.useDOM && this.element) {
             this.element.style.opacity = this.age / this.lifespan;
         }
     }
 
+    /**
+     * Renders output from current module state.
+     * @param {*} ctx - Parameter value.
+     * @returns {*} Result of renderCanvas.
+     */
     renderCanvas(ctx) {
         if (!this.useDOM) {
             ctx.fillStyle = "black";
@@ -79,10 +110,18 @@ class Particle {
         }
     }
 
+    /**
+     * Executes isAlive.
+     * @returns {*} Result of isAlive.
+     */
     isAlive() {
         return this.age < this.lifespan;
     }
 
+    /**
+     * Executes remove.
+     * @returns {*} Result of remove.
+     */
     remove() {
         if (this.useDOM && this.element) {
             document.body.removeChild(this.element);

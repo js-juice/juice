@@ -107,6 +107,9 @@ export const VariableTypes = {
     MEDIUMP_FLOAT: "mediump"
 };
 
+/**
+ * Represents the Variable animation module class.
+ */
 export class Variable {
     static ATTRIBUTE = "attribute";
     static UNIFORM = "uniform";
@@ -124,6 +127,14 @@ export class Variable {
 
     settings = null;
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} qualifier - Parameter value.
+     * @param {*} type - Parameter value.
+     * @param {*} name - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(qualifier, type, name, options = {}) {
         this.qualifier = qualifier;
         this.type = type;
@@ -150,6 +161,12 @@ export class Variable {
         console.log("CREATING VARIABLE", qualifier, type, name);
     }
 
+    /**
+     * Executes bind.
+     * @param {*} gl - Parameter value.
+     * @param {*} program - Parameter value.
+     * @returns {*} Result of bind.
+     */
     bind(gl, program) {
         this.gl = gl;
         this.program = program;
@@ -161,6 +178,10 @@ export class Variable {
         }
     }
 
+    /**
+     * Executes declare.
+     * @returns {*} Result of declare.
+     */
     declare() {
         let loc = "";
         if (this.options.location !== undefined) {
@@ -170,11 +191,19 @@ export class Variable {
         return `${loc}${this.qualifier} ${this.type} ${this.name};`;
     }
 
+    /**
+     * Executes feedbackLocation.
+     * @returns {*} Result of feedbackLocation.
+     */
     feedbackLocation() {
         if (this._feedbackLocation) return this._feedbackLocation;
         const { gl } = this;
     }
 
+    /**
+     * Returns the current location value.
+     * @returns {*} Current location value.
+     */
     get location() {
         if (!this.program) this.program = this.webgl.program;
         if (this._location !== undefined) return this._location;
@@ -194,6 +223,11 @@ export class Variable {
         return this._location;
     }
 
+    /**
+     * Sets  values.
+     * @param {*} data - Parameter value.
+     * @returns {*} Result of set.
+     */
     set(data) {
         const { gl } = this;
         this.value = data;
@@ -203,16 +237,30 @@ export class Variable {
         }
     }
 
+    /**
+     * Updates the value value.
+     * @param {*} value - Parameter value.
+     * @returns {*} void.
+     */
     set value(value) {
         if (value === this._value) return;
         this._value = value;
         this.upload();
     }
 
+    /**
+     * Updates the deferredValue value.
+     * @param {*} value - Parameter value.
+     * @returns {*} void.
+     */
     set deferredValue(value) {
         this._value = value;
     }
 
+    /**
+     * Executes upload.
+     * @returns {*} Result of upload.
+     */
     upload() {
         if (this.qualifier === Variable.UNIFORM) {
             if (this.settings) {
@@ -229,10 +277,18 @@ export class Variable {
         checkGLError(this.gl);
     }
 
+    /**
+     * Returns the current value value.
+     * @returns {*} Current value value.
+     */
     get value() {
         return this._value;
     }
 
+    /**
+     * Returns the current buffer value.
+     * @returns {*} Current buffer value.
+     */
     get buffer() {
         if (this._buffer) {
             return this._buffer;
@@ -242,6 +298,10 @@ export class Variable {
         }
     }
 
+    /**
+     * Executes uploadBuffer.
+     * @returns {*} Result of uploadBuffer.
+     */
     uploadBuffer() {
         const { gl } = this;
         if (this._value === undefined || !this.location) return;
@@ -252,6 +312,11 @@ export class Variable {
         gl.enableVertexAttribArray(this.location);
     }
 
+    /**
+     * Executes swapBuffer.
+     * @param {*} buffer - Parameter value.
+     * @returns {*} Result of swapBuffer.
+     */
     swapBuffer(buffer) {
         this._buffer = buffer;
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -260,6 +325,12 @@ export class Variable {
         gl.vertexAttribPointer(this.location, gl[this.settings.args], gl[this.settings.argType], false, 0, 0);
     }
 
+    /**
+     * Executes createBuffer.
+     * @param {*} value - Parameter value.
+     * @param {*} size - Parameter value.
+     * @returns {*} Result of createBuffer.
+     */
     createBuffer(value, size) {
         console.log(this.name, value, size);
         if (value) this._value = value;

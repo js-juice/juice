@@ -30,6 +30,11 @@ class Camera {
         z: 0
     };
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} viewer - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(viewer) {
         this.viewer = viewer;
         this.last = { x: 0, y: 0, z: 0 };
@@ -37,6 +42,11 @@ class Camera {
         this.worldPosition = { x: 0, y: 0, z: 0 }; // Track actual world position of frozen targets
     }
 
+    /**
+     * Updates the x value.
+     * @param {*} value - Parameter value.
+     * @returns {*} void.
+     */
     set x(value) {
         if (!this.viewer.stage) return;
         const stage = this.viewer.stage;
@@ -46,6 +56,11 @@ class Camera {
         stage.position.x = anchorX - value - centerX;
     }
 
+    /**
+     * Updates the y value.
+     * @param {*} value - Parameter value.
+     * @returns {*} void.
+     */
     set y(value) {
         if (!this.viewer.stage) return;
         const stage = this.viewer.stage;
@@ -55,12 +70,21 @@ class Camera {
         stage.position.y = anchorY - value - centerY;
     }
 
+    /**
+     * Updates the z value.
+     * @param {*} value - Parameter value.
+     * @returns {*} void.
+     */
     set z(value) {
         // Z is not used in 2D stages, but kept for 3D compatibility
         if (!this.viewer.stage || !this.viewer.stage.position.z) return;
         this.viewer.stage.position.z = -value;
     }
 
+    /**
+     * Returns the current x value.
+     * @returns {*} Current x value.
+     */
     get x() {
         const stage = this.viewer.stage;
         if (!stage) return 0;
@@ -70,6 +94,10 @@ class Camera {
         return anchorX - centerX - (stage.position?.x || 0);
     }
 
+    /**
+     * Returns the current y value.
+     * @returns {*} Current y value.
+     */
     get y() {
         const stage = this.viewer.stage;
         if (!stage) return 0;
@@ -79,17 +107,30 @@ class Camera {
         return anchorY - centerY - (stage.position?.y || 0);
     }
 
+    /**
+     * Returns the current z value.
+     * @returns {*} Current z value.
+     */
     get z() {
         // Z is not used in 2D stages, but kept for 3D compatibility
         return -(this.viewer.stage?.position.z || 0);
     }
 
+    /**
+     * Executes follow.
+     * @param {*} target - Parameter value.
+     * @returns {*} Result of follow.
+     */
     follow(target) {
         this.target = target;
     }
 
     filters = [];
     activeFilters = [];
+    /**
+     * Returns the current filter value.
+     * @returns {*} Current filter value.
+     */
     get filter() {
         return {
             start(type, options = {}) {
@@ -110,6 +151,11 @@ class Camera {
         };
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} time - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(time) {
         if (!this.viewer.stage) return;
 
@@ -168,6 +214,10 @@ class Camera {
         };
     }
 
+    /**
+     * Renders output from current module state.
+     * @returns {*} Result of render.
+     */
     render() {}
 }
 

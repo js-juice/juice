@@ -1,41 +1,45 @@
 <div class="controls-emitter" id="emitter-controls">
     <h4>Emitter</h4>
-    <div class="controls-row">
-        <button id="emitter-toggle" type="button">Emitter: off</button>
-        <label for="emitter-pps">PPS</label>
-        <input id="emitter-pps" type="number" min="0" value="30" />
-        <label for="emitter-burst">Burst</label>
-        <input id="emitter-burst" type="number" min="0" value="50" />
-        <button id="emitter-burst-btn" type="button">Fire Burst</button>
+    <div class="flex-row">
+        <div class="flex-static">
+            <input-direction id="direction" inline label="Direction" default-x="1" default-y="0"
+                default-z="0"></input-direction>
+        </div>
+        <div class="flex-grow padding:0o5">
+
+            <div class="row nowrap cols:2 gap:0o5">
+                <input-number id="emitter-spread" label="Spread (deg)" type="number" step="1" value="10"></input-number>
+                <input-number id="emitter-pps" label="PPS" type="number" min="0" value="30" step="1"></input-number>
+            </div>
+            <div class="row nowrap cols:2 gap:0o5">
+                <input-number id="emitter-size" label="Size" type="number" step="1" value="2"></input-number>
+                <input-number id="emitter-life" label="Lifespan" type="number" step="0.25" value="2"></input-number>
+            </div>
+            <div class="row nowrap cols:2 gap:0o5">
+                <input-number id="emitter-speed" label="Speed" type="number" step="0.5" value="90"></input-number>
+
+                <input-number id="emitter-friction" label="Friction" type="number" step="0.01"
+                    value="0.0"></input-number>
+            </div>
+            <div class="row nowrap cols:1 gap:0o5">
+                <input-vector id="position" step="1" dimentions="3" label="Position" default-x="0" default-y="0"
+                    default-z="0" normalize="false"></input-vector>
+            </div>
+            <div class="row nowrap cols:1 gap:0o5">
+                <input-vector id="gravity" step="1" dimentions="3" label="Gravity" default-x="0" default-y="0"
+                    default-z="0" normalize="false"></input-vector>
+            </div>
+
+        </div>
     </div>
+
     <div class="controls-row">
-        <label for="emitter-direction">Direction (deg)</label>
-        <input id="emitter-direction" type="number" step="1" value="0" />
-        <label for="emitter-spread">Spread (deg)</label>
-        <input id="emitter-spread" type="number" step="1" value="20" />
+        <input-button id="emitter-toggle" type="button">Emitter: off</input-button>
+        <input-number id="emitter-burst" label="Burst" type="number" min="0" value="50" step="1"></input-number>
+        <input-button id="emitter-burst-btn" type="button">Fire Burst</input-button>
     </div>
-    <div class="controls-row">
-        <label for="emitter-theta">Theta (deg)</label>
-        <input id="emitter-theta" type="number" step="1" value="90" />
-        <label for="emitter-phi">Phi (deg)</label>
-        <input id="emitter-phi" type="number" step="1" value="0" />
-    </div>
-    <div class="controls-row">
-        <label for="emitter-pos-x">Pos X</label>
-        <input id="emitter-pos-x" type="number" step="0.01" value="150" />
-        <label for="emitter-pos-y">Pos Y</label>
-        <input id="emitter-pos-y" type="number" step="0.01" value="150" />
-        <label for="emitter-pos-z">Pos Z</label>
-        <input id="emitter-pos-z" type="number" step="0.01" value="0" />
-    </div>
-    <div class="controls-row">
-        <label for="emitter-speed">Speed</label>
-        <input id="emitter-speed" type="number" step="0.01" value="120" />
-        <label for="emitter-size">Size</label>
-        <input id="emitter-size" type="number" step="0.1" value="3" />
-        <label for="emitter-life">Lifespan (s)</label>
-        <input id="emitter-life" type="number" step="0.1" value="2" />
-    </div>
+
+    <!-- Theta/Phi removed: replaced by direction ball input-direction -->
     <div class="controls-row">
         <label for="emitter-mask-select">Mask</label>
         <select id="emitter-mask-select">
@@ -44,16 +48,13 @@
         <label for="emitter-randomize">Randomize</label>
         <input id="emitter-randomize" type="checkbox" />
     </div>
-    <div class="controls-row">
-        <label for="emitter-grav-x">Gravity X</label>
-        <input id="emitter-grav-x" type="number" step="0.01" value="0" />
-        <label for="emitter-grav-y">Gravity Y</label>
-        <input id="emitter-grav-y" type="number" step="0.01" value="0.0" />
-        <label for="emitter-grav-z">Gravity Z</label>
-        <input id="emitter-grav-z" type="number" step="0.01" value="0" />
-    </div>
-    <div class="controls-row">
-        <label for="emitter-friction">Friction</label>
-        <input id="emitter-friction" type="number" step="0.01" value="0.0" />
-    </div>
+
+
+    <script>
+        const spreadInput = document.getElementById("emitter-spread");
+        console.dir(spreadInput);
+        spreadInput.addEventListener("change", (e) => {
+            consople.debug("spread input", e);
+        });
+    </script>
 </div>

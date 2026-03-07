@@ -24,6 +24,9 @@ export const StorageQualifiers = {
 
 const QUALIFIER_VALUES = Object.values(StorageQualifiers);
 
+/**
+ * Represents the VariableBase animation module class.
+ */
 class VariableBase {
     static qualifiers = QUALIFIER_VALUES;
 
@@ -31,6 +34,11 @@ class VariableBase {
     static webgl;
     static gl;
 
+    /**
+     * Sets gl values.
+     * @param {*} gl - Parameter value.
+     * @returns {*} Result of setGL.
+     */
     static setGL(gl) {
         this.gl = gl;
     }
@@ -57,6 +65,11 @@ class VariableBase {
             this.LOCATION_LOOKUP === "getUniformLocation" ? WebGLRenderingContext.UNIFORM : WebGLUniformLocation;
     }
 
+    /**
+     * Executes linkGL.
+     * @param {*} webgl - Parameter value.
+     * @returns {*} Result of linkGL.
+     */
     linkGL(webgl) {
         if (webgl instanceof WebGLRenderingContext) {
             this.gl = webgl;
@@ -65,6 +78,11 @@ class VariableBase {
         }
     }
 
+    /**
+     * Executes define.
+     * @param {*} builder - Parameter value.
+     * @returns {*} Result of define.
+     */
     define(builder) {
         builder.define(
             (this._locationId !== null ? `layout(location = ${this._locationId}) ` : "") + this.qualifier,
@@ -73,6 +91,10 @@ class VariableBase {
         );
     }
 
+    /**
+     * Returns the current definition value.
+     * @returns {*} Current definition value.
+     */
     get definition() {
         return (
             (this._locationId !== null ? `layout(location = ${this._locationId}) ` : "") +
@@ -80,6 +102,10 @@ class VariableBase {
         );
     }
 
+    /**
+     * Executes lookupLocation.
+     * @returns {*} Result of lookupLocation.
+     */
     lookupLocation() {
         if (!this.bound) return;
         const { gl, program, name } = this;
@@ -92,6 +118,11 @@ class VariableBase {
         return this._location;
     }
 
+    /**
+     * Updates the value value.
+     * @param {*} value - Parameter value.
+     * @returns {*} void.
+     */
     set value(value) {
         if (this.options.debug) console.log("Attempting to set value", this.name, value, "from", this._value);
         //  console.log("Setting value", this.qualifier, this.name, value);
@@ -114,15 +145,28 @@ class VariableBase {
         return true;
     }
 
+    /**
+     * Returns the current value value.
+     * @returns {*} Current value value.
+     */
     get value() {
         return this._value;
     }
 
+    /**
+     * Returns the current location value.
+     * @returns {*} Current location value.
+     */
     get location() {
         if (this._location !== null) return this._location;
         if (this.lookupLocation) return this.lookupLocation();
     }
 
+    /**
+     * Updates the location value.
+     * @param {*} value - Parameter value.
+     * @returns {*} void.
+     */
     set location(value) {
         this._location = value;
     }

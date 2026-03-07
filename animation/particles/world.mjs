@@ -14,6 +14,13 @@ const { angle, distance, lerp, clamp, norm, pointDiff, diff } = geom;
 const STATE_PROPS = ["state", "distance", "alpha"];
 const POSITION_PROPS = ["x", "y", "z", "bx", "by", "bz", "vx", "vy", "vz"];
 
+/**
+ * Executes anyLerp.
+ * @param {*} a - Parameter value.
+ * @param {*} b - Parameter value.
+ * @param {*} t - Parameter value.
+ * @returns {*} Result of anyLerp.
+ */
 function anyLerp(a, b, t) {
     if (typeof a === "number") {
         return lerp(a, b, t);
@@ -40,7 +47,15 @@ const lifeState = new ParticleLifeState(Particle.States.SPAWNED, {
     },
 });
 */
+/**
+ * Represents the ParticleLifeState animation module class.
+ */
 class ParticleLifeState {
+    /**
+     * Executes chain.
+     * @param {*} states - Parameter value.
+     * @returns {*} Result of chain.
+     */
     static chain(states) {
         const sorted = states.sort((a, b) => a.state - b.state);
         for (let i = 0; i < sorted.length - 1; i++) {
@@ -54,6 +69,12 @@ class ParticleLifeState {
     next;
     properties = ["duration", "size", "color", "position", "velocity"];
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} state - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(state, options = {}) {
         this.state = state;
         this.time = 0;
@@ -66,6 +87,10 @@ class ParticleLifeState {
         this.velocity = options.velocity || { x: 0, y: 0, z: 0 };
     }
 
+    /**
+     * Executes initialize.
+     * @returns {*} Result of initialize.
+     */
     initialize() {
         const transitions = null;
         const { properties } = this;
@@ -90,6 +115,11 @@ class ParticleLifeState {
         }
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @param {*} time - Parameter value.
+     * @returns {*} Result of update.
+     */
     update(time) {
         this.time += time.delta;
         this.percent = this.time / this.duration;
@@ -98,6 +128,11 @@ class ParticleLifeState {
         }
     }
 
+    /**
+     * Executes after.
+     * @param {*} lifeState - Parameter value.
+     * @returns {*} Result of after.
+     */
     after(lifeState) {
         if (this.next === lifeState) return;
         if (this.next) {
@@ -108,6 +143,11 @@ class ParticleLifeState {
         this.next = lifeState;
     }
 
+    /**
+     * Executes before.
+     * @param {*} lifeState - Parameter value.
+     * @returns {*} Result of before.
+     */
     before(lifeState) {
         if (this.prev === lifeState) return;
         if (this.prev) {
@@ -118,11 +158,18 @@ class ParticleLifeState {
         this.prev = lifeState;
     }
 
+    /**
+     * Executes toArray.
+     * @returns {*} Result of toArray.
+     */
     toArray() {
         const { properties } = this;
     }
 }
 
+/**
+ * Represents the Particle animation module class.
+ */
 class Particle {
     static States = {
         DEFAULT: 0,
@@ -132,6 +179,10 @@ class Particle {
         DEAD: 4,
     };
 
+    /**
+     * Executes generateLifePath.
+     * @returns {*} Result of generateLifePath.
+     */
     static generateLifePath() {
         const spawn = {
             duration: 1,
@@ -169,18 +220,33 @@ class Particle {
     state = 0;
     distance = 0;
     alpha = 1;
+    /**
+     * Executes birth.
+     * @returns {*} Result of birth.
+     */
     birth() {
         this.state = 0;
         this.distance = 0;
         this.alpha = 1;
     }
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @param {*} z - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(x, y, z = 0) {
         this.position = { x, y, z };
         this.velocity = { x: 0, y: 0, z: 0 };
         this.birth();
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @returns {*} Result of update.
+     */
     update() {
         switch (this.state) {
             case Particle.States.SPAWNED:
@@ -198,19 +264,42 @@ class Particle {
         }
     }
 
+    /**
+     * Executes stateComplete.
+     * @returns {*} Result of stateComplete.
+     */
     stateComplete() {
         if (this.state < Particle.States.DEAD) this.state++;
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @returns {*} Result of updateSpawned.
+     */
     updateSpawned() {}
 
+    /**
+     * Updates internal state from incoming values.
+     * @returns {*} Result of updateActive.
+     */
     updateActive() {}
 
+    /**
+     * Updates internal state from incoming values.
+     * @returns {*} Result of updateDying.
+     */
     updateDying() {}
 
+    /**
+     * Updates internal state from incoming values.
+     * @returns {*} Result of updateDead.
+     */
     updateDead() {}
 }
 
+/**
+ * Represents the ParticleWorld animation module class.
+ */
 class ParticleWorld {
     config = {
         density: 1,
@@ -221,6 +310,10 @@ class ParticleWorld {
         },
     };
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @returns {*} Result of constructor.
+     */
     constructor() {
         this.particles = [];
         this.emitters = [];
@@ -228,18 +321,40 @@ class ParticleWorld {
         this.gravity = { x: 0, y: 0.1, z: 0 }; // Default gravity force
     }
 
+    /**
+     * Executes addEmitter.
+     * @param {*} emitter - Parameter value.
+     * @returns {*} Result of addEmitter.
+     */
     addEmitter(emitter) {
         this.emitters.push(emitter);
     }
 
+    /**
+     * Executes addParticle.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @param {*} z - Parameter value.
+     * @returns {*} Result of addParticle.
+     */
     addParticle(x, y, z = 0) {
         this.particles.push(new Particle(x, y, z));
     }
 
+    /**
+     * Executes addForce.
+     * @param {*} force - Parameter value.
+     * @returns {*} Result of addForce.
+     */
     addForce(force) {
         this.forces.push(force);
     }
 
+    /**
+     * Executes applyForces.
+     * @param {*} particle - Parameter value.
+     * @returns {*} Result of applyForces.
+     */
     applyForces(particle) {
         // Apply all global forces (e.g., gravity, wind)
         for (const force of this.forces) {
@@ -249,11 +364,19 @@ class ParticleWorld {
         particle.applyForce(this.gravity);
     }
 
+    /**
+     * Executes createParticles.
+     * @returns {*} Result of createParticles.
+     */
     createParticles() {
         this.particles = new PropertyArray(particles.length / POSITION_PROPS.length, POSITION_PROPS, "float");
         this.particles.set(particles, 0);
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @returns {*} Result of update.
+     */
     update() {
         for (const emitter of this.emitters) {
             emitter.update();
@@ -269,6 +392,10 @@ class ParticleWorld {
         }
     }
 
+    /**
+     * Renders output from current module state.
+     * @returns {*} Result of render.
+     */
     render() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         for (const particle of this.particles) {
@@ -276,6 +403,10 @@ class ParticleWorld {
         }
     }
 
+    /**
+     * Executes run.
+     * @returns {*} Result of run.
+     */
     run() {
         const step = () => {
             this.update();

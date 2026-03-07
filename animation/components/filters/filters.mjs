@@ -11,6 +11,11 @@ import ShakeFilter from "./shake.mjs";
  * @class Filters
  */
 class Filters {
+    /**
+     * Executes shake.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of shake.
+     */
     static shake(options) {
         return new ShakeFilter(activeFilters);
     }

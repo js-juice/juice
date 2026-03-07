@@ -12,6 +12,11 @@ body.height = 110;
 let last = performance.now();
 let t = 0;
 
+/**
+ * Executes tick.
+ * @param {*} now - Parameter value.
+ * @returns {*} Result of tick.
+ */
 function tick(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;

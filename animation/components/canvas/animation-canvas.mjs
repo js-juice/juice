@@ -27,12 +27,20 @@ class AnimationCanvas extends Component.HTMLElement {
         },
     };
 
+    /**
+     * Returns the current observed value.
+     * @returns {*} Current observed value.
+     */
     static get observed() {
         return {
             all: ["width", "height", "fps", "debug"],
         };
     }
 
+    /**
+     * Returns the current style value.
+     * @returns {*} Current style value.
+     */
     static get style() {
         return [
             {
@@ -46,6 +54,10 @@ class AnimationCanvas extends Component.HTMLElement {
         ];
     }
 
+    /**
+     * Executes html.
+     * @returns {*} Result of html.
+     */
     static html() {
         return `<canvas id="native" part="canvas" width="${this.width}" height="${this.height}" ></canvas>`;
     }
@@ -54,18 +66,35 @@ class AnimationCanvas extends Component.HTMLElement {
     filters = [];
     mode = "normal";
 
+    /**
+     * Handles firstconnect events.
+     * @returns {*} Result of onFirstConnect.
+     */
     onFirstConnect() {
         this.dispatchEvent(new CustomEvent("connected", { detail: this }));
     }
 
+    /**
+     * Executes add.
+     * @param {*} asset - Parameter value.
+     * @returns {*} Result of add.
+     */
     add(asset) {
         this.assets.push(asset);
     }
 
+    /**
+     * Executes reset.
+     * @returns {*} Result of reset.
+     */
     reset() {
         this.ref("native").clearRect(0, 0, this.width, this.height);
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @returns {*} Result of update.
+     */
     update() {
         this.assets.forEach((asset) => {
             asset.update();

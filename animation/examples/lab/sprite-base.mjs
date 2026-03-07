@@ -12,16 +12,30 @@ let playing = false;
 let frame = 0;
 let last = performance.now();
 
+/**
+ * Renders module output using the current state.
+ * @returns {*} Result of renderReadout.
+ */
 function renderReadout() {
     frameEl.textContent = String(frame);
 }
 
+/**
+ * Executes applyFrame.
+ * @param {*} nextFrame - Parameter value.
+ * @returns {*} Result of applyFrame.
+ */
 function applyFrame(nextFrame) {
     frame = ((nextFrame % FRAME_COUNT) + FRAME_COUNT) % FRAME_COUNT;
     sprite.frame = frame;
     renderReadout();
 }
 
+/**
+ * Executes tick.
+ * @param {*} now - Parameter value.
+ * @returns {*} Result of tick.
+ */
 function tick(now) {
     if (ready && playing && now - last >= FRAME_MS) {
         last = now;

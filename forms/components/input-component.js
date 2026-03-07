@@ -1,5 +1,52 @@
+/**
+ * AUTODOC:START
+ * Component: <input-*>
+ * Class: InputComponent (base)
+ * Overview: Abstract base class for Juice form inputs that standardizes native-control wiring, layout rendering, style compilation, validation, and form association.
+ *
+ * Features:
+ * - Form-associated custom element support via ElementInternals.
+ * - Shared lifecycle pipeline for attribute sync, rendering, formatting, and validation.
+ * - Configurable layout tokens for composing label/input/status/validation regions.
+ * - Built-in integration with validation controller and configurable format pipeline.
+ *
+ * Example:
+ * `class InputText extends InputComponent { _createNativeControl(){...} }`
+ *
+ * Attribute Reference:
+ * - Provides shared attributes such as `label`, `name`, `value`, `disabled`, `validation`, `format`, and constraint attrs.
+ * - Subclasses can extend `observedAttributes` with component-specific attributes.
+ *
+ * Property Reference:
+ * - Exposes native-like APIs: `value`, `checked`, `disabled`, `form`, `validity`, `checkValidity()`, `reportValidity()`.
+ *
+ * Feature Registry:
+ * - `registerFeatures(features)` accepts a plain object and shallow-merges into `_features`.
+ * - Base-collected feature keys: `canreset`, `validate`, `validation`, `format`, `icon`, `template`.
+ * - Values are stored as-is (usually raw attribute strings) so subclasses can interpret them.
+ *
+ * Formatting Guide:
+ * - `format` attribute/property defines the active format pipeline spec.
+ * - `formatters` property/register API accepts `{ [name]: function }` map used by the format pipeline.
+ * - Format spec resolution precedence: host `format` attribute > forms config (`forms.<type>.format`) > shared forms config (`forms.format`).
+ * - Formatter map precedence: instance formatter registrations > per-type form config formatters > shared form config formatters.
+ *
+ * Example (custom formatter registration):
+ * `input.registerFormatters({ clamp2: (value) => String(Number(value).toFixed(2)) });`
+ * `input.format = "trim|clamp2";`
+ *
+ * CSS Variables:
+ * - `--form-label-weight`, `--form-label-color`: Base label styling.
+ * - `--input-border`, `--input-border-radius`, `--input-height`: Input container sizing and border control.
+ * - `--validation-color`, `--validation-message-color`, `--juice-validation-color-invalid`: Validation visual states.
+ *
+ * Part Names:
+ * - `input-wrapper`: Primary visual input container exposed for styling.
+ * AUTODOC:END
+ */
+
 import { render } from "./layout.js";
-import FieldValidationController from "./validation/FieldValidationController.mjs";
+import FieldValidationController from "./validation/validation-controller.mjs";
 import { getJuiceConfig } from "../../config/juice-config.mjs";
 import { applyFormatPipeline } from "../../data/format/FormatPipeline.mjs";
 import { isPlainObject, looksLikeStyleMap, mergeStyleMaps, toKebabCase, makeCSSString } from "./component-util.js";
@@ -71,6 +118,7 @@ function uniqueId(prefix) {
 }
 
 class InputComponent extends HTMLElement {
+    // TODO(refactor): Extract layout token parsing/rendering into a dedicated layout engine to reduce base-class surface area.
     /**
      * Form associated is a boolean that indicates whether the custom element has form associated logic.
      * If true, the custom element will participate in the form's lifecycle and provide value and validity information.
@@ -113,6 +161,7 @@ class InputComponent extends HTMLElement {
             "format",
             "template",
             "view",
+            "append",
             "validation-color",
             "validation-color-valid",
             "validation-color-incomplete",
@@ -133,8 +182,7 @@ class InputComponent extends HTMLElement {
                 display: "block",
                 fontFamily: "system-ui,Segoe UI,Roboto,Arial,sans-serif",
                 boxSizing: "border-box",
-                marginBottom: "1rem",
-                marginRight: "0.5rem"
+                marginBottom: "1rem"
             },
             ":host([inline])": {
                 display: "inline-block"
@@ -282,6 +330,7 @@ class InputComponent extends HTMLElement {
         this._isSyncing = false;
         this._eventsBound = false;
         this._layout = "label:input";
+        this._labelPlacement = "default";
         this._initialLayout = null;
         this._features = {};
         this._formatters = {};
@@ -307,13 +356,17 @@ class InputComponent extends HTMLElement {
         // Scaffold/layout-only nodes. Subclasses should not treat these as view widgets.
         this._wireframe = {
             root: render("div.input-root"),
-            input: render("div.input-wrapper"),
+            input: render('div.input-wrapper[part="input-wrapper"]'),
             native: render("div.native-wrapper"),
             icon: render("div.icon-wrapper"),
             status: render("div.status-wrapper > div.cover"),
             default: render("div.default"),
             validation: render("div.validation-wrapper")
         };
+
+        if (this.hasAttribute("append")) {
+            this._append = this.getAttribute("append");
+        }
 
         if (this._layout.split(":").indexOf("native") !== -1) {
             this._nativeWrapper = this._wireframe.native;
@@ -347,16 +400,17 @@ class InputComponent extends HTMLElement {
     }
 
     /**
-     * Registers new features to the component.
+     * Merges feature flags/options into the component feature registry.
      *
-     * Features are additional attributes/options that can be used to customize the
-     * component's behavior.
+     * This method does not validate or coerce values; it stores the provided keys
+     * so subclass logic can consume them later.
      *
-     * @param {Object} features - an object containing the new features to register.
+     * @param {Record<string, unknown>} features - Feature map to merge into the registry.
      * @example
-     * const input = new InputComponent();
-     * input.registerFeatures({
-     *     placeholder: "Enter your email address"
+     * this.registerFeatures({
+     *   canreset: this.hasAttribute("canreset"),
+     *   validate: this.getAttribute("validate"),
+     *   icon: this.getAttribute("icon")
      * });
      */
     registerFeatures(features = {}) {
@@ -382,6 +436,19 @@ class InputComponent extends HTMLElement {
 
     //END OF LIFECYCLE HOOKS
 
+    /**
+     * Registers named formatter functions for use by the format pipeline.
+     *
+     * Each key becomes a formatter token name that can be referenced from the
+     * `format` attribute/property.
+     *
+     * @param {Record<string, Function>} formatters - Formatter function map keyed by formatter name.
+     * @example
+     * this.registerFormatters({
+     *   clamp2: (value) => String(Number(value).toFixed(2)),
+     *   digitsOnly: (value) => String(value).replace(/\D+/g, "")
+     * });
+     */
     registerFormatters(formatters = {}) {
         if (!isPlainObject(formatters)) return;
         const names = Object.keys(formatters);
@@ -420,6 +487,16 @@ class InputComponent extends HTMLElement {
         return { ...sharedFormatters, ...typeFormatters };
     }
 
+    /**
+     * Resolves the active format specification string.
+     *
+     * Precedence:
+     * 1. Host `format` attribute.
+     * 2. Form config type override (`forms.<type>.format`).
+     * 3. Shared form config (`forms.format`).
+     *
+     * @returns {string} Active format specification.
+     */
     _getActiveFormatSpec() {
         if (this.hasAttribute("format")) {
             return this.getAttribute("format") || "";
@@ -427,6 +504,16 @@ class InputComponent extends HTMLElement {
         return this._getConfiguredFormFormat();
     }
 
+    /**
+     * Runs the active format pipeline against the native control value.
+     *
+     * This is a no-op when formatting is unsupported (for example checkable inputs
+     * or selects) or when no format spec exists.
+     *
+     * @param {{syncHost?: boolean}} options - Formatting options.
+     * @param {boolean} [options.syncHost=false] - Whether to sync host attributes after formatting.
+     * @returns {boolean} True when value changed, otherwise false.
+     */
     _applyFormatting({ syncHost = false } = {}) {
         const native = this._dom.native;
         if (!this._supportsFormatting(native)) return false;
@@ -544,6 +631,10 @@ class InputComponent extends HTMLElement {
      * Finally, it will compile the component's styles and update its value in the form.
      */
     connectedCallback() {
+        if (this.hasAttribute("label-placement")) {
+            this._labelPlacement = this.getAttribute("label-placement");
+        }
+
         this._collectFeatures();
         this._upgradeProperties([
             "label",
@@ -658,12 +749,16 @@ class InputComponent extends HTMLElement {
 
     /**
      * Collects features from attributes of the component.
-     * The features are currently the following:
-     * - canreset: a boolean indicating whether the component can reset its state.
-     * - validate: a boolean indicating whether the component should validate its input.
-     * - icon: a string indicating the icon to be displayed next to the component.
-     * - template: a string indicating the template to be used for rendering the component.
-     * The features are registered in the component using the registerFeatures method.
+     *
+     * Collected keys:
+     * - `canreset`
+     * - `validate`
+     * - `validation`
+     * - `format`
+     * - `icon`
+     * - `template`
+     *
+     * Values are copied from raw attributes and passed to `registerFeatures()`.
      */
     _collectFeatures() {
         const attrs = ["canreset", "validate", "validation", "format", "icon", "template"];
@@ -746,7 +841,13 @@ class InputComponent extends HTMLElement {
             this._syncHostFromNative();
             this._updateFormValue();
             this._queueValidation();
-            this.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+            try {
+                this.dispatchEvent(
+                    new CustomEvent("input", { bubbles: true, composed: true, detail: { from: "native" } })
+                );
+            } catch (e) {
+                this.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+            }
         });
 
         this._dom.native.addEventListener("change", (event) => {
@@ -756,7 +857,13 @@ class InputComponent extends HTMLElement {
             this._syncHostFromNative();
             this._updateFormValue();
             this._queueValidation();
-            this.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+            try {
+                this.dispatchEvent(
+                    new CustomEvent("change", { bubbles: true, composed: true, detail: { from: "native" } })
+                );
+            } catch (e) {
+                this.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+            }
         });
 
         // Refresh validation UI status on focus transitions so "incomplete" can
@@ -906,6 +1013,36 @@ class InputComponent extends HTMLElement {
                 } else {
                     tokens.push("validation");
                 }
+            }
+        }
+        //console.log("label placement", this._labelPlacement);
+        if (this._labelPlacement !== "default") {
+            const [position, relative] = this._labelPlacement.split(":");
+            const labelIndex = tokens.indexOf("label");
+
+            const label = tokens[labelIndex];
+            tokens.splice(labelIndex, 1);
+            const inputIndex = tokens.indexOf(relative);
+
+            const directions = {
+                after: 1,
+                before: 0,
+                inside: 1
+            };
+
+            const direction = directions[position] || 0;
+            let relativeIndex = 0;
+            if (relative) relativeIndex = tokens.indexOf(relative);
+            let newIndex = relativeIndex + direction;
+
+            if (tokens[newIndex] === ">") newIndex += 1;
+
+            if (position === "inside") {
+                tokens.splice(newIndex, 0, ">", "label", "<");
+            } else if (position === "before") {
+                tokens.splice(newIndex, 0, "label");
+            } else if (position === "after") {
+                tokens.splice(newIndex, 0, "label");
             }
         }
 
@@ -1185,7 +1322,7 @@ class InputComponent extends HTMLElement {
 
     /**
      * Callback to update the component's native control's disabled state.
-     * @param {boolean} disabled - Whether the component is disabled or not.
+     * @param {boolean} disabled - Disabled state.
      * @protected
      */
     formDisabledCallback(disabled) {
@@ -1213,50 +1350,100 @@ class InputComponent extends HTMLElement {
         this._queueValidation();
     }
 
+    /**
+     * Handles native form reset callbacks by restoring initial input state.
+     * @returns {void}
+     */
     formResetCallback() {
         this.resetInput();
     }
 
+    /**
+     * Handles native form reset callbacks by restoring initial input state.
+     * @returns {void}
+     */
     formStateRestoreCallback() {}
 
+    /**
+     * Returns the associated native form element.
+     * @returns {HTMLFormElement | null}
+     */
     get form() {
         return this._internals ? this._internals.form : null;
     }
 
+    /**
+     * Returns the current `validity` value.
+     * @returns {ValidityState | null}
+     */
     get validity() {
         return this._internals ? this._internals.validity : null;
     }
 
+    /**
+     * Returns the current `validationMessage` value.
+     * @returns {string}
+     */
     get validationMessage() {
         return this._internals ? this._internals.validationMessage : "";
     }
 
+    /**
+     * Returns the current `willValidate` value.
+     * @returns {boolean}
+     */
     get willValidate() {
         return this._internals ? this._internals.willValidate : false;
     }
 
+    /**
+     * Checks the current validity state without forcing UI.
+     * @returns {boolean}
+     */
     checkValidity() {
         return this._internals ? this._internals.checkValidity() : true;
     }
 
+    /**
+     * Reports validity and returns whether the component is valid.
+     * @returns {boolean}
+     */
     reportValidity() {
         return this._internals ? this._internals.reportValidity() : true;
     }
 
+    /**
+     * Returns whether the component is disabled.
+     * @returns {boolean}
+     */
     get disabled() {
         return this.hasAttribute("disabled");
     }
 
+    /**
+     * Updates the disabled state by toggling the `disabled` attribute.
+     * @param {boolean} value - Assigned value.
+     * @returns {void}
+     */
     set disabled(value) {
         if (value) this.setAttribute("disabled", "");
         else this.removeAttribute("disabled");
     }
 
+    /**
+     * Returns the current checked state.
+     * @returns {boolean}
+     */
     get checked() {
         if (!this._dom.native || !this._isCheckableControl()) return false;
         return !!this._dom.native.checked;
     }
 
+    /**
+     * Updates the checked state and synchronizes host/form/validation state.
+     * @param {boolean} value - Assigned value.
+     * @returns {void}
+     */
     set checked(value) {
         if (!this._dom.native || !this._isCheckableControl()) return;
         this._dom.native.checked = !!value;
@@ -1267,10 +1454,19 @@ class InputComponent extends HTMLElement {
         this._queueValidation();
     }
 
+    /**
+     * Returns the current component value.
+     * @returns {string}
+     */
     get value() {
         return this._dom.native ? this._dom.native.value : "";
     }
 
+    /**
+     * Updates the value, applies formatting, then syncs host/form/validation state.
+     * @param {string | number | null | undefined} value - Assigned value.
+     * @returns {void}
+     */
     set value(value) {
         if (!this._dom.native) return;
         const normalized = value == null ? "" : String(value);
@@ -1281,10 +1477,22 @@ class InputComponent extends HTMLElement {
         this._queueValidation();
     }
 
+    /**
+     * Returns the active format specification.
+     *
+     * @returns {*} Current format specification.
+     */
     get format() {
         return this.getAttribute("format") || this._format || "";
     }
 
+    /**
+     * Sets the active format spec string for this input.
+     *
+     * Pass `null`, `undefined`, or `false` to remove formatting.
+     *
+     * @param {string | null | undefined | false} value - Assigned value.
+     */
     set format(value) {
         if (value == null || value === false) {
             this.removeAttribute("format");
@@ -1293,10 +1501,23 @@ class InputComponent extends HTMLElement {
         this.setAttribute("format", String(value));
     }
 
+    /**
+     * Returns registered formatter functions.
+     *
+     * @returns {Record<string, Function>} Formatter map.
+     */
     get formatters() {
         return { ...this._formatters };
     }
 
+    /**
+     * Replaces instance formatter registrations.
+     *
+     * This clears existing formatter registrations, applies the new formatter map,
+     * then re-runs formatting/validation on the current value.
+     *
+     * @param {Record<string, Function>} value - Assigned value.
+     */
     set formatters(value) {
         this._formatters = {};
         if (isPlainObject(value)) {
@@ -1307,6 +1528,10 @@ class InputComponent extends HTMLElement {
         this._queueValidation();
     }
 
+    /**
+     * Returns the underlying native input control.
+     * @returns {HTMLElement | null}
+     */
     get nativeInput() {
         return this._dom.native;
     }

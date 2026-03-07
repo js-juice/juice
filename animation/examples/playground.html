@@ -19,24 +19,40 @@
                 --form-label-color: var(var(--color-dark-grey))
             }
 
-            body>main {
-                margin: 0 !important;
-                padding: 0 !important;
-                min-height: calc(100vh - 60px);
-                max-height: calc(100vh - 60px);
-                overflow: hidden;
+            body {
                 position: absolute;
-                top: 60px;
+                top: 0;
                 left: 0;
-                right: 0;
-                bottom: 0;
+                height: 100%;
+                max-height: 100vh;
+                width: 100%;
+                background: #fff;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+            }
+
+            body>header {
+                flex: 0 0 auto;
+                position: relative;
+            }
+
+            body>main {
+                display: block;
+                margin: 0 !important;
+
+                height: 100vh;
+                max-height: 100vh;
+                overflow: hidden;
+                position: relative;
+
             }
 
             .playground-layout {
                 display: block;
                 position: absolute;
                 left: 0;
-                top: 0;
+                top: 1em;
                 width: 100%;
                 min-height: 100%;
                 height: 100%;
@@ -351,7 +367,8 @@
                         <img src="../../brand/logo-long.svg" alt="JS Juice" />
                     </a>
                 </div>
-                <div id="nav">
+                <div class="flex-grow" style="flex:0 1 auto;width:100%"></div>
+                <div id="nav" class="flex-static">
                     <div data-include="../../brand/templates/includes/nav.html" data-nav-base="../../"></div>
                 </div>
                 <div id="back-link">
@@ -362,56 +379,52 @@
         <main>
 
 
-
-            <div class="playground-layout">
-                <section id="playground-sidebar" class="">
-                    <header>
-                        <button id="reset-files" class="float-right" type="button">Reset Files</button>
-                        <h3>Files</h3>
-                        <div class="clearfix"></div>
-                    </header>
-                    <div class="controls flex-h" style="--form-label-color: var(--color-dark-grey);">
-                        <div class="example-select w:100">
-                            <input-select id="example-set" label="Choose Example" name="example-set"
-                                class="w:100 relative">
-                            </input-select>
-                        </div>
+            <section id="playground-sidebar" class="">
+                <header>
+                    <button id="reset-files" class="float-right" type="button">Reset Files</button>
+                    <h3>Files</h3>
+                    <div class="clearfix"></div>
+                </header>
+                <div class="controls flex-h" style="--form-label-color: var(--color-dark-grey);">
+                    <div class="example-select w:100">
+                        <input-select id="example-set" label="Choose Example" name="example-set" class="w:100 relative">
+                        </input-select>
                     </div>
-                    <ul id="file-list"></ul>
-                </section>
-                <div class="playground-content">
-                    <header>
-                        <h4>Animation Playground</h4>
-                    </header>
-                    <div id="playground-panels">
-                        <section id="playground-editor-panel" class="playground-panel">
-                            <div id="resize-handle"></div>
-                            <ul id="panel-1-tabs" class="flex-h items-nowrap w:100 padding:0 margin:0">
-                                <li class="tab block active" data-tab="editor">
-                                    <h3>Editor</h3>
-                                </li>
-                                <li class="tab block" data-tab="controls" disabled>
-                                    <h3>Controls</h3>
-                                </li>
-                            </ul>
-                            <div class="content">
-                                <div class="tab-content active" data-tab="editor">
-                                    <div id="editor"></div>
-                                    <div id="readme-view" style="display:none;height:100%;overflow:auto;"></div>
-                                    <div id="docs-view">
-                                        <iframe id="docs-preview" title="Example Documentation"></iframe>
-                                    </div>
+                </div>
+                <ul id="file-list"></ul>
+            </section>
+            <div class="playground-content">
+                <header>
+                    <h4>Animation Playground</h4>
+                </header>
+                <div id="playground-panels">
+                    <section id="playground-editor-panel" class="playground-panel">
+                        <div id="resize-handle"></div>
+                        <ul id="panel-1-tabs" class="flex-h items-nowrap w:100 padding:0 margin:0">
+                            <li class="tab block active" data-tab="editor">
+                                <h3>Editor</h3>
+                            </li>
+                            <li class="tab block" data-tab="controls" disabled>
+                                <h3>Controls</h3>
+                            </li>
+                        </ul>
+                        <div class="content">
+                            <div class="tab-content active" data-tab="editor">
+                                <div id="editor"></div>
+                                <div id="readme-view" style="display:none;height:100%;overflow:auto;"></div>
+                                <div id="docs-view">
+                                    <iframe id="docs-preview" title="Example Documentation"></iframe>
                                 </div>
-                                <div class="tab-content" data-tab="controls"></div>
                             </div>
-                        </section>
-                        <section id="playground-preview-panel" class="playground-panel">
-                            <h3>Preview</h3>
-                            <div class="content">
-                                <iframe id="preview" title="Example Preview"></iframe>
-                            </div>
-                        </section>
-                    </div>
+                            <div class="tab-content" data-tab="controls"></div>
+                        </div>
+                    </section>
+                    <section id="playground-preview-panel" class="playground-panel">
+                        <h3>Preview</h3>
+                        <div class="content">
+                            <iframe id="preview" title="Example Preview"></iframe>
+                        </div>
+                    </section>
                 </div>
             </div>
         </main>

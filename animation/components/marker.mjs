@@ -23,22 +23,39 @@ class Marker extends Component.HTMLElement {
         }
     };
 
+    /**
+     * Returns the current observed value.
+     * @returns {*} Current observed value.
+     */
     static get observed() {
         return {
             all: ["x", "y"]
         };
     }
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(options) {
         super();
 
         this.position = new Vector2D();
     }
 
+    /**
+     * Handles firstconnect events.
+     * @returns {*} Result of onFirstConnect.
+     */
     onFirstConnect() {
         this.updatePosition();
     }
 
+    /**
+     * Updates internal state from incoming values.
+     * @returns {*} Result of updatePosition.
+     */
     updatePosition() {
         const verticalPostions = ["top", "center", "bottom"];
         const horizontalPostions = ["left", "center", "right"];
@@ -58,6 +75,10 @@ class Marker extends Component.HTMLElement {
         });
     }
 
+    /**
+     * Returns the current style value.
+     * @returns {*} Current style value.
+     */
     static get style() {
         return {
             ":host": {
@@ -121,6 +142,11 @@ class Marker extends Component.HTMLElement {
         };
     }
 
+    /**
+     * Executes html.
+     * @param {*} data - Parameter value.
+     * @returns {*} Result of html.
+     */
     static html(data = {}) {
         return `
         <div id="anchor" class="anchor">
@@ -137,6 +163,13 @@ class Marker extends Component.HTMLElement {
         `;
     }
 
+    /**
+     * Handles attributechange events.
+     * @param {*} name - Parameter value.
+     * @param {*} oldValue - Parameter value.
+     * @param {*} newValue - Parameter value.
+     * @returns {*} Result of onAttributeChange.
+     */
     onAttributeChange(name, oldValue, newValue) {
         if (name === "x" || name === "y") {
             this.updatePosition();

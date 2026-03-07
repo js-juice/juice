@@ -331,6 +331,14 @@ export class Ease {
     /** @type {number} Current time */
     time = 0;
 
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} start - Parameter value.
+     * @param {*} end - Parameter value.
+     * @param {*} duration - Parameter value.
+     * @param {*} easeType - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(start, end, duration, easeType = "linear") {
         this.easeFn = typeof easeType == "function" ? easeType : Easing[easeType];
         this.duration = duration;

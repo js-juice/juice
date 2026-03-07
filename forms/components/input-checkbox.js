@@ -1,15 +1,62 @@
+
+
+/**
+ * AUTODOC:START
+ * Component: <input-checkbox>
+ * Class: InputCheckbox
+ * Overview: Styled checkbox input that preserves native checked/value semantics.
+ *
+ * Features:
+ * - Custom visual checkbox rendering with native input state synchronization.
+ * - Supports inline usage in row/group layouts.
+ * - Participates in validation/status workflow inherited from InputComponent.
+ *
+ * Example:
+ * `<input-checkbox name="subscribe" label="Subscribe to updates" value="yes"></input-checkbox>`
+ *
+ * Attribute Reference:
+ * - `bgcolor`: Optional custom background color for the checkbox shell.
+ * - `checkcolor`: Optional custom checkmark color.
+ * - Inherits base attributes (`checked`, `disabled`, `required`, ...).
+ *
+ * Property Reference:
+ * - Inherits base properties (`checked`, `value`, `disabled`, `nativeInput`, ...).
+ *
+ * CSS Variables:
+ * - `--bgcolor`: Checked-state accent/background override.
+ * - `--checkcolor`, `--check-color`: Checkmark stroke color control.
+ * - `--checked-border-color`: Optional checked border override.
+ * - Inherits shared InputComponent variables.
+ *
+ * Part Names:
+ * - `input-wrapper` (inherited from InputComponent).
+ * AUTODOC:END
+ */
+
 import InputComponent from "./input-component.js";
 
 class InputCheckbox extends InputComponent {
+    /**
+        * Initializes component state, DOM references, and default behavior.
+     * @returns {*} void.
+     */
     constructor() {
         super({ _layout: "label:>:input:<:validation" });
         this.inputType = "checkbox";
     }
 
+    /**
+     * Lists attributes that are observed for runtime updates.
+     * @returns {*} List of observed attribute names.
+     */
     static get observedAttributes() {
         return [...super.observedAttributes, "bgcolor", "checkcolor"];
     }
 
+    /**
+       * Returns component-scoped style definitions used to generate CSS.
+     * @returns {*} Style definition map used for generated component CSS.
+     */
     get _styles() {
         return {
             label: {
@@ -77,6 +124,10 @@ class InputCheckbox extends InputComponent {
         };
     }
 
+    /**
+      * Creates the hidden native input used for form integration.
+     * @returns {*} Configured native input element.
+     */
     _createNativeControl() {
         const input = document.createElement("input");
         input.type = "checkbox";
@@ -85,6 +136,10 @@ class InputCheckbox extends InputComponent {
         return input;
     }
 
+    /**
+      * Builds the default dial DOM (SVG rings, knob, labels, value display).
+     * @returns {*} Rendered default dial container node.
+     */
     _renderDefault() {
         const wrapper = this._wireframe.input;
         if (!wrapper) return;
@@ -109,6 +164,10 @@ class InputCheckbox extends InputComponent {
         this._syncVisualState();
     }
 
+    /**
+      * Performs post-connect setup after the component has its default DOM nodes.
+     * @returns {*} void.
+     */
     _afterConnected() {
         if (!this._dom.default) {
             this._renderDefault();
@@ -117,6 +176,10 @@ class InputCheckbox extends InputComponent {
         this._ensureDefaultMountedInInputContainer();
     }
 
+    /**
+      * Recomputes ring/progress/tick geometry and knob placement from current value state.
+     * @returns {*} void.
+     */
     _syncVisualState() {
         if (!this._dom.default) {
             this._renderDefault();

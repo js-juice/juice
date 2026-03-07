@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Redirecting to Emitter Docs</title>
+        <script>
+            const params = new URLSearchParams(window.location.search);
+            params.set("file", "particles/emitter.mjs");
+            window.location.replace(`./module-docs.html?${params.toString()}`);
+        </script>
+    </head>
+    <body>
+        <p>Redirecting to emitter module docs...</p>
+    </body>
+</html>

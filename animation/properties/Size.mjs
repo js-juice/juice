@@ -14,6 +14,12 @@ import AnimationValue from "./Value.mjs";
  * @param {Object} [options={}] - Configuration options
  */
 export class Size extends AnimationValue {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} value - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(value, options = {}) {}
 }
 
@@ -30,6 +36,12 @@ export class Size extends AnimationValue {
  * if (size.dirty) console.log('Size changed');
  */
 export class Size2D extends Float32Array {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(x = 0, y = 0) {
         super(3);
         this[0] = x;
@@ -102,6 +114,13 @@ export class Size2D extends Float32Array {
  * if (size.dirty('x', 'y')) console.log('X or Y changed');
  */
 export class Size3D extends Float32Array {
+    /**
+     * Initializes class state and runtime dependencies.
+     * @param {*} x - Parameter value.
+     * @param {*} y - Parameter value.
+     * @param {*} z - Parameter value.
+     * @returns {*} Result of constructor.
+     */
     constructor(x = 0, y = 0, z = 0) {
         super(3);
         this[0] = x;

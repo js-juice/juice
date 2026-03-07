@@ -14,6 +14,10 @@ import AnimationValue from "../properties/Value.mjs";
 class AnimationLoop extends Component.HTMLElement {
     static tag = "animation-loop";
 
+    /**
+     * Returns the current config value.
+     * @returns {*} Current config value.
+     */
     static get config() {
         return {
             properties: {
@@ -25,6 +29,10 @@ class AnimationLoop extends Component.HTMLElement {
         };
     }
 
+    /**
+     * Returns the current observed value.
+     * @returns {*} Current observed value.
+     */
     static get observed() {
         return {
             all: ["asset", "from", "to", "duration"],
