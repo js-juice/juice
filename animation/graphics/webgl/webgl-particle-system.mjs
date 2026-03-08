@@ -209,9 +209,12 @@ class WebGLParticleSystem {
                 return vec4(0.0);
             }
 
-            float halfHeight = depth * tan(radians(45.0));
-            float aspectRatio = projectionMatrix[0][0] / projectionMatrix[1][1];
-            float halfWidth = halfHeight * aspectRatio;
+            // For a standard perspective matrix:
+            // projectionMatrix[1][1] = 1 / tan(fovY / 2)
+            // projectionMatrix[0][0] = projectionMatrix[1][1] / aspect
+            // So visible half-extents at a given depth are depth / m11 and depth / m00.
+            float halfHeight = depth / projectionMatrix[1][1];
+            float halfWidth = depth / projectionMatrix[0][0];
 
             return vec4(-halfWidth, halfWidth, halfHeight, -halfHeight);
             `
