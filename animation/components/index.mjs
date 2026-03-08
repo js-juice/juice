@@ -8,7 +8,7 @@ export { default as AnimationBackground } from "./background.mjs";
 export { default as AnimationCamera } from "./camera.mjs";
 export { default as AnimationLayer } from "./layer.mjs";
 export { default as AnimationMarker } from "./marker.mjs";
-export { default as AnimationMinimap, AnimationPreview } from "./preview.mjs";
+export { default as AnimationMinimap, AnimationPreview } from "./minimap.mjs";
 export { default as AnimationSprite } from "./sprite.mjs";
 export { default as AnimationStage } from "./stage.mjs";
 export { default as AnimationStats } from "./stats.mjs";

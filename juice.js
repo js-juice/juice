@@ -11,8 +11,8 @@ import _config from "./config/juice-config.mjs";
 
 export const root = typeof globalThis !== "undefined" ? globalThis : {};
 
-import JuiceStorage from "./inc/Storage.mjs";
-import JuiceQueues from "./inc/Queues.mjs";
+import JuiceStorage from "./core/inc/Storage.mjs";
+import JuiceQueues from "./core/inc/Queues.mjs";
 
 /**
  * Parses a file path into its component parts.
