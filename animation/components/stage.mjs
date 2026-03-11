@@ -281,7 +281,7 @@ class AnimationStage extends Component.HTMLElement {
      * @returns {*} Result of addBackground.
      */
     addBackground(element, options = {}) {
-        if (options.placement === "parallax") {
+        if (options.paralax || options.placement === "parallax") {
             this.ref("parallax").appendChild(element);
         } else {
             this.ref("world").appendChild(element);

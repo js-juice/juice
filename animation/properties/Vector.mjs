@@ -741,6 +741,14 @@ export class Vector2D extends Float32Array {
  * @param {number} [options.history=0] - History buffer size (0 = disabled)
  */
 export class Vector3D extends Float32Array {
+    static add(...vectors) {
+        let sum = new Vector3D(x, y, z);
+        for (let v of vectors) {
+            sum.add(v);
+        }
+        return sum;
+    }
+
     /**
      * Linear interpolation between two vectors.
      * @static
@@ -858,7 +866,11 @@ export class Vector3D extends Float32Array {
     add(x, y, z) {
         if (this._freezable && this.frozen) return this;
 
-        if (typeof x == "number") {
+        if (arguments.length == 1 && x instanceof Vector3D) {
+            this[0] += x[0];
+            this[1] += x[1];
+            this[2] += x[2];
+        } else if (typeof x == "number") {
             this[0] += x;
             this[1] += y || 0;
             this[2] += z || 0;
@@ -1198,6 +1210,10 @@ export class Vector3D extends Float32Array {
     }
 
     // === UTILITY METHODS ===
+
+    get hasValue() {
+        return this[0] !== 0 || this[1] !== 0 || this[2] !== 0;
+    }
 
     /**
      * Converts the vector to a plain JavaScript object.

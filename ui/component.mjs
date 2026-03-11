@@ -404,8 +404,6 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 root.style.cssText = Object.entries(this._.styleVars)
                     .map(([k, v]) => `${k}: ${v}`)
                     .join(";");
-
-                //alert(this.ref("html").style.cssText);
             }
 
             /**

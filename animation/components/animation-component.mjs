@@ -3,7 +3,8 @@
  * Provides position, rotation, scale, and velocity properties for animations.
  * @module Components/Animation/AnimationComponent
  */
-
+import Anchor from "./anchor.mjs";
+import { parseAnchor } from "../anchor.mjs";
 import { type } from "../../core/Util/Core.mjs";
 import Component from "../../ui/component.mjs";
 import AnimationValue from "../properties/Value.mjs";
@@ -21,6 +22,7 @@ import { Vector3D, Vector2D } from "../properties/Vector.mjs";
  */
 export class AnimationComponent extends Component.HTMLElement {
     static tag = "animation-body";
+    animate = true;
 
     static config = {
         name: "animation-component",
@@ -57,6 +59,40 @@ export class AnimationComponent extends Component.HTMLElement {
         };
     }
 
+    static html(data = {}) {
+        return `
+            <animation-anchor>
+            <div id="contents">
+            <slot></slot>
+            </div>  
+            </animation-anchor>
+        `;
+    }
+
+    static get styles() {
+        return `
+            :host { 
+                position: absolute; 
+                pointer-events: none; 
+                width: 0px;
+                height: 0px;
+            }
+            #contents {
+                position: absolute;
+                top: var(--anchor-y, 0px);
+                left: var(--anchor-x, 0px);
+                width: var(--width);
+                height: var(--height);
+            }
+            #contents slot{
+                position: relative;
+                display: block;
+                width: 100%;
+                height: 100%;
+            }
+        `;
+    }
+
     /**
      * Executes beforeCreate.
      * @returns {*} Result of beforeCreate.
@@ -64,10 +100,13 @@ export class AnimationComponent extends Component.HTMLElement {
     beforeCreate() {
         this.animationBody = true;
         this.visible = true;
+
         this.rotation = new Rotation3D(-90, 0, 0);
         this.rotation.OFFSET.x = 90;
         this.position = new Vector3D(0, 0, 0);
+        this.viewerPosition = new Vector3D(0, 0, 0);
         this.velocity = new Vector3D(0, 0, 0);
+
         this.s = new AnimationValue(1, {
             min: 0
         });
@@ -93,6 +132,59 @@ export class AnimationComponent extends Component.HTMLElement {
 
         if (this.hasAttribute("noanimate")) {
             this.animate = false;
+        }
+    }
+
+    update() {
+        if (!this.animate) return null;
+
+        if (this.velocity.hasValue) {
+            this.position.x += this.velocity.x;
+            this.position.y += this.velocity.y;
+            this.position.z += this.velocity.z;
+        }
+
+        if (!this.froozen) {
+            this.viewerPosition.x += this.velocity.x;
+            this.viewerPosition.y += this.velocity.y;
+            this.viewerPosition.z += this.velocity.z;
+        }
+    }
+
+    render() {
+        if (!this.visible) return;
+
+        const updates = {};
+        const debugUpdates = {};
+
+        if (this.beforeRender) this.beforeRender(time);
+
+        if (this.w.dirty) {
+            updates["--width"] = this.w.value + "px";
+            this.w.save();
+        }
+
+        if (this.h.dirty) {
+            updates["--height"] = this.h.value + "px";
+            this.h.save();
+        }
+
+        if (this.position.dirty) {
+            updates["--x"] = this.position.x + "px";
+            updates["--y"] = this.position.y + "px";
+            updates["--z"] = this.position.z + "px";
+            this.position.clean();
+        }
+
+        if (this.rotation.dirty) {
+            updates["--rotation"] = `${this.rotation.x}deg`;
+            updates["--rotationY"] = `${this.rotation.y}deg`;
+            updates["--rotationZ"] = `${this.rotation.z}deg`;
+            this.rotation.clean();
+        }
+
+        if (Object.keys(updates).length) {
+            this.writeStyleVars(updates);
         }
     }
 }

@@ -46,6 +46,12 @@ class KeyFramedValue {
         if (duration) frames = duration * fps;
         if (frames) duration = frames / fps;
         // Ensure keyframes are sorted
+
+        return this.processKeyframes();
+    }
+
+    processKeyframes() {
+        // This method can be used to process keyframes if needed, such as normalizing values or precomputing data.
         this.keyframes.sort((a, b) => a.percentage - b.percentage);
         // Precompute easing functions for each keyframe
         this.keyframes.forEach((kf) => {
@@ -75,7 +81,6 @@ class KeyFramedValue {
             }
             index++;
         }
-
         return frameArr;
     }
 }

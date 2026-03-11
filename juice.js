@@ -49,6 +49,8 @@ root.currentFile = currentFile;
  * @class Juice
  */
 class Juice {
+    static isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
+    static isNode = typeof process !== "undefined" && process.versions != null && process.versions.node != null;
     /**
      * Creates a blended class from multiple mixin classes.
      * The resulting class will have properties and methods from all mixins.
@@ -85,6 +87,7 @@ class Juice {
         this.storage = new JuiceStorage();
         this.eventRegistry = {};
         this.config = _config;
+        this._cache = {};
         this.callStack = [];
     }
 
@@ -165,11 +168,8 @@ class Juice {
      * juice.dispatchEvent(element, 'customEvent', data);
      */
     dispatchEvent(target, eventName, ...args) {
-        const eventRegistry = this.eventRegistry;
-        const eventHandlers = eventRegistry[eventName];
-
+        const eventHandlers = this.eventRegistryy[eventName];
         if (!eventHandlers) return;
-
         eventHandlers.forEach((handler) => handler(target, ...args));
     }
 
@@ -179,6 +179,28 @@ class Juice {
     expose() {
         const globalScope = typeof window !== "undefined" ? window : global;
         globalScope.juice = this;
+    }
+
+    async import(section, path, properties = null) {
+        const modulePath = `./${section}${path ? `/${path}` : ""}.mjs`;
+        if (this._cache[modulePath] || this._cache[modulePath][properties.join(",")]) {
+            return this._cache[modulePath];
+        }
+        const module = await import(modulePath);
+        const m;
+        if (Array.isArray(properties)) {
+            m = {};
+            properties.forEach((property) => {
+                if (module[property]) {
+                    m[property] = module[property];
+                }
+            });
+        } else {
+            m = module;
+        }
+
+        this._cache[modulePath] = m;
+        return m;
     }
 
     /**
