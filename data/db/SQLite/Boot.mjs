@@ -6,7 +6,7 @@
 
 import Model from "../../models/Model.mjs";
 import { STORAGE_TYPES, TYPE_ALIASES } from "./Constants.mjs";
-import * as Condition from "../../../juice/Util/Condition.mjs";
+import * as Condition from "../../../core/Util/Condition.mjs";
 
 /**
  * Boot model for tracking application lifecycle events.

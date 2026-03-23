@@ -4,11 +4,11 @@
  * @module DB/Model/Collection
  */
 
-import { default as Util, type, empty } from "../../juice/Util/Core.mjs";
-import * as Condition from "../../juice/Util/Condition.mjs";
-import DistinctArray from "../../juice/DataTypes/DistinctArray.mjs";
+import { default as Util, type, empty } from "../../core/Util/Core.mjs";
+import * as Condition from "../../core/Util/Condition.mjs";
+import DistinctArray from "../../core/DataTypes/DistinctArray.mjs";
 //import { PackageFile, FileCollection } from './PackageFile.mjs';
-import Emitter from "../../juice/Event/Emitter.mjs";
+import Emitter from "../../core/Event/Emitter.mjs";
 
 const studly = Util.String.studly;
 const unStudly = Util.String.unStudly;

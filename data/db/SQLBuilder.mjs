@@ -4,7 +4,7 @@
  * @module DB/SQLBuilder
  */
 
-import { empty, type } from "../../juice/Util/Core.mjs";
+import { empty, type } from "../../core/Util/Core.mjs";
 /*
 This is a JavaScript class definition for a SQL builder, which helps construct SQL queries in a programmatic way. Here's a succinct explanation of what each class method does:
 

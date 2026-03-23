@@ -4,7 +4,7 @@
  * @module DB/Database
  */
 
-import EventEmitter from "../../juice/Event/Emitter.mjs";
+import EventEmitter from "../../core/Event/Emitter.mjs";
 import fs from "node:fs";
 import path from "node:path";
 

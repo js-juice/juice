@@ -4,13 +4,13 @@
  * @module DB/Model/Model
  */
 
-import EventEmitter from "../../juice/Event/Emitter.mjs";
+import EventEmitter from "../../core/Event/Emitter.mjs";
 import Collection from "./Collection.mjs";
-import DistinctArray from "../../juice/DataTypes/DistinctArray.mjs";
-import { type, empty, equals, exists } from "../../juice/Util/Core.mjs";
-import { normalCase, studly, unStudly, pascalCase, dashed } from "../../juice/Util/String.mjs";
-import { setEnumerability } from "../../juice/Util/Object.mjs";
-import Watch from "../../juice/Proxy/Watch.mjs";
+import DistinctArray from "../../core/DataTypes/DistinctArray.mjs";
+import { type, empty, equals, exists } from "../../core/Util/Core.mjs";
+import { normalCase, studly, unStudly, pascalCase, dashed } from "../../core/Util/String.mjs";
+import { setEnumerability } from "../../core/Util/Object.mjs";
+import Watch from "../../core/Proxy/Watch.mjs";
 import ModelSQLBuilder from "./ModelSQLBuilder.mjs";
 import FormBuilder from "../../forms/compat/Form/Builder.mjs";
 

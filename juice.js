@@ -96,9 +96,10 @@ class Juice {
     }
 
     async db(type, name, models) {
-        return this.import("data", "db/SQLite/Database.mjs").then(({ SQLiteDatabase }) => {
-            this.dbInstance = new SQLiteDatabase(name, models);
-            this.dbInstance.loadModelDirectory(models);
+        return this.import("data", "db/SQLite/Database.mjs").then(async (module) => {
+            const SQLiteDatabase = module.default || module.SQLiteDatabase;
+            this.dbInstance = await SQLiteDatabase.create(name, models);
+            await this.dbInstance.loadModelDirectory(models);
             return this.dbInstance;
         });
     }

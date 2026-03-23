@@ -4,11 +4,28 @@
  * @module DB/SQLite/RemoteDatabase
  */
 
-import BetterSQLite3 from "better-sqlite3";
 import { STORAGE_TYPES, TYPE_ALIASES } from "./Constants.mjs";
 
 import Database from "../Database.mjs";
 import SQLBuilder from "../SQLBuilder.mjs";
+
+let BetterSQLite3Module = null;
+
+async function loadBetterSQLite3() {
+    if (BetterSQLite3Module) return BetterSQLite3Module;
+
+    try {
+        const module = await import("better-sqlite3");
+        BetterSQLite3Module = module.default || module;
+        return BetterSQLite3Module;
+    } catch (error) {
+        error.message =
+            `SQLite support requires the optional dependency "better-sqlite3". ` +
+            `Install it in the app that uses Juice before opening a SQLite database.\n` +
+            `Original error: ${error.message}`;
+        throw error;
+    }
+}
 
 /**
  * SQLite database with remote connection support.
@@ -18,8 +35,16 @@ import SQLBuilder from "../SQLBuilder.mjs";
 class SQLiteDatabase extends Database {
     source = null;
 
-    constructor(path, options) {
-        super(new BetterSQLite3(path, options));
+    static async create(databasePath, options) {
+        const BetterSQLite3 = await loadBetterSQLite3();
+        const db = new BetterSQLite3(databasePath, options);
+        return new this(db, databasePath, options);
+    }
+
+    constructor(db, path, options) {
+        super(db);
+        this.databasePath = path;
+        this.dbOptions = options;
     }
 
     command(method, statement, args) {}
