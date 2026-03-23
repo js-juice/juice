@@ -32,7 +32,7 @@
  * AUTODOC:END
  */
 
-import InputComponent from "./input-component.js";
+import InputComponent from "./input-component.mjs";
 import { getJuiceConfig } from "../../config/juice-config.mjs";
 
 class InputFileComponent extends InputComponent {

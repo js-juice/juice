@@ -91,6 +91,18 @@ class Juice {
         this.callStack = [];
     }
 
+    dev() {
+        this.import("./core/Dev/Log.mjs");
+    }
+
+    async db(type, name, models) {
+        return this.import("data", "db/SQLite/Database.mjs").then(({ SQLiteDatabase }) => {
+            this.dbInstance = new SQLiteDatabase(name, models);
+            this.dbInstance.loadModelDirectory(models);
+            return this.dbInstance;
+        });
+    }
+
     /**
      * Instance method to blend multiple mixin classes.
      * @param {...Function} mixins - Mixin classes to blend
@@ -168,7 +180,7 @@ class Juice {
      * juice.dispatchEvent(element, 'customEvent', data);
      */
     dispatchEvent(target, eventName, ...args) {
-        const eventHandlers = this.eventRegistryy[eventName];
+        const eventHandlers = this.eventRegistry[eventName];
         if (!eventHandlers) return;
         eventHandlers.forEach((handler) => handler(target, ...args));
     }
@@ -181,16 +193,29 @@ class Juice {
         globalScope.juice = this;
     }
 
-    async import(section, path, properties = null) {
-        const modulePath = `./${section}${path ? `/${path}` : ""}.mjs`;
-        if (this._cache[modulePath] || this._cache[modulePath][properties.join(",")]) {
-            return this._cache[modulePath];
+    async import(...args) {
+        let resolvers = [], imports=[], options={};
+        if(Array.isArray(args[args.length - 1])){
+            imports = args.pop();
+        }else if(typeof args[args.length - 1] === "object" && Array.isArray(args[args.length - 1].imports)){
+            options = args.pop();
+            imports = options.imports;
+        }else if(typeof args[args.length - 1] === "object"){
+            options = args.pop();
+            imports = ["default"];
         }
-        const module = await import(modulePath);
-        const m;
-        if (Array.isArray(properties)) {
+        resolvers = args;
+    
+        const modulePath = `./${resolvers.join("/")}${resolvers[resolvers.length-1].endsWith(".mjs") ? "" : `.mjs`}`;
+        console.log(modulePath);
+
+        const module = this._cache[modulePath] || await import(modulePath);
+        console.log(`Imported module: ${modulePath}`, module);
+
+        let m;
+        if (Array.isArray(imports) && imports.length > 0) {
             m = {};
-            properties.forEach((property) => {
+            imports.forEach((property) => {
                 if (module[property]) {
                     m[property] = module[property];
                 }

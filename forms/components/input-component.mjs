@@ -45,11 +45,11 @@
  * AUTODOC:END
  */
 
-import { render } from "./layout.js";
+import { render } from "./layout.mjs";
 import FieldValidationController from "./validation/validation-controller.mjs";
 import { getJuiceConfig } from "../../config/juice-config.mjs";
 import { applyFormatPipeline } from "../../data/format/FormatPipeline.mjs";
-import { isPlainObject, looksLikeStyleMap, mergeStyleMaps, toKebabCase, makeCSSString } from "./component-util.js";
+import { isPlainObject, looksLikeStyleMap, mergeStyleMaps, toKebabCase, makeCSSString } from "./component-util.mjs";
 /*
  * InputComponent (abstract base class)
  *

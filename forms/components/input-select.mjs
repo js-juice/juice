@@ -36,7 +36,7 @@
  * AUTODOC:END
  */
 
-import InputComponent from "./input-component.js";
+import InputComponent from "./input-component.mjs";
 
 /**
  * Style Vars

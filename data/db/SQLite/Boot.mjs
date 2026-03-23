@@ -4,7 +4,7 @@
  * @module DB/SQLite/Boot
  */
 
-import Model from "../../models/Model.js";
+import Model from "../../models/Model.mjs";
 import { STORAGE_TYPES, TYPE_ALIASES } from "./Constants.mjs";
 import * as Condition from "../../../juice/Util/Condition.mjs";
 

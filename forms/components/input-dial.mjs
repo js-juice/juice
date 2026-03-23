@@ -39,7 +39,7 @@
  * AUTODOC:END
  */
 
-import InputComponent from "./input-component.js";
+import InputComponent from "./input-component.mjs";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const SIZE = 120;

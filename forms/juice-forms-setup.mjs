@@ -1,2 +1,2 @@
 import "./juice-forms.mjs";
-import "./components/input-radio.js";
+import "./components/input-radio.mjs";

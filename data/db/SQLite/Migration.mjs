@@ -4,10 +4,10 @@
  * @module DB/SQLite/Migration
  */
 
-import Model from "../../models/Model.js";
+import Model from "../../models/Model.mjs";
 import { STORAGE_TYPES, TYPE_ALIASES } from "./Constants.mjs";
 import * as Condition from "../../../juice/Util/Condition.mjs";
-import MigrationHistory from "./MigrationHistory.js";
+import MigrationHistory from "./MigrationHistory.mjs";
 
 /**
  * Migration model for tracking and executing database schema changes.

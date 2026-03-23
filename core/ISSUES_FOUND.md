@@ -75,7 +75,7 @@ This document tracks issues, duplications, and inconsistencies found in the juic
 - `./ChromeProtocol/Dom/Helper.js`
 - `./ChromeProtocol/VirtualDom/Helper.js`
 - `./Components/Helper.mjs`
-- `./Workers/Helper.js`
+- `./Workers/Helper.mjs`
 - **Status:** Review needed - FIVE helper files!
 
 ### InputName Files
@@ -176,13 +176,13 @@ This document tracks issues, duplications, and inconsistencies found in the juic
 - **Status:** Likely intentional - module index files
 
 ### webgl-debug Files
-- `./Graphics/WebGL/debug/webgl-debug.js`
-- `./Graphics/WebGL/debug/externs/webgl-debug.js`
+- `./Graphics/WebGL/debug/webgl-debug.mjs`
+- `./Graphics/WebGL/debug/externs/webgl-debug.mjs`
 - **Status:** Likely intentional - main vs externs
 
 ### Content Files
 - `./HTML/Content.mjs`
-- `./Template/Content.js`
+- `./Template/Content.mjs`
 - **Status:** Review needed - may be duplicated
 
 ## Style Issues
@@ -204,7 +204,7 @@ Over 200+ files end with blank lines. This is a minor style issue but affects co
 
 ### Incomplete Implementations
 - `./Animation/Properties/Vector.mjs` - Line with TODO: "Add Other Vector Methods set, clone, add, sub, mul, div, dot, cross, length, normalize, lerp"
-- `./Graphics/WebGL/debug/webgl-debug.js` - Multiple TODOs in WebGL debug code
+- `./Graphics/WebGL/debug/webgl-debug.mjs` - Multiple TODOs in WebGL debug code
 
 ## Summary Statistics
 

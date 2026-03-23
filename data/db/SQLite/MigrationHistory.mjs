@@ -4,7 +4,7 @@
  * @module DB/SQLite/MigrationHistory
  */
 
-import Model from "../../models/Model.js";
+import Model from "../../models/Model.mjs";
 
 /**
  * Model for tracking database migration history.

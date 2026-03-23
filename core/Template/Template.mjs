@@ -8,8 +8,8 @@ import nodePath from "node:path";
 import fs from "node:fs";
 import EventEmitter from "node:events";
 import { empty } from "../Util/Core.mjs";
-import TokenContent from "./Content.js";
-import BlockContext from "./Context.js";
+import TokenContent from "./Content.mjs";
+import BlockContext from "./Context.mjs";
 
 /**
  * Template loader for file system and URL sources.

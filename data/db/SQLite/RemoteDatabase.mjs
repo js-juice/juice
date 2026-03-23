@@ -7,8 +7,8 @@
 import BetterSQLite3 from "better-sqlite3";
 import { STORAGE_TYPES, TYPE_ALIASES } from "./Constants.mjs";
 
-import Database from "../Database.js";
-import SQLBuilder from "../SQLBuilder.js";
+import Database from "../Database.mjs";
+import SQLBuilder from "../SQLBuilder.mjs";
 
 /**
  * SQLite database with remote connection support.

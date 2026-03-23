@@ -12,7 +12,7 @@ import { Vector2D, Vector3D, Vector4D } from "../../../animation/Properties/Vect
 import Particles from "../Particles/Particles.mjs";
 import AnimationValue from "../../../animation/Properties/Value.mjs";
 import TransformFeedback from "./Lib/TransformFeedback.mjs";
-import WebGLDebugUtils from "./debug/webgl-debug.js";
+import WebGLDebugUtils from "./debug/webgl-debug.mjs";
 
 /**
  * Checks for WebGL errors.

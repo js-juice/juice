@@ -4,12 +4,12 @@
  * @module Template/Token
  */
 
-import ContentReader from "./ContentReader.js";
-import TokenContent from "./Content.js";
+import ContentReader from "./ContentReader.mjs";
+import TokenContent from "./Content.mjs";
 import fs from "fs";
 import path from "path";
 import EventEmitter from "events";
-import { safeEval, findTokensInString } from "../Util/Eval.js";
+import { safeEval, findTokensInString } from "../Util/Eval.mjs";
 
 /**
  * Generates a short random ID.

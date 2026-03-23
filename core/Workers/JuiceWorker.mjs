@@ -5,7 +5,7 @@
  */
 
 import EventEmitter from "../Event/Emitter.mjs";
-import { getAvailableCores } from "./Helper.js";
+import { getAvailableCores } from "./Helper.mjs";
 
 const cores = getAvailableCores();
 

@@ -5,8 +5,8 @@
  */
 
 import EventEmitter from "../Event/Emitter.mjs";
-import Token from "./Token.js";
-import Context from "./Context.js";
+import Token from "./Token.mjs";
+import Context from "./Context.mjs";
 import path from "node:path";
 import { type } from "node:os";
 

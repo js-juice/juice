@@ -6,10 +6,10 @@
 
 import BetterSQLite3 from "better-sqlite3";
 import { STORAGE_TYPES, TYPE_ALIASES } from "./Constants.mjs";
-import Database from "../Database.js";
+import Database from "../Database.mjs";
 import Migration from "./Migration.mjs";
-import SQLiteWorker from "./WorkerClient.js";
-import SQLBuilder from "../SQLBuilder.js";
+import SQLiteWorker from "./WorkerClient.mjs";
+import SQLBuilder from "../SQLBuilder.mjs";
 
 /**
  * SQLite database implementation with migrations and worker thread support.

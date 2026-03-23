@@ -4,7 +4,7 @@
  * @module Template/ContentReader
  */
 
-import ReaderBase from "../Reader/ReaderBase.js";
+import ReaderBase from "../Reader/ReaderBase.mjs";
 
 /**
  * Reader for template content with tag and token extraction.

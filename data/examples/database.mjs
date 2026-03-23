@@ -6,8 +6,8 @@
  */
 
 import SQLiteDatabase from "../db/SQLite/Database.js";
-import SQLBuilder from "../db/SQLBuilder.js";
-import Model from "../models/Model.js";
+import SQLBuilder from "../db/SQLBuilder.mjs";
+import Model from "../models/Model.mjs";
 
 // ============================================================================
 // Product Model for Examples

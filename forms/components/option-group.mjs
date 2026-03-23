@@ -32,7 +32,7 @@
  * AUTODOC:END
  */
 
-import { makeCSSString } from "./component-util.js";
+import { makeCSSString } from "./component-util.mjs";
 
 class OptionGroup extends HTMLElement {
     // TODO(refactor): Unify generated-option synchronization and observer wiring in a small controller helper.

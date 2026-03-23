@@ -3,7 +3,7 @@
  * @module Dev/Log
  */
 
-const root = window || global;
+const root = typeof window !== "undefined" ? window : global;
 const config = {};
 
 const consoleStyles = {
@@ -43,7 +43,7 @@ const consoleStyles = {
     ROFF: "\x1B[27m",
 
     //reset
-    RESET: "\x1B[0m",
+    RESET: "\x1B[0m"
 };
 
 /**
@@ -91,12 +91,12 @@ class ConsoleMessage {
                         method: parsed.method,
                         line: parsed.line,
                         column: parsed.column,
-                        raw: line,
+                        raw: line
                     };
                 } else {
                     return line;
                 }
-            },
+            }
         };
         return FileMessage;
     }
@@ -120,7 +120,7 @@ root.log = () => {
     return {
         write: (file) => {
             config.writeTo = file;
-        },
+        }
     };
 };
 

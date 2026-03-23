@@ -31,7 +31,7 @@
  * AUTODOC:END
  */
 
-import { render } from "./layout.js";
+import { render } from "./layout.mjs";
 
 class JuiceFormElement extends HTMLElement {
     /**

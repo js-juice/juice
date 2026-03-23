@@ -35,7 +35,7 @@
  * AUTODOC:END
  */
 
-import InputComponent from "./input-component.js";
+import InputComponent from "./input-component.mjs";
 
 class InputNumber extends InputComponent {
     /**

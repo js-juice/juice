@@ -11,7 +11,7 @@ import { type, empty, equals, exists } from "../../juice/Util/Core.mjs";
 import { normalCase, studly, unStudly, pascalCase, dashed } from "../../juice/Util/String.mjs";
 import { setEnumerability } from "../../juice/Util/Object.mjs";
 import Watch from "../../juice/Proxy/Watch.mjs";
-import ModelSQLBuilder from "./ModelSQLBuilder.js";
+import ModelSQLBuilder from "./ModelSQLBuilder.mjs";
 import FormBuilder from "../../forms/compat/Form/Builder.mjs";
 
 /**

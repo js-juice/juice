@@ -30,7 +30,7 @@
  * AUTODOC:END
  */
 
-import { isPlainObject, looksLikeStyleMap, mergeStyleMaps, toKebabCase, makeCSSString } from "./component-util.js";
+import { isPlainObject, looksLikeStyleMap, mergeStyleMaps, toKebabCase, makeCSSString } from "./component-util.mjs";
 
 class InputFieldset extends HTMLElement {
     /**

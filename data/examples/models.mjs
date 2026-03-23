@@ -5,7 +5,7 @@
  * work with relationships, and use validation.
  */
 
-import Model from "../models/Model.js";
+import Model from "../models/Model.mjs";
 import Collection from "../models/Collection.mjs";
 import SQLiteDatabase from "../db/SQLite/Database.js";
 
