@@ -191,7 +191,8 @@ class InputComponent extends HTMLElement {
                 display: "block"
             },
             ".input-root": {
-                position: "relative"
+                position: "relative",
+                fontSize: "inherit"
             },
             ".input-root label": {
                 position: "relative",
@@ -210,10 +211,10 @@ class InputComponent extends HTMLElement {
             ".input-wrapper": {
                 border: "var(--input-border, 1px solid #c8c8c8)",
                 borderRadius: "var(--input-border-radius, 5px)",
+                background: "var(--input-bgcolor, #ffffff)",
                 position: "relative",
                 display: "flex",
                 flexDirection: "row",
-                fontSize: "1rem",
                 overflow: "hidden",
                 boxSizing: "border-box"
             },
@@ -234,7 +235,8 @@ class InputComponent extends HTMLElement {
                 border: 0,
                 outline: 0,
                 padding: 0,
-                margin: 0
+                margin: 0,
+                fontSize: "inherit"
             },
             "input.native[type=text], input.native[type=number]": {
                 margin: "0.2rem"
@@ -355,13 +357,13 @@ class InputComponent extends HTMLElement {
         this._layout = this._layout || "label:input";
         // Scaffold/layout-only nodes. Subclasses should not treat these as view widgets.
         this._wireframe = {
-            root: render("div.input-root"),
+            root: render("div.input-root[part='input-root']"),
             input: render('div.input-wrapper[part="input-wrapper"]'),
-            native: render("div.native-wrapper"),
-            icon: render("div.icon-wrapper"),
-            status: render("div.status-wrapper > div.cover"),
-            default: render("div.default"),
-            validation: render("div.validation-wrapper")
+            native: render("div.native-wrapper[part='native-wrapper']"),
+            icon: render("div.icon-wrapper[part='icon-wrapper']"),
+            status: render("div.status-wrapper > div.cover[part='status-cover']"),
+            default: render("div.default[part='default']"),
+            validation: render("div.validation-wrapper[part='validation-wrapper']")
         };
 
         if (this.hasAttribute("append")) {

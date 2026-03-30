@@ -14,6 +14,7 @@ import "./components/input-dial.mjs";
 import "./components/input-vector.mjs";
 import "./components/form-info.mjs";
 import "./components/input-fieldset.mjs";
+import "./components/input-buttonbar.mjs";
 
 class JuiceForms {
     constructor() {

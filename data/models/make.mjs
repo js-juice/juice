@@ -4,8 +4,8 @@
  * @module DB/Model/make
  */
 
-import fs, { writeFileSync } from "node:fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 /**
  * Converts camelCase string to snake_case plural.
@@ -25,13 +25,27 @@ function toSnakePlural(str) {
     );
 }
 
-const dir = process.argv[2].includes("/") ? process.argv[2].substring(0, process.argv[2].lastIndexOf("/")) : "";
-const modelName = process.argv[2].replace(dir, "");
+const target = process.argv[2];
+
+if (!target) {
+    throw new Error("Model name or path is required. Example: node vendor/juice/data/models/make.mjs data/models/User");
+}
+
+const normalizedTarget = target.replace(/\\/g, "/");
+const parsedTarget = path.posix.parse(normalizedTarget);
+const dir = parsedTarget.dir;
+const modelName = parsedTarget.name;
 const tableName = toSnakePlural(modelName);
-const modelPath = path.resolve(process.cwd().replace(/\\/g, "/"), dir, `./${modelName}.js`);
+const modelPath = path.resolve(process.cwd(), dir || ".", `${modelName}.mjs`);
+const baseModelPath = path.resolve(process.cwd(), "vendor", "juice", "data", "models", "Model.mjs");
+let modelImportPath = path.relative(path.dirname(modelPath), baseModelPath).replace(/\\/g, "/");
+
+if (!modelImportPath.startsWith(".")) {
+    modelImportPath = `./${modelImportPath}`;
+}
 
 const code = `
-import Model from "../Model.js";
+import Model from "${modelImportPath}";
 
 
 class ${modelName} extends Model {
@@ -47,8 +61,8 @@ class ${modelName} extends Model {
     static get schema() {
         return {
             id: { type: "integer", primaryKey: true, autoIncrement: true },
-            created_at: { type: "datetime" },
-            updated_at: { type: "datetime" }
+            created_at: { type: "datetime", null: true },
+            updated_at: { type: "datetime", null: true }
         };
     }
 }
@@ -56,4 +70,5 @@ class ${modelName} extends Model {
 export default ${modelName};
 `;
 
-fs.writeFileSync(modelPath, code);
+fs.mkdirSync(path.dirname(modelPath), { recursive: true });
+fs.writeFileSync(modelPath, code.trimStart());

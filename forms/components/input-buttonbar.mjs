@@ -29,7 +29,7 @@
 import { getJuiceConfig } from "../../config/juice-config.mjs";
 
 class InputButtonBarComponent extends HTMLElement {
-
+    static tag = "input-buttonbar";
     constructor() {
         super();
         this._shadow = this.attachShadow({ mode: "open" });
@@ -42,21 +42,33 @@ class InputButtonBarComponent extends HTMLElement {
                     gap: 0.5rem;
                 }
                 slot{
+                    width:100%;
                     display: flex;
                     flex-direction: row;
-                    gap: 0rem;
+                    flex-gap: 0rem;
+                    overflow: hidden;
+                    border-radius: var(--form-border-radius, 4px) !important;
+                    background:var(--input-buttonbar-bgcolor, transparent);
+                    border:1px solid var(--input-buttonbar-border-color, #FFFFFF);
                 }
+            
                 
                 ::slotted(button), ::slotted(input-button) {
-                    border-radius:0;
+                    border:0;
+                    border-radius:0 !important;
+                    width:100%;
+                    margin:0;
+                    display:block;
+                    border-left:1px solid var(--input-buttonbar-border-color, #FFFFFF);
                 }
                 ::slotted(button:first-child), ::slotted(input-button:first-child) {
-                    border-top-left-radius: var(--form-border-radius, 4px);
-                    border-bottom-left-radius: var(--form-border-radius, 4px);    
+                    border-left:0 !important;
+                    border-top-left-radius: var(--form-border-radius, 4px) !important;
+                    border-bottom-left-radius: var(--form-border-radius, 4px) !important;    
                 }
                 ::slotted(button:last-child), ::slotted(input-button:last-child) {
-                    border-top-right-radius: var(--form-border-radius, 4px);
-                    border-bottom-right-radius: var(--form-border-radius, 4px);
+                    border-top-right-radius: var(--form-border-radius, 4px) !important;
+                    border-bottom-right-radius: var(--form-border-radius, 4px) !important;
                 }
 
             }
@@ -65,3 +77,7 @@ class InputButtonBarComponent extends HTMLElement {
         `;
     }
 }
+
+customElements.define(InputButtonBarComponent.tag, InputButtonBarComponent);
+
+export default InputButtonBarComponent;

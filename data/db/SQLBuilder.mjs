@@ -383,14 +383,10 @@ class SQLBuilder {
             }
 
             case "UPDATE": {
-                console.log(this._params);
-                console.log("UPDATE", this._set);
                 const sets = Object.entries(this._set).map(([key, val]) => {
-                    console.log(key, val);
                     return `${key} = ?`;
                 });
                 this._args.values = Object.values(this._set);
-                console.log(this._params);
                 sql = `UPDATE ${this._table} SET ${sets.join(", ")}`;
                 break;
             }

@@ -1,5 +1,3 @@
-
-
 /**
  * AUTODOC:START
  * Component: <input-number>
@@ -46,7 +44,7 @@ class InputNumber extends InputComponent {
         return [...super.observedAttributes.filter((name) => name !== "type"), "units", "step", "decimals"];
     }
     /**
-        * Initializes component state, DOM references, and default behavior.
+     * Initializes component state, DOM references, and default behavior.
      * @returns {*} void.
      */
     constructor() {
@@ -58,7 +56,7 @@ class InputNumber extends InputComponent {
     }
 
     /**
-       * Returns component-scoped style definitions used to generate CSS.
+     * Returns component-scoped style definitions used to generate CSS.
      * @returns {*} Style definition map used for generated component CSS.
      */
     get _styles() {
@@ -156,7 +154,7 @@ class InputNumber extends InputComponent {
     }
 
     /**
-      * Creates the hidden native input used for form integration.
+     * Creates the hidden native input used for form integration.
      * @returns {*} Configured native input element.
      */
     _createNativeControl() {
@@ -165,11 +163,110 @@ class InputNumber extends InputComponent {
         input.autocomplete = "off";
         input.inputMode = "decimal";
         input.classList.add("native");
+        input.addEventListener("input", () => {
+            const sanitizedValue = this._sanitizeLiveValue(input.value);
+            if (sanitizedValue !== input.value) {
+                input.value = sanitizedValue;
+            }
+        });
         return input;
     }
 
+    _getDecimalLimit() {
+        if (!this.hasAttribute("decimals")) {
+            return null;
+        }
+
+        const decimals = Number(this.getAttribute("decimals"));
+        return Number.isInteger(decimals) && decimals >= 0 ? decimals : null;
+    }
+
+    _sanitizeLiveValue(value) {
+        const text = value == null ? "" : String(value);
+        if (!text) {
+            return "";
+        }
+
+        const allowNegative = !this.hasAttribute("min") || Number(this.getAttribute("min")) < 0;
+        const hasLeadingNegative = allowNegative && text.startsWith("-");
+        const unsignedText = hasLeadingNegative ? text.slice(1) : text;
+        const firstDecimalIndex = unsignedText.indexOf(".");
+
+        let integerPart = "";
+        let decimalPart = "";
+
+        if (firstDecimalIndex >= 0) {
+            integerPart = unsignedText.slice(0, firstDecimalIndex);
+            decimalPart = unsignedText.slice(firstDecimalIndex + 1);
+        } else {
+            integerPart = unsignedText;
+        }
+
+        integerPart = integerPart.replace(/\D+/g, "");
+        decimalPart = decimalPart.replace(/\D+/g, "");
+
+        const decimalLimit = this._getDecimalLimit();
+        if (decimalLimit === 0) {
+            decimalPart = "";
+        } else if (decimalLimit !== null) {
+            decimalPart = decimalPart.slice(0, decimalLimit);
+        }
+
+        const hadDecimalPoint = firstDecimalIndex >= 0 && decimalLimit !== 0;
+        const prefix = hasLeadingNegative ? "-" : "";
+        const shouldKeepBareDecimal = hadDecimalPoint && integerPart === "" && decimalPart === "";
+        const shouldKeepTrailingDecimal = hadDecimalPoint && decimalPart === "";
+
+        if (shouldKeepBareDecimal) {
+            return `${prefix}.`;
+        }
+
+        if (!integerPart && !decimalPart) {
+            return prefix;
+        }
+
+        if (hadDecimalPoint && (decimalPart || shouldKeepTrailingDecimal)) {
+            return `${prefix}${integerPart}.${decimalPart}`;
+        }
+
+        return `${prefix}${integerPart}`;
+    }
+
+    _normalizeValue(value) {
+        const text = value == null ? "" : String(value).trim();
+        if (!text) {
+            return "";
+        }
+
+        const numericValue = Number(text);
+        if (!Number.isFinite(numericValue)) {
+            return "";
+        }
+
+        if (this.hasAttribute("decimals")) {
+            const decimals = Number(this.getAttribute("decimals"));
+            const factor = Math.pow(10, decimals);
+            return String(Math.round(numericValue * factor) / factor);
+        }
+
+        return String(numericValue);
+    }
+
+    _setValue(value, { dispatchEvents = false } = {}) {
+        const normalizedValue = this._normalizeValue(value);
+        if (normalizedValue === this._lastSetValue && normalizedValue === this._dom.native.value) return;
+
+        this._lastSetValue = normalizedValue;
+        this._dom.native.value = normalizedValue;
+
+        if (dispatchEvents) {
+            this._dom.native.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+            this._dom.native.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+        }
+    }
+
     /**
-       * Computes the next numeric value using step/min/max constraints.
+     * Computes the next numeric value using step/min/max constraints.
      * @param {*} step - Input value for step.
      * @returns {*} Derived internal value or completion status.
      */
@@ -177,14 +274,15 @@ class InputNumber extends InputComponent {
         const current = Number(this._dom.native.value);
         const base = Number.isFinite(current) ? current : 0;
         const newValue = base + step;
-        console.log(newValue);
-        this._dom.native.value = newValue;
-        this._dom.native.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
-        this._dom.native.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+        this._setValue(newValue, { dispatchEvents: true });
+    }
+
+    _onNativeChangeEvent() {
+        this._setValue(this._dom.native.value);
     }
 
     /**
-       * Attaches increment/decrement controls and keyboard shortcuts for stepping.
+     * Attaches increment/decrement controls and keyboard shortcuts for stepping.
      * @returns {*} void.
      */
     _bindStepers() {

@@ -19,7 +19,7 @@ class Migration extends Model {
 
     static fromModel(Model) {
         const migration = Migration.where({ model_name: Model.name }).first();
-        
+
         if (migration.exists) {
             migration.Model = Model;
 
@@ -37,7 +37,6 @@ class Migration extends Model {
 
             return migration;
         } else {
-
             const migration = new Migration();
             migration.Model = Model;
             migration.model_name = Model.name;
@@ -82,7 +81,7 @@ class Migration extends Model {
     }
 
     static diffFields(current, compare) {
-        console.log(current, compare);
+        //console.log(current, compare);
         const currentKeys = Object.keys(current || {});
         const compareKeys = Object.keys(compare || {});
         const added = compareKeys.filter((k) => !currentKeys.includes(k));
@@ -143,9 +142,13 @@ class Migration extends Model {
 
         if (schema.maxLength) definition[0] += `(${schema.maxLength})`;
         if (schema.primaryKey) definition.push("PRIMARY KEY");
-        ["autoIncrement", "unique", "null", "required"].forEach((key) => {
-            if (schema[key]) definition.push(key.replace(/[a-z]/g, (char) => char.toUpperCase()));
-        });
+        if (schema.autoIncrement) definition.push("AUTOINCREMENT");
+        if (schema.unique) definition.push("UNIQUE");
+        if (schema.required || schema.null === false) {
+            definition.push("NOT NULL");
+        } else if (schema.null) {
+            definition.push("NULL");
+        }
         if (schema.default !== undefined)
             definition.push(
                 `DEFAULT ${
@@ -161,7 +164,7 @@ class Migration extends Model {
     }
 
     diff(fields) {
-        console.log("diff", this.field_schema, fields);
+        // console.log("diff", this.field_schema, fields);
         return Migration.diffFields(this.field_schema, fields);
     }
 

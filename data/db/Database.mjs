@@ -7,6 +7,7 @@
 import EventEmitter from "../../core/Event/Emitter.mjs";
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 /**
  * Base database class for managing database connections and models.
@@ -237,7 +238,7 @@ class Database extends EventEmitter {
      */
     async loadModelDirectory(dir) {
         const loadModel = (modelPath) => {
-            return import(modelPath)
+            return import(pathToFileURL(modelPath).href)
                 .then((module) => module.default)
                 .catch((error) => {
                     console.error(`Failed to load model from ${modelPath}:`, error);

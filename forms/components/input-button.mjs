@@ -56,21 +56,22 @@ class InputButtonComponent extends HTMLElement {
                 }
 
                 button {
+                width:100%;
                     box-sizing: border-box;
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
                     gap: 0.45rem;
                     border: 1px solid transparent;
-                    border-radius: var(--input-border-radius, 5px);
+                    border-radius: var(--input-border-radius, 0);
                     padding: 0.5rem 1rem;
                     margin: 0;
                     cursor: pointer;
                     user-select: none;
-                    font: inherit;
+                    font-size: inherit;
                     line-height: 1;
-                    color: var(--input-button-color, #ffffff);
-                    background: var(--input-button-bgcolor, #2f5ea6);
+                    color: var(--input-button-color, #333333);
+                    background: var(--input-button-bgcolor, #FFFFFF);
                     transition: filter 0.14s ease, opacity 0.14s ease;
                 }
 
@@ -130,7 +131,7 @@ class InputButtonComponent extends HTMLElement {
                         <span id="icon-text" class="icon-text"></span>
                         <slot id="icon-slot" class="icon-slot" name="icon"></slot>
                     </span>
-                    <span id="label" class="label"></span>
+                    <span id="label" class="label" part="label"></span>
                 </span>
             </button>
         `;
@@ -184,12 +185,6 @@ class InputButtonComponent extends HTMLElement {
 
         const formsConfig = getJuiceConfig("forms") || {};
         const theme = formsConfig.theme || {};
-        const fallbackBg = theme.inputButtonBgColor || "#2f5ea6";
-        const fallbackColor = theme.inputButtonColor || "#ffffff";
-        const bg = this.getAttribute("bgcolor") || fallbackBg;
-        const color = this.getAttribute("color") || fallbackColor;
-        this.style.setProperty("--input-button-bgcolor", bg);
-        this.style.setProperty("--input-button-color", color);
 
         const type = this.getAttribute("type") || "button";
         this._button.type = type;
