@@ -1,5 +1,3 @@
-
-
 /**
  * AUTODOC:START
  * Component: <input-checkbox>
@@ -37,7 +35,7 @@ import InputComponent from "./input-component.mjs";
 
 class InputCheckbox extends InputComponent {
     /**
-        * Initializes component state, DOM references, and default behavior.
+     * Initializes component state, DOM references, and default behavior.
      * @returns {*} void.
      */
     constructor() {
@@ -50,11 +48,20 @@ class InputCheckbox extends InputComponent {
      * @returns {*} List of observed attribute names.
      */
     static get observedAttributes() {
-        return [...super.observedAttributes, "bgcolor", "checkcolor"];
+        return [...super.observedAttributes, "bgcolor", "checkcolor", "label-checked"];
+    }
+
+    _syncCheckedLabel() {
+        const baseLabel = this.getAttribute("label") || "";
+        const checkedLabel = this.getAttribute("label-checked");
+        const nextLabel = this.checked && checkedLabel != null ? checkedLabel : baseLabel;
+
+        if (!this._dom?.labelText) return;
+        this._dom.labelText.textContent = nextLabel;
     }
 
     /**
-       * Returns component-scoped style definitions used to generate CSS.
+     * Returns component-scoped style definitions used to generate CSS.
      * @returns {*} Style definition map used for generated component CSS.
      */
     get _styles() {
@@ -66,12 +73,12 @@ class InputCheckbox extends InputComponent {
                 cursor: "pointer"
             },
             ".label-text": {
-                lineHeight: "calc(1em - 2px)",
+                lineHeight: "calc(1.5rem - 0.5em)",
                 marginLeft: "0.5rem"
             },
             ".input-wrapper": {
-                width: "1em",
-                height: "1em",
+                width: "1.5em",
+                height: "1.5em",
                 borderRadius: "0.2em",
                 border: "1px solid #8a8a8a",
                 backgroundColor: "transparent",
@@ -125,7 +132,7 @@ class InputCheckbox extends InputComponent {
     }
 
     /**
-      * Creates the hidden native input used for form integration.
+     * Creates the hidden native input used for form integration.
      * @returns {*} Configured native input element.
      */
     _createNativeControl() {
@@ -137,7 +144,7 @@ class InputCheckbox extends InputComponent {
     }
 
     /**
-      * Builds the default dial DOM (SVG rings, knob, labels, value display).
+     * Builds the default dial DOM (SVG rings, knob, labels, value display).
      * @returns {*} Rendered default dial container node.
      */
     _renderDefault() {
@@ -165,7 +172,7 @@ class InputCheckbox extends InputComponent {
     }
 
     /**
-      * Performs post-connect setup after the component has its default DOM nodes.
+     * Performs post-connect setup after the component has its default DOM nodes.
      * @returns {*} void.
      */
     _afterConnected() {
@@ -174,10 +181,11 @@ class InputCheckbox extends InputComponent {
             return;
         }
         this._ensureDefaultMountedInInputContainer();
+        this._syncCheckedLabel();
     }
 
     /**
-      * Recomputes ring/progress/tick geometry and knob placement from current value state.
+     * Recomputes ring/progress/tick geometry and knob placement from current value state.
      * @returns {*} void.
      */
     _syncVisualState() {
@@ -195,6 +203,7 @@ class InputCheckbox extends InputComponent {
         else this.style.removeProperty("--checkcolor");
         this.setAttribute("aria-checked", this.checked ? "true" : "false");
         this.setAttribute("role", "checkbox");
+        this._syncCheckedLabel();
     }
 }
 

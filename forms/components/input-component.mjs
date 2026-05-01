@@ -162,6 +162,7 @@ class InputComponent extends HTMLElement {
             "template",
             "view",
             "append",
+            "datalist",
             "validation-color",
             "validation-color-valid",
             "validation-color-incomplete",
@@ -180,9 +181,10 @@ class InputComponent extends HTMLElement {
         return {
             ":host": {
                 display: "block",
-                fontFamily: "system-ui,Segoe UI,Roboto,Arial,sans-serif",
+                fontFamily: "var(--form-font-family, system-ui,Segoe UI,Roboto,Arial,sans-serif)",
                 boxSizing: "border-box",
-                marginBottom: "1rem"
+                marginBottom: "1rem",
+                maxWidth: "100%"
             },
             ":host([inline])": {
                 display: "inline-block"
@@ -194,19 +196,23 @@ class InputComponent extends HTMLElement {
                 position: "relative",
                 fontSize: "inherit"
             },
-            ".input-root label": {
-                position: "relative",
-                fontSize: "0.8rem",
-                textTransform: "uppercase"
+            ".input-root > label": {
+                marginBottom: "0.25rem"
             },
             label: {
+                position: "relative",
                 display: "block",
-                cursor: "pointer"
-            },
-            ".label-text": {
-                fontSize: "0.8em",
+                cursor: "pointer",
+                fontSize: "var(--form-label-font-size, 0.7rem)",
+                textTransform: "var(--form-label-text-transform, uppercase)",
                 fontWeight: "var(--form-label-weight, bold)",
                 color: "var(--form-label-color, #48484A)"
+            },
+            ".checkbox label": {
+                fontSize: "0.9rem"
+            },
+            ".label-text": {
+                display: "inline"
             },
             ".input-wrapper": {
                 border: "var(--input-border, 1px solid #c8c8c8)",
@@ -221,17 +227,19 @@ class InputComponent extends HTMLElement {
             ".native-wrapper": {
                 display: "block",
                 width: "100%",
-                flex: "1 1 auto"
+                flex: "1 1 auto",
+                marginLeft: "0.5rem"
             },
             ".native-wrapper input": {
                 position: "relative",
-                width: "100%"
+                width: "100%",
+                height: "var(--input-height, 30px)"
             },
             "input.native": {
                 display: "block",
                 width: "100%",
                 boxSizing: "border-box",
-                fontFamily: "inherit",
+                fontFamily: "var(--form-input-font-family, inherit)",
                 border: 0,
                 outline: 0,
                 padding: 0,
@@ -239,7 +247,7 @@ class InputComponent extends HTMLElement {
                 fontSize: "inherit"
             },
             "input.native[type=text], input.native[type=number]": {
-                margin: "0.2rem"
+                margin: "var(--input-margin, 0)"
             },
             ".input-wrapper .status-wrapper": {
                 position: "relative",
@@ -564,6 +572,7 @@ class InputComponent extends HTMLElement {
     }
 
     _syncConfiguredCharacterWidth() {
+        if (this.syncCharWidth !== undefined && !this.syncCharWidth) return;
         const native = this._dom.native;
         if (!native || this._isCheckableControl(native)) return;
 

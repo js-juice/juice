@@ -1,5 +1,3 @@
-
-
 /**
  * AUTODOC:START
  * Component: <input-select>
@@ -48,13 +46,20 @@ import InputComponent from "./input-component.mjs";
 function parseOptionItem(option) {
     if (typeof option === "string") {
         if (option.includes(":")) {
-            const [value, label] = option.split(":").map((s) => s.trim());
-            return { value, label };
+            const parts = option.split(":").map((s) => s.trim());
+            const value = parts[0] || "";
+            const label = parts[1] || value;
+            const description = parts.length > 2 ? parts.slice(2).join(":").trim() : "";
+            return { value, label, description };
         }
-        return { value: option, label: option };
+        return { value: option, label: option, description: "" };
     }
     if (option && typeof option === "object" && option.value !== undefined) {
-        return { value: String(option.value), label: String(option.label ?? option.value) };
+        return {
+            value: String(option.value),
+            label: String(option.label ?? option.value),
+            description: String(option.description ?? "")
+        };
     }
     return null;
 }
@@ -89,7 +94,7 @@ function parseSelectOptions(options) {
     }
 
     if (options && typeof options === "object") {
-        return Object.entries(options).map(([value, label]) => ({ value, label: String(label) }));
+        return Object.entries(options).map(([value, label]) => ({ value, label: String(label), description: "" }));
     }
 
     return [];
@@ -106,28 +111,35 @@ class InputSelect extends InputComponent {
     }
 
     /**
-        * Initializes component state, DOM references, and default behavior.
+     * Initializes component state, DOM references, and default behavior.
      * @returns {*} void.
      */
     constructor() {
         super({ _layout: "label:input:>:native:status:div.tab:<:validation" });
         this.inputType = "select";
+        this.syncCharWidth = false;
         this._options = [];
-        this.selected = { value: "", label: "" };
+        this.selected = { value: "", label: "", description: "" };
         this._optionList = null;
         this._optionObserver = null;
         this._customBoundNative = null;
         this._customBoundList = null;
+        this._nativeChangeHandler = null;
+        this._descriptionEl = null;
+        this._viewportListener = null;
+        this._scrollParents = [];
+        this._openIntent = false;
     }
 
     /**
-       * Returns component-scoped style definitions used to generate CSS.
+     * Returns component-scoped style definitions used to generate CSS.
      * @returns {*} Style definition map used for generated component CSS.
      */
     get _styles() {
         return {
             ":host": {
-                cursor: "pointer"
+                cursor: "pointer",
+                position: "relative"
             },
             label: {
                 marginBottom: "0.25rem"
@@ -138,6 +150,14 @@ class InputSelect extends InputComponent {
                 borderRadius: "var(--input-border-radius, 5px)",
                 userSelect: "none",
                 cursor: "pointer"
+            },
+            ":host(.open-below) .input-wrapper": {
+                borderBottomLeftRadius: 0,
+                borderBottomRightRadius: 0
+            },
+            ":host(.open-above) .input-wrapper": {
+                borderTopLeftRadius: 0,
+                borderTopRightRadius: 0
             },
             ".tab": {
                 position: "relative",
@@ -173,20 +193,24 @@ class InputSelect extends InputComponent {
                 margin: "0",
                 padding: "0",
                 border: "1px solid #c8c8c8",
+                borderRadius: "var(--input-border-radius, 5px)",
                 backgroundColor: "#ffffff",
                 position: "absolute",
-                width: "100%",
-                zIndex: "10",
-                maxHeight: "12rem",
+                width: "auto",
+                zIndex: "10000",
+                maxHeight: "300px",
                 overflowY: "auto",
                 boxSizing: "border-box",
                 display: "none"
             },
+            ":host(.open-below) .select-options": {
+                borderRadius: "0 0 var(--input-border-radius, 5px) var(--input-border-radius, 5px)"
+            },
+            ":host(.open-above) .select-options": {
+                borderRadius: "var(--input-border-radius, 5px) var(--input-border-radius, 5px) 0 0"
+            },
             ".select-options.open": {
                 display: "block"
-            },
-            ".select-options.above": {
-                bottom: "var(--input-height)"
             },
             ".select-options li": {
                 color: "#333333",
@@ -202,6 +226,16 @@ class InputSelect extends InputComponent {
                 backgroundColor: "var(--selected-option-bg, var(--form-accent-color, #0059ff))",
                 color: "var(--selected-option-color, #ffffff)"
             },
+            ".select-description": {
+                marginTop: "0.35rem",
+                fontSize: "0.82rem",
+                lineHeight: "1.35",
+                color: "var(--input-help-color, #64748b)",
+                minHeight: "1.1em"
+            },
+            ".select-description:empty": {
+                display: "none"
+            },
             "::slotted(option)": {
                 display: "none"
             }
@@ -209,7 +243,7 @@ class InputSelect extends InputComponent {
     }
 
     /**
-      * Returns whether the select should delegate to native rendering mode.
+     * Returns whether the select should delegate to native rendering mode.
      * @returns {*} Boolean state value.
      */
     _useNativeMode() {
@@ -217,7 +251,7 @@ class InputSelect extends InputComponent {
     }
 
     /**
-      * Creates the hidden native input used for form integration.
+     * Creates the hidden native input used for form integration.
      * @returns {*} Configured native input element.
      */
     _createNativeControl() {
@@ -253,6 +287,175 @@ class InputSelect extends InputComponent {
     disconnectedCallback() {
         super.disconnectedCallback();
         if (this._optionObserver) this._optionObserver.disconnect();
+        this._stopViewportListeners();
+        this._closeOptionList();
+    }
+
+    _startViewportListeners() {
+        if (this._viewportListener) return;
+        this._viewportListener = () => {
+            this._positionOptionList();
+        };
+        window.addEventListener("scroll", this._viewportListener, true);
+        window.addEventListener("resize", this._viewportListener);
+
+        this._scrollParents = this._getScrollAncestors();
+        for (let i = 0; i < this._scrollParents.length; i += 1) {
+            this._scrollParents[i].addEventListener("scroll", this._viewportListener);
+        }
+    }
+
+    _stopViewportListeners() {
+        if (!this._viewportListener) return;
+        window.removeEventListener("scroll", this._viewportListener, true);
+        window.removeEventListener("resize", this._viewportListener);
+        for (let i = 0; i < this._scrollParents.length; i += 1) {
+            this._scrollParents[i].removeEventListener("scroll", this._viewportListener);
+        }
+        this._scrollParents = [];
+        this._viewportListener = null;
+    }
+
+    _walkAncestors(visitor) {
+        const inputEl = this._wireframe?.input;
+        if (!inputEl || typeof visitor !== "function") return;
+
+        const getNextAncestor = (current) => {
+            if (!current) return null;
+            if (current.parentElement) return current.parentElement;
+            const root = current.getRootNode?.();
+            if (root && root.host) return root.host;
+            return null;
+        };
+
+        let node = getNextAncestor(inputEl);
+        while (node && node !== document.body && node !== document.documentElement) {
+            visitor(node);
+            node = getNextAncestor(node);
+        }
+    }
+
+    _getScrollAncestors() {
+        const ancestors = [];
+        this._walkAncestors((node) => {
+            const style = window.getComputedStyle(node);
+            const overflowY = style?.overflowY || "visible";
+            const overflowX = style?.overflowX || "visible";
+            const isScrollableY = overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay";
+            const isScrollableX = overflowX === "auto" || overflowX === "scroll" || overflowX === "overlay";
+            if (isScrollableY || isScrollableX) {
+                ancestors.push(node);
+            }
+        });
+
+        return ancestors;
+    }
+
+    _getScrollClipRect() {
+        const viewportRect = {
+            top: 0,
+            left: 0,
+            right: window.innerWidth || document.documentElement.clientWidth,
+            bottom: window.innerHeight || document.documentElement.clientHeight
+        };
+
+        let clipRect = { ...viewportRect };
+        this._walkAncestors((node) => {
+            const style = window.getComputedStyle(node);
+            const overflowY = style?.overflowY || "visible";
+            const overflowX = style?.overflowX || "visible";
+            const isScrollableY = overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay";
+            const isScrollableX = overflowX === "auto" || overflowX === "scroll" || overflowX === "overlay";
+            const isClippedY = overflowY === "hidden" || overflowY === "clip";
+            const isClippedX = overflowX === "hidden" || overflowX === "clip";
+
+            if (isScrollableY || isScrollableX || isClippedY || isClippedX) {
+                const rect = node.getBoundingClientRect();
+                clipRect.top = Math.max(clipRect.top, rect.top);
+                clipRect.left = Math.max(clipRect.left, rect.left);
+                clipRect.right = Math.min(clipRect.right, rect.right);
+                clipRect.bottom = Math.min(clipRect.bottom, rect.bottom);
+            }
+        });
+
+        if (clipRect.right < clipRect.left) {
+            clipRect.right = clipRect.left;
+        }
+        if (clipRect.bottom < clipRect.top) {
+            clipRect.bottom = clipRect.top;
+        }
+
+        return clipRect;
+    }
+
+    _closeOptionList(options = {}) {
+        const { keepViewportListeners = false, preserveIntent = false } = options;
+        if (this._optionList) {
+            this._optionList.classList.remove("open");
+        }
+        this.style.zIndex = "";
+        this.classList.remove("open-below", "open-above");
+        this.expanded = false;
+        if (!preserveIntent) {
+            this._openIntent = false;
+        }
+        if (!keepViewportListeners) {
+            this._stopViewportListeners();
+        }
+    }
+
+    _positionOptionList() {
+        if (!this._optionList) return;
+
+        if (!this.expanded) {
+            const inputRect = this._wireframe?.input?.getBoundingClientRect?.() || this.getBoundingClientRect();
+            const clipRect = this._getScrollClipRect();
+            const isVisible = inputRect.bottom > clipRect.top && inputRect.top < clipRect.bottom;
+            if (this._openIntent && isVisible) {
+                this.style.zIndex = "100000";
+                this._optionList.classList.add("open");
+                this.expanded = true;
+            } else {
+                return;
+            }
+        }
+
+        const hostRect = this.getBoundingClientRect();
+        const inputRect = this._wireframe?.input?.getBoundingClientRect?.() || hostRect;
+        const clipRect = this._getScrollClipRect();
+
+        // Close once the trigger leaves its effective visible scroll area.
+        if (inputRect.bottom <= clipRect.top || inputRect.top >= clipRect.bottom) {
+            this._closeOptionList({ keepViewportListeners: true, preserveIntent: true });
+            return;
+        }
+
+        const bottomSpace = clipRect.bottom - inputRect.bottom;
+        const topSpace = inputRect.top - clipRect.top;
+        const listHeight = Math.max(0, this._optionList.scrollHeight || 0);
+
+        this.classList.remove("open-below", "open-above");
+
+        const useAbove = topSpace > bottomSpace && listHeight > bottomSpace;
+
+        // Use fixed positioning with viewport coordinates so the list escapes
+        // any overflow:hidden/auto scroll container that would clip it.
+
+        this._optionList.style.minWidth = `${inputRect.width}px`;
+
+        if (useAbove) {
+            const maxH = Math.max(60, topSpace - 4);
+            this._optionList.style.maxHeight = `${maxH}px`;
+            this._optionList.style.bottom = `100%`;
+            this._optionList.style.top = "";
+            this.classList.add("open-above");
+        } else {
+            const maxH = Math.max(60, bottomSpace - 4);
+            this._optionList.style.maxHeight = `${maxH}px`;
+            this._optionList.style.top = `100%`;
+            this._optionList.style.bottom = "";
+            this.classList.add("open-below");
+        }
     }
 
     /**
@@ -272,17 +475,14 @@ class InputSelect extends InputComponent {
 
         super.attributeChangedCallback(name, oldValue, newValue);
 
-        if (name === "value" && oldValue !== newValue && !this._useNativeMode()) {
+        if (name === "value" && oldValue !== newValue) {
             const normalized = newValue == null ? "" : String(newValue);
-            const option = this._options.find((o) => o.value === normalized) || null;
-            this.selected = {
-                value: normalized,
-                label: option ? option.label : ""
-            };
-            if (this._dom.native) {
+            this._setSelectedByValue(normalized);
+            if (this._dom.native && !this._useNativeMode()) {
                 this._dom.native.value = this.selected.label;
             }
             this._updateFormValue();
+            this._syncSelectedDescription();
         }
 
         if (name === "options" && oldValue !== newValue) {
@@ -291,16 +491,24 @@ class InputSelect extends InputComponent {
     }
 
     /**
-      * Performs post-connect setup after the component has its default DOM nodes.
+     * Performs post-connect setup after the component has its default DOM nodes.
      * @returns {*} void.
      */
     _afterConnected() {
+        if (!this._descriptionEl) {
+            this._descriptionEl = document.createElement("div");
+            this._descriptionEl.className = "select-description";
+            this._descriptionEl.setAttribute("aria-live", "polite");
+        }
+        if (this._descriptionEl.parentNode !== this._wireframe.root) {
+            this._wireframe.root.appendChild(this._descriptionEl);
+        }
         this._refreshOptions();
         this._bindCustomDropdownEvents();
     }
 
     /**
-      * Builds the custom dropdown list container for non-native mode.
+     * Builds the custom dropdown list container for non-native mode.
      * @returns {*} void.
      */
     _renderDefault() {
@@ -309,6 +517,15 @@ class InputSelect extends InputComponent {
         }
         this._optionList = null;
 
+        if (!this._descriptionEl) {
+            this._descriptionEl = document.createElement("div");
+            this._descriptionEl.className = "select-description";
+            this._descriptionEl.setAttribute("aria-live", "polite");
+        }
+        if (this._descriptionEl.parentNode !== this._wireframe.root) {
+            this._wireframe.root.appendChild(this._descriptionEl);
+        }
+
         if (this._useNativeMode()) return;
 
         this._optionList = document.createElement("ul");
@@ -316,8 +533,18 @@ class InputSelect extends InputComponent {
         this._wireframe.root.appendChild(this._optionList);
     }
 
+    _setSelectedByValue(value) {
+        const normalized = value == null ? "" : String(value);
+        const option = this._options.find((o) => o.value === normalized) || null;
+        this.selected = {
+            value: normalized,
+            label: option ? option.label : "",
+            description: option ? option.description || "" : ""
+        };
+    }
+
     /**
-      * Starts option observers so option list changes are reflected immediately.
+     * Starts option observers so option list changes are reflected immediately.
      * @returns {*} void.
      */
     _startOptionObserver() {
@@ -327,13 +554,14 @@ class InputSelect extends InputComponent {
     }
 
     /**
-      * Builds normalized option data from configured sources.
+     * Builds normalized option data from configured sources.
      * @returns {*} Derived value.
      */
     _readOptions() {
         const childOptions = Array.from(this.querySelectorAll(":scope > option")).map((option) => ({
             value: option.value || option.textContent.trim(),
             label: option.textContent.trim(),
+            description: option.getAttribute("description") || option.dataset.description || "",
             selected: option.hasAttribute("selected")
         }));
         if (childOptions.length) return childOptions;
@@ -345,7 +573,7 @@ class InputSelect extends InputComponent {
     }
 
     /**
-      * Rebuilds option UI and selection state from current option data.
+     * Rebuilds option UI and selection state from current option data.
      * @returns {*} void.
      */
     _refreshOptions() {
@@ -373,6 +601,7 @@ class InputSelect extends InputComponent {
             this._options.unshift({
                 label: defaultValue || "Select an option",
                 value: "",
+                description: "",
                 selected: this.value === ""
             });
             for (let i = 0; i < this._options.length; i += 1) {
@@ -384,7 +613,11 @@ class InputSelect extends InputComponent {
                     this.value = optionData.value;
                     li.classList.add("selected");
                     this._dom.labelValue.value = optionData.label;
-                    this.selected = { value: optionData.value, label: optionData.label };
+                    this.selected = {
+                        value: optionData.value,
+                        label: optionData.label,
+                        description: optionData.description || ""
+                    };
                 }
 
                 this._optionList.appendChild(li);
@@ -395,7 +628,7 @@ class InputSelect extends InputComponent {
             this._selectOptionByValue(this.selected.value);
         }
 
-        this._dom.native.style.width = `calc(${maxLen}ch + 1.5rem)`;
+        // this._dom.native.style.width = `calc(${maxLen}ch + 1.5rem)`;
 
         const attrValue = this.getAttribute("value");
         if (attrValue !== null) {
@@ -404,18 +637,25 @@ class InputSelect extends InputComponent {
             const selected = this._options.find((o) => o.selected);
             if (selected) this.value = selected.value;
         }
+
+        if (this._useNativeMode() && this._dom.native) {
+            this._setSelectedByValue(this._dom.native.value);
+        }
+
+        this._syncSelectedDescription();
     }
 
     /**
-      * Selects and activates the option matching a value.
+     * Selects and activates the option matching a value.
      * @param {*} value - Raw value being normalized or assigned.
      * @returns {*} void.
      */
     _selectOptionByValue(value) {
-        const option = this._options.find((o) => o.value === value);
+        const normalized = value == null ? "" : String(value);
+        const option = this._options.find((o) => o.value === normalized);
         if (!option) return;
 
-        this.selected = { value: option.value, label: option.label };
+        this._setSelectedByValue(option.value);
 
         this.value = option.value;
         if (!this._useNativeMode()) {
@@ -432,46 +672,58 @@ class InputSelect extends InputComponent {
                 li.classList.add("selected");
             }
         }
+
+        this._syncSelectedDescription();
+    }
+
+    _syncSelectedDescription() {
+        if (!this._descriptionEl) {
+            this._descriptionEl = document.createElement("div");
+            this._descriptionEl.className = "select-description";
+            this._descriptionEl.setAttribute("aria-live", "polite");
+        }
+        if (this._descriptionEl.parentNode !== this._wireframe.root) {
+            this._wireframe.root.appendChild(this._descriptionEl);
+        }
+        this._descriptionEl.textContent = this.selected.description || this.getAttribute("description") || "";
     }
 
     /**
-      * Opens or closes the custom option list UI.
+     * Opens or closes the custom option list UI.
      * @returns {*} void.
      */
     _expandOptionList() {
-        console.log("_expandOptionList");
         if (!this._optionList) return;
         if (this.expanded) {
-            this._optionList.classList.remove("open");
-            this.expanded = false;
+            this._closeOptionList();
             return;
         }
+        this.style.zIndex = "2147483647";
+        this._openIntent = true;
         this._optionList.classList.add("open");
-        const rect = this.getBoundingClientRect();
-        const listRect = this._optionList.getBoundingClientRect();
-        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-
-        const bottomSpace = viewportHeight - rect.bottom;
-        const topSpace = rect.top;
-
-        if (bottomSpace > topSpace) {
-            this._optionList.style.maxHeight = `${bottomSpace - 50}px`;
-            this._optionList.style.top = "100%";
-            this._optionList.style.bottom = "auto";
-        } else {
-            this._optionList.style.maxHeight = `${topSpace - 50}px`;
-            this._optionList.style.top = "auto";
-            this._optionList.style.bottom = "var(--input-height)";
-        }
         this.expanded = true;
-        console.log(rect, viewportHeight, listRect);
+        this._startViewportListeners();
+        this._positionOptionList();
     }
 
     /**
-       * Wires dropdown open/close, option click, and keyboard interactions.
+     * Wires dropdown open/close, option click, and keyboard interactions.
      * @returns {*} void.
      */
     _bindCustomDropdownEvents() {
+        if (this._dom.native) {
+            if (this._nativeChangeHandler) {
+                this._dom.native.removeEventListener("change", this._nativeChangeHandler);
+            }
+            this._nativeChangeHandler = () => {
+                if (this._useNativeMode()) {
+                    this._setSelectedByValue(this._dom.native?.value ?? "");
+                    this._syncSelectedDescription();
+                }
+            };
+            this._dom.native.addEventListener("change", this._nativeChangeHandler);
+        }
+
         if (this._useNativeMode() || !this._dom.native || !this._optionList) return;
         if (this._customBoundNative === this._dom.native && this._customBoundList === this._optionList) return;
         this._customBoundNative = this._dom.native;
@@ -487,7 +739,7 @@ class InputSelect extends InputComponent {
 
         this._dom.native.addEventListener("blur", () => {
             setTimeout(() => {
-                if (this._optionList) this._optionList.classList.remove("open");
+                this._closeOptionList();
             }, 120);
         });
 
@@ -501,12 +753,13 @@ class InputSelect extends InputComponent {
 
             this.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
             this.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
-            this._optionList.classList.remove("open");
+            this._closeOptionList();
+            this._syncSelectedDescription();
         });
     }
 
     /**
-      * Returns derived form value state.
+     * Returns derived form value state.
      * @returns {*} Derived value.
      */
     _getFormValue() {
@@ -517,7 +770,7 @@ class InputSelect extends InputComponent {
     }
 
     /**
-        * Returns the current component value.
+     * Returns the current component value.
      * @returns {*} Current value.
      */
     get value() {
@@ -539,11 +792,7 @@ class InputSelect extends InputComponent {
         }
 
         const normalized = value == null ? "" : String(value);
-        const option = this._options.find((o) => o.value === normalized) || null;
-        this.selected = {
-            value: normalized,
-            label: option ? option.label : ""
-        };
+        this._setSelectedByValue(normalized);
 
         if (this.getAttribute("value") !== normalized) {
             this.setAttribute("value", normalized);
@@ -555,6 +804,8 @@ class InputSelect extends InputComponent {
         if (this._dom.native) {
             this._dom.native.value = this.selected.label;
         }
+
+        this._syncSelectedDescription();
     }
 }
 

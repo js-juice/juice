@@ -1,0 +1,16 @@
+{
+  "name": "juice-styles",
+  "version": "1.0.0",
+  "description": "SCSS Stylesheets",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "build": "sass scss:build --no-source-map",
+    "watch": "sass scss:build --watch --no-source-map"
+  },
+  "devDependencies": {
+    "sass": "^1.98.0"
+  }
+}

@@ -172,7 +172,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 this.template = new ComponentTemplate(this.config);
                 const styleProperties = ["baseStyle", "style", "_style"];
 
-                styleProperties.forEach((property) => {
+                styleProperties.forEach(async (property) => {
                     const value = this[property];
                     if (value) {
                         if (Util.isArray(value)) {
@@ -182,8 +182,9 @@ function ComponentCompiler(name, BaseHTMLElement) {
                         } else if (type(value, "string")) {
                             if (value.includes("}")) {
                                 this.template.addStyle(value);
-                            } else if (!value.includes(" ")) {
+                            } else if (!value.includes(" ") && value.endsWith(".css")) {
                                 //Process as Link
+                                await this.template.loadStyle(value);
                             }
                         }
                     }
@@ -937,7 +938,24 @@ function ComponentCompiler(name, BaseHTMLElement) {
                     const onEvents = this.root.querySelectorAll("[event]:not(.events-set)");
                     for (let i = 0; i < onEvents.length; i++) {
                         const eventHandle = onEvents[i].getAttribute("event");
-                        if (eventHandle.includes("::")) {
+                        if (eventHandle.includes(";")) {
+                            const eventHandles = eventHandle
+                                .split(";")
+                                .map((e) => e.trim())
+                                .filter(Boolean);
+                            eventHandles.forEach((handle) => {
+                                if (handle.includes("::")) {
+                                    const [event, call] = handle.split("::");
+                                    this._bindEvent(event, onEvents[i], call);
+                                } else {
+                                    console.error(
+                                        this.constructor.name,
+                                        "Event Auto Handel must include event and method",
+                                        handle
+                                    );
+                                }
+                            });
+                        } else if (eventHandle.includes("::")) {
                             const [event, call] = eventHandle.split("::");
                             this._bindEvent(event, onEvents[i], call);
                         } else {

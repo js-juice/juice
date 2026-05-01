@@ -39,7 +39,19 @@ class InputButtonComponent extends HTMLElement {
     static tag = "input-button";
 
     static get observedAttributes() {
-        return ["label", "icon", "bgcolor", "color", "disabled", "type", "name", "value", "action", "aria-label"];
+        return [
+            "label",
+            "icon",
+            "bgcolor",
+            "color",
+            "disabled",
+            "type",
+            "name",
+            "value",
+            "action",
+            "onclick",
+            "aria-label"
+        ];
     }
 
     constructor() {
@@ -51,27 +63,41 @@ class InputButtonComponent extends HTMLElement {
         this._shadow.innerHTML = `
             <style>
                 :host {
+                    position:relative;
                     display: inline-block;
                     box-sizing: border-box;
+                    ${this.hasAttribute("bgcolor") ? `--input-button-bgcolor: ${this.getAttribute("bgcolor")};` : ""}
+                    ${this.hasAttribute("color") ? `--input-button-color: ${this.getAttribute("color")};` : ""}
                 }
-
+                .input-root{
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-sizing: border-box;
+                    width: 100%;
+                    height:100%;
+                    vertical-align: middle;        
+                }
                 button {
-                width:100%;
+                    width:100%;
+                    cursor: pointer;
+                    height: var(--input-height, auto);
                     box-sizing: border-box;
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
                     gap: 0.45rem;
                     border: 1px solid transparent;
-                    border-radius: var(--input-border-radius, 0);
+                    border-radius: var(--form-input-border-radius, 0.3em);
                     padding: 0.5rem 1rem;
                     margin: 0;
                     cursor: pointer;
                     user-select: none;
                     font-size: inherit;
                     line-height: 1;
-                    color: var(--input-button-color, #333333);
-                    background: var(--input-button-bgcolor, #FFFFFF);
+                    vertical-align: middle;
+                    color: var(--input-button-color, inherit);
+                    background: var(--input-button-bgcolor, inherit);
                     transition: filter 0.14s ease, opacity 0.14s ease;
                 }
 
@@ -125,6 +151,7 @@ class InputButtonComponent extends HTMLElement {
                     white-space: nowrap;
                 }
             </style>
+            <div class="input-root">
             <button id="button" type="button" part="button">
                 <span class="content">
                     <span class="icon-wrap" aria-hidden="true">
@@ -134,6 +161,7 @@ class InputButtonComponent extends HTMLElement {
                     <span id="label" class="label" part="label"></span>
                 </span>
             </button>
+            </div>
         `;
 
         this._button = this._shadow.getElementById("button");
@@ -156,6 +184,9 @@ class InputButtonComponent extends HTMLElement {
     attributeChangedCallback(name, oldValue, newValue) {
         if (oldValue === newValue) return;
 
+        if (name == "onclick") {
+            this._syncAll();
+        }
         if (
             name === "label" ||
             name === "icon" ||

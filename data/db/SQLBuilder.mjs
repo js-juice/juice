@@ -194,6 +194,16 @@ class SQLBuilder {
         return this;
     }
 
+    insertOrUpdate(data, conflictTarget) {
+        this._type = "INSERT";
+        this._values = data;
+        const keys = Object.keys(data);
+        const placeholders = keys.map(() => "?");
+        this._args.values = Object.values(data);
+        this._createDef = `(${keys.join(", ")}) VALUES (${placeholders.join(", ")}) ON CONFLICT(${conflictTarget}) DO UPDATE SET ${keys.map((key) => `${key} = excluded.${key}`).join(", ")}`;
+        return this;
+    }
+
     /**
      * Deletes data from the table
      * @returns {this}

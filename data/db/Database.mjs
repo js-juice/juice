@@ -238,12 +238,32 @@ class Database extends EventEmitter {
      */
     async loadModelDirectory(dir) {
         const loadModel = (modelPath) => {
-            return import(pathToFileURL(modelPath).href)
+            const moduleUrl = pathToFileURL(modelPath);
+            const isolationKey =
+                typeof this?.databasePath === "string" && this.databasePath.trim()
+                    ? this.databasePath.trim()
+                    : typeof dir === "string" && dir.trim()
+                      ? dir.trim()
+                      : "default";
+            moduleUrl.searchParams.set("db", isolationKey);
+
+            return import(moduleUrl.href)
                 .then((module) => module.default)
                 .catch((error) => {
                     console.error(`Failed to load model from ${modelPath}:`, error);
                     return null;
                 });
+        };
+
+        const isConcreteModel = (Model) => {
+            if (!Model || typeof Model !== "function") {
+                return false;
+            }
+
+            const tableName = typeof Model.tableName === "string" ? Model.tableName.trim() : "";
+            const schema = Model.schema && typeof Model.schema === "object" ? Model.schema : null;
+
+            return Boolean(tableName && schema && Object.keys(schema).length);
         };
 
         const isFile = (fileName) => {
@@ -268,7 +288,7 @@ class Database extends EventEmitter {
             const models = await Promise.all(files);
 
             models.forEach((model) => {
-                if (model) {
+                if (isConcreteModel(model)) {
                     this.addModel(model);
                 }
             });
