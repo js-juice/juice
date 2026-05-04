@@ -15,7 +15,7 @@
  */
 export class Cursor {
     index = -1;
-    
+
     /**
      * Creates a new Cursor for the given array.
      * @param {Array} arr - The array to create a cursor for
@@ -167,6 +167,22 @@ export function equal(a, b) {
     return a.length === b.length && a.every((v, i) => v === b[i]);
 }
 
+export function diff(a, b) {
+    return {
+        added: b.filter((i) => !a.includes(i)),
+        removed: a.filter((i) => !b.includes(i))
+    };
+}
+
+export function indexesOf(value, arr) {
+    const indexes = [];
+    let i = -1;
+    for (i = 0; i < arr.length; i++) {
+        if (arr[i] === value) indexes.push(i);
+    }
+    return indexes;
+}
+
 /**
  * ArrUtil provides static utility methods for array operations.
  * @class ArrUtil
@@ -184,7 +200,7 @@ class ArrUtil {
     static diff(a, b) {
         return {
             added: b.filter((i) => !a.includes(i)),
-            removed: a.filter((i) => !b.includes(i)),
+            removed: a.filter((i) => !b.includes(i))
         };
     }
 
@@ -207,7 +223,7 @@ class ArrUtil {
     static last(arr) {
         return arr[arr.length - 1];
     }
-    
+
     /**
      * Returns the intersection of two arrays (elements present in both).
      * @param {Array} arr1 - The first array

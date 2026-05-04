@@ -1,19 +1,20 @@
-import "./components/juice-form.js";
-import "./components/input-checkbox.js";
-import "./components/input-radio.js";
-import "./components/input-select.js";
-import "./components/input-button.js";
-import "./components/input-text.js";
-import "./components/input-number.js";
-import "./components/input-textarea.js";
-import "./components/input-status.js";
-import "./components/option-group.js";
-import "./components/juice-forms.js";
-import "./components/input-direction.js";
-import "./components/input-dial.js";
-import "./components/input-vector.js";
-import "./components/form-info.js";
-import "./components/input-fieldset.js";
+import "./components/juice-form.mjs";
+import "./components/input-checkbox.mjs";
+import "./components/input-radio.mjs";
+import "./components/input-select.mjs";
+import "./components/input-button.mjs";
+import "./components/input-text.mjs";
+import "./components/input-number.mjs";
+import "./components/input-textarea.mjs";
+import "./components/input-status.mjs";
+import "./components/option-group.mjs";
+import "./components/juice-forms.mjs";
+import "./components/input-direction.mjs";
+import "./components/input-dial.mjs";
+import "./components/input-vector.mjs";
+import "./components/form-info.mjs";
+import "./components/input-fieldset.mjs";
+import "./components/input-buttonbar.mjs";
 
 class JuiceForms {
     constructor() {

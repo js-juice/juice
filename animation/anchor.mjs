@@ -53,14 +53,18 @@ export function parseAnchor(position) {
     ["x", "y"].forEach((axis) => {
         const value = position[axis];
         const isVertical = axis === "y";
-        if (isVertical && VERTICAL_POSITIONS.includes(value)) {
+        if (axis === "y" && VERTICAL_POSITIONS.includes(value)) {
             parsed.y = VERTICAL_POSITIONS.indexOf(value) * 0.5;
-        } else if (!isVertical && HORIZONTAL_POSITIONS.includes(value)) {
+        } else if (axis === "x" && HORIZONTAL_POSITIONS.includes(value)) {
             parsed.x = HORIZONTAL_POSITIONS.indexOf(value) * 0.5;
         } else if (UNITS.some((unit) => String(value).endsWith(unit))) {
-            parsed[isVertical ? "y" : "x"] = value;
+            if (String(value).trim().endsWith("%")) {
+                parsed[axis] = parseFloat(value) / 100;
+            } else {
+                parsed[axis] = value;
+            }
         } else {
-            parsed[isVertical ? "y" : "x"] = `${value}px`;
+            parsed[axis] = `${value}px`;
         }
     });
     return parsed;

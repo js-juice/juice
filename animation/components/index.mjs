@@ -2,6 +2,8 @@
  * @file components/index.mjs
  * @description Animation module.
  */
+export { default as AnimationComponent } from "./animation-component.mjs";
+export { default as Anchor } from "./anchor.mjs";
 export { default as AnimationBody } from "./body.mjs";
 export { AnimationComponent } from "./animation-component.mjs";
 export { default as AnimationBackground } from "./background.mjs";

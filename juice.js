@@ -8,6 +8,7 @@ import "./config/juice-config.mjs";
 import "./core/Dev/Log.mjs";
 import { blendClasses } from "./core/Util/Class.mjs";
 import _config from "./config/juice-config.mjs";
+import path from "node:path";
 
 export const root = typeof globalThis !== "undefined" ? globalThis : {};
 
@@ -26,6 +27,32 @@ function parseFilePath(path) {
         path,
         dir: path.substr(0, path.lastIndexOf("/")),
         ext: path.split(".").pop()
+    };
+}
+
+function getDefaultPaths() {
+    const cwd = process.cwd();
+    const vendor = path.resolve(cwd, "vendor");
+    const state = path.resolve(cwd, ".juice");
+    const data = path.resolve(cwd, "data");
+    return {
+        cwd,
+        root: cwd,
+        app: cwd,
+        src: cwd,
+        vendor,
+        juice: path.resolve(vendor, "juice"),
+        electronToolkit: path.resolve(vendor, "electron-toolkit"),
+        nodeModules: path.resolve(cwd, "node_modules"),
+        data,
+        models: path.resolve(data, "models"),
+        db: path.resolve(data, "db"),
+        config: path.resolve(cwd, "config"),
+        tmp: path.resolve(cwd, "tmp"),
+        logs: path.resolve(cwd, "logs"),
+        state,
+        storage: state,
+        cache: path.resolve(state, "cache")
     };
 }
 
@@ -49,6 +76,8 @@ root.currentFile = currentFile;
  * @class Juice
  */
 class Juice {
+    static isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
+    static isNode = typeof process !== "undefined" && process.versions != null && process.versions.node != null;
     /**
      * Creates a blended class from multiple mixin classes.
      * The resulting class will have properties and methods from all mixins.
@@ -85,7 +114,49 @@ class Juice {
         this.storage = new JuiceStorage();
         this.eventRegistry = {};
         this.config = _config;
+        this._cache = {};
         this.callStack = [];
+        this.config.merge(
+            {
+                appName: path.basename(process.cwd()),
+                paths: getDefaultPaths()
+            },
+            "juice:defaults"
+        );
+    }
+
+    dev() {
+        this.import("./core/Dev/Log.mjs");
+    }
+
+    async db(type, name, models) {
+        const dbConfig = this.config.db || {};
+        const dataPath = this.config.get("paths.data");
+        type = type || dbConfig.type;
+        name = name || dbConfig.name;
+        models = models || dbConfig.models;
+
+        const databaseName = typeof name === "string" ? name.trim() : name;
+        const databasePath =
+            typeof databaseName === "string" && databaseName
+                ? path.isAbsolute(databaseName)
+                    ? databaseName
+                    : typeof dataPath === "string" && dataPath.trim()
+                        ? path.resolve(dataPath, databaseName)
+                        : path.resolve(process.cwd(), databaseName)
+                : databaseName;
+
+        return this.import("data", "db/SQLite/Database.mjs").then(async (module) => {
+            const SQLiteDatabase = module.default || module.SQLiteDatabase;
+            this.dbInstance = await SQLiteDatabase.create(databasePath, { type, models });
+
+            if (typeof models === "string" && models.trim()) {
+                const modelDirectory = path.isAbsolute(models) ? models : path.resolve(process.cwd(), models);
+                await this.dbInstance.loadModelDirectory(modelDirectory);
+            }
+
+            return this.dbInstance;
+        });
     }
 
     /**
@@ -107,7 +178,14 @@ class Juice {
     }
 
     path(scope, relative) {
-        return this.config.get(`paths.${scope}`);
+        const configuredPath = this.config.get(`paths.${scope}`);
+        if (!relative) {
+            return configuredPath;
+        }
+        if (typeof configuredPath === "string" && configuredPath.trim()) {
+            return path.resolve(configuredPath, relative);
+        }
+        return relative;
     }
 
     /**
@@ -165,11 +243,8 @@ class Juice {
      * juice.dispatchEvent(element, 'customEvent', data);
      */
     dispatchEvent(target, eventName, ...args) {
-        const eventRegistry = this.eventRegistry;
-        const eventHandlers = eventRegistry[eventName];
-
+        const eventHandlers = this.eventRegistry[eventName];
         if (!eventHandlers) return;
-
         eventHandlers.forEach((handler) => handler(target, ...args));
     }
 
@@ -179,6 +254,43 @@ class Juice {
     expose() {
         const globalScope = typeof window !== "undefined" ? window : global;
         globalScope.juice = this;
+    }
+
+    async import(...args) {
+        let resolvers = [],
+            imports = [],
+            options = {};
+        if (Array.isArray(args[args.length - 1])) {
+            imports = args.pop();
+        } else if (typeof args[args.length - 1] === "object" && Array.isArray(args[args.length - 1].imports)) {
+            options = args.pop();
+            imports = options.imports;
+        } else if (typeof args[args.length - 1] === "object") {
+            options = args.pop();
+            imports = ["default"];
+        }
+        resolvers = args;
+
+        const modulePath = `./${resolvers.join("/")}${resolvers[resolvers.length - 1].endsWith(".mjs") ? "" : `.mjs`}`;
+        console.log(modulePath);
+
+        const module = this._cache[modulePath] || (await import(modulePath));
+        console.log(`Imported module: ${modulePath}`, module);
+
+        let m;
+        if (Array.isArray(imports) && imports.length > 0) {
+            m = {};
+            imports.forEach((property) => {
+                if (module[property]) {
+                    m[property] = module[property];
+                }
+            });
+        } else {
+            m = module;
+        }
+
+        this._cache[modulePath] = m;
+        return m;
     }
 
     /**
@@ -255,7 +367,5 @@ juice.expose();
  * @type {DotNotation}
  */
 export const config = _config;
-
-config.set("paths.root", currentFile(import.meta));
 
 export default juice;

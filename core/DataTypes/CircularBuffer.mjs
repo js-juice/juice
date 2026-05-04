@@ -102,13 +102,19 @@ class CircularBuffer {
         this._first = this.tail;
     }
 
+    inside(value) {
+        for (let i = 0; i < this.length; i++) {
+            if (this.get(i) < this.min) {
+            }
+        }
+        return false;
+    }
+
     // Get element at a specific index
     get(index) {
         if (index < 0 || index >= this.count) return undefined; // Index out of bounds
-
         // Calculate the position in the circular buffer
-        const actualIndex = (this.tail + index) % this.size;
-        return this.buffer[actualIndex];
+        return this.buffer[(this.tail + index) % this.size];
     }
 
     // Print buffer contents

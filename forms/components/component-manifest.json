@@ -7,7 +7,7 @@
     {
       "tag": "form-info",
       "className": "FormInfo",
-      "file": "form-info.js",
+      "file": "form-info.mjs",
       "overview": "Form-level status panel that shows description text, aggregate validation messages, and form actions.",
       "features": [
         {
@@ -437,7 +437,7 @@
     {
       "tag": "input-checkbox",
       "className": "InputCheckbox",
-      "file": "input-checkbox.js",
+      "file": "input-checkbox.mjs",
       "overview": "Styled checkbox input that preserves native checked/value semantics.",
       "features": [
         {
@@ -542,7 +542,7 @@
     {
       "tag": "input-dial",
       "className": "InputDialComponent",
-      "file": "input-dial.js",
+      "file": "input-dial.mjs",
       "overview": "Rotary dial input with configurable sweep gap, anchor offset, ticks, labels, and progress visualization.",
       "features": [
         {
@@ -1070,7 +1070,7 @@
     {
       "tag": "input-direction",
       "className": "InputDirectionComponent",
-      "file": "input-direction.js",
+      "file": "input-direction.mjs",
       "overview": "3D unit-direction control with arcball interaction, SVG visualization, and axis value editing.",
       "features": [
         {
@@ -1728,7 +1728,7 @@
     {
       "tag": "input-fieldset",
       "className": "InputFieldset",
-      "file": "input-fieldset.js",
+      "file": "input-fieldset.mjs",
       "overview": "Lightweight grouping container that wraps slotted form controls in a native `fieldset`/`legend` shell.",
       "features": [
         {
@@ -1829,7 +1829,7 @@
     {
       "tag": "input-number",
       "className": "InputNumber",
-      "file": "input-number.js",
+      "file": "input-number.mjs",
       "overview": "Numeric entry component with stepper controls, optional units, and precision support.",
       "features": [
         {
@@ -1955,7 +1955,7 @@
     {
       "tag": "input-radio",
       "className": "InputRadio",
-      "file": "input-radio.js",
+      "file": "input-radio.mjs",
       "overview": "Custom-styled radio input that preserves native radio semantics and group exclusivity.",
       "features": [
         {
@@ -2127,7 +2127,7 @@
     {
       "tag": "input-select",
       "className": "InputSelect",
-      "file": "input-select.js",
+      "file": "input-select.mjs",
       "overview": "Select/dropdown component that supports both native `<select>` mode and custom listbox mode.",
       "features": [
         {
@@ -2406,7 +2406,7 @@
     {
       "tag": "input-status",
       "className": "InputStatus",
-      "file": "input-status.js",
+      "file": "input-status.mjs",
       "overview": "Animated status badge used by form components to show idle/info/warning/error/success states.",
       "features": [
         {
@@ -2646,7 +2646,7 @@
     {
       "tag": "input-text",
       "className": "InputText",
-      "file": "input-text.js",
+      "file": "input-text.mjs",
       "overview": "Single-line text input built on InputComponent with native text semantics.",
       "features": [
         {
@@ -2696,7 +2696,7 @@
     {
       "tag": "input-textarea",
       "className": "InputTextarea",
-      "file": "input-textarea.js",
+      "file": "input-textarea.mjs",
       "overview": "Multi-line text input component for longer free-form text entry.",
       "features": [
         {
@@ -2741,7 +2741,7 @@
     {
       "tag": "input-vector",
       "className": "InputVectorComponent",
-      "file": "input-vector.js",
+      "file": "input-vector.mjs",
       "overview": "Multi-axis numeric vector input that composes `input-number` controls for 2D/3D/4D values.",
       "features": [
         {
@@ -3023,7 +3023,7 @@
     {
       "tag": "juice-form",
       "className": "JuiceFormElement",
-      "file": "juice-form.js",
+      "file": "juice-form.mjs",
       "overview": "Shadow-DOM form wrapper that hosts `<form-info>` and a slotted field container.",
       "features": [
         {
@@ -3099,7 +3099,7 @@
     {
       "tag": "juice-forms",
       "className": "JuiceFormsElement",
-      "file": "juice-forms.js",
+      "file": "juice-forms.mjs",
       "overview": "Form host component that owns a real `<form>` element and applies preset-driven responsive layout metadata.",
       "features": [
         {
@@ -3535,7 +3535,7 @@
     {
       "tag": "option-group",
       "className": "OptionGroup",
-      "file": "option-group.js",
+      "file": "option-group.mjs",
       "overview": "Declarative option-group wrapper that turns child `<option>` nodes into generated radio or checkbox controls.",
       "features": [
         {

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Electron GUI to extract selected Juice modules with minimal dependencies.",
   "author": "Chris Kirby",
-  "main": "src/main.js",
+  "main": "src/main.mjs",
   "type": "commonjs",
   "scripts": {
     "start": "electron .",

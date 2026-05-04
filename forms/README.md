@@ -10,16 +10,16 @@ Juice Forms is a web component form system with:
 
 ## Files
 
-- `components/input-component.js`: abstract base class for all custom inputs
-- `components/input-text.js`: `input-text`
-- `components/input-textarea.js`: `input-textarea`
-- `components/input-checkbox.js`: `input-checkbox`
-- `components/input-radio.js`: `input-radio`
-- `components/input-select.js`: `input-select`
-- `components/input-button.js`: `input-button`
-- `components/option-group.js`: `option-group`
-- `components/juice-forms.js`: `juice-forms` container entry
-- `components/form-info.js`: `form-info` state/actions panel
+- `components/input-component.mjs`: abstract base class for all custom inputs
+- `components/input-text.mjs`: `input-text`
+- `components/input-textarea.mjs`: `input-textarea`
+- `components/input-checkbox.mjs`: `input-checkbox`
+- `components/input-radio.mjs`: `input-radio`
+- `components/input-select.mjs`: `input-select`
+- `components/input-button.mjs`: `input-button`
+- `components/option-group.mjs`: `option-group`
+- `components/juice-forms.mjs`: `juice-forms` container entry
+- `components/form-info.mjs`: `form-info` state/actions panel
 - `native/juice-form.mjs`: native form binder and enhancer class (`JuiceForm`)
 - `native/form-input.mjs`: migrated form input base class
 - `native/virtual-builder.mjs`: migrated virtual form builder utilities

@@ -28,7 +28,8 @@ class ParticleEmitter {
         size = 2,
         lifespan = 2,
         forces = [],
-        useDOM = false
+        useDOM = false,
+        generator = null
     }) {
         this.x = x;
         this.y = y;
@@ -42,6 +43,7 @@ class ParticleEmitter {
         this.particles = [];
         this.lastEmissionTime = 0;
         this.useDOM = useDOM;
+        this.generator = generator;
     }
 
     /**
@@ -57,24 +59,32 @@ class ParticleEmitter {
         while (this.lastEmissionTime > emissionRate) {
             this.lastEmissionTime -= emissionRate;
 
-            const randomDirection = this.direction + (Math.random() * this.spread - this.spread / 2);
-            const randomSpeed = this.speed + Math.random() * this.speed * 0.1 - this.speed * 0.05;
-            const randomSize = this.size + Math.random() * this.size * 0.2 - this.size * 0.1;
-            const randomLifespan = this.lifespan + Math.random() * this.lifespan * 0.2 - this.lifespan * 0.1;
+            if (this.generator) {
+                const particle = this.generator(this);
+                this.particles.push(particle);
+                continue;
+            } else {
+                const randomDirection = this.direction + (Math.random() * this.spread - this.spread / 2);
+                const randomSpeed = this.speed + Math.random() * this.speed * 0.1 - this.speed * 0.05;
+                const randomSize = this.size + Math.random() * this.size * 0.2 - this.size * 0.1;
+                const randomLifespan = this.lifespan + Math.random() * this.lifespan * 0.2 - this.lifespan * 0.1;
 
-            const velocityX = Math.cos(randomDirection) * randomSpeed;
-            const velocityY = Math.sin(randomDirection) * randomSpeed;
+                const velocityX = Math.cos(randomDirection) * randomSpeed;
+                const velocityY = Math.sin(randomDirection) * randomSpeed;
 
-            const particle = new Particle(
-                this.x,
-                this.y,
-                velocityX,
-                velocityY,
-                randomSize,
-                randomLifespan,
-                this.forces,
-                this.useDOM
-            );
+                const particle = new Particle(
+                    this.x,
+                    this.y,
+                    velocityX,
+                    velocityY,
+                    randomSize,
+                    randomLifespan,
+                    this.forces,
+                    this.useDOM
+                );
+                this.particles.push(particle);
+            }
+
             // Debug: log emission only when verbose flag is enabled to avoid
             // spamming the console every frame.
             try {
@@ -84,8 +94,11 @@ class ParticleEmitter {
                     }
                 }
             } catch (e) {}
-            this.particles.push(particle);
         }
+    }
+
+    addForce(type, force) {
+        this.forces[type] = force;
     }
 
     /**

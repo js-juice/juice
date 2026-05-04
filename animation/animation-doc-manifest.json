@@ -4358,7 +4358,7 @@
       ]
     },
     {
-      "file": "graphics/webgl/debug/externs/webgl-debug.js",
+      "file": "graphics/webgl/debug/externs/webgl-debug.mjs",
       "overview": "Module at graphics/webgl/debug/externs/webgl-debug.js.",
       "exports": [],
       "classes": [],
@@ -4373,7 +4373,7 @@
       ]
     },
     {
-      "file": "graphics/webgl/debug/webgl-debug.js",
+      "file": "graphics/webgl/debug/webgl-debug.mjs",
       "overview": "Wrapped logging function.",
       "exports": [
         {
@@ -6410,7 +6410,7 @@
       "features": []
     },
     {
-      "file": "keyframed-value.js",
+      "file": "keyframed-value.mjs",
       "overview": "Represents the KeyFramedValue animation module class.",
       "exports": [
         {

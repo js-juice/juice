@@ -62,7 +62,7 @@ String manipulation and data transformation.
 ### Using Models
 
 ```javascript
-import Model from "./models/Model.js";
+import Model from "./models/Model.mjs";
 import SQLiteDatabase from "./db/SQLite/Database.js";
 
 // Define a model
