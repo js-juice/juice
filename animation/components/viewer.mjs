@@ -33,7 +33,8 @@ export class AnimationViewer extends Component.HTMLElement {
             fps: { default: 60, type: "number", unit: "frames per second", linked: true },
             state: { default: "initial", type: "string", allowed: AnimationViewer.allowedStates },
             follow: { default: false, type: "string" },
-            debug: { default: false, type: "exists", linked: true }
+            debug: { default: false, type: "exists", linked: true },
+            frame: { default: false, type: "exists", linked: true }
         }
     };
 
@@ -43,7 +44,7 @@ export class AnimationViewer extends Component.HTMLElement {
      */
     static get observed() {
         return {
-            all: ["width", "height", "fps", "state", "follow", "debug", "stats"]
+            all: ["width", "height", "fps", "state", "follow", "debug", "stats", "frame"]
         };
     }
 
@@ -88,6 +89,44 @@ export class AnimationViewer extends Component.HTMLElement {
                     position: "absolute",
                     width: "var(--width, 100% )",
                     height: "var( --height, 100% )"
+                },
+                "#frame": {
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    pointerEvents: "none",
+                    zIndex: 1000
+                },
+                "#frame .viewable": {
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    border: "1px solid red",
+                    width: "100%",
+                    height: "100%",
+                    boxSizing: "border-box"
+                },
+                "#frame .center": {
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: "80px",
+                    height: "80px",
+                    background: "red",
+                    borderRadius: "50%"
+                },
+                "#frame .cross": {
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: "2px",
+                    height: "2px",
+                    background: "red"
                 }
             }
         ];
@@ -100,6 +139,7 @@ export class AnimationViewer extends Component.HTMLElement {
      */
     static html(data = {}) {
         return `
+        ${this.frame ? `<div id="frame"><div class="viewable"><div class="center"><div class="cross"></div></div></div></div>` : ""}
         ${this.stats ? `<animation-stats></animation-stats>` : ""}
         <div id="background">
             <div id="parallax"></div>
@@ -152,6 +192,7 @@ export class AnimationViewer extends Component.HTMLElement {
     onResize(w, h) {
         this.width = w;
         this.height = h;
+
         this.dispatchEvent(new CustomEvent("resize", { detail: { width: w, height: h } }));
     }
 
@@ -164,6 +205,11 @@ export class AnimationViewer extends Component.HTMLElement {
      */
     onStageConnect(stage) {
         this.stage = stage;
+
+        const viewrect = this.getBoundingClientRect();
+
+        this.ref("html").style.setProperty("--viewer-width", `${viewrect.width}px`);
+        this.ref("html").style.setProperty("--viewer-height", `${viewrect.height}px`);
 
         const stageRect = stage.ref?.("html")?.getBoundingClientRect?.() || stage.getBoundingClientRect();
         const widthAttr = stage.getAttribute?.("width") || "";

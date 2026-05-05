@@ -18,22 +18,26 @@ import Particle from "./particle.mjs";
  * });
  */
 class ParticleEmitter {
-    constructor({
-        x,
-        y,
-        particlesPerSecond = 10,
-        direction = 0,
-        speed = 100,
-        spread = Math.PI / 8,
-        size = 2,
-        lifespan = 2,
-        forces = [],
-        useDOM = false,
-        generator = null
-    }) {
+    constructor(
+        container,
+        {
+            x,
+            y,
+            particlesPerSecond = 10,
+            pps,
+            direction = 0,
+            speed = 100,
+            spread = Math.PI / 8,
+            size = 2,
+            lifespan = 2,
+            forces = [],
+            useDOM = false,
+            generator = null
+        }
+    ) {
         this.x = x;
         this.y = y;
-        this.particlesPerSecond = particlesPerSecond;
+        this.particlesPerSecond = pps || particlesPerSecond;
         this.direction = direction;
         this.speed = speed;
         this.spread = spread;
@@ -42,7 +46,7 @@ class ParticleEmitter {
         this.forces = forces;
         this.particles = [];
         this.lastEmissionTime = 0;
-        this.useDOM = useDOM;
+
         this.generator = generator;
     }
 

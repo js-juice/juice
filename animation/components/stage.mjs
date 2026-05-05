@@ -64,20 +64,22 @@ class AnimationStage extends Component.HTMLElement {
                 },
                 ":host(.viewer-connected)": {
                     position: "absolute",
-                    width: "1px",
-                    height: "1px"
+                    width: "100%",
+                    height: "100%"
                 },
-                "#html": {
+                "#world": {
                     display: "block",
                     position: "relative",
                     width: "var(--width, 100% )",
                     height: "var( --height, 100% )",
+                    transform: "translate(-var(--anchor-x, 0), -var(--anchor-y, 0))",
                     overflow: "hidden"
                 },
-                ":host(.viewer-connected) #html": {
+                ":host(.viewer-connected) #world": {
                     position: "absolute",
-                    left: "calc(var(--anchor-x, 0) * -1px)",
-                    top: "calc(var(--anchor-y, 0) * -1px)"
+                    left: "var(--anchor-x, 0)",
+                    top: "var(--anchor-y, 0)",
+                    transform: "translate(var(--stage-x, 0), var(--stage-y, 0))"
                 },
                 slot: {
                     display: "block",
@@ -86,34 +88,21 @@ class AnimationStage extends Component.HTMLElement {
                     height: "100%",
                     zIndex: 100
                 },
-                "#background": {
-                    display: "block",
+                "#paralax-bg-container": {
                     position: "absolute",
-                    width: "100%",
-                    height: "100%",
-                    left: 0,
-                    top: 0
-                },
-                "#background > *": {
-                    display: "block",
-                    position: "absolute",
-                    width: "100%",
-                    height: "100%",
-                    left: "0",
-                    top: "0"
-                },
-                "#parallax": {
-                    position: "absolute",
-                    width: "100%",
-                    height: "100%",
+                    width: "var(--viewer-width, 100% )",
+                    height: "var(--viewer-height, 100% )",
                     top: 0,
                     left: 0,
+
                     overflow: "hidden",
                     pointerEvents: "none",
                     zIndex: 10
                 },
                 "#world": {
                     position: "absolute",
+                    left: "50%",
+                    top: "50%",
                     width: "var(--width, 100% )",
                     height: "var( --height, 100% )",
                     pointerEvents: "none",
@@ -124,11 +113,16 @@ class AnimationStage extends Component.HTMLElement {
                     width: "100%",
                     height: "100%"
                 },
-                "#parallax > *": {
+                "#paralax-bg-container > *": {
                     pointerEvents: "auto",
                     width: "100%",
                     height: "100%",
                     position: "absolute"
+                },
+                "animation-anchor": {
+                    position: "absolute",
+                    top: "var(--anchor-y, 0)",
+                    left: "var(--anchor-x, 0)"
                 }
             }
         ];
@@ -141,11 +135,19 @@ class AnimationStage extends Component.HTMLElement {
      */
     static html(data = {}) {
         return `
-        <slot ></slot>
-        <div id="background" part="background">
-            <div id="parallax"></div>
-            <div id="world"></div>
+        <div id="paralax-bg-container">
+            <slot name="paralax-background"></slot>
         </div>
+        <animation-anchor id="anchor">
+       <div id="world">
+            <div id="world-background-container">
+            <slot name="world-background"></slot>
+            </div>
+            <slot></slot>
+        </div> 
+        </animation-anchor>
+        
+        
         `;
     }
 
@@ -281,16 +283,18 @@ class AnimationStage extends Component.HTMLElement {
      * @returns {*} Result of addBackground.
      */
     addBackground(element, options = {}) {
-        if (options.paralax || options.placement === "parallax") {
-            this.ref("parallax").appendChild(element);
-        } else {
-            this.ref("world").appendChild(element);
-        }
-
-        this.backgrounds.push({
+        const bg = {
             element: element,
             ...options
-        });
+        };
+        if (options.paralax || options.placement === "paralax") {
+            bg.paralax;
+            element.setAttribute("slot", "paralax-background");
+        } else {
+            element.setAttribute("slot", "world-background");
+        }
+
+        this.backgrounds.push(bg);
     }
 
     /**
@@ -338,6 +342,7 @@ class AnimationStage extends Component.HTMLElement {
      */
     onCustomChildReady(child) {
         if (!child || !child.animate) return;
+        console.log("Child ready for animation stage", { child });
         this.animatorChildren.add(child);
 
         if (this.hasViewerTimeline) {
@@ -358,6 +363,7 @@ class AnimationStage extends Component.HTMLElement {
      */
     addAnimator(animator) {
         if (!animator) return;
+        console.log("Adding animator to stage", { animator });
         const canAnimate =
             animator.animate === true || typeof animator.update === "function" || typeof animator.render === "function";
         if (!canAnimate) return;
@@ -387,12 +393,15 @@ class AnimationStage extends Component.HTMLElement {
      */
     setAnchor(anchorPosition) {
         const { x, y } = parseAnchor(anchorPosition || this.getAttribute("anchor") || "left top");
+        console.log("Anchor", x, y);
         const { width: stageWidth, height: stageHeight } = this._stageSize();
-        const anchorX = this._anchorValueToPixels(x, stageWidth);
-        const anchorY = this._anchorValueToPixels(y, stageHeight);
+        const anchorX = `${x * 100}%`;
+        const anchorY = `${y * 100}%`;
+        //const anchorX = this._anchorValueToPixels(x, stageWidth);
+        //const anchorY = this._anchorValueToPixels(y, stageHeight);
         this.anchorPoint = { x: anchorX, y: anchorY };
 
-        this.writeStyleVars({ "--anchor-x": anchorX, "--anchor-y": anchorY });
+        this.writeStyleVars({ "--anchor-x": anchorX, "--anchor-y": anchorY }, this.ref("html"));
         this._refreshPlacement();
     }
 
@@ -584,7 +593,7 @@ class AnimationStage extends Component.HTMLElement {
             }
         }
 
-        this.style.setProperty(`--${axis}`, cssValue || "0px");
+        this.ref("html").style.setProperty(`--${axis}`, cssValue || "0px");
         this._refreshPlacement();
     }
 
@@ -766,12 +775,12 @@ class AnimationStage extends Component.HTMLElement {
     _applyPositionToDOM() {
         if (!this.viewer) return;
         const { width: viewerWidth, height: viewerHeight } = this._viewerSize();
-        this.style.left = `${viewerWidth / 2}px`;
-        this.style.top = `${viewerHeight / 2}px`;
+        //this.ref("world").style.left = `${viewerWidth / 2}px`;
+        //this.ref("world").style.top = `${viewerHeight / 2}px`;
         if (this.parallax) {
-            this.writeStyleVars({ "--stage-x": this.position.x, "--stage-y": this.position.y });
+            this.writeStyleVars({ "--stage-x": this.position.x, "--stage-y": this.position.y }, this.ref("html"));
         } else {
-            this.style.transform = `translate3d(${this.position.x}px, ${this.position.y}px, 0)`;
+            this.ref("html").style.transform = `translate3d(${this.position.x}px, ${this.position.y}px, 0)`;
         }
     }
 

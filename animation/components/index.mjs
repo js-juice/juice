@@ -5,7 +5,6 @@
 export { default as AnimationComponent } from "./animation-component.mjs";
 export { default as Anchor } from "./anchor.mjs";
 export { default as AnimationBody } from "./body.mjs";
-export { AnimationComponent } from "./animation-component.mjs";
 export { default as AnimationBackground } from "./background.mjs";
 export { default as AnimationCamera } from "./camera.mjs";
 export { default as AnimationLayer } from "./layer.mjs";

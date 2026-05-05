@@ -29,24 +29,26 @@ class Anchor extends HTMLElement {
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                border: 1px solid red;
+                border: 1px solid yellow;
                 border-radius: 50%;
                 width: 10px;
                 height: 10px;
             }
             .vert-line {
                 position: absolute;
-                top: 0;
-                left: 0;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
                 width: 1px;
-                height: 100%;
+                height: 300%;
                 background: red;
             }
             .horiz-line {
                 position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 300%;
                 height: 1px;
                 background: red;
             }

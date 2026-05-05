@@ -4,7 +4,7 @@
  * Provides core functionality including module loading, event handling, and configuration.
  * @module Core
  */
-import "./config/juice-config.mjs";
+import JUICE_CONFIG from "./config/juice-config.mjs";
 import "./core/Dev/Log.mjs";
 import { blendClasses } from "./core/Util/Class.mjs";
 import _config from "./config/juice-config.mjs";
@@ -113,7 +113,7 @@ class Juice {
         this.queues = new JuiceQueues();
         this.storage = new JuiceStorage();
         this.eventRegistry = {};
-        this.config = _config;
+        this.config = JUICE_CONFIG;
         this._cache = {};
         this.callStack = [];
         this.config.merge(
@@ -142,8 +142,8 @@ class Juice {
                 ? path.isAbsolute(databaseName)
                     ? databaseName
                     : typeof dataPath === "string" && dataPath.trim()
-                        ? path.resolve(dataPath, databaseName)
-                        : path.resolve(process.cwd(), databaseName)
+                      ? path.resolve(dataPath, databaseName)
+                      : path.resolve(process.cwd(), databaseName)
                 : databaseName;
 
         return this.import("data", "db/SQLite/Database.mjs").then(async (module) => {
@@ -256,35 +256,23 @@ class Juice {
         globalScope.juice = this;
     }
 
-    async import(...args) {
-        let resolvers = [],
-            imports = [],
-            options = {};
-        if (Array.isArray(args[args.length - 1])) {
-            imports = args.pop();
-        } else if (typeof args[args.length - 1] === "object" && Array.isArray(args[args.length - 1].imports)) {
-            options = args.pop();
-            imports = options.imports;
-        } else if (typeof args[args.length - 1] === "object") {
-            options = args.pop();
-            imports = ["default"];
+    async import(section, path, properties = []) {
+        const modulePath = `./${section}${path ? `/${path}` : ""}.mjs`;
+        if (this._cache[modulePath]) {
+            return properties.length
+                ? properties.reduce((acc, property) => (acc[property] = this._cache[modulePath][property]), {})
+                : this._cache[modulePath];
         }
-        resolvers = args;
-
-        const modulePath = `./${resolvers.join("/")}${resolvers[resolvers.length - 1].endsWith(".mjs") ? "" : `.mjs`}`;
-        console.log(modulePath);
-
-        const module = this._cache[modulePath] || (await import(modulePath));
-        console.log(`Imported module: ${modulePath}`, module);
-
-        let m;
-        if (Array.isArray(imports) && imports.length > 0) {
+        const module = await import(modulePath);
+        let m = {};
+        if (Array.isArray(properties) && properties.length > 0) {
             m = {};
-            imports.forEach((property) => {
+            for (let i = 0; i < properties.length; i++) {
+                const property = properties[i];
                 if (module[property]) {
                     m[property] = module[property];
                 }
-            });
+            }
         } else {
             m = module;
         }

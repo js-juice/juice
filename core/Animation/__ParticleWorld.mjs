@@ -10,51 +10,11 @@ import Canvas from "../Graphics/Canvas.mjs";
 import "../Components/Canvas.mjs";
 import { sortedIndex } from "../DataTypes/Index.mjs";
 import PropertyArray from "../DataTypes/PropertyArray.mjs";
-import JuiceWorkers from "../Workers/JuiceWorkers.mjs";
 
 const { pow, cos, sin } = Math;
 const { angle, distance, lerp, clamp, norm, pointDiff, diff } = geom;
 
 const PARTICLE_PROPS = ["state", "x", "y", "vx", "vy", "bx", "by", "td", "alpha", "random"];
-
-/**
- * Calculates distances between particles using a web worker for performance.
- * @private
- * @param {PropertyArray} particles - The particle property array
- * @returns {Promise<PropertyArray>} Updated particles with calculated distances
- */
-function distanceWorker(particles) {
-    return new Promise((resolve) => {
-        const sourceData = [];
-        for (let i = 0; i < particles.length; i++) {
-            const particle = particles.get(i);
-            sourceData[i] = [
-                { x: particle[1], y: particle[2] },
-                { x: particle[5], y: particle[6] },
-            ];
-        }
-        console.log(sourceData);
-        const distWorker = JuiceWorkers.job(function (event) {
-            const { chunk } = event.data;
-            const distances = [];
-            for (let i = 0; i < chunk.length; i++) {
-                const pair = chunk[i];
-                const dx = pair[0].x - pair[1].x;
-                const dy = pair[0].y - pair[1].y;
-                distances[i] = Math.sqrt(dx * dx + dy * dy);
-            }
-
-            postMessage(distances);
-            close(); // Terminate the worker
-        }, sourceData).then((resp) => {
-            console.log("WORKER RESP", resp);
-            for (let i = 0; i < resp.length; i++) {
-                particles.set([resp[i]], i, 7);
-            }
-            resolve(particles);
-        });
-    });
-}
 
 /**
  * Manages a world of particles with physics, repel forces, and animation.
@@ -71,11 +31,11 @@ export default class ParticleWorld {
         color: [255, 255, 255, 255],
         lerpAmt: 0.001,
         velocityLerpAmt: 0.001,
-        initialSpeed: 0.5,
+        initialSpeed: 0.5
     };
 
     indexes = {
-        byDistance: [],
+        byDistance: []
     };
     // The color of the particles
     // The amount to lerp the particles by
@@ -109,7 +69,7 @@ export default class ParticleWorld {
                 point.x = x;
                 point.y = y;
                 point.size = size;
-            },
+            }
         };
     }
 
@@ -181,7 +141,7 @@ export default class ParticleWorld {
             args: { time: 0 },
             fn: () => {
                 this.postCanvas.placeImage(alphaMap, 0, 0, this.canvas.width, this.canvas.height);
-            },
+            }
         });
     }
 
