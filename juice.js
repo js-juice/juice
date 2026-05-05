@@ -8,9 +8,10 @@ import JUICE_CONFIG from "./config/juice-config.mjs";
 import "./core/Dev/Log.mjs";
 import { blendClasses } from "./core/Util/Class.mjs";
 import _config from "./config/juice-config.mjs";
-import path from "node:path";
+import path from "./core/Util/Path.mjs";
 
 export const root = typeof globalThis !== "undefined" ? globalThis : {};
+const nodeProcess = root.process?.versions?.node && typeof root.process.cwd === "function" ? root.process : null;
 
 import JuiceStorage from "./core/inc/Storage.mjs";
 import JuiceQueues from "./core/inc/Queues.mjs";
@@ -30,8 +31,19 @@ function parseFilePath(path) {
     };
 }
 
+function getRuntimeRoot() {
+    if (nodeProcess) return nodeProcess.cwd();
+
+    const browserLocation = root.location;
+    if (browserLocation?.pathname) {
+        return path.directory(browserLocation.pathname) || "/";
+    }
+
+    return "/";
+}
+
 function getDefaultPaths() {
-    const cwd = process.cwd();
+    const cwd = getRuntimeRoot();
     const vendor = path.resolve(cwd, "vendor");
     const state = path.resolve(cwd, ".juice");
     const data = path.resolve(cwd, "data");
@@ -77,7 +89,7 @@ root.currentFile = currentFile;
  */
 class Juice {
     static isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
-    static isNode = typeof process !== "undefined" && process.versions != null && process.versions.node != null;
+    static isNode = Boolean(nodeProcess);
     /**
      * Creates a blended class from multiple mixin classes.
      * The resulting class will have properties and methods from all mixins.
@@ -118,7 +130,7 @@ class Juice {
         this.callStack = [];
         this.config.merge(
             {
-                appName: path.basename(process.cwd()),
+                appName: path.basename(getRuntimeRoot()),
                 paths: getDefaultPaths()
             },
             "juice:defaults"
@@ -143,7 +155,7 @@ class Juice {
                     ? databaseName
                     : typeof dataPath === "string" && dataPath.trim()
                       ? path.resolve(dataPath, databaseName)
-                      : path.resolve(process.cwd(), databaseName)
+                      : path.resolve(getRuntimeRoot(), databaseName)
                 : databaseName;
 
         return this.import("data", "db/SQLite/Database.mjs").then(async (module) => {
@@ -151,7 +163,7 @@ class Juice {
             this.dbInstance = await SQLiteDatabase.create(databasePath, { type, models });
 
             if (typeof models === "string" && models.trim()) {
-                const modelDirectory = path.isAbsolute(models) ? models : path.resolve(process.cwd(), models);
+                const modelDirectory = path.isAbsolute(models) ? models : path.resolve(getRuntimeRoot(), models);
                 await this.dbInstance.loadModelDirectory(modelDirectory);
             }
 

@@ -16,6 +16,17 @@ export function directory(pathStr) {
 }
 
 /**
+ * Extracts the last path segment from a path.
+ * @param {string} pathStr - The path to read
+ * @returns {string} The last path segment
+ * @example
+ * basename("/path/to/file.txt") // returns "file.txt"
+ */
+export function basename(pathStr) {
+    return pathStr.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || "";
+}
+
+/**
  * Checks if a path is relative (not absolute).
  * Tests against Unix absolute paths (/) and Windows absolute paths (C:\, D:\, etc.).
  * @param {string} pathStr - The path to check
@@ -27,6 +38,18 @@ export function directory(pathStr) {
  */
 export function isRelative(pathStr) {
     return !/^(\/|\\|[a-zA-Z]:)/.test(pathStr);
+}
+
+/**
+ * Checks if a path is absolute.
+ * @param {string} pathStr - The path to check
+ * @returns {boolean} True if path is absolute
+ * @example
+ * isAbsolute("/absolute/path") // returns true
+ * isAbsolute("./file.txt") // returns false
+ */
+export function isAbsolute(pathStr) {
+    return !isRelative(pathStr);
 }
 
 /**
@@ -97,6 +120,11 @@ export function resolve() {
 }
 
 export default {
-    isRelative: isRelative,
-    resolve: resolve,
+    basename,
+    directory,
+    extention,
+    isAbsolute,
+    isRelative,
+    normalize,
+    resolve,
 };
