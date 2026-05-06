@@ -188,3 +188,5 @@ export class AnimationComponent extends Component.HTMLElement {
         }
     }
 }
+
+export default AnimationComponent;

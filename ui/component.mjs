@@ -398,8 +398,8 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 Object.assign(this._.styleVars, vars); //this.ref("html").style.setProperty(key, value);
             }
 
-            writeStyleVars(vars) {
-                const root = this.shadowRoot?.host || this.root || this;
+            writeStyleVars(vars, target = null) {
+                const root = target || this.shadowRoot?.host || this.root || this;
                 if (!root || !root.style) return;
                 if (vars) Object.assign(this._.styleVars, vars);
                 root.style.cssText = Object.entries(this._.styleVars)
