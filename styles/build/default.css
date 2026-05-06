@@ -2808,7 +2808,7 @@ h1 {
   font-family: "Proxima Nova", Georgia, sans-serif;
   font-size: 3rem;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.4;
   margin-bottom: 1rem;
 }
 
@@ -2912,6 +2912,8 @@ p {
 }
 
 .flex-h,
+.flex-column,
+.flex-v,
 .flex-row {
   position: relative;
   display: flex;
@@ -2919,23 +2921,33 @@ p {
   flex-wrap: nowrap;
 }
 .flex-h > *,
+.flex-column > *,
+.flex-v > *,
 .flex-row > * {
   flex: 0 1 auto;
   position: relative;
 }
 .flex-h > .flex-all,
+.flex-column > .flex-all,
+.flex-v > .flex-all,
 .flex-row > .flex-all {
   flex: 1 1 100%;
 }
 .flex-h > .flex-shrink,
+.flex-column > .flex-shrink,
+.flex-v > .flex-shrink,
 .flex-row > .flex-shrink {
   flex: 0 1 auto;
 }
 .flex-h > .flex-grow,
+.flex-column > .flex-grow,
+.flex-v > .flex-grow,
 .flex-row > .flex-grow {
   flex-grow: 1;
 }
 .flex-h > .flex-static,
+.flex-column > .flex-static,
+.flex-v > .flex-static,
 .flex-row > .flex-static {
   flex: 0 0 auto;
 }
@@ -3121,4 +3133,13 @@ a.button\:light:hover {
 }
 .row.cols\:5 > * {
   flex: 0 1 20%;
+}
+.row.gap\:0o5 {
+  gap: 0.5rem;
+}
+.row.gap\:1 {
+  gap: 1rem;
+}
+.row.gap\:2 {
+  gap: 2rem;
 }

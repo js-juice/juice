@@ -1,0 +1,23 @@
+@function percent($n) {
+    @return $n * 1%;
+}
+
+@function rem($n) {
+    @return $n * 1rem;
+}
+
+@function em($n) {
+    @return $n * 1em;
+}
+
+@function px($n) {
+    @return $n * 1px;
+}
+
+@function vw($n) {
+    @return $n * 1vw;
+}
+
+@function vh($n) {
+    @return $n * 1vh;
+}
