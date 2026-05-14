@@ -13,11 +13,11 @@ const UNITS = ["px", "%"];
  * @param {string|number} position - Position name or percentage string or numeric value
  * @returns {number} Numeric position (0 = top/left, 0.5 = center, 1 = bottom/right)
  * @example
- * parseAnchorPosition('top'); // 0
- * parseAnchorPosition('center'); // 0.5
- * parseAnchorPosition('75%'); // 0.75
+ * parsePositionFromLocation('top'); // 0
+ * parsePositionFromLocation('center'); // 0.5
+ * parsePositionFromLocation('75%'); // 0.75
  */
-export function parseAnchorPosition(position) {
+export function parsePositionFromLocation(position) {
     switch (position) {
         case "top":
             return 0;
@@ -46,6 +46,7 @@ export function parseAnchorPosition(position) {
  */
 export function parseAnchor(position) {
     if (typeof position === "string") {
+        if (!position.includes(" ")) position = `${position} ${position}`;
         const [x, y] = position.split(" ");
         return parseAnchor({ x, y });
     }
@@ -70,6 +71,10 @@ export function parseAnchor(position) {
     return parsed;
 }
 
+export function parsePosition(position) {
+    return parseAnchor(position);
+}
+
 /**
  * Parses anchor string with x and y positions into numeric coordinates.
  * @param {string} string - Anchor position string (e.g., "top left", "center center")
@@ -79,3 +84,23 @@ export function parseAnchor(position) {
  * parseAnchor('center center'); // { x: 0.5, y: 0.5 }
  * parseAnchor('bottom right'); // { x: 1, y: 1 }
  */
+
+export function parseAnchorForContent(string, content) {
+    const { x, y } = parseAnchor(string);
+    if ([x, y].some((v) => typeof v === "string")) {
+        [x, y].forEach((v, i) => {
+            if (v.endsWith("px")) {
+                const contentRect = content.getBoundingClientRect();
+                if (i === 0) x = parseFloat(x) / contentRect.width;
+                if (i === 1) y = parseFloat(y) / contentRect.height;
+            } else if (v.endsWith("%")) {
+                if (i === 0) x = parseFloat(x) / 100;
+                if (i === 1) y = parseFloat(y) / 100;
+            }
+        });
+    }
+    content.style.transformOrigin = `${x * 100}% ${y * 100}%`;
+    content.style.left = `${x * 100}%`;
+    content.style.top = `${y * 100}%`;
+    return { x, y };
+}

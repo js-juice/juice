@@ -41,7 +41,6 @@ export class AnimationBody extends Component.HTMLElement {
 
     static config = {
         name: "animation-body",
-        tag: "animation-body",
         properties: {
             width: { type: "int", route: "w.value", default: 0, linked: true },
             height: { type: "int", route: "h.value", default: 0, linked: true },
@@ -68,8 +67,8 @@ export class AnimationBody extends Component.HTMLElement {
      */
     static get observed() {
         return {
-            all: ["anchor", "x", "y", "z", "r", "rx", "ry", "rz", "scale", "vx", "vy", "width", "height", "debug"],
-            attributes: ["offset", "position", "", "rx", "ry", "rz"],
+            all: ["width", "height", "x", "y", "z", "r", "rx", "ry", "rz", "scale", "vx", "vy", "debug"],
+            attributes: ["anchor", "offset", "position"],
             properties: []
         };
     }
@@ -380,6 +379,12 @@ export class AnimationBody extends Component.HTMLElement {
             case "anchor":
                 this.setAnchor(value);
                 break;
+            case "width":
+                this.w.value = value;
+                break;
+            case "height":
+                this.h.value = value;
+                break;
         }
     }
 
@@ -516,6 +521,11 @@ export class AnimationBody extends Component.HTMLElement {
         }
     }
 
+    onFirstConnect() {
+        this.ref("html").style.setProperty("--width", this.width);
+        this.ref("html").style.setProperty("--height", this.height);
+    }
+
     /**
      * Sets offset values.
      * @param {*} left - Parameter value.
@@ -554,6 +564,13 @@ export class AnimationBody extends Component.HTMLElement {
      */
     viewerPosition() {
         let isDirty = false;
+        if (!this._treeAsset) {
+            this._treeAsset = this.animation.tree.findAssetByElement(this);
+        }
+
+        return this.animation?.getWorldPosition(this._treeAsset) || { x: 0, y: 0 };
+
+        this.stack = this.animation.tree.getParents(this._treeAsset);
 
         // Check if any element in stack has dirty position
         if (!this._cachedViewerPos) {

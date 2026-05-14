@@ -12,6 +12,9 @@ import AnimationSprite from "./sprite.mjs";
 import AnimationStats from "./stats.mjs";
 import Camera from "./camera.mjs";
 import "./stats.mjs";
+import Animation from "../animation.mjs";
+
+import { parsePosition } from "../anchor.mjs";
 
 /**
  * Viewer component for displaying and controlling animations.
@@ -34,7 +37,8 @@ export class AnimationViewer extends Component.HTMLElement {
             state: { default: "initial", type: "string", allowed: AnimationViewer.allowedStates },
             follow: { default: false, type: "string" },
             debug: { default: false, type: "exists", linked: true },
-            frame: { default: false, type: "exists", linked: true }
+            frame: { default: false, type: "exists", linked: true },
+            origin: { default: "center", type: "string" }
         }
     };
 
@@ -44,7 +48,7 @@ export class AnimationViewer extends Component.HTMLElement {
      */
     static get observed() {
         return {
-            all: ["width", "height", "fps", "state", "follow", "debug", "stats", "frame"]
+            all: ["width", "height", "fps", "state", "follow", "debug", "stats", "frame", "origin"]
         };
     }
 
@@ -65,8 +69,10 @@ export class AnimationViewer extends Component.HTMLElement {
                 slot: {
                     display: "block",
                     position: "absolute",
-                    width: "100%",
-                    height: "100%"
+                    width: "0px",
+                    height: "0px",
+                    left: "calc( var(--origin-x, 0) * 100% )",
+                    top: "calc( var(--origin-y, 0) * 100% )"
                 },
                 "#background": {
                     position: "absolute",
@@ -127,9 +133,110 @@ export class AnimationViewer extends Component.HTMLElement {
                     width: "2px",
                     height: "2px",
                     background: "red"
+                },
+                ".safe-zone": {
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: "calc(100% - 80px)",
+                    height: "calc(100% - 80px)"
+                },
+                ".safe-zone .corner": {
+                    position: "absolute",
+                    width: "200px",
+                    height: "200px"
+                },
+                ".safe-zone .corner.left-top": {
+                    top: 0,
+                    left: 0,
+                    borderTop: "4px solid #FFFFFF",
+                    borderLeft: "4px solid #FFFFFF"
+                },
+                ".safe-zone .corner.right-top": {
+                    top: 0,
+                    right: 0,
+                    borderTop: "4px solid #FFFFFF",
+                    borderRight: "4px solid #FFFFFF"
+                },
+                ".safe-zone .corner.left-bottom": {
+                    bottom: 0,
+                    left: 0,
+                    borderBottom: "4px solid #FFFFFF",
+                    borderLeft: "4px solid #FFFFFF"
+                },
+                ".safe-zone .corner.right-bottom": {
+                    bottom: 0,
+                    right: 0,
+                    borderBottom: "4px solid #FFFFFF",
+                    borderRight: "4px solid #FFFFFF"
+                },
+                ".debug-overlay": {
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    pointerEvents: "none",
+                    zIndex: 1000,
+                    opacity: 0.4
+                },
+                ".debug-overlay .center-rect": {
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: "20%",
+                    height: "20%",
+                    border: "1px solid #FFFFFF"
+                },
+                ".debug-overlay .center-cross": {
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: "2px",
+                    height: "2px",
+                    background: "#FFFFFF"
+                },
+                ".debug-overlay .center-cross::before": {
+                    content: '""',
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: "40px",
+                    height: "2px",
+                    background: "#FFFFFF"
+                },
+                ".debug-overlay .center-cross::after": {
+                    content: '""',
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: "2px",
+                    height: "40px",
+                    background: "#FFFFFF"
                 }
             }
         ];
+    }
+
+    debugHTML() {
+        return `
+        <div class="debug-overlay">
+            <div class="center-rect">
+            <div class="center-cross"></div>
+            </div>
+            <div class="safe-zone">
+                <div class="corner left-top"></div>
+                <div class="corner right-top"></div>
+                <div class="corner left-bottom"></div>
+                <div class="corner right-bottom"></div>
+            </div>
+        </div>
+        `;
     }
 
     /**
@@ -140,11 +247,7 @@ export class AnimationViewer extends Component.HTMLElement {
     static html(data = {}) {
         return `
         ${this.frame ? `<div id="frame"><div class="viewable"><div class="center"><div class="cross"></div></div></div></div>` : ""}
-        ${this.stats ? `<animation-stats></animation-stats>` : ""}
-        <div id="background">
-            <div id="parallax"></div>
-            <div id="world"></div>
-        </div>
+        ${this.debug ? this.debugHTML() + `` : ""}
         <slot></slot>`;
     }
 
@@ -160,16 +263,18 @@ export class AnimationViewer extends Component.HTMLElement {
     constructor() {
         super();
         this.camera = new Camera(this);
-        if (!this.timeline) {
-            this.timeline = new Timeline(this, { defer: true, fps: this.fps });
+        if (!this.animation) {
+            this.animation = new Animation({ viewer: this, fps: this.fps || 60 });
 
-            this.timeline.update = this.update.bind(this);
+            this.timeline = this.animation.timeline;
+            this.timeline.addAnimator(this);
+            //this.timeline.update = this.update.bind(this);
 
             this.timeline.afterUpdate((time) => {
                 this.updateCamera(time);
             });
 
-            this.timeline.render = this.render.bind(this);
+            //this.timeline.render = this.render.bind(this);
 
             this.timeline.complete = () => {};
         }
@@ -192,7 +297,6 @@ export class AnimationViewer extends Component.HTMLElement {
     onResize(w, h) {
         this.width = w;
         this.height = h;
-
         this.dispatchEvent(new CustomEvent("resize", { detail: { width: w, height: h } }));
     }
 
@@ -403,6 +507,8 @@ export class AnimationViewer extends Component.HTMLElement {
         this.animatedAssets.push(asset);
         asset.viewer = this;
 
+        this.animation.tree.addAsset(asset, this);
+
         if (!this.stage && (asset instanceof AnimationStage || asset?.tagName?.toLowerCase() === "animation-stage")) {
             this._tryAttachStageCandidate(asset);
             return asset;
@@ -429,6 +535,20 @@ export class AnimationViewer extends Component.HTMLElement {
     onPropertyChanged(property, previous, value) {
         if (property === "fps" && this.timeline) {
             this.timeline.fps = value;
+        } else if (property === "debug") {
+            if (value) {
+                if (!this._debug) {
+                    const debug = document.createElement("animation-stats");
+                    debug.inline = true;
+                    this.ref("html").appendChild(debug);
+                    this._debug = debug;
+                }
+            } else {
+                if (this._debug) {
+                    this._debug.remove();
+                    this._debug = null;
+                }
+            }
         }
     }
 
@@ -440,6 +560,16 @@ export class AnimationViewer extends Component.HTMLElement {
         const { width, height } = this.getBoundingClientRect();
         this.width = width;
         this.height = height;
+
+        this.animation.setRootElement(this);
+
+        if (this.hasAttribute("origin")) {
+            const { x: originX, y: originY } = parsePosition(this.getAttribute("origin"));
+            this.origin = { x: originX, y: originY };
+        }
+
+        this.ref("html").style.setProperty("--origin-x", this.origin.x);
+        this.ref("html").style.setProperty("--origin-y", this.origin.y);
 
         if (!this.stage) {
             const stageChild = Array.from(this.children).find(
@@ -491,65 +621,6 @@ export class AnimationViewer extends Component.HTMLElement {
     /***
      * ANIMATION LAYERS
      */
-
-    namedLayers = {};
-    /**
-     * Executes addLayer.
-     * @param {*} name - Parameter value.
-     * @param {*} options - Parameter value.
-     * @returns {*} Result of addLayer.
-     */
-    addLayer(name, options = {}) {
-        const layers = this.layers;
-        const index = options.index ?? layers.length;
-        const layer = document.createElement("animation-layer");
-        if (options.type) layer.setAttribute("type", options.type);
-        if (name) layer.setAttribute("name", name);
-        layer.setAttribute("index", index);
-        if (options.width) layer.setAttribute("width", options.width);
-        if (options.height) layer.setAttribute("height", options.height);
-        this.insertBefore(layer, this.layers[index] || null);
-        this.layers.splice(index, 0, layer);
-        if (name) {
-            this.namedLayers[name] = layer;
-        }
-
-        return layer;
-    }
-
-    /**
-     * Executes appendLayer.
-     * @param {*} name - Parameter value.
-     * @param {*} options - Parameter value.
-     * @returns {*} Result of appendLayer.
-     */
-    appendLayer(name, options = {}) {
-        options.index = this.layers.length;
-        return this.addLayer(name, options);
-    }
-
-    /**
-     * Executes prependLayer.
-     * @param {*} name - Parameter value.
-     * @param {*} options - Parameter value.
-     * @returns {*} Result of prependLayer.
-     */
-    prependLayer(name, options = {}) {
-        options.index = 0;
-        return this.addLayer(name, options);
-    }
-
-    /**
-     * Executes layer.
-     * @param {*} indexOrName - Parameter value.
-     * @returns {*} Result of layer.
-     */
-    layer(indexOrName = 0) {
-        if (typeof indexOrName == "string") {
-            return this.namedLayers[indexOrName];
-        }
-        return this.layers[indexOrName];
-    }
 }
 
 customElements.define(AnimationViewer.tag, AnimationViewer);

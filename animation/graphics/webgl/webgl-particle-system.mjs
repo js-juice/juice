@@ -102,6 +102,14 @@ class WebGLParticleSystem {
         this.orbitSpeedScale = 1.0;
         this.repelStrengthScale = 1.0;
         this.orbitPullScale = 1.0;
+        this.cameraPan = { x: 0, y: 0 };
+        this._previousCameraPan = { x: 0, y: 0 };
+        this.cameraAngle = { yaw: 0, pitch: 0 };
+        this._previousCameraAngle = { yaw: 0, pitch: 0 };
+        this.cameraPanScale = 1.0;
+        this.cameraAngleScale = 1.0;
+        this.cameraDepthEffect = 1.0;
+        this.cameraMaxStep = 0.04;
         this._snapshots = new Map();
         this._maskTransition = null;
         this.emitter = null;
@@ -234,6 +242,8 @@ class WebGLParticleSystem {
         this.uMotion = this.feedback.addUniform("uMotion", VariableTypes.FLOAT_VEC4, [1.0, 1.0, 1.0, 0.0]);
         this.uDriftSpeed = this.feedback.addUniform("uDriftSpeed", VariableTypes.FLOAT, 1.0);
         this.uDriftMode = this.feedback.addUniform("uDriftMode", VariableTypes.FLOAT, 0.0);
+        this.uCameraDelta = this.feedback.addUniform("uCameraDelta", VariableTypes.FLOAT_VEC4, [0.0, 0.0, 0.0, 0.0]);
+        this.uCameraConfig = this.feedback.addUniform("uCameraConfig", VariableTypes.FLOAT_VEC4, [1.0, 1.0, 1.0, 0.0]);
         this.projectionMatrix = this.feedback.addUniform(
             "uProjectionMatrix",
             VariableTypes.FLOAT_MAT4,
@@ -421,12 +431,44 @@ class WebGLParticleSystem {
                 }
             }
 
-            if (position.x < boundLeft) position.x = boundRight;
-            if (position.x > boundRight) position.x = boundLeft;
-            if (position.y < boundBottom) position.y = boundTop;
-            if (position.y > boundTop) position.y = boundBottom;
-            if (position.z < -far) position.z = -near;
-            if (position.z > -near) position.z = -far;
+            float cameraActive = step(0.000001, abs(uCameraDelta.x) + abs(uCameraDelta.y) + abs(uCameraDelta.z) + abs(uCameraDelta.w));
+            float normalizedDepth = clamp((-position.z - near) / max(0.0001, far - near), 0.0, 1.0);
+            float depthParallax = mix(1.6, 0.35, normalizedDepth);
+            float depthEffect = max(0.0, uCameraConfig.z);
+            float panDepth = mix(1.0, depthParallax, clamp(depthEffect, 0.0, 1.0));
+            vec2 cameraShift = uCameraDelta.xy * uCameraConfig.x * panDepth;
+            cameraShift *= cameraActive;
+            position.xy += cameraShift;
+            home.xy += cameraShift;
+            if (driftAbsolute) {
+                absoluteDriftX += cameraShift.x;
+                absoluteDriftY += cameraShift.y;
+            }
+
+            if (position.x < boundLeft) {
+                position.x = boundRight;
+                home.x = position.x;
+            }
+            if (position.x > boundRight) {
+                position.x = boundLeft;
+                home.x = position.x;
+            }
+            if (position.y < boundBottom) {
+                position.y = boundTop;
+                home.y = position.y;
+            }
+            if (position.y > boundTop) {
+                position.y = boundBottom;
+                home.y = position.y;
+            }
+            if (position.z < -far) {
+                position.z = -near;
+                home.z = position.z;
+            }
+            if (position.z > -near) {
+                position.z = -far;
+                home.z = position.z;
+            }
 
             // Integrate velocity with gravity and friction
             velocity += uGravity * delta;
@@ -475,10 +517,29 @@ class WebGLParticleSystem {
             VariableTypes.FLOAT_MAT4,
             this.particles.projection.matrix
         );
+        this.uRenderCamera = vertex.addUniform("uRenderCamera", VariableTypes.FLOAT_VEC4, [0.0, 0.0, 1.0, 1.0]);
 
         vertex.main(`
-            gl_Position = uProjectionMatrix * vec4(aPosition, 1.0);
-            float depth = max(0.2, abs(aPosition.z));
+            vec3 renderPosition = aPosition;
+            float nearPlane = -1.0 / uProjectionMatrix[2][2];
+            float farPlane = uProjectionMatrix[2][3] / (1.0 + uProjectionMatrix[2][2]);
+            float renderDepth = max(nearPlane, -renderPosition.z);
+            float halfHeight = renderDepth / uProjectionMatrix[1][1];
+            float halfWidth = renderDepth / uProjectionMatrix[0][0];
+            float normalizedDepth = clamp((renderDepth - nearPlane) / max(0.0001, farPlane - nearPlane), 0.0, 1.0);
+            float depthEffect = clamp(max(0.0, uRenderCamera.w), 0.0, 4.0);
+            float parallax = mix(1.0 + depthEffect * 0.18, max(0.45, 1.0 - depthEffect * 0.1), normalizedDepth);
+            renderPosition.xy +=
+                uRenderCamera.xy *
+                vec2(halfWidth, halfHeight) *
+                max(0.0, uRenderCamera.z) *
+                0.08 *
+                parallax;
+            vec2 renderSize = max(vec2(0.0001), vec2(halfWidth * 2.0, halfHeight * 2.0));
+            renderPosition.x = mod(renderPosition.x + halfWidth, renderSize.x) - halfWidth;
+            renderPosition.y = mod(renderPosition.y + halfHeight, renderSize.y) - halfHeight;
+            gl_Position = uProjectionMatrix * vec4(renderPosition, 1.0);
+            float depth = max(0.2, abs(renderPosition.z));
             gl_PointSize = max(1.5, ${this.particleSize} / depth);
             particleStateColor = aColor.rgb;
         `);
@@ -675,16 +736,22 @@ class WebGLParticleSystem {
      */
     async loadMask(source, options = {}) {
         console.log("loadMask", source, options);
-        const { apply = true, buildOptions = {}, ...maskOptions } = options;
+        const isOptionsResolver = typeof options === "function";
+        const { apply = true, buildOptions = {}, ...maskOptions } = isOptionsResolver ? {} : options;
         if (!source || !this.particles?.loadMask) {
             return { maskIndex: -1, count: this.particles?.count || 0 };
         }
 
-        const maskIndex = await this.particles.loadMask(source, maskOptions);
+        const maskIndex = await this.particles.loadMask(source, isOptionsResolver ? options : maskOptions);
         if (apply) {
             const applyOptions = { ...buildOptions };
             if (applyOptions.preserveMaskColor === undefined && maskOptions.preserveColor !== undefined) {
                 applyOptions.preserveMaskColor = maskOptions.preserveColor === true;
+            }
+            for (const key of ["maskMode", "mode", "append", "scatter", "anchor", "maskAnchor", "rotation", "rotate", "maskRotation"]) {
+                if (applyOptions[key] === undefined && maskOptions[key] !== undefined) {
+                    applyOptions[key] = maskOptions[key];
+                }
             }
             this.applyMask(maskIndex, applyOptions);
         }
@@ -848,6 +915,71 @@ class WebGLParticleSystem {
         if (config.repelStrength !== undefined)
             this.repelStrengthScale = Math.max(0, Number(config.repelStrength) || 0);
         if (config.orbitPull !== undefined) this.orbitPullScale = Math.max(0, Number(config.orbitPull) || 0);
+    }
+
+    /**
+     * Sets fake camera pan in world units. The next frame applies only the delta.
+     *
+     * @param {number} x
+     * @param {number} y
+     */
+    setCameraPan(x = 0, y = 0) {
+        this.cameraPan.x = Number(x) || 0;
+        this.cameraPan.y = Number(y) || 0;
+    }
+
+    /**
+     * Adds fake camera pan movement in world units.
+     *
+     * @param {number} x
+     * @param {number} y
+     */
+    moveCameraPan(x = 0, y = 0) {
+        this.cameraPan.x += Number(x) || 0;
+        this.cameraPan.y += Number(y) || 0;
+    }
+
+    /**
+     * Sets fake camera yaw/pitch. Values are absolute angle-like inputs, not frame deltas.
+     *
+     * @param {number} yaw
+     * @param {number} pitch
+     */
+    setCameraAngle(yaw = 0, pitch = 0) {
+        this.cameraAngle.yaw = Number(yaw) || 0;
+        this.cameraAngle.pitch = Number(pitch) || 0;
+    }
+
+    /**
+     * Adds fake camera yaw/pitch movement.
+     *
+     * @param {number} yaw
+     * @param {number} pitch
+     */
+    moveCameraAngle(yaw = 0, pitch = 0) {
+        this.cameraAngle.yaw += Number(yaw) || 0;
+        this.cameraAngle.pitch += Number(pitch) || 0;
+    }
+
+    /**
+     * Configures fake camera movement strength.
+     *
+     * @param {{panScale?:number,angleScale?:number,depthEffect?:number}} [config={}]
+     */
+    setCameraMotion(config = {}) {
+        if (config.panScale !== undefined) this.cameraPanScale = Math.max(0, Number(config.panScale) || 0);
+        if (config.angleScale !== undefined) this.cameraAngleScale = Math.max(0, Number(config.angleScale) || 0);
+        if (config.depthEffect !== undefined) this.cameraDepthEffect = Math.max(0, Number(config.depthEffect) || 0);
+        if (config.maxStep !== undefined) this.cameraMaxStep = Math.max(0.0001, Number(config.maxStep) || 0.04);
+    }
+
+    /**
+     * Sets fake camera depth parallax strength.
+     *
+     * @param {number} value
+     */
+    setCameraDepthEffect(value = 1) {
+        this.cameraDepthEffect = Math.max(0, Number(value) || 0);
     }
 
     /**
@@ -1030,6 +1162,36 @@ class WebGLParticleSystem {
             ];
             if (this.uDriftSpeed) this.uDriftSpeed.value = Number(this.driftSpeedScale) || 0;
             if (this.uDriftMode) this.uDriftMode.value = this.driftType === "absolute" ? 1 : 0;
+            const limitCameraStep = (value) => {
+                const next = Number(value) || 0;
+                const maxStep = Math.max(0.0001, Number(this.cameraMaxStep) || 0.04);
+                return Math.max(-maxStep, Math.min(maxStep, next));
+            };
+            const rawCameraDeltaX = (Number(this.cameraPan.x) || 0) - (Number(this._previousCameraPan.x) || 0);
+            const rawCameraDeltaY = (Number(this.cameraPan.y) || 0) - (Number(this._previousCameraPan.y) || 0);
+            const rawCameraDeltaYaw =
+                (Number(this.cameraAngle.yaw) || 0) - (Number(this._previousCameraAngle.yaw) || 0);
+            const rawCameraDeltaPitch =
+                (Number(this.cameraAngle.pitch) || 0) - (Number(this._previousCameraAngle.pitch) || 0);
+            const cameraDeltaX = limitCameraStep(rawCameraDeltaX);
+            const cameraDeltaY = limitCameraStep(rawCameraDeltaY);
+            const cameraDeltaYaw = limitCameraStep(rawCameraDeltaYaw);
+            const cameraDeltaPitch = limitCameraStep(rawCameraDeltaPitch);
+            if (this.uCameraDelta) {
+                this.uCameraDelta.value = [cameraDeltaX, cameraDeltaY, cameraDeltaYaw, cameraDeltaPitch];
+            }
+            if (this.uCameraConfig) {
+                this.uCameraConfig.value = [
+                    Number(this.cameraPanScale) || 0,
+                    Number(this.cameraAngleScale) || 0,
+                    Number(this.cameraDepthEffect) || 0,
+                    0
+                ];
+            }
+            this._previousCameraPan.x += cameraDeltaX;
+            this._previousCameraPan.y += cameraDeltaY;
+            this._previousCameraAngle.yaw += cameraDeltaYaw;
+            this._previousCameraAngle.pitch += cameraDeltaPitch;
             const orbitRadius = Math.max(0.0001, Number(this.orbitPoint[3]) || 0.4);
             const repelRadius = Math.max(0.0001, Number(this.repelPoint[3]) || 0.4);
             const orbitFieldRadius =
@@ -1062,9 +1224,19 @@ class WebGLParticleSystem {
         }
 
         gl.useProgram(this.program);
+        if (this.uRenderCamera) {
+            this.uRenderCamera.value = [
+                Number(this.cameraAngle.yaw) || 0,
+                Number(this.cameraAngle.pitch) || 0,
+                Number(this.cameraAngleScale) || 0,
+                Number(this.cameraDepthEffect) || 0
+            ];
+        }
         gl.clearColor(0, 0, 0, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
         gl.enable(gl.DEPTH_TEST);
+        gl.depthMask(true);
+        gl.clearDepth(1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         // Bind latest TF read buffers as render attributes.
         this.feedback.applyDownStreamData();

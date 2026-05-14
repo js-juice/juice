@@ -8,6 +8,113 @@ import Observe from "../../core/Dom/Observe/Observe.mjs";
 import { fixedClamp } from "../../core/Util/Math.mjs";
 import AnimationValue from "../../animation/properties/Value.mjs";
 
+class TrackedView extends Component.HTMLElement {
+    static tag = "tracked-view";
+
+    static config = {
+        name: "tracked-view",
+        properties: {
+            top: { type: "int", default: 0, linked: true },
+            left: { type: "int", default: 0, linked: true },
+            width: { type: "int", default: 0, linked: true },
+            height: { type: "int", default: 0, linked: true }
+        }
+    };
+
+    static get observed() {
+        return {
+            all: ["top", "left", "width", "height"]
+        };
+    }
+
+    constructor() {
+        super();
+        this.updateBounds = this.updateBounds.bind(this);
+        this._scheduleUpdate = this._scheduleUpdate.bind(this);
+        this._wasInView = false;
+        this._raf = 0;
+    }
+
+    updateBounds() {
+        const rect = this.getBoundingClientRect();
+        const scrollView = this.closest("scroll-view");
+        const viewport = scrollView
+            ? scrollView.getBoundingClientRect()
+            : {
+                  top: 0,
+                  left: 0,
+                  right: window.innerWidth,
+                  bottom: window.innerHeight,
+                  width: window.innerWidth,
+                  height: window.innerHeight
+              };
+
+        this.top = rect.top;
+        this.left = rect.left;
+        this.width = rect.width;
+        this.height = rect.height;
+
+        const visibleTop = Math.max(rect.top, viewport.top);
+        const visibleBottom = Math.min(rect.bottom, viewport.bottom);
+        const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+        const inView = visibleHeight > 0 && rect.bottom > viewport.top && rect.top < viewport.bottom;
+        const travel = Math.max(1, viewport.height + rect.height);
+        const progress = fixedClamp(0, 100)(((viewport.bottom - rect.top) / travel) * 100);
+        const visiblePercent = rect.height > 0 ? fixedClamp(0, 100)((visibleHeight / rect.height) * 100) : 0;
+        const detail = {
+            percent: progress,
+            progress,
+            visiblePercent,
+            visibleRatio: visiblePercent / 100,
+            inView,
+            rect,
+            viewport
+        };
+
+        if (inView && !this._wasInView) {
+            this.dispatchEvent(new CustomEvent("enter", { detail, bubbles: true }));
+        }
+
+        if (inView) {
+            this.dispatchEvent(new CustomEvent("progress", { detail, bubbles: true }));
+        }
+
+        if (!inView && this._wasInView) {
+            this.dispatchEvent(new CustomEvent("leave", { detail, bubbles: true }));
+        }
+
+        this._wasInView = inView;
+    }
+
+    _scheduleUpdate() {
+        if (this._raf) return;
+        this._raf = requestAnimationFrame(() => {
+            this._raf = 0;
+            this.updateBounds();
+        });
+    }
+
+    onFirstConnect() {
+        this.scrollView = this.closest("scroll-view");
+        const source = this.scrollView || window;
+        source.addEventListener("scroll-y", this._scheduleUpdate);
+        source.addEventListener("scroll-x", this._scheduleUpdate);
+        window.addEventListener("resize", this._scheduleUpdate);
+        Observe.resize(this).change(this._scheduleUpdate);
+
+        this._scheduleUpdate();
+    }
+
+    onDisconnect() {
+        const source = this.scrollView || window;
+        source.removeEventListener("scroll-y", this._scheduleUpdate);
+        source.removeEventListener("scroll-x", this._scheduleUpdate);
+        window.removeEventListener("resize", this._scheduleUpdate);
+        if (this._raf) cancelAnimationFrame(this._raf);
+        this._raf = 0;
+    }
+}
+
 class ScrollBar extends Component.HTMLElement {
     static tag = "scroll-bar";
 
@@ -444,7 +551,7 @@ class ScrollView extends Component.HTMLElement {
                 "#content": {
                     position: "relative",
                     display: "block",
-                    width: "calc(100% - 25px)",
+                    width: "calc(100% - 20px)",
                     height: "auto",
                     zIndex: 1
                 },
@@ -630,6 +737,9 @@ class ScrollView extends Component.HTMLElement {
 }
 
 if (typeof customElements !== "undefined") {
+    if (!customElements.get("tracked-view")) {
+        customElements.define("tracked-view", TrackedView);
+    }
     if (!customElements.get("scroll-bar")) {
         customElements.define("scroll-bar", ScrollBar);
     }
@@ -638,5 +748,5 @@ if (typeof customElements !== "undefined") {
     }
 }
 
-export { ScrollBar, ScrollView };
+export { ScrollBar, ScrollView, TrackedView };
 export default ScrollView;

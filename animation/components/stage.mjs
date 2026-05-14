@@ -5,7 +5,8 @@
 import Component from "../../ui/component.mjs";
 import Timeline from "../timeline.mjs";
 import { Position } from "../properties/Position.mjs";
-import { parseAnchor } from "../anchor.mjs";
+import AnimationComponentUtil from "./util.mjs";
+
 import "./stats.mjs";
 
 /**
@@ -29,11 +30,12 @@ class AnimationStage extends Component.HTMLElement {
             background: { default: "transparent", type: "string", linked: true },
             x: { default: 0, route: "position.x", type: "number", unit: "percent" },
             y: { default: 0, route: "position.y", type: "number", unit: "percent" },
-            anchor: { default: "left top", type: "string" },
             frction: { default: 0.6, type: "number", unit: "coefficient" },
             gravity: { default: 9.81, type: "number", unit: "meters per second sq" },
             fps: { default: 60, type: "number", unit: "frames per second", linked: true },
-            state: { default: "initial", type: "string", allowed: AnimationStage.allowedStates }
+            state: { default: "initial", type: "string", allowed: AnimationStage.allowedStates },
+            anchor: { default: { x: 0.5, y: 0.5 }, type: "object" },
+            origin: { default: { x: 0.5, y: 0.5 }, type: "object" }
         }
     };
 
@@ -43,7 +45,8 @@ class AnimationStage extends Component.HTMLElement {
      */
     static get observed() {
         return {
-            all: ["debug", "background", "width", "height", "friction", "gravity", "state", "fps", "x", "y", "anchor"]
+            all: ["debug", "background", "width", "height", "friction", "gravity", "state", "fps", "x", "y"],
+            attributres: ["anchor", "origin"]
         };
     }
 
@@ -55,74 +58,67 @@ class AnimationStage extends Component.HTMLElement {
         return [
             {
                 ":host": {
+                    position: "relative",
                     display: "block",
                     top: 0,
                     left: 0,
-                    width: "var(--width, 100% )",
-                    height: "var( --height, 100% )",
+                    width: "var( --viewer-width, --stage-width, 100% )",
+                    height: "var( --viewer-height, --stage-height, 100% )",
                     zIndex: 0
                 },
                 ":host(.viewer-connected)": {
                     position: "absolute",
-                    width: "100%",
-                    height: "100%"
+                    transform: "translate( calc( var(--origin-x) * -100% ), calc( var( --origin-y ) * -100%) )"
+                },
+                "#html": {
+                    position: "absolute",
+                    width: "var(--viewer-width, --stage-width, 100%)",
+                    height: "var(--viewer-height, --stage-height, 100%)"
                 },
                 "#world": {
-                    display: "block",
-                    position: "relative",
-                    width: "var(--width, 100% )",
-                    height: "var( --height, 100% )",
-                    transform: "translate(-var(--anchor-x, 0), -var(--anchor-y, 0))",
-                    overflow: "hidden"
+                    position: "absolute",
+                    width: "var(--stage-width, 100% )",
+                    height: "var(--stage-height, 100% )",
+                    pointerEvents: "none",
+                    zIndex: 1
                 },
                 ":host(.viewer-connected) #world": {
-                    position: "absolute",
-                    left: "var(--anchor-x, 0)",
-                    top: "var(--anchor-y, 0)",
-                    transform: "translate(var(--stage-x, 0), var(--stage-y, 0))"
+                    position: "relative"
+                    // left: "var(--anchor-x, 0)",
+                    // top: "var(--anchor-y, 0)",
                 },
-                slot: {
-                    display: "block",
-                    position: "relative",
+                'slot[name="paralax-background"]': {
+                    pointerEvents: "auto",
                     width: "100%",
                     height: "100%",
-                    zIndex: 100
-                },
-                "#paralax-bg-container": {
                     position: "absolute",
-                    width: "var(--viewer-width, 100% )",
-                    height: "var(--viewer-height, 100% )",
+                    display: "block",
                     top: 0,
                     left: 0,
-
-                    overflow: "hidden",
-                    pointerEvents: "none",
-                    zIndex: 10
+                    zIndex: -1
+                    //transform: "translate( calc( var(--origin-x, 0) * -100% ), calc( var(--origin-y, 0) * -100% ) )"
                 },
-                "#world": {
-                    position: "absolute",
-                    left: "50%",
-                    top: "50%",
-                    width: "var(--width, 100% )",
-                    height: "var( --height, 100% )",
-                    pointerEvents: "none",
-                    zIndex: 5
-                },
-                "#world > *": {
-                    pointerEvents: "auto",
-                    width: "100%",
-                    height: "100%"
-                },
-                "#paralax-bg-container > *": {
+                'slot[name="world-background"]': {
                     pointerEvents: "auto",
                     width: "100%",
                     height: "100%",
-                    position: "absolute"
+                    position: "absolute",
+                    display: "block",
+                    top: 0,
+                    left: 0,
+                    zIndex: -1
+                },
+                "slot:not([name])": {
+                    position: "absolute",
+                    display: "block",
+                    left: "calc( var(--origin-x, 0) * 100% )",
+                    top: "calc( var(--origin-y, 0) * 100% )"
                 },
                 "animation-anchor": {
-                    position: "absolute",
-                    top: "var(--anchor-y, 0)",
-                    left: "var(--anchor-x, 0)"
+                    zIndex: 1,
+                    left: "calc( var( --origin-x, 0 ) * 100% )",
+                    top: "calc( var( --origin-y, 0 ) * 100% )",
+                    transform: "translate(var(--stage-x, 0), var(--stage-y, 0))"
                 }
             }
         ];
@@ -135,16 +131,12 @@ class AnimationStage extends Component.HTMLElement {
      */
     static html(data = {}) {
         return `
-        <div id="paralax-bg-container">
-            <slot name="paralax-background"></slot>
-        </div>
+        <slot name="paralax-background"></slot>
         <animation-anchor id="anchor">
-       <div id="world">
-            <div id="world-background-container">
-            <slot name="world-background"></slot>
-            </div>
-            <slot></slot>
-        </div> 
+            <div id="world">
+                <slot name="world-background"></slot>
+                <slot></slot>
+            </div> 
         </animation-anchor>
         
         
@@ -181,19 +173,11 @@ class AnimationStage extends Component.HTMLElement {
     viewer = null;
 
     /**
-     * Returns the current hasViewerTimeline value.
-     * @returns {*} Current hasViewerTimeline value.
-     */
-    get hasViewerTimeline() {
-        return !!(this.viewer && this.viewer.timeline);
-    }
-
-    /**
      * Returns the current timeline value.
      * @returns {*} Current timeline value.
      */
     get timeline() {
-        return this.hasViewerTimeline ? this.viewer.timeline : this.localTimeline;
+        return this.animation.timeline;
     }
 
     /**
@@ -257,7 +241,7 @@ class AnimationStage extends Component.HTMLElement {
     onPropertyChanged(property, prevous, value) {
         switch (property) {
             case "fps":
-                if (this.localTimeline) this.localTimeline.fps = value;
+                this.animation.timeline.fps = value;
                 break;
             case "width":
                 this._setDimensionVar("width", value);
@@ -266,7 +250,7 @@ class AnimationStage extends Component.HTMLElement {
                 this._setDimensionVar("height", value);
                 break;
             case "anchor":
-                this.setAnchor(value);
+                AnimationComponentUtil.setAnchor(this);
                 break;
             case "background":
                 this.ref("html").style.background = value;
@@ -283,6 +267,7 @@ class AnimationStage extends Component.HTMLElement {
      * @returns {*} Result of addBackground.
      */
     addBackground(element, options = {}) {
+        if (!element) return;
         const bg = {
             element: element,
             ...options
@@ -292,6 +277,18 @@ class AnimationStage extends Component.HTMLElement {
             element.setAttribute("slot", "paralax-background");
         } else {
             element.setAttribute("slot", "world-background");
+        }
+
+        Object.assign(element.style, {
+            position: element.style.position || "absolute",
+            width: element.style.width || "100%",
+            height: element.style.height || "100%",
+            top: element.style.top || "0",
+            left: element.style.left || "0"
+        });
+
+        if (!element.parentNode) {
+            this.appendChild(element);
         }
 
         this.backgrounds.push(bg);
@@ -345,15 +342,7 @@ class AnimationStage extends Component.HTMLElement {
         console.log("Child ready for animation stage", { child });
         this.animatorChildren.add(child);
 
-        if (this.hasViewerTimeline) {
-            this.viewer.onAssetAdded(child);
-            child._juiceTimelineOwner = this.viewer.timeline;
-        } else if (this.localTimeline) {
-            if (child._juiceTimelineOwner !== this.localTimeline) {
-                this.localTimeline.addAnimator(child);
-                child._juiceTimelineOwner = this.localTimeline;
-            }
-        }
+        this.animation.tree.addAsset(child, this);
     }
 
     /**
@@ -373,36 +362,8 @@ class AnimationStage extends Component.HTMLElement {
             animator.stage = this;
         }
         if (animator.animate !== true) animator.animate = true;
-        this.animatorChildren.add(animator);
 
-        if (this.hasViewerTimeline) {
-            this.viewer.onAssetAdded(animator);
-            animator._juiceTimelineOwner = this.viewer.timeline;
-        } else if (this.localTimeline) {
-            if (animator._juiceTimelineOwner !== this.localTimeline) {
-                this.localTimeline.addAnimator(animator);
-                animator._juiceTimelineOwner = this.localTimeline;
-            }
-        }
-    }
-
-    /**
-     * Sets anchor values.
-     * @param {*} anchorPosition - Parameter value.
-     * @returns {*} Result of setAnchor.
-     */
-    setAnchor(anchorPosition) {
-        const { x, y } = parseAnchor(anchorPosition || this.getAttribute("anchor") || "left top");
-        console.log("Anchor", x, y);
-        const { width: stageWidth, height: stageHeight } = this._stageSize();
-        const anchorX = `${x * 100}%`;
-        const anchorY = `${y * 100}%`;
-        //const anchorX = this._anchorValueToPixels(x, stageWidth);
-        //const anchorY = this._anchorValueToPixels(y, stageHeight);
-        this.anchorPoint = { x: anchorX, y: anchorY };
-
-        this.writeStyleVars({ "--anchor-x": anchorX, "--anchor-y": anchorY }, this.ref("html"));
-        this._refreshPlacement();
+        this.animation.timeline.addAnimator(animator);
     }
 
     /**
@@ -410,11 +371,11 @@ class AnimationStage extends Component.HTMLElement {
      * @returns {*} Result of onFirstConnect.
      */
     onFirstConnect() {
+        AnimationComponentUtil.initialize(this);
+
         if (this.hasAttribute("parallax")) {
             this.parallax = true;
         }
-        this._syncTimelineOwner();
-        this.setAnchor(this.getAttribute("anchor") || this.anchor || "left top");
         const defer = globalThis.requestAnimationFrame || ((fn) => setTimeout(fn, 0));
         defer(() => {
             if (this.viewer) return;
@@ -446,7 +407,6 @@ class AnimationStage extends Component.HTMLElement {
         }
         this.viewer.addEventListener("resize", this._viewerResizeHandler);
         this._refreshPlacement();
-        this._syncTimelineOwner();
         this.classList.add("viewer-connected");
     }
 
@@ -465,7 +425,6 @@ class AnimationStage extends Component.HTMLElement {
         this.style.transform = "";
         this.style.left = "0px";
         this.style.top = "0px";
-        this._syncTimelineOwner();
     }
 
     /**
@@ -477,98 +436,6 @@ class AnimationStage extends Component.HTMLElement {
             this.viewer.removeEventListener("resize", this._viewerResizeHandler);
         }
         this.viewer = null;
-        this._stopLocalTimeline();
-    }
-
-    /**
-     * Implements internal _createLocalTimeline behavior.
-     * @returns {*} Result of _createLocalTimeline.
-     */
-    _createLocalTimeline() {
-        if (this.localTimeline) return this.localTimeline;
-
-        const timeline = new Timeline(this, { defer: true, fps: this.fps || 60 });
-        timeline.update = this.update;
-        timeline.render = this.render;
-        timeline.complete = () => {};
-        this.localTimeline = timeline;
-
-        this.animatorChildren.forEach((child) => {
-            if (!child || !child.animate) return;
-            if (child._juiceTimelineOwner === timeline) return;
-            timeline.addAnimator(child);
-            child._juiceTimelineOwner = timeline;
-        });
-
-        timeline.play();
-        return timeline;
-    }
-
-    /**
-     * Implements internal _stopLocalTimeline behavior.
-     * @returns {*} Result of _stopLocalTimeline.
-     */
-    _stopLocalTimeline() {
-        if (!this.localTimeline) return;
-        const old = this.localTimeline;
-        old.pause();
-        old.active = false;
-        this.localTimeline = null;
-
-        this.animatorChildren.forEach((child) => {
-            if (child && child._juiceTimelineOwner === old) {
-                child._juiceTimelineOwner = null;
-            }
-        });
-    }
-
-    /**
-     * Implements internal _bindAnimatorsToViewer behavior.
-     * @returns {*} Result of _bindAnimatorsToViewer.
-     */
-    _bindAnimatorsToViewer() {
-        if (!this.viewer) return;
-        this.animatorChildren.forEach((child) => {
-            if (!child || !child.animate) return;
-            this.viewer.onAssetAdded(child);
-            child._juiceTimelineOwner = this.viewer.timeline;
-        });
-    }
-
-    /**
-     * Implements internal _syncTimelineOwner behavior.
-     * @returns {*} Result of _syncTimelineOwner.
-     */
-    _syncTimelineOwner() {
-        if (this.hasViewerTimeline) {
-            this._stopLocalTimeline();
-            this._bindAnimatorsToViewer();
-            return;
-        }
-        this._createLocalTimeline();
-    }
-
-    /**
-     * Implements internal _anchorValueToPixels behavior.
-     * @param {*} value - Parameter value.
-     * @param {*} axisSize - Parameter value.
-     * @returns {*} Result of _anchorValueToPixels.
-     */
-    _anchorValueToPixels(value, axisSize) {
-        if (typeof value === "number") return value * axisSize;
-        if (typeof value !== "string") return 0;
-        const trimmed = value.trim();
-        if (!trimmed.length) return 0;
-        if (trimmed.endsWith("%")) {
-            const parsedPercent = Number.parseFloat(trimmed);
-            return Number.isFinite(parsedPercent) ? (parsedPercent / 100) * axisSize : 0;
-        }
-        if (trimmed.endsWith("px")) {
-            const parsedPixels = Number.parseFloat(trimmed);
-            return Number.isFinite(parsedPixels) ? parsedPixels : 0;
-        }
-        const parsedNumber = Number(trimmed);
-        return Number.isFinite(parsedNumber) ? parsedNumber : 0;
     }
 
     /**
@@ -593,6 +460,7 @@ class AnimationStage extends Component.HTMLElement {
             }
         }
 
+        this.ref("html").style.setProperty(`--stage-${axis}`, cssValue || "0px");
         this.ref("html").style.setProperty(`--${axis}`, cssValue || "0px");
         this._refreshPlacement();
     }
@@ -774,13 +642,13 @@ class AnimationStage extends Component.HTMLElement {
      */
     _applyPositionToDOM() {
         if (!this.viewer) return;
-        const { width: viewerWidth, height: viewerHeight } = this._viewerSize();
+        const { width: viewerWidth, height: viewerHeight } = this.viewer;
         //this.ref("world").style.left = `${viewerWidth / 2}px`;
         //this.ref("world").style.top = `${viewerHeight / 2}px`;
         if (this.parallax) {
             this.writeStyleVars({ "--stage-x": this.position.x, "--stage-y": this.position.y }, this.ref("html"));
         } else {
-            this.ref("html").style.transform = `translate3d(${this.position.x}px, ${this.position.y}px, 0)`;
+            //  this.ref("anchor").style.transform = `translate3d(${this.position.x}px, ${this.position.y}px, 0)`;
         }
     }
 
@@ -806,28 +674,63 @@ class AnimationStage extends Component.HTMLElement {
         camera.max.y = cameraOffsetY - this.bounds.min.y;
     }
 
+    namedLayers = {};
     /**
-     * Implements internal _findViewerHost behavior.
-     * @returns {*} Result of _findViewerHost.
+     * Executes addLayer.
+     * @param {*} name - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of addLayer.
      */
-    _findViewerHost() {
-        let node = this;
-        while (node) {
-            if (node?.tagName?.toLowerCase?.() === "animation-viewer") {
-                return node;
-            }
-            if (node.parentNode) {
-                node = node.parentNode;
-                continue;
-            }
-            const root = typeof node.getRootNode === "function" ? node.getRootNode() : null;
-            if (root?.host) {
-                node = root.host;
-                continue;
-            }
-            return null;
+    addLayer(name, options = {}) {
+        const layers = this.layers;
+        const index = options.index ?? layers.length;
+        const layer = document.createElement("animation-layer");
+        if (options.type) layer.setAttribute("type", options.type);
+        if (name) layer.setAttribute("name", name);
+        layer.setAttribute("index", index);
+        if (options.width) layer.setAttribute("width", options.width);
+        if (options.height) layer.setAttribute("height", options.height);
+        this.insertBefore(layer, this.layers[index] || null);
+        this.layers.splice(index, 0, layer);
+        if (name) {
+            this.namedLayers[name] = layer;
         }
-        return null;
+
+        return layer;
+    }
+
+    /**
+     * Executes appendLayer.
+     * @param {*} name - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of appendLayer.
+     */
+    appendLayer(name, options = {}) {
+        options.index = this.layers.length;
+        return this.addLayer(name, options);
+    }
+
+    /**
+     * Executes prependLayer.
+     * @param {*} name - Parameter value.
+     * @param {*} options - Parameter value.
+     * @returns {*} Result of prependLayer.
+     */
+    prependLayer(name, options = {}) {
+        options.index = 0;
+        return this.addLayer(name, options);
+    }
+
+    /**
+     * Executes layer.
+     * @param {*} indexOrName - Parameter value.
+     * @returns {*} Result of layer.
+     */
+    layer(indexOrName = 0) {
+        if (typeof indexOrName == "string") {
+            return this.namedLayers[indexOrName];
+        }
+        return this.layers[indexOrName];
     }
 }
 

@@ -620,6 +620,13 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 }
             }
 
+            scheduleRenderEvent() {
+                clearTimeout(this.renderTO);
+                this.renderTO = setTimeout(() => {
+                    this.#render();
+                }, 0);
+            }
+
             // Handle property changes
             async _onPropertyChanged(property, oldValue, newValue, config) {
                 if (this.onPropertyChanged) await this.onPropertyChanged(property, oldValue, newValue);
@@ -640,10 +647,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 // If "render" is set in property config
                 if (config.render) {
                     // Force render the component
-                    clearTimeout(this.renderTO);
-                    this.renderTO = setTimeout(() => {
-                        this.#render();
-                    }, 0);
+                    this.scheduleRenderEvent();
                 }
             }
 
@@ -1031,7 +1035,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
              */
 
             attributeChangedCallback(property, oldValue, newValue) {
-                const { type, unit, linked } = this.config.properties[property] || {};
+                const { attrtype, type, unit, linked } = this.config.properties[property] || {};
 
                 if (oldValue === newValue) return;
 
@@ -1061,7 +1065,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
                     }
                 }
 
-                switch (type) {
+                switch (attrtype || type) {
                     case "int":
                         newValue = parseInt(newValue);
                     case "number":
@@ -1073,6 +1077,9 @@ function ComponentCompiler(name, BaseHTMLElement) {
                         } else if (["1", "true", 1].includes(newValue)) {
                             newValue = true;
                         }
+                        break;
+                    case "object":
+                        if (typeof newValue === "string") newValue = JSON.parse(newValue);
                         break;
                     case "json":
                         if (typeof newValue === "string") newValue = JSON.parse(newValue);
