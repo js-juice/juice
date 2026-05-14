@@ -4,7 +4,8 @@
  * Provides core functionality including module loading, event handling, and configuration.
  * @module Core
  */
-import JUICE_CONFIG from "./config/juice-config.mjs";
+
+import "./config/juice-config.mjs";
 import "./core/Dev/Log.mjs";
 import { blendClasses } from "./core/Util/Class.mjs";
 import _config from "./config/juice-config.mjs";
