@@ -270,7 +270,11 @@ class Juice {
     }
 
     async import(section, path, properties = []) {
-        const modulePath = `./${section}${path ? `/${path}` : ""}.mjs`;
+        const sectionPath = typeof section === "string" ? section.replace(/\/+$/, "") : "";
+        const relativePath = typeof path === "string" ? path.replace(/^\/+/, "") : "";
+        const joinedPath = relativePath ? `${sectionPath}/${relativePath}` : sectionPath;
+        const relativeModulePath = joinedPath.startsWith(".") ? joinedPath : `./${joinedPath}`;
+        const modulePath = relativeModulePath.endsWith(".mjs") ? relativeModulePath : `${relativeModulePath}.mjs`;
         if (this._cache[modulePath]) {
             return properties.length
                 ? properties.reduce((acc, property) => (acc[property] = this._cache[modulePath][property]), {})
