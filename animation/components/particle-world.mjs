@@ -18,11 +18,16 @@
  * @attribute {string} particle-color - Hex particle color, for example `#ffffff`.
  * @attribute {string} particle-type - Stored particle type label. The current WebGL renderer does not consume this value.
  * @attribute {number} particle-radius - Shared orbit/repel target radius. Alias: `radius`.
+ * @attribute {number} particle-size - WebGL point size used when rendering particles.
+ * @attribute {number} min-particle-size - Smallest WebGL point size after depth scaling.
+ * @attribute {"square"|"circle"|"soft-circle"} particle-shape - WebGL point sprite shape.
  * @attribute {number} drift - Motion drift multiplier from 0 to 1.
  * @attribute {number} drift-speed - Drift animation speed multiplier.
  * @attribute {"relative"|"absolute"} drift-type - Drift coordinate mode.
  * @attribute {number} orbit-speed - Orbit speed multiplier.
  * @attribute {number} orbit-pull - Orbit convergence multiplier.
+ * @attribute {number} orbit-escape - Ratio of orbiting particles that can flare away from the orbit, from 0 to 1.
+ * @attribute {number} orbit-escape-push - Outward push strength for orbit escape particles.
  * @attribute {number} repel-strength - Repel force multiplier.
  * @attribute {"idle"|"orbit"|"repel"} mode - Interaction mode. `orbit` and `repel` boolean attributes also toggle modes.
  * @attribute {boolean} orbit - Enables orbit mode.
@@ -44,6 +49,7 @@
  * @attribute {string|object} mask-options - JSON object passed to `setMask()`.
  * @attribute {"replace"|"append"} mask-mode - `replace` uses the active particles for the mask; `append` creates new mask particles after existing particles.
  * @attribute {number} mask-scatter - Random mask-point offset from 0 to 1. `0` keeps pristine mask positions.
+ * @attribute {"box"|"sphere"} mask-scatter-shape - Scatter distribution. `box` preserves rectangular/cubic bounds; `sphere` disperses points radially.
  * @attribute {number|string} mask-anchor - Mask transform anchor as JSON, comma list, or space list: `x,y,z`.
  * @attribute {number} mask-anchor-x - Mask transform anchor X coordinate.
  * @attribute {number} mask-anchor-y - Mask transform anchor Y coordinate.
@@ -61,6 +67,7 @@
  * @attribute {number} alpha-threshold - Minimum mask pixel alpha, 0 to 255.
  * @attribute {boolean} transition - Enables mask transition. Omit or set false to disable.
  * @attribute {number} transition-duration - Mask transition duration in milliseconds.
+ * @attribute {number} transition-spread - Mask transition stagger from 0 to 1.
  * @attribute {string|object} spawn-volume - JSON object with `{type, params}` for random non-mask seeding.
  * @attribute {number} max-speed - Initial random velocity range used by the particle buffer.
  * @attribute {number|string} camera-pan - Fake camera pan as JSON, comma list, or space list: `x,y`.
@@ -156,7 +163,10 @@ function parseVector(value, fallback = []) {
     const text = value.trim();
     if (!text.length) return fallback;
     if (text.startsWith("[") || text.startsWith("{")) return parseVector(parseObject(text, fallback), fallback);
-    return text.split(/[,\s]+/).filter(Boolean).map(Number);
+    return text
+        .split(/[,\s]+/)
+        .filter(Boolean)
+        .map(Number);
 }
 
 function normalizeScale(value, fallback = null) {
@@ -218,11 +228,16 @@ class ParticleWorldComponent extends Component.HTMLElement {
             "particle-color": { type: "string", default: "#ffffff", linked: true },
             "particle-type": { type: "string", default: "sphere", linked: true },
             "particle-radius": { type: "number", default: 0.4, linked: true },
+            "particle-size": { type: "number", default: 3, linked: true },
+            "min-particle-size": { type: "number", default: 1.5, linked: true },
+            "particle-shape": { type: "string", default: "square", linked: true },
             drift: { type: "number", default: 0.1, linked: true },
             "drift-speed": { type: "number", default: 1, linked: true },
             "drift-type": { type: "string", default: "relative", linked: true },
             "orbit-speed": { type: "number", default: 1.5, linked: true },
             "orbit-pull": { type: "number", default: 1, linked: true },
+            "orbit-escape": { type: "number", default: 0, linked: true },
+            "orbit-escape-push": { type: "number", default: 1, linked: true },
             "repel-strength": { type: "number", default: 1, linked: true },
             mode: { type: "string", default: "idle", linked: true },
             orbit: { type: "exists", default: false, linked: true },
@@ -244,6 +259,7 @@ class ParticleWorldComponent extends Component.HTMLElement {
             "mask-align": { type: "string", default: "center", linked: true },
             "mask-mode": { type: "string", default: "replace", linked: true },
             "mask-scatter": { type: "number", default: 0, linked: true },
+            "mask-scatter-shape": { type: "string", default: "box", linked: true },
             "mask-anchor-x": { type: "number", default: null, linked: true },
             "mask-anchor-y": { type: "number", default: null, linked: true },
             "mask-anchor-z": { type: "number", default: null, linked: true },
@@ -256,6 +272,7 @@ class ParticleWorldComponent extends Component.HTMLElement {
             "alpha-threshold": { type: "number", default: 1, linked: true },
             transition: { type: "boolean", default: true, linked: true },
             "transition-duration": { type: "number", default: 1400, linked: true },
+            "transition-spread": { type: "number", default: 0, linked: true },
             "max-speed": { type: "number", default: 0.03, linked: true },
             "camera-pan-x": { type: "number", default: 0, linked: true },
             "camera-pan-y": { type: "number", default: 0, linked: true },
@@ -333,6 +350,12 @@ class ParticleWorldComponent extends Component.HTMLElement {
         super();
     }
 
+    openDebugPanel() {
+        const viewer = this.getViewer();
+        if (!viewer?.openDebugPanel) return;
+        viewer.openDebugPanel();
+    }
+
     _propertyName(attribute) {
         return String(attribute || "")
             .split("-")
@@ -359,7 +382,10 @@ class ParticleWorldComponent extends Component.HTMLElement {
     }
 
     _syncParticleConfigFromAttributes() {
-        const maxParticles = this._readNumber("max-particles", this._readNumber("particles", this.particleConfig.maxParticles));
+        const maxParticles = this._readNumber(
+            "max-particles",
+            this._readNumber("particles", this.particleConfig.maxParticles)
+        );
         const emitRate = this._readNumber("emit-rate", this.particleConfig.emitRate);
         this.particleConfig.maxParticles = Math.max(8, Math.floor(maxParticles || this.particleConfig.maxParticles));
         this.particleConfig.emitRate = Math.max(0, Number(emitRate) || 0);
@@ -399,17 +425,24 @@ class ParticleWorldComponent extends Component.HTMLElement {
             position.x = this._readNumber("mask-x", position.x ?? 0);
             position.y = this._readNumber("mask-y", position.y ?? 0);
         } else {
-            Object.assign(position, alignMaskPosition(align, options.contentBox?.width ?? 1, options.contentBox?.height ?? 1));
+            Object.assign(
+                position,
+                alignMaskPosition(align, options.contentBox?.width ?? 1, options.contentBox?.height ?? 1)
+            );
         }
         const maskZ = this._readNumber("mask-z", position.z);
         if (maskZ !== null) position.z = maskZ;
         if (Object.keys(position).length) options.position = position;
 
-        const maskMode = String(this._readSetting("mask-mode", options.maskMode || options.mode || "replace") || "replace").toLowerCase();
+        const maskMode = String(
+            this._readSetting("mask-mode", options.maskMode || options.mode || "replace") || "replace"
+        ).toLowerCase();
         options.maskMode = maskMode === "append" ? "append" : "replace";
 
         const scatter = this._readNumber("mask-scatter", options.scatter);
         if (scatter !== null) options.scatter = Math.max(0, Math.min(1, scatter));
+        const scatterShape = String(this._readSetting("mask-scatter-shape", options.scatterShape || "box")).toLowerCase();
+        options.scatterShape = scatterShape === "sphere" ? "sphere" : "box";
 
         const anchorVector = parseVector(this._readSetting("mask-anchor", null), []);
         const anchor = { ...(options.anchor || options.maskAnchor || {}) };
@@ -433,7 +466,10 @@ class ParticleWorldComponent extends Component.HTMLElement {
             "mask-preserve-color",
             this._readBoolean("preserve-color", options.preserveColor === true)
         );
-        const particleGap = this._readNumber("mask-particle-gap", this._readNumber("particle-gap", options.particleGap));
+        const particleGap = this._readNumber(
+            "mask-particle-gap",
+            this._readNumber("particle-gap", options.particleGap)
+        );
         if (particleGap !== null) options.particleGap = Math.max(0, Math.floor(particleGap));
         const alphaThreshold = this._readNumber("alpha-threshold", options.alphaThreshold);
         if (alphaThreshold !== null) options.alphaThreshold = Math.max(0, Math.min(255, alphaThreshold));
@@ -444,8 +480,17 @@ class ParticleWorldComponent extends Component.HTMLElement {
         if (options.anchor !== undefined) options.buildOptions.anchor = options.anchor;
         if (options.rotation !== undefined) options.buildOptions.rotation = options.rotation;
         options.buildOptions.transition = this._readBoolean("transition", options.buildOptions.transition !== false);
+        options.transition = options.buildOptions.transition;
         const duration = this._readNumber("transition-duration", options.buildOptions.transitionDuration);
-        if (duration !== null) options.buildOptions.transitionDuration = Math.max(0, duration);
+        if (duration !== null) {
+            options.buildOptions.transitionDuration = Math.max(0, duration);
+            options.transitionDuration = options.buildOptions.transitionDuration;
+        }
+        const spread = this._readNumber("transition-spread", options.buildOptions.transitionSpread);
+        if (spread !== null) {
+            options.buildOptions.transitionSpread = Math.max(0, Math.min(1, spread));
+            options.transitionSpread = options.buildOptions.transitionSpread;
+        }
         return options;
     }
 
@@ -468,11 +513,15 @@ class ParticleWorldComponent extends Component.HTMLElement {
             driftType: this._readSetting("drift-type", "relative"),
             orbitSpeed: this._readNumber("orbit-speed", 1.5),
             orbitPull: this._readNumber("orbit-pull", 1),
+            orbitEscape: this._readNumber("orbit-escape", 0),
+            orbitEscapePush: this._readNumber("orbit-escape-push", 1),
             repelStrength: this._readNumber("repel-strength", 1)
         });
 
         const target = this._buildTargetOptions();
         this.setTarget(target.x, target.y, target.z, target.radius);
+        this.setParticleRenderSize(this._readNumber("particle-size", 3), this._readNumber("min-particle-size", 1.5));
+        this.setParticleShape(this._readSetting("particle-shape", "square"));
         this.setParticleColor(this._readSetting("particle-color", "#ffffff"));
         this.setValue("particleType", this._readSetting("particle-type", "sphere"));
         const gravity = this.hasAttribute("gravity")
@@ -502,7 +551,9 @@ class ParticleWorldComponent extends Component.HTMLElement {
         this.setOrbit(orbitEnabled && !repelEnabled, {
             ...target,
             radius: this._readNumber("orbit-radius", target.radius),
-            fieldRadius: this._readNumber("orbit-reach", null)
+            fieldRadius: this._readNumber("orbit-reach", null),
+            escape: this._readNumber("orbit-escape", 0),
+            escapePush: this._readNumber("orbit-escape-push", 1)
         });
         this.setRepel(repelEnabled, {
             ...target,
@@ -683,7 +734,11 @@ class ParticleWorldComponent extends Component.HTMLElement {
             this._syncParticleConfigFromAttributes();
             const { maxParticles, emitRate } = this.particleConfig;
             try {
-                this.particleViewer = new WebGLParticleSystem(this.canvas, maxParticles, emitRate);
+                this.particleViewer = new WebGLParticleSystem(this.canvas, maxParticles, emitRate, {
+                    particleSize: this._readNumber("particle-size", 3),
+                    minParticleSize: this._readNumber("min-particle-size", 1.5),
+                    particleShape: this._readSetting("particle-shape", "square")
+                });
                 this.particleViewer.start();
                 this._applyEngineAttributes({ applyMask: true, rebuildFreeParticles: true });
             } catch (error) {
@@ -745,7 +800,11 @@ class ParticleWorldComponent extends Component.HTMLElement {
         if (previous?.stop) previous.stop();
 
         const { emitRate } = this.particleConfig;
-        this.particleViewer = new WebGLParticleSystem(this.canvas, value, emitRate);
+        this.particleViewer = new WebGLParticleSystem(this.canvas, value, emitRate, {
+            particleSize: this._readNumber("particle-size", 3),
+            minParticleSize: this._readNumber("min-particle-size", 1.5),
+            particleShape: this._readSetting("particle-shape", "square")
+        });
         this.particleViewer.start();
         this._applyEngineAttributes({ applyMask: true, rebuildFreeParticles: true });
         this.dispatchEvent(new CustomEvent("particle-count", { detail: { value } }));
@@ -770,7 +829,11 @@ class ParticleWorldComponent extends Component.HTMLElement {
         if (!source || this.renderer !== "webgl") return null;
         const viewer = this.getViewer()?.loadMask ? this.getViewer() : await this._viewerReadyPromise;
         if (!viewer?.loadMask) return null;
-        const loadOptions = typeof options === "function" ? options : { apply: true, ...this.maskSettings, ...options };
+        const baseOptions = { apply: true, ...this.maskSettings, ...this._buildMaskOptions() };
+        const loadOptions =
+            typeof options === "function"
+                ? (...args) => this._mergeMaskResolverOptions(baseOptions, options(...args))
+                : { ...baseOptions, ...options };
         const result = await viewer.loadMask(source, loadOptions);
         this.dispatchEvent(new CustomEvent("mask-loaded", { detail: { source, ...result } }));
         return result;
@@ -811,7 +874,25 @@ class ParticleWorldComponent extends Component.HTMLElement {
         if (!source || this.renderer !== "webgl") return null;
         const viewer = this.getViewer()?.loadMask ? this.getViewer() : await this._viewerReadyPromise;
         if (!viewer?.loadMask) return null;
-        return viewer.loadMask(source, typeof options === "function" ? options : { ...this.maskSettings, ...options });
+        const baseOptions = { ...this.maskSettings, ...this._buildMaskOptions() };
+        return viewer.loadMask(
+            source,
+            typeof options === "function"
+                ? (...args) => this._mergeMaskResolverOptions(baseOptions, options(...args))
+                : { ...baseOptions, ...options }
+        );
+    }
+
+    _mergeMaskResolverOptions(baseOptions, resolvedOptions = {}) {
+        const resolved = resolvedOptions && typeof resolvedOptions === "object" ? resolvedOptions : {};
+        const merged = { ...baseOptions, ...resolved };
+        const usesPixelPosition =
+            (Number.isFinite(Number(resolved.x)) || Number.isFinite(Number(resolved.y))) && !resolved.position;
+        if (usesPixelPosition) {
+            delete merged.position;
+            if (!resolved.contentBox) delete merged.contentBox;
+        }
+        return merged;
     }
 
     /**
@@ -859,6 +940,18 @@ class ParticleWorldComponent extends Component.HTMLElement {
         const viewer = this.getViewer();
         if (!viewer?.setParticleColor) return;
         viewer.setParticleColor(color);
+    }
+
+    setParticleRenderSize(size, minSize) {
+        const viewer = this.getViewer();
+        if (!viewer?.setParticleRenderSize) return;
+        viewer.setParticleRenderSize(size, minSize);
+    }
+
+    setParticleShape(shape) {
+        const viewer = this.getViewer();
+        if (!viewer?.setParticleShape) return;
+        viewer.setParticleShape(shape);
     }
 
     /**
@@ -1175,15 +1268,41 @@ class ParticleWorldComponent extends Component.HTMLElement {
                 break;
             case "particles":
             case "emit-rate":
+            case "particle-size":
+            case "min-particle-size":
                 this._syncParticleConfigFromAttributes();
-                this.setParticleCount(this.particleConfig.maxParticles, property === "emit-rate");
+                this.setParticleCount(this.particleConfig.maxParticles, property !== "particles");
+                break;
+            case "particle-shape":
+                this.setParticleShape(value);
                 break;
             case "mask":
                 this._applyEngineAttributes({ applyMask: true });
                 break;
             default:
                 this._applyEngineAttributes({
-                    applyMask: ["mask-options", "mask-width", "mask-height", "mask-align", "mask-mode", "mask-scatter", "mask-anchor-x", "mask-anchor-y", "mask-anchor-z", "mask-rotation", "mask-x", "mask-y", "mask-z", "preserve-color", "particle-gap", "alpha-threshold", "transition", "transition-duration"].includes(property),
+                    applyMask: [
+                        "mask-options",
+                        "mask-width",
+                        "mask-height",
+                        "mask-align",
+                        "mask-mode",
+                        "mask-scatter",
+                        "mask-scatter-shape",
+                        "mask-anchor-x",
+                        "mask-anchor-y",
+                        "mask-anchor-z",
+                        "mask-rotation",
+                        "mask-x",
+                        "mask-y",
+                        "mask-z",
+                        "preserve-color",
+                        "particle-gap",
+                        "alpha-threshold",
+                        "transition",
+                        "transition-duration",
+                        "transition-spread"
+                    ].includes(property),
                     rebuildFreeParticles: ["spawn-volume", "max-speed"].includes(property)
                 });
                 break;
@@ -1205,6 +1324,7 @@ class ParticleWorldComponent extends Component.HTMLElement {
             case "mask-align":
             case "mask-mode":
             case "mask-scatter":
+            case "mask-scatter-shape":
             case "mask-anchor":
             case "mask-anchor-x":
             case "mask-anchor-y":
@@ -1221,6 +1341,7 @@ class ParticleWorldComponent extends Component.HTMLElement {
             case "alpha-threshold":
             case "transition":
             case "transition-duration":
+            case "transition-spread":
                 this._applyEngineAttributes({ applyMask: true });
                 break;
             default:

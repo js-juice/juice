@@ -18,6 +18,21 @@ const UNITS = ["px", "%"];
  * parsePositionFromLocation('75%'); // 0.75
  */
 export function parsePositionFromLocation(position) {
+    if (position.endsWith("vh") || position.endsWith("vw")) {
+        const vh = window.innerHeight;
+        const vw = window.innerWidth;
+        const relValue = parseFloat(position);
+        if (position.endsWith("vh")) {
+            return relValue / vh;
+        } else {
+            return relValue / vw;
+        }
+    } else if (position.endsWith("%")) {
+        return position.includes("%") ? parseFloat(position) / 100 : position;
+    } else if (position.endsWith("px")) {
+        return parseFloat(position);
+    }
+
     switch (position) {
         case "top":
             return 0;

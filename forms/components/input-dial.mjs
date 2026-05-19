@@ -1,5 +1,3 @@
-
-
 /**
  * AUTODOC:START
  * Component: <input-dial>
@@ -79,7 +77,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-        * Initializes component state, DOM references, and default behavior.
+     * Initializes component state, DOM references, and default behavior.
      * @returns {*} void.
      */
     constructor() {
@@ -169,7 +167,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-       * Returns component-scoped style definitions used to generate CSS.
+     * Returns component-scoped style definitions used to generate CSS.
      * @returns {*} Style definition map used for generated component CSS.
      */
     get _styles() {
@@ -279,7 +277,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Normalizes a degree value into the `[0, 360)` range.
+     * Normalizes a degree value into the `[0, 360)` range.
      * @param {*} value - Raw value being normalized or assigned.
      * @returns {*} Normalized degree value in the inclusive range `[0, 360)`.
      */
@@ -290,7 +288,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Reads dial arc-related attributes and updates start/sweep/gap configuration.
+     * Reads dial arc-related attributes and updates start/sweep/gap configuration.
      * @returns {*} void.
      */
     _syncDialArcConfigFromAttributes() {
@@ -306,7 +304,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Reads `rotation-value` and updates unbounded rotation behavior.
+     * Reads `rotation-value` and updates unbounded rotation behavior.
      * @returns {*} void.
      */
     _syncRotationValueFromAttribute() {
@@ -320,7 +318,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Returns how much value a full rotation represents.
+     * Returns how much value a full rotation represents.
      * @returns {*} Numeric value represented by one full rotation.
      */
     _getRotationValue() {
@@ -330,7 +328,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Returns whether the dial arc has a non-zero configured start or end gap.
+     * Returns whether the dial arc has a non-zero configured start or end gap.
      * @returns {*} Boolean indicator of whether a dial gap is configured.
      */
     _hasConfiguredGap() {
@@ -340,7 +338,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Returns whether the dial should accumulate value across rotations.
+     * Returns whether the dial should accumulate value across rotations.
      * @returns {*} Boolean indicator of unbounded rotation mode.
      */
     _isUnboundedMode() {
@@ -349,7 +347,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Builds normalized arc geometry from start/end offset and anchor configuration.
+     * Builds normalized arc geometry from start/end offset and anchor configuration.
      * @returns {*} Derived value.
      */
     _resolveDialArc() {
@@ -371,7 +369,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Creates the hidden native input used for form integration.
+     * Creates the hidden native input used for form integration.
      * @returns {*} Configured native input element.
      */
     _createNativeControl() {
@@ -390,7 +388,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Builds the default dial DOM (SVG rings, knob, labels, value display).
+     * Builds the default dial DOM (SVG rings, knob, labels, value display).
      * @returns {*} Rendered default dial container node.
      */
     _renderDefault() {
@@ -471,7 +469,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Collects dial tick/label configuration from attributes or child options.
+     * Collects dial tick/label configuration from attributes or child options.
      * @returns {*} Normalized option/tick/label descriptors.
      */
     _collectOptions() {
@@ -521,7 +519,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Returns effective dial bounds based on min/max or default rotation range.
+     * Returns effective dial bounds based on min/max or default rotation range.
      * @returns {*} Dial bounds descriptor containing min and max values.
      */
     _getDialBounds() {
@@ -533,7 +531,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Maps a numeric value into a normalized arc ratio between 0 and 1.
+     * Maps a numeric value into a normalized arc ratio between 0 and 1.
      * @param {*} value - Raw value being normalized or assigned.
      * @returns {*} Normalized ratio in the inclusive range `[0, 1]`.
      */
@@ -549,7 +547,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Creates and positions one dial label in the HTML overlay.
+     * Creates and positions one dial label in the HTML overlay.
      * @param {*} label - Label text or label descriptor.
      * @param {*} ratio - Normalized position on the active arc.
      * @param {*} start - Arc start angle in degrees.
@@ -573,7 +571,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Renders dial tick marks and label markers for the active arc.
+     * Renders dial tick marks and label markers for the active arc.
      * @returns {*} void.
      */
     _renderTicksAndLabels() {
@@ -633,7 +631,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Handles pointer down events and updates component state.
+     * Handles pointer down events and updates component state.
      * @param {*} ev - Pointer/keyboard event payload.
      * @returns {*} void.
      */
@@ -658,7 +656,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Handles pointer move events and updates component state.
+     * Handles pointer move events and updates component state.
      * @param {*} ev - Pointer/keyboard event payload.
      * @returns {*} void.
      */
@@ -671,7 +669,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Handles pointer up events and updates component state.
+     * Handles pointer up events and updates component state.
      * @param {*} ev - Pointer/keyboard event payload.
      * @returns {*} void.
      */
@@ -694,7 +692,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Handles wheel events and updates component state.
+     * Handles wheel events and updates component state.
      * @param {*} ev - Pointer/keyboard event payload.
      * @returns {*} void.
      */
@@ -729,7 +727,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Handles key down events and updates component state.
+     * Handles key down events and updates component state.
      * @param {*} ev - Pointer/keyboard event payload.
      * @returns {*} void.
      */
@@ -746,7 +744,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Applies a signed step increment and commits the resulting dial value.
+     * Applies a signed step increment and commits the resulting dial value.
      * @param {*} dir - Signed direction (`-1` or `1`) for stepping.
      * @returns {*} Derived internal value or completion status.
      */
@@ -758,7 +756,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Projects pointer coordinates to the dial arc and commits the nearest stepped value.
+     * Projects pointer coordinates to the dial arc and commits the nearest stepped value.
      * @param {*} ev - Pointer/keyboard event payload.
      * @returns {*} Derived internal value or completion status.
      */
@@ -838,7 +836,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Clamps a value to the configured minimum/maximum range when bounds exist.
+     * Clamps a value to the configured minimum/maximum range when bounds exist.
      * @param {*} v - Numeric value candidate.
      * @returns {*} Clamped numeric value.
      */
@@ -850,7 +848,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Rounds a value to the configured step and decimal precision.
+     * Rounds a value to the configured step and decimal precision.
      * @param {*} v - Numeric value candidate.
      * @returns {*} Step-rounded numeric value.
      */
@@ -887,7 +885,7 @@ class InputDialComponent extends InputComponent {
     }
 
     /**
-      * Recomputes ring/progress/tick geometry and knob placement from current value state.
+     * Recomputes ring/progress/tick geometry and knob placement from current value state.
      * @returns {*} void.
      */
     _syncVisualState() {

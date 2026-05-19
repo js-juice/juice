@@ -10,6 +10,11 @@
 export default class EmitterAdapter {
     constructor(particles, config = {}) {
         this.particles = particles;
+        this._accum = 0;
+        this.configure(config);
+    }
+
+    configure(config = {}) {
         this.rate = Number(config.particlesPerSecond) || 10;
         this.direction = Number(config.direction) || 0;
         this.speed = Number(config.speed) || 0.2; // world units per second (tunable)
@@ -20,8 +25,8 @@ export default class EmitterAdapter {
         // Mask configuration: either a maskIndex (into particles.masks) or an explicit mask object
         this.maskIndex = Number.isFinite(config.maskIndex) ? Math.floor(config.maskIndex) : null;
         this.mask = config.mask || null;
-        this._accum = 0;
         this.directionVec = config.directionVec || null; // {x,y,z}
+        return this;
     }
 
     _normalize(v) {

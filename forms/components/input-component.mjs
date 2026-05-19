@@ -117,6 +117,189 @@ function uniqueId(prefix) {
     return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+const BASE_OBSERVED_ATTRS = [
+    "label",
+    "name",
+    "value",
+    "checked",
+    "disabled",
+    "placeholder",
+    "required",
+    "minlength",
+    "maxlength",
+    "min",
+    "max",
+    "pattern",
+    "type",
+    "icon",
+    "inline",
+    "label-inline",
+    "stacked",
+    "validation",
+    "validate",
+    "format",
+    "template",
+    "view",
+    "append",
+    "datalist",
+    "validation-color",
+    "validation-color-valid",
+    "validation-color-incomplete",
+    "validation-color-invalid",
+    "validation-color-none"
+];
+
+const BASE_STYLES = {
+    ":host": {
+        display: "block",
+        fontFamily: "var(--form-font-family, system-ui,Segoe UI,Roboto,Arial,sans-serif)",
+        boxSizing: "border-box",
+        marginBottom: "1rem",
+        maxWidth: "100%"
+    },
+    ":host([inline])": {
+        display: "inline-block"
+    },
+    ":host([stacked])": {
+        display: "block"
+    },
+    ".input-root": {
+        position: "relative",
+        fontSize: "inherit"
+    },
+    ".input-root > label": {
+        marginBottom: "0.25rem"
+    },
+    label: {
+        position: "relative",
+        display: "block",
+        cursor: "pointer",
+        fontSize: "var(--form-label-font-size, 0.7rem)",
+        textTransform: "var(--form-label-text-transform, uppercase)",
+        fontWeight: "var(--form-label-weight, bold)",
+        color: "var(--form-label-color, #48484A)"
+    },
+    ".checkbox label": {
+        fontSize: "0.9rem"
+    },
+    ".label-text": {
+        display: "inline"
+    },
+    ".input-wrapper": {
+        border: "var(--input-border, 1px solid #c8c8c8)",
+        borderRadius: "var(--input-border-radius, 5px)",
+        background: "var(--input-bgcolor, #ffffff)",
+        position: "relative",
+        display: "flex",
+        flexDirection: "row",
+        overflow: "hidden",
+        boxSizing: "border-box"
+    },
+    ".default": {
+        display: "block",
+        width: "100%",
+        flex: "1 1 auto"
+    },
+    ".native-wrapper": {
+        display: "block",
+        width: "100%",
+        flex: "1 1 auto",
+        marginLeft: "0.5rem"
+    },
+    ".native-wrapper input": {
+        position: "relative",
+        width: "100%",
+        height: "var(--input-height, 30px)"
+    },
+    "input.native": {
+        display: "block",
+        width: "100%",
+        boxSizing: "border-box",
+        fontFamily: "var(--form-input-font-family, inherit)",
+        border: 0,
+        outline: 0,
+        padding: 0,
+        margin: 0,
+        fontSize: "inherit"
+    },
+    "input.native[type=text], input.native[type=number]": {
+        margin: "var(--input-margin, 0)"
+    },
+    ".input-wrapper .status-wrapper": {
+        position: "relative",
+        flex: "0 0 auto",
+        width: "var(--input-height)",
+        height: "var(--input-height)",
+        top: "0",
+        right: "0",
+        marginLeft: 0,
+        pointerEvents: "none",
+        overflow: "hidden",
+        color: "#FFFFFF"
+    },
+    "input-status": {
+        position: "absolute",
+        top: 0,
+        right: 0
+    },
+    ".status-wrapper .cover": {
+        width: "1px",
+        height: "1px",
+        left: "calc(100% - 5px)",
+        top: "5px",
+        position: "absolute",
+        transform: "rotate(45deg)",
+        backgroundColor: "var(--validation-color)",
+        transition: "right 0.3s ease, top 0.3s ease, background-color 0.3s ease"
+    },
+    ".status-wrapper .cover::before": {
+        content: "''",
+        display: "block",
+        position: "absolute",
+        width: "80px",
+        height: "80px",
+        bottom: 0,
+        left: "50%",
+        transform: "translate(-50%, 0)",
+        transformOrigin: "bottom center",
+        backgroundColor: "var(--validation-color)",
+        transition: "background-color 0.3s ease"
+    },
+    ":host(.focused) .status-wrapper .cover": {
+        left: "50%",
+        top: "50%"
+    },
+    ":host(.has-validation.touched) .input-root .input-wrapper": {
+        border: "1px solid var(--validation-color, #c8c8c8)"
+    },
+
+    ".visually-hidden": {
+        position: "absolute",
+        width: "1px",
+        height: "1px",
+        padding: "0",
+        margin: "-1px",
+        overflow: "hidden",
+        clip: "rect(0 0 0 0)",
+        whiteSpace: "nowrap",
+        border: "0"
+    },
+    ".validation-wrapper": {
+        position: "absolute",
+        fontSize: "0.7em",
+        lineHeight: "1.25",
+        minHeight: "1.1em",
+        marginTop: "0.25rem",
+        display: "none"
+    },
+    ".validation-message": {
+        color: "var(--validation-message-color, var(--juice-validation-color-invalid, #b1302e))"
+    },
+    ".validation-message:empty": {
+        display: "none"
+    }
+};
+
 class InputComponent extends HTMLElement {
     // TODO(refactor): Extract layout token parsing/rendering into a dedicated layout engine to reduce base-class surface area.
     /**
@@ -138,37 +321,7 @@ class InputComponent extends HTMLElement {
      * @returns {string[]} A list of attribute names
      */
     static get observedAttributes() {
-        return [
-            "label",
-            "name",
-            "value",
-            "checked",
-            "disabled",
-            "placeholder",
-            "required",
-            "minlength",
-            "maxlength",
-            "min",
-            "max",
-            "pattern",
-            "type",
-            "icon",
-            "inline",
-            "label-inline",
-            "stacked",
-            "validation",
-            "validate",
-            "format",
-            "template",
-            "view",
-            "append",
-            "datalist",
-            "validation-color",
-            "validation-color-valid",
-            "validation-color-incomplete",
-            "validation-color-invalid",
-            "validation-color-none"
-        ];
+        return BASE_OBSERVED_ATTRS;
     }
 
     /**
@@ -178,151 +331,7 @@ class InputComponent extends HTMLElement {
      * @returns {Object} A map of CSS selectors to their styles.
      */
     static get baseStyle() {
-        return {
-            ":host": {
-                display: "block",
-                fontFamily: "var(--form-font-family, system-ui,Segoe UI,Roboto,Arial,sans-serif)",
-                boxSizing: "border-box",
-                marginBottom: "1rem",
-                maxWidth: "100%"
-            },
-            ":host([inline])": {
-                display: "inline-block"
-            },
-            ":host([stacked])": {
-                display: "block"
-            },
-            ".input-root": {
-                position: "relative",
-                fontSize: "inherit"
-            },
-            ".input-root > label": {
-                marginBottom: "0.25rem"
-            },
-            label: {
-                position: "relative",
-                display: "block",
-                cursor: "pointer",
-                fontSize: "var(--form-label-font-size, 0.7rem)",
-                textTransform: "var(--form-label-text-transform, uppercase)",
-                fontWeight: "var(--form-label-weight, bold)",
-                color: "var(--form-label-color, #48484A)"
-            },
-            ".checkbox label": {
-                fontSize: "0.9rem"
-            },
-            ".label-text": {
-                display: "inline"
-            },
-            ".input-wrapper": {
-                border: "var(--input-border, 1px solid #c8c8c8)",
-                borderRadius: "var(--input-border-radius, 5px)",
-                background: "var(--input-bgcolor, #ffffff)",
-                position: "relative",
-                display: "flex",
-                flexDirection: "row",
-                overflow: "hidden",
-                boxSizing: "border-box"
-            },
-            ".native-wrapper": {
-                display: "block",
-                width: "100%",
-                flex: "1 1 auto",
-                marginLeft: "0.5rem"
-            },
-            ".native-wrapper input": {
-                position: "relative",
-                width: "100%",
-                height: "var(--input-height, 30px)"
-            },
-            "input.native": {
-                display: "block",
-                width: "100%",
-                boxSizing: "border-box",
-                fontFamily: "var(--form-input-font-family, inherit)",
-                border: 0,
-                outline: 0,
-                padding: 0,
-                margin: 0,
-                fontSize: "inherit"
-            },
-            "input.native[type=text], input.native[type=number]": {
-                margin: "var(--input-margin, 0)"
-            },
-            ".input-wrapper .status-wrapper": {
-                position: "relative",
-                flex: "0 0 auto",
-                width: "var(--input-height)",
-                height: "var(--input-height)",
-                top: "0",
-                right: "0",
-                marginLeft: 0,
-                pointerEvents: "none",
-                overflow: "hidden",
-                color: "#FFFFFF"
-            },
-            "input-status": {
-                position: "absolute",
-                top: 0,
-                right: 0
-            },
-            ".status-wrapper .cover": {
-                width: "1px",
-                height: "1px",
-                left: "calc(100% - 5px)",
-                top: "5px",
-                position: "absolute",
-                transform: "rotate(45deg)",
-                backgroundColor: "var(--validation-color)",
-                transition: "right 0.3s ease, top 0.3s ease, background-color 0.3s ease"
-            },
-            ".status-wrapper .cover::before": {
-                content: "''",
-                display: "block",
-                position: "absolute",
-                width: "80px",
-                height: "80px",
-                bottom: 0,
-                left: "50%",
-                transform: "translate(-50%, 0)",
-                transformOrigin: "bottom center",
-                backgroundColor: "var(--validation-color)",
-                transition: "background-color 0.3s ease"
-            },
-            ":host(.focused) .status-wrapper .cover": {
-                left: "50%",
-                top: "50%"
-            },
-            ":host(.has-validation.touched) .input-root .input-wrapper": {
-                border: "1px solid var(--validation-color, #c8c8c8)"
-            },
-
-            ".visually-hidden": {
-                position: "absolute",
-                width: "1px",
-                height: "1px",
-                padding: "0",
-                margin: "-1px",
-                overflow: "hidden",
-                clip: "rect(0 0 0 0)",
-                whiteSpace: "nowrap",
-                border: "0"
-            },
-            ".validation-wrapper": {
-                position: "absolute",
-                fontSize: "0.7em",
-                lineHeight: "1.25",
-                minHeight: "1.1em",
-                marginTop: "0.25rem",
-                display: "none"
-            },
-            ".validation-message": {
-                color: "var(--validation-message-color, var(--juice-validation-color-invalid, #b1302e))"
-            },
-            ".validation-message:empty": {
-                display: "none"
-            }
-        };
+        return BASE_STYLES;
     }
 
     /**
@@ -338,6 +347,7 @@ class InputComponent extends HTMLElement {
         this._internals = this.attachInternals ? this.attachInternals() : null;
         this._shadow = this.attachShadow({ mode: "open", delegatesFocus: true });
         this._isSyncing = false;
+        this.eventTypes = ["input", "change"];
         this._eventsBound = false;
         this._layout = "label:input";
         this._labelPlacement = "default";
@@ -1545,6 +1555,13 @@ class InputComponent extends HTMLElement {
      */
     get nativeInput() {
         return this._dom.native;
+    }
+
+    subscribe(fn) {
+        const events = this.eventTypes;
+        for (const event of events) {
+            this.addEventListener(event, fn.bind(this));
+        }
     }
 }
 

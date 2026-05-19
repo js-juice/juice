@@ -4,6 +4,31 @@
  * @module Util/String
  */
 
+export function extractBetween(string, start, end, matchPairs = false) {
+    if (matchPairs) {
+        const stack = [];
+        let result = "";
+        for (let i = 0; i < string.length; i++) {
+            if (string[i] === start) {
+                stack.push(start);
+            } else if (string[i] === end) {
+                stack.pop();
+                if (stack.length === 0) {
+                    return result;
+                }
+            }
+            result += string[i];
+        }
+        return null;
+    } else {
+        const startIndex = string.indexOf(start);
+        if (startIndex === -1) return null;
+        const endIndex = string.indexOf(end, startIndex + 1);
+        if (endIndex === -1) return null;
+        return string.substring(startIndex + 1, endIndex);
+    }
+}
+
 /**
  * Splits a string into words based on spaces, hyphens, and underscores.
  * @param {string} string - The string to split
@@ -312,5 +337,5 @@ export default {
             .replace(/[^a-zA-Z0-9 -]/g, "")
             .replace(/\s/g, "-")
             .toLowerCase();
-    },
+    }
 };

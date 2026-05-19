@@ -269,12 +269,28 @@ class Juice {
         globalScope.juice = this;
     }
 
+    get importSections() {
+        return {
+            forms: {
+                include: "include.mjs"
+            }
+        };
+    }
+
     async import(section, path, properties = []) {
+<<<<<<< Updated upstream
         const sectionPath = typeof section === "string" ? section.replace(/\/+$/, "") : "";
         const relativePath = typeof path === "string" ? path.replace(/^\/+/, "") : "";
         const joinedPath = relativePath ? `${sectionPath}/${relativePath}` : sectionPath;
         const relativeModulePath = joinedPath.startsWith(".") ? joinedPath : `./${joinedPath}`;
         const modulePath = relativeModulePath.endsWith(".mjs") ? relativeModulePath : `${relativeModulePath}.mjs`;
+=======
+        const importSection = this.importSections[section];
+        if (importSection && !path) {
+            path = importSection.include;
+        }
+        const modulePath = `./${section}${path ? `/${path}` : ""}${path.endsWith(".mjs") ? "" : ".mjs"}`;
+>>>>>>> Stashed changes
         if (this._cache[modulePath]) {
             return properties.length
                 ? properties.reduce((acc, property) => (acc[property] = this._cache[modulePath][property]), {})

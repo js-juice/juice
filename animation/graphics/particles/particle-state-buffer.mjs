@@ -11,7 +11,7 @@
 
 import PerspectiveProjection from "../projection/perspective-projection.mjs";
 import { mat4 } from "../matrix/mat4.mjs";
-import { randomIntBetween, randomBetween } from "../../../core/Util/Math.mjs";
+import { randomBetween } from "../../../core/Util/Math.mjs";
 import { lerp } from "../../../core/Util/Geometry.mjs";
 
 const BUFFER_LAYOUT = {
@@ -327,11 +327,42 @@ class ParticleStateBuffer {
         return Number.isFinite(number) ? number : fallback;
     }
 
+    _resolveRotationVector(value) {
+        if (value && typeof value === "object") {
+            return {
+                x: this._resolveRotation(value.x, 0),
+                y: this._resolveRotation(value.y, 0),
+                z: this._resolveRotation(value.z, 0)
+            };
+        }
+        if (typeof value === "string") {
+            const matches = value.match(/[-+]?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?(?:deg|rad)?/gi);
+            if (matches && matches.length >= 3) {
+                return {
+                    x: this._resolveRotation(matches[0], 0),
+                    y: this._resolveRotation(matches[1], 0),
+                    z: this._resolveRotation(matches[2], 0)
+                };
+            }
+        }
+        return { x: 0, y: 0, z: this._resolveRotation(value, 0) };
+    }
+
     _resolveMaskAnchor(anchor, bounds) {
         if (anchor && typeof anchor === "object") {
             const x = Number(anchor.x);
             const y = Number(anchor.y);
             const z = Number(anchor.z);
+            const space = String(anchor.space ?? anchor.anchorSpace ?? anchor.mode ?? "").toLowerCase();
+            if (["bounds", "mask", "normalized", "relative"].includes(space)) {
+                const anchorX = Number.isFinite(x) ? Math.max(-1, Math.min(1, x)) : 0;
+                const anchorY = Number.isFinite(y) ? Math.max(-1, Math.min(1, y)) : 0;
+                return {
+                    x: bounds.min.x + (bounds.max.x - bounds.min.x) * ((anchorX + 1) * 0.5),
+                    y: bounds.min.y + (bounds.max.y - bounds.min.y) * ((anchorY + 1) * 0.5),
+                    z: Number.isFinite(z) ? z : (bounds.min.z + bounds.max.z) / 2
+                };
+            }
             return {
                 x: Number.isFinite(x) ? x : (bounds.min.x + bounds.max.x) / 2,
                 y: Number.isFinite(y) ? y : (bounds.min.y + bounds.max.y) / 2,
@@ -368,9 +399,19 @@ class ParticleStateBuffer {
 
         const anchor = this._resolveMaskAnchor(options.anchor ?? options.maskAnchor, bounds);
         const scatter = this._clampUnit(options.scatter ?? options.maskScatter, 0);
-        const rotation = this._resolveRotation(options.rotation ?? options.rotate ?? options.maskRotation, 0);
-        const cos = Math.cos(rotation);
-        const sin = Math.sin(rotation);
+        const scatterShape = ["sphere", "ball", "radial"].includes(
+            String(options.scatterShape ?? options.maskScatterShape ?? "box").toLowerCase()
+        )
+            ? "sphere"
+            : "box";
+        const rotation = this._resolveRotationVector(options.rotation ?? options.rotate ?? options.maskRotation);
+        const cosX = Math.cos(rotation.x);
+        const sinX = Math.sin(rotation.x);
+        const cosY = Math.cos(rotation.y);
+        const sinY = Math.sin(rotation.y);
+        const cosZ = Math.cos(rotation.z);
+        const sinZ = Math.sin(rotation.z);
+        const hasRotation = Math.abs(rotation.x) > 0 || Math.abs(rotation.y) > 0 || Math.abs(rotation.z) > 0;
         const scatterRadius =
             scatter *
             Math.max(
@@ -380,7 +421,18 @@ class ParticleStateBuffer {
                 0
             );
 
-        if (!scatterRadius && !rotation) return;
+        this.activeMaskTransform = {
+            start,
+            count,
+            bounds,
+            anchor,
+            scatter,
+            scatterShape,
+            scatterRadius,
+            rotation
+        };
+
+        if (!scatterRadius && !hasRotation) return;
 
         for (let i = start; i < start + count; i++) {
             const i3 = i * 3;
@@ -389,11 +441,24 @@ class ParticleStateBuffer {
             let y = this.positions[i3 + 1] - anchor.y;
             let z = this.positions[i3 + 2] - anchor.z;
 
-            if (rotation) {
-                const rx = x * cos - y * sin;
-                const ry = x * sin + y * cos;
+            if (hasRotation) {
+                let rx = x;
+                let ry = y * cosX - z * sinX;
+                let rz = y * sinX + z * cosX;
+
+                const yx = rx * cosY + rz * sinY;
+                const yz = -rx * sinY + rz * cosY;
+                rx = yx;
+                rz = yz;
+
+                const zx = rx * cosZ - ry * sinZ;
+                const zy = rx * sinZ + ry * cosZ;
+                rx = zx;
+                ry = zy;
+
                 x = rx;
                 y = ry;
+                z = rz;
             }
 
             let nx = anchor.x + x;
@@ -401,9 +466,20 @@ class ParticleStateBuffer {
             let nz = anchor.z + z;
 
             if (scatterRadius) {
-                nx += randomBetween(-scatterRadius, scatterRadius);
-                ny += randomBetween(-scatterRadius, scatterRadius);
-                nz += randomBetween(-scatterRadius, scatterRadius);
+                const rng = seededRandom((i + 1) * 2654435761);
+                if (scatterShape === "sphere") {
+                    const theta = rng() * Math.PI * 2;
+                    const u = rng() * 2 - 1;
+                    const r = Math.cbrt(rng()) * scatterRadius;
+                    const radial = Math.sqrt(Math.max(0, 1 - u * u));
+                    nx += Math.cos(theta) * radial * r;
+                    ny += Math.sin(theta) * radial * r;
+                    nz += u * r;
+                } else {
+                    nx += (rng() * 2 - 1) * scatterRadius;
+                    ny += (rng() * 2 - 1) * scatterRadius;
+                    nz += (rng() * 2 - 1) * scatterRadius;
+                }
             }
 
             this.positions[i3] = nx;
@@ -416,6 +492,12 @@ class ParticleStateBuffer {
             this.states[i4 + 2] = nx;
             this.states[i4 + 3] = ny;
         }
+    }
+
+    _maskPointIndex(offset, count, maskCount) {
+        if (maskCount <= 0 || count <= 0) return 0;
+        if (count >= maskCount) return offset % maskCount;
+        return Math.min(maskCount - 1, Math.floor((offset * maskCount) / count));
     }
 
     /**
@@ -837,9 +919,13 @@ class ParticleStateBuffer {
                         },
                         particleGap,
                         scatter: this._clampUnit(options.scatter, 0),
+                        scatterShape: options.scatterShape ?? options.maskScatterShape ?? "box",
                         anchor: options.anchor || options.maskAnchor || null,
                         rotation: options.rotation ?? options.rotate ?? options.maskRotation ?? 0,
-                        maskMode: options.maskMode || options.mode || "replace"
+                        maskMode: options.maskMode || options.mode || "replace",
+                        transition: options.transition,
+                        transitionDuration: options.transitionDuration ?? options.duration,
+                        transitionSpread: options.transitionSpread ?? options.randomizeTransition
                     }
                 });
                 resolve(this.masks.length - 1);
@@ -869,23 +955,8 @@ class ParticleStateBuffer {
     getDestinations(maskIndex) {
         const maskEntry = this._normalizeMaskEntry(this._resolveMask(maskIndex));
         const maskPoints = maskEntry.points;
-        const transformOptions = { ...(maskEntry.options || {}), ...(options || {}) };
-        const maskMode = String(transformOptions.maskMode ?? transformOptions.mode ?? "replace").toLowerCase();
-        const explicitStart = Number(transformOptions.startIndex);
-        const appendMask = maskPoints && !Number.isFinite(explicitStart) && (maskMode === "append" || options.append === true);
-        const startIndex = Number.isFinite(explicitStart)
-            ? Math.max(0, Math.min(this.maxCount, Math.floor(explicitStart)))
-            : appendMask
-              ? Math.max(0, Math.min(this.maxCount, this.count || 0))
-              : 0;
-        const capacity = Math.max(0, this.maxCount - startIndex);
         const maskCount = maskPoints ? Math.floor(maskPoints.length / 2) : 0;
-        const requestedCount = Number(transformOptions.count);
-        const availableCount = maskPoints ? maskCount : this.maxCount;
-        const count = Math.min(
-            capacity,
-            Number.isFinite(requestedCount) ? Math.max(0, Math.floor(requestedCount)) : availableCount
-        );
+        const count = Math.min(this.maxCount, maskPoints ? maskCount : this.maxCount);
         const near = Number(this.projection?.near) || 0.01;
         const far = Number(this.projection?.far) || 20;
         const optionDepth = Number(maskEntry.options?.position?.z);
@@ -893,12 +964,10 @@ class ParticleStateBuffer {
         const minDepth = -far + 0.0001;
         const maxDepth = -near - 0.0001;
         const maskDepth = Math.min(maxDepth, Math.max(minDepth, defaultDepth));
-        const exclude = [];
         for (let i = 0; i < this.maxCount; i++) {
             const i3 = i * 3;
             if (maskPoints && i < count) {
-                const pi = randomIntBetween(0, maskCount, exclude);
-                exclude.push(pi);
+                const pi = this._maskPointIndex(i, count, maskCount);
                 const mx = maskPoints[pi * 2];
                 const my = maskPoints[pi * 2 + 1];
                 const mapped = this._maskPointToWorld(mx, my, maskDepth);
@@ -940,8 +1009,27 @@ class ParticleStateBuffer {
             ...(options.stateDefaults || {})
         };
         const spawnVolume = options.spawnVolume || this.spawnVolume || null;
+        const transformOptions = { ...(maskEntry.options || {}), ...(options || {}) };
+        const maskMode = String(transformOptions.maskMode ?? transformOptions.mode ?? "replace").toLowerCase();
+        const explicitStart = Number(transformOptions.startIndex);
+        const appendMask =
+            maskPoints && !Number.isFinite(explicitStart) && (maskMode === "append" || transformOptions.append === true);
+        const startIndex = Number.isFinite(explicitStart)
+            ? Math.max(0, Math.min(this.maxCount, Math.floor(explicitStart)))
+            : appendMask
+              ? Math.max(0, Math.min(this.maxCount, this.count || 0))
+              : 0;
+        const capacity = Math.max(0, this.maxCount - startIndex);
         const maskCount = maskPoints ? Math.floor(maskPoints.length / 2) : 0;
-        const count = Math.min(this.maxCount, maskPoints ? maskCount : this.maxCount);
+        const requestedCount = Number(transformOptions.count);
+        const requestedApplyGap = Number(options.particleGap ?? options.gap);
+        const applyGap = Number.isFinite(requestedApplyGap) ? Math.max(0, Math.floor(requestedApplyGap)) : 0;
+        const gapStride = Math.max(1, Math.pow(applyGap + 1, 2));
+        const availableCount = maskPoints ? maskCount : this.maxCount;
+        const count = Math.min(
+            capacity,
+            Number.isFinite(requestedCount) ? Math.max(0, Math.floor(requestedCount)) : availableCount
+        );
         const near = Number(this.projection?.near) || 0.01;
         const far = Number(this.projection?.far) || 20;
         const requestedMaskDepth = Number(options.maskDepth ?? maskEntry.options?.position?.z);
@@ -952,16 +1040,13 @@ class ParticleStateBuffer {
         const preserveMaskColor =
             options.preserveMaskColor === true ||
             (options.preserveMaskColor !== false && maskEntry.options?.preserveColor === true);
-        const exclude = [];
         for (let offset = 0; offset < count; offset++) {
             const i = startIndex + offset;
             const i3 = i * 3;
             const i4 = i * 4;
             let maskColor = null;
             if (maskPoints) {
-                const pi = randomIntBetween(0, maskCount, exclude);
-
-                exclude.push(pi);
+                const pi = this._maskPointIndex(offset, count, maskCount);
                 const mx = maskPoints[pi * 2];
                 const my = maskPoints[pi * 2 + 1];
                 const mapped = this._maskPointToWorld(mx, my, maskDepth);
@@ -1048,6 +1133,9 @@ class ParticleStateBuffer {
                 this.colors[i4 + 1] = maskColor[1];
                 this.colors[i4 + 2] = maskColor[2];
                 this.colors[i4 + 3] = maskColor[3];
+            }
+            if (maskPoints && applyGap > 0 && offset % gapStride !== 0) {
+                this.colors[i4 + 3] = 0;
             }
             this.sizes[i] = Number(stateDefaults.size) || 1;
         }
@@ -1278,9 +1366,13 @@ class ParticleStateBuffer {
         this.setMask(maskIndex);
         const buildOptions = { ...options };
         if (buildOptions.reuseMaskRange === true && this.activeMaskRange?.maskIndex === Math.floor(maskIndex)) {
+            const hasDynamicCount =
+                Number.isFinite(Number(options.count)) || Number.isFinite(Number(options.particleGap ?? options.gap));
             buildOptions.startIndex = this.activeMaskRange.start;
-            buildOptions.count = this.activeMaskRange.count;
-            buildOptions.preserveParticleCount = true;
+            if (!hasDynamicCount) {
+                buildOptions.count = this.activeMaskRange.count;
+                buildOptions.preserveParticleCount = true;
+            }
             buildOptions.maskMode = "replace";
         }
         this.build(maskIndex, buildOptions);

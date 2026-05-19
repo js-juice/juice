@@ -17,6 +17,10 @@ import AnimationValue from "../../properties/Value.mjs";
 import TransformFeedback from "./Lib/TransformFeedback.mjs";
 import EmitterAdapter from "./emitter-adapter.mjs";
 
+import uiCard from "../../../ui/components/card.mjs";
+import { FormBuilder, FormRow, InputBuilder, FormFieldSet } from "../../../forms/build/builder.mjs";
+
+const REPEL_RADIUS_SCALE = 0.1;
 /**
  * Creates a deterministic RNG when a seed is provided.
  *
@@ -75,17 +79,24 @@ function normalizeColorInput(input) {
  * GPU particle system wrapper.
  */
 class WebGLParticleSystem {
-    particleSize = "3.0";
+    particleSize = 3.0;
+    minParticleSize = 1.5;
 
     /**
      * @param {HTMLCanvasElement} canvas Render target.
      * @param {number} maxParticles Max active particle count.
      * @param {number} [emitRate=10] Reserved for emitter-driven usage.
      */
-    constructor(canvas, maxParticles, emitRate = 10) {
+    constructor(canvas, maxParticles, emitRate = 10, options = {}) {
         this.canvas = canvas;
         this.maxParticles = maxParticles;
         this.emitRate = emitRate;
+        this.particleSize = Math.max(0.1, Number(options.particleSize) || this.particleSize);
+        this.minParticleSize = Math.max(0.1, Number(options.minParticleSize) || this.minParticleSize);
+        this.particleColor = options.particleColor || "#ffffff";
+        this.particleShape = ["square", "circle", "soft-circle"].includes(options.particleShape)
+            ? options.particleShape
+            : "square";
 
         // Interactive controls used by playground/component bindings.
         this.repel = new AnimationValue(0, { type: "int" });
@@ -93,6 +104,8 @@ class WebGLParticleSystem {
         this.orbit = new AnimationValue(0, { type: "int" });
         this.orbitPoint = new Vector4D(0.0, 0.0, 0.0, 0.0);
         this.orbitFieldRadius = null;
+        this.orbitEscape = 0;
+        this.orbitEscapePush = 1;
         this.repelFieldRadius = null;
 
         // uMotion = [driftScale, orbitSpeedScale, repelStrengthScale, orbitPullScale]
@@ -102,6 +115,8 @@ class WebGLParticleSystem {
         this.orbitSpeedScale = 1.0;
         this.repelStrengthScale = 1.0;
         this.orbitPullScale = 1.0;
+        this.gravity = [0, 0, 0];
+        this.friction = 0;
         this.cameraPan = { x: 0, y: 0 };
         this._previousCameraPan = { x: 0, y: 0 };
         this.cameraAngle = { yaw: 0, pitch: 0 };
@@ -113,6 +128,8 @@ class WebGLParticleSystem {
         this._snapshots = new Map();
         this._maskTransition = null;
         this.emitter = null;
+        this.debugCrosshairMode = "none";
+        this._debugCrosshairLayer = null;
 
         this.particles = new ParticleStateBuffer(maxParticles, canvas.width, canvas.height);
         // Keep baseline motion subtle so drift reads as wobble, not ballistic travel.
@@ -120,6 +137,872 @@ class WebGLParticleSystem {
         this.particles.setProjection("perspective", { fov: 45, near: 0.01, far: 20 });
 
         this.setupWebGL();
+    }
+
+    openDebugPanel() {
+        juice.import("forms");
+        if (this._debugPanel?.isConnected) {
+            this._debugPanel.style.display = "";
+            return this._debugPanel;
+        }
+
+        const card = document.createElement("ui-card");
+        card.setAttribute("draggable", "true");
+        card.setAttribute("width", 360);
+        card.setAttribute("title", "Particle World Control");
+
+        const form = new FormBuilder("particle-controls", "Particle System Controls");
+        const storageKey = `juice:webgl-particle-system:debug-panel:${this.canvas?.id || "default"}`;
+        let restoringDebugSettings = false;
+        const readDebugSettings = () => {
+            try {
+                return JSON.parse(localStorage.getItem(storageKey) || "{}") || {};
+            } catch (_error) {
+                return {};
+            }
+        };
+        const writeDebugSettings = (settings) => {
+            try {
+                localStorage.setItem(storageKey, JSON.stringify(settings));
+            } catch (_error) {
+                // Debug persistence should never break the particle system.
+            }
+        };
+        const debugSettings = readDebugSettings();
+        const readControlValue = (control) => {
+            const tag = control.tagName?.toLowerCase();
+            if (tag === "input-checkbox") return !!control.checked;
+            return control.value;
+        };
+        const applyControlValue = (control, value) => {
+            const tag = control.tagName?.toLowerCase();
+            if (tag === "input-checkbox") {
+                control.checked = value === true || value === "true" || value === "on";
+            } else {
+                control.value = value ?? "";
+            }
+        };
+        const namedControls = (formEl) =>
+            Array.from(formEl.querySelectorAll("[name]")).filter(
+                (control) => !["input-button", "input-file"].includes(control.tagName?.toLowerCase())
+            );
+        const collectDebugSettings = (formEl) => {
+            const next = {};
+            namedControls(formEl).forEach((control) => {
+                next[control.getAttribute("name")] = readControlValue(control);
+            });
+            return next;
+        };
+        const saveDebugSettings = (formEl) => {
+            if (restoringDebugSettings || !formEl) return;
+            writeDebugSettings(collectDebugSettings(formEl));
+        };
+        const restoreDebugSettings = (formEl) => {
+            if (!formEl || !Object.keys(debugSettings).length) return;
+            restoringDebugSettings = true;
+            namedControls(formEl).forEach((control) => {
+                const name = control.getAttribute("name");
+                if (Object.prototype.hasOwnProperty.call(debugSettings, name)) {
+                    applyControlValue(control, debugSettings[name]);
+                }
+            });
+            restoringDebugSettings = false;
+            namedControls(formEl).forEach((control) => {
+                const name = control.getAttribute("name");
+                if (Object.prototype.hasOwnProperty.call(debugSettings, name)) {
+                    control.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+                }
+            });
+        };
+
+        const valueOf = (event) => {
+            const input = event.currentTarget;
+            return input?.checked !== undefined && input.tagName?.toLowerCase() === "input-checkbox"
+                ? input.checked
+                : input?.value;
+        };
+        const onValue = (fn) => (event) => fn(valueOf(event), event.currentTarget, event);
+        const number = (value, fallback = 0) => {
+            const next = Number(value);
+            return Number.isFinite(next) ? next : fallback;
+        };
+        const range = (name, label, min, max, value, step, precision, fn) =>
+            InputBuilder.range(name, min, max, value, {
+                label,
+                step,
+                precision,
+                on: { input: onValue(fn), change: onValue(fn) }
+            });
+        const inputNumber = (name, label, value, step, fn) =>
+            InputBuilder.number(name, value, {
+                label,
+                step,
+                decimals: step < 1 ? 3 : 0,
+                on: { input: onValue(fn), change: onValue(fn) }
+            });
+        const directionVector = (value) => {
+            if (value && typeof value === "object") {
+                const x = number(value.x, 1);
+                const y = number(value.y, 0);
+                const z = number(value.z, 0);
+                return `${x},${y},${z}`;
+            }
+            const angle = number(value, 0);
+            return `${Math.cos(angle)},${Math.sin(angle)},0`;
+        };
+        const parseDirectionVector = (value) => {
+            if (value && typeof value === "object") {
+                return { x: number(value.x, 1), y: number(value.y, 0), z: number(value.z, 0) };
+            }
+            const parts = String(value || "")
+                .split(",")
+                .map((part) => Number(part.trim()));
+            if (parts.length >= 3 && parts.every(Number.isFinite)) {
+                return { x: parts[0], y: parts[1], z: parts[2] };
+            }
+            return { x: 1, y: 0, z: 0 };
+        };
+        const parseRotationVector = (value) => {
+            if (value && typeof value === "object") {
+                return { x: number(value.x, 0), y: number(value.y, 0), z: number(value.z, 0) };
+            }
+            const parts = String(value || "")
+                .split(",")
+                .map((part) => Number(part.trim()));
+            if (parts.length >= 3 && parts.every(Number.isFinite)) {
+                return { x: parts[0], y: parts[1], z: parts[2] };
+            }
+            const scalar = Number(value);
+            return { x: 0, y: 0, z: Number.isFinite(scalar) ? scalar : 0 };
+        };
+        const select = (name, label, value, options, fn) =>
+            InputBuilder.select(name, value, {
+                label,
+                options,
+                on: { input: onValue(fn), change: onValue(fn) }
+            });
+        const checkbox = (name, label, value, fn) =>
+            InputBuilder.checkbox(name, value, {
+                label,
+                on: { input: onValue(fn), change: onValue(fn) }
+            });
+        const action = (name, label, fn) =>
+            InputBuilder.button(name, label, {
+                label,
+                on: { "input-button-click": fn }
+            });
+        const fieldset = (label, controls) => new FormFieldSet(label, controls).build();
+        const toggleSection = (label, toggle, controls, sync) => {
+            const section = document.createElement("input-fieldset");
+            section.setAttribute("label", label);
+            const body = document.createElement("div");
+            body.className = "particle-debug-section-body";
+            controls.forEach((control) => body.appendChild(control));
+            const refresh = () => {
+                body.hidden = !toggle.checked;
+                if (sync) sync();
+            };
+            toggle.addEventListener("input", refresh);
+            toggle.addEventListener("change", refresh);
+            section.append(toggle, body);
+            requestAnimationFrame(refresh);
+            return section;
+        };
+        let builtForm = null;
+        const codeValue = (value) => JSON.stringify(value, null, 4);
+        const buildDebugCode = () => {
+            const values = collectDebugSettings(builtForm);
+            const setting = (name, fallback = "") => values[name] ?? fallback;
+            const numericSetting = (name, fallback = 0) => number(setting(name, fallback), fallback);
+            const booleanSetting = (name, fallback = false) => {
+                const value = setting(name, fallback);
+                return value === true || value === "true" || value === "on";
+            };
+            const vectorSetting = (name, parser, fallback) => parser(setting(name, fallback));
+            const maskSettings = {
+                maskMode: setting("mask-mode", "replace"),
+                scatter: numericSetting("mask-scatter", 0),
+                scatterShape: setting("mask-scatter-shape", "box"),
+                particleGap: Math.max(0, Math.floor(numericSetting("mask-load-gap", 0))),
+                anchor: {
+                    x: numericSetting("mask-anchor-x", 0),
+                    y: numericSetting("mask-anchor-y", 0),
+                    z: numericSetting("mask-anchor-z", -2),
+                    space: "bounds"
+                },
+                rotation: vectorSetting("mask-rotation", parseRotationVector, "0,0,0"),
+                transition: booleanSetting("mask-transition", true),
+                transitionDuration: numericSetting("mask-transition-duration", 1400),
+                transitionSpread: numericSetting("mask-transition-spread", 0)
+            };
+            const lines = [
+                `const world = document.querySelector("particle-world");`,
+                `const viewer = world.getViewer();`,
+                ``,
+                `viewer.setParticleRenderSize(${numericSetting("particle-size", this.particleSize)}, ${numericSetting("min-particle-size", this.minParticleSize)});`,
+                `viewer.setParticleShape(${JSON.stringify(setting("particle-shape", this.particleShape))});`,
+                `viewer.setParticleColor(${JSON.stringify(setting("particle-color", this.particleColor || "#ffffff"))});`,
+                `viewer.setMotion(${codeValue({
+                    drift: numericSetting("drift", this.driftScale),
+                    driftSpeed: numericSetting("drift-speed", this.driftSpeedScale),
+                    driftType: setting("drift-type", this.driftType),
+                    orbitSpeed: numericSetting("orbit-speed", this.orbitSpeedScale),
+                    orbitPull: numericSetting("orbit-pull", this.orbitPullScale),
+                    orbitEscape: numericSetting("orbit-escape", this.orbitEscape),
+                    orbitEscapePush: numericSetting("orbit-escape-push", this.orbitEscapePush),
+                    repelStrength: numericSetting("repel-strength", this.repelStrengthScale)
+                })});`,
+                `viewer.setGravity(${codeValue([
+                    numericSetting("gravity-x", this.gravity[0]),
+                    numericSetting("gravity-y", this.gravity[1]),
+                    numericSetting("gravity-z", this.gravity[2])
+                ])});`,
+                `viewer.setFriction(${numericSetting("friction", this.friction)});`,
+                `viewer.setCameraPan(${numericSetting("camera-pan-x", this.cameraPan.x)}, ${numericSetting("camera-pan-y", this.cameraPan.y)});`,
+                `viewer.setCameraAngle(${numericSetting("camera-yaw", this.cameraAngle.yaw)}, ${numericSetting("camera-pitch", this.cameraAngle.pitch)});`,
+                `viewer.setCameraMotion(${codeValue({
+                    panScale: numericSetting("camera-pan-scale", this.cameraPanScale),
+                    angleScale: numericSetting("camera-angle-scale", this.cameraAngleScale),
+                    depthEffect: numericSetting("camera-depth-effect", this.cameraDepthEffect),
+                    maxStep: numericSetting("camera-max-step", this.cameraMaxStep)
+                })});`,
+                `viewer.setDebugCrosshair(${JSON.stringify(setting("crosshair-mode", this.debugCrosshairMode))});`,
+                ``,
+                `viewer.setOrbit(${booleanSetting("orbit-active", false)}, ${codeValue({
+                    x: numericSetting("orbit-x", this.orbitPoint[0]),
+                    y: numericSetting("orbit-y", this.orbitPoint[1]),
+                    z: numericSetting("orbit-z", this.orbitPoint[2]),
+                    radius: numericSetting("orbit-radius", this.orbitPoint[3] || 0.4),
+                    fieldRadius: numericSetting("orbit-reach", this.orbitFieldRadius || 0) || null,
+                    escape: numericSetting("orbit-escape", this.orbitEscape),
+                    escapePush: numericSetting("orbit-escape-push", this.orbitEscapePush)
+                })});`,
+                `viewer.setRepel(${booleanSetting("repel-active", false)}, ${codeValue({
+                    x: numericSetting("repel-x", this.repelPoint[0]),
+                    y: numericSetting("repel-y", this.repelPoint[1]),
+                    z: numericSetting("repel-z", this.repelPoint[2]),
+                    radius: numericSetting("repel-radius", this.repelPoint[3] || 0.4),
+                    fieldRadius: numericSetting("repel-reach", this.repelFieldRadius || 0) || null
+                })});`
+            ];
+            const maskSource = String(setting("mask-source", "") || "").trim();
+            if (maskSource) {
+                lines.push(
+                    ``,
+                    `await world.loadMask(${JSON.stringify(maskSource)}, ${codeValue({
+                        apply: booleanSetting("mask-load-apply", true),
+                        preserveColor: booleanSetting("mask-load-preserve-color", false),
+                        alphaThreshold: numericSetting("mask-load-alpha", 0.01),
+                        x: numericSetting("mask-load-x", 0),
+                        y: numericSetting("mask-load-y", 0),
+                        ...maskSettings
+                    })});`
+                );
+            } else if (setting("mask-index", "") !== "") {
+                lines.push(``, `viewer.applyMask(${Math.floor(numericSetting("mask-index", 0))}, ${codeValue(maskSettings)});`);
+            }
+
+            if (booleanSetting("emitter-active", false)) {
+                const emitterDirection = vectorSetting("emitter-direction", parseDirectionVector, "1,0,0");
+                lines.push(
+                    ``,
+                    `viewer.addEmitter(${codeValue({
+                        particlesPerSecond: numericSetting("emitter-rate", 10),
+                        direction: Math.atan2(emitterDirection.y, emitterDirection.x),
+                        directionVec: emitterDirection,
+                        speed: numericSetting("emitter-speed", 0.2),
+                        spread: numericSetting("emitter-spread", Math.PI / 8),
+                        size: numericSetting("emitter-size", 1),
+                        lifespan: numericSetting("emitter-life", 2),
+                        x: numericSetting("emitter-x", 0),
+                        y: numericSetting("emitter-y", 0),
+                        z: numericSetting("emitter-z", -2)
+                    })});`
+                );
+            } else {
+                lines.push(``, `viewer.removeEmitter();`);
+            }
+            return lines.join("\n");
+        };
+        const showDebugCode = () => {
+            const code = buildDebugCode();
+            const panel = this._debugCodePanel?.isConnected ? this._debugCodePanel : document.createElement("div");
+            if (!panel.isConnected) {
+                panel.style.cssText = [
+                    "position:fixed",
+                    "right:16px",
+                    "bottom:16px",
+                    "z-index:99999",
+                    "width:min(720px, calc(100vw - 32px))",
+                    "max-height:calc(100vh - 32px)",
+                    "display:flex",
+                    "flex-direction:column",
+                    "gap:8px",
+                    "padding:10px",
+                    "box-sizing:border-box",
+                    "background:rgba(12, 18, 24, 0.96)",
+                    "color:#f5f7fa",
+                    "border:1px solid rgba(255,255,255,0.18)",
+                    "border-radius:6px",
+                    "box-shadow:0 12px 30px rgba(0,0,0,0.35)"
+                ].join(";");
+                const header = document.createElement("div");
+                header.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:8px;font:600 13px system-ui,sans-serif;";
+                const title = document.createElement("span");
+                title.textContent = "Particle world code";
+                const close = document.createElement("button");
+                close.type = "button";
+                close.textContent = "Close";
+                close.style.cssText = "font:12px system-ui,sans-serif;padding:4px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.28);background:transparent;color:inherit;cursor:pointer;";
+                close.addEventListener("click", () => panel.remove());
+                header.append(title, close);
+                const pre = document.createElement("pre");
+                pre.style.cssText = "margin:0;overflow:auto;white-space:pre;max-height:calc(100vh - 104px);font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;";
+                panel.append(header, pre);
+                document.body.appendChild(panel);
+                this._debugCodePanel = panel;
+            }
+            panel.querySelector("pre").textContent = code;
+        };
+
+        const applyRender = () => {
+            this.setParticleRenderSize(this.particleSize, this.minParticleSize);
+            this.setParticleShape(this.particleShape);
+        };
+        const applyMotion = () => {
+            this.setMotion({
+                drift: this.driftScale,
+                driftSpeed: this.driftSpeedScale,
+                driftType: this.driftType,
+                orbitSpeed: this.orbitSpeedScale,
+                orbitPull: this.orbitPullScale,
+                orbitEscape: this.orbitEscape,
+                orbitEscapePush: this.orbitEscapePush,
+                repelStrength: this.repelStrengthScale
+            });
+        };
+        const applyGravity = () => this.setGravity(this.gravity);
+        const applyCamera = () => {
+            this.setCameraPan(this.cameraPan.x, this.cameraPan.y);
+            this.setCameraAngle(this.cameraAngle.yaw, this.cameraAngle.pitch);
+            this.setCameraMotion({
+                panScale: this.cameraPanScale,
+                angleScale: this.cameraAngleScale,
+                depthEffect: this.cameraDepthEffect,
+                maxStep: this.cameraMaxStep
+            });
+        };
+        const applyCrosshair = (value) => this.setDebugCrosshair(value);
+
+        form.add(
+            fieldset("Particles", [
+                range("particle-size", "Point size", 0.1, 20, this.particleSize, 0.1, 2, (value) => {
+                    this.particleSize = number(value, this.particleSize);
+                    applyRender();
+                }),
+                range("min-particle-size", "Min point size", 0.1, 20, this.minParticleSize, 0.1, 2, (value) => {
+                    this.minParticleSize = number(value, this.minParticleSize);
+                    applyRender();
+                }),
+                select(
+                    "particle-shape",
+                    "Shape",
+                    this.particleShape,
+                    [
+                        { value: "square", label: "Square" },
+                        { value: "circle", label: "Circle" },
+                        { value: "soft-circle", label: "Soft circle" }
+                    ],
+                    (value) => {
+                        this.particleShape = value;
+                        applyRender();
+                    }
+                ),
+                InputBuilder.color("particle-color", this.particleColor || "#ffffff", {
+                    label: "Particle color",
+                    on: { input: onValue((value) => this.setParticleColor(value)), change: onValue((value) => this.setParticleColor(value)) }
+                }),
+                range("max-speed", "Initial max speed", 0, 1, this.particles?.config?.maxSpeed ?? 0.03, 0.005, 3, (value) => {
+                    if (this.particles?.config) this.particles.config.maxSpeed = Math.max(0, number(value, 0));
+                })
+            ]),
+            fieldset("Motion", [
+                range("drift", "Drift", 0, 1, this.driftScale, 0.01, 2, (value) => {
+                    this.driftScale = number(value, this.driftScale);
+                    applyMotion();
+                }),
+                range("drift-speed", "Drift speed", 0, 5, this.driftSpeedScale, 0.05, 2, (value) => {
+                    this.driftSpeedScale = number(value, this.driftSpeedScale);
+                    applyMotion();
+                }),
+                select(
+                    "drift-type",
+                    "Drift type",
+                    this.driftType,
+                    [
+                        { value: "relative", label: "Relative" },
+                        { value: "absolute", label: "Absolute" }
+                    ],
+                    (value) => {
+                        this.driftType = value;
+                        applyMotion();
+                    }
+                ),
+                range("friction", "Friction", 0, 1, this.friction, 0.01, 2, (value) => this.setFriction(value))
+            ]),
+            fieldset("Gravity", [
+                range("gravity-x", "Gravity X", -2, 2, this.gravity[0], 0.01, 2, (value) => {
+                    this.gravity[0] = number(value, 0);
+                    applyGravity();
+                }),
+                range("gravity-y", "Gravity Y", -2, 2, this.gravity[1], 0.01, 2, (value) => {
+                    this.gravity[1] = number(value, 0);
+                    applyGravity();
+                }),
+                range("gravity-z", "Gravity Z", -2, 2, this.gravity[2], 0.01, 2, (value) => {
+                    this.gravity[2] = number(value, 0);
+                    applyGravity();
+                })
+            ]),
+            fieldset("Debug", [
+                select(
+                    "crosshair-mode",
+                    "Crosshair",
+                    this.debugCrosshairMode,
+                    [
+                        { value: "none", label: "None" },
+                        { value: "orbit", label: "Orbit" },
+                        { value: "repel", label: "Repel" },
+                        { value: "mask", label: "Mask" },
+                        { value: "emitter", label: "Emitter" },
+                        { value: "both", label: "Orbit + repel" },
+                        { value: "all", label: "All" }
+                    ],
+                    applyCrosshair
+                ),
+                action("view-code", "View code", (event) => {
+                    event.preventDefault();
+                    showDebugCode();
+                })
+            ])
+        );
+
+        let orbitToggle;
+        let repelToggle;
+        const syncOrbit = () => {
+            if (!orbitToggle) return;
+            if (orbitToggle.checked && repelToggle?.checked) {
+                repelToggle.checked = false;
+                repelToggle.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+            }
+            this.setOrbit(orbitToggle.checked, {
+                x: this.orbitPoint[0],
+                y: this.orbitPoint[1],
+                z: this.orbitPoint[2],
+                radius: this.orbitPoint[3],
+                fieldRadius: this.orbitFieldRadius,
+                escape: this.orbitEscape,
+                escapePush: this.orbitEscapePush
+            });
+        };
+        const syncRepel = () => {
+            if (!repelToggle) return;
+            if (repelToggle.checked && orbitToggle?.checked) {
+                orbitToggle.checked = false;
+                orbitToggle.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+            }
+            this.setRepel(repelToggle.checked, {
+                x: this.repelPoint[0],
+                y: this.repelPoint[1],
+                z: this.repelPoint[2],
+                radius: this.repelPoint[3],
+                fieldRadius: this.repelFieldRadius
+            });
+        };
+
+        orbitToggle = checkbox("orbit-active", "Enable orbit", this.orbit.value === 1, syncOrbit);
+        repelToggle = checkbox("repel-active", "Enable repel", this.repel.value === 1, syncRepel);
+
+        form.add(
+            toggleSection("Orbit", orbitToggle, [
+                range("orbit-speed", "Speed", 0, 8, this.orbitSpeedScale, 0.05, 2, (value) => {
+                    this.orbitSpeedScale = number(value, this.orbitSpeedScale);
+                    applyMotion();
+                }),
+                range("orbit-pull", "Pull", 0, 8, this.orbitPullScale, 0.05, 2, (value) => {
+                    this.orbitPullScale = number(value, this.orbitPullScale);
+                    applyMotion();
+                }),
+                range("orbit-escape", "Escape", 0, 1, this.orbitEscape, 0.01, 2, (value) => {
+                    this.orbitEscape = Math.max(0, Math.min(1, number(value, 0)));
+                    syncOrbit();
+                    applyMotion();
+                }),
+                range("orbit-escape-push", "Escape push", 0, 5, this.orbitEscapePush, 0.05, 2, (value) => {
+                    this.orbitEscapePush = Math.max(0, number(value, 1));
+                    syncOrbit();
+                    applyMotion();
+                }),
+                range("orbit-x", "X", -10, 10, this.orbitPoint[0], 0.01, 2, (value) => {
+                    this.orbitPoint[0] = number(value, 0);
+                    syncOrbit();
+                }),
+                range("orbit-y", "Y", -10, 10, this.orbitPoint[1], 0.01, 2, (value) => {
+                    this.orbitPoint[1] = number(value, 0);
+                    syncOrbit();
+                }),
+                range("orbit-z", "Z", -20, 0, this.orbitPoint[2], 0.01, 2, (value) => {
+                    this.orbitPoint[2] = number(value, -2);
+                    syncOrbit();
+                }),
+                range("orbit-radius", "Radius", 0.01, 10, this.orbitPoint[3] || 0.4, 0.01, 2, (value) => {
+                    this.orbitPoint[3] = Math.max(0.0001, number(value, 0.4));
+                    syncOrbit();
+                }),
+                range("orbit-reach", "Reach", 0, 20, this.orbitFieldRadius || 0, 0.05, 2, (value) => {
+                    const next = number(value, 0);
+                    this.orbitFieldRadius = next > 0 ? next : null;
+                    syncOrbit();
+                })
+            ], syncOrbit),
+            toggleSection("Repel", repelToggle, [
+                range("repel-strength", "Strength", 0, 8, this.repelStrengthScale, 0.05, 2, (value) => {
+                    this.repelStrengthScale = number(value, this.repelStrengthScale);
+                    applyMotion();
+                }),
+                range("repel-x", "X", -10, 10, this.repelPoint[0], 0.01, 2, (value) => {
+                    this.repelPoint[0] = number(value, 0);
+                    syncRepel();
+                }),
+                range("repel-y", "Y", -10, 10, this.repelPoint[1], 0.01, 2, (value) => {
+                    this.repelPoint[1] = number(value, 0);
+                    syncRepel();
+                }),
+                range("repel-z", "Z", -20, 0, this.repelPoint[2], 0.01, 2, (value) => {
+                    this.repelPoint[2] = number(value, -2);
+                    syncRepel();
+                }),
+                range("repel-radius", "Radius", 0.01, 10, this.repelPoint[3] || 0.4, 0.01, 2, (value) => {
+                    this.repelPoint[3] = Math.max(0.0001, number(value, 0.4));
+                    syncRepel();
+                }),
+                range("repel-reach", "Reach", 0, 20, this.repelFieldRadius || 0, 0.05, 2, (value) => {
+                    const next = number(value, 0);
+                    this.repelFieldRadius = next > 0 ? next : null;
+                    syncRepel();
+                })
+            ], syncRepel)
+        );
+
+        const maskOptions = () =>
+            (this.particles?.masks || []).map((mask, index) => ({
+                value: String(index),
+                label: `Mask ${index} (${Math.floor((mask?.points?.length || 0) / 2)} pts)`
+            }));
+        const refreshMaskSelect = () => {
+            if (!maskSelectInput) return;
+            maskSelectInput.setAttribute("options", JSON.stringify(maskOptions()));
+            if (Number.isFinite(this.maskIndex)) maskSelectInput.value = String(this.maskIndex);
+        };
+        const selectedMaskIndex = () => {
+            const selected = Number(maskSelectInput?.value);
+            if (Number.isFinite(selected)) return Math.floor(selected);
+            return Number.isFinite(this.maskIndex) ? Math.floor(this.maskIndex) : -1;
+        };
+        const applyCurrentMask = () => {
+            const maskIndex = selectedMaskIndex();
+            if (!Number.isFinite(maskIndex) || maskIndex < 0) return;
+            this.applyMask(maskIndex, {
+                reuseMaskRange: true,
+                maskMode: maskModeInput.value,
+                scatter: number(maskScatterInput.value, 0),
+                scatterShape: maskScatterShapeInput.value,
+                particleGap: Math.max(0, Math.floor(number(maskGapInput.value, 0))),
+                anchor: {
+                    x: number(maskAnchorXInput.value, 0),
+                    y: number(maskAnchorYInput.value, 0),
+                    z: number(maskAnchorZInput.value, -2),
+                    space: "bounds"
+                },
+                rotation: parseRotationVector(maskRotationInput.value),
+                transition: false,
+                transitionDuration: number(maskTransitionDurationInput.value, 1400),
+                transitionSpread: number(maskTransitionSpreadInput.value, 0)
+            });
+            refreshMaskSelect();
+        };
+        let maskSelectInput;
+        maskSelectInput = select("mask-index", "Loaded mask", Number.isFinite(this.maskIndex) ? String(this.maskIndex) : "", maskOptions(), applyCurrentMask);
+        const maskSourceInput = InputBuilder.text("mask-source", "", { label: "Source" });
+        const maskModeInput = select(
+            "mask-mode",
+            "Mode",
+            "replace",
+            [
+                { value: "replace", label: "Replace" },
+                { value: "append", label: "Append" }
+            ],
+            applyCurrentMask
+        );
+        const maskScatterInput = range("mask-scatter", "Scatter", 0, 1, 0, 0.01, 2, applyCurrentMask);
+        const maskScatterShapeInput = select(
+            "mask-scatter-shape",
+            "Scatter shape",
+            "box",
+            [
+                { value: "box", label: "Box" },
+                { value: "sphere", label: "Sphere" }
+            ],
+            applyCurrentMask
+        );
+        const maskAnchorXInput = range("mask-anchor-x", "Anchor X", -1, 1, 0, 0.01, 2, applyCurrentMask);
+        const maskAnchorYInput = range("mask-anchor-y", "Anchor Y", -1, 1, 0, 0.01, 2, applyCurrentMask);
+        const maskAnchorZInput = range("mask-anchor-z", "Anchor Z", -20, 0, -2, 0.01, 2, applyCurrentMask);
+        const maskRotationInput = InputBuilder.rotation("mask-rotation", "0,0,0", {
+            label: "Rotation",
+            attributes: {
+                "default-x": 0,
+                "default-y": 0,
+                "default-z": 0
+            },
+            on: { input: onValue(applyCurrentMask), change: onValue(applyCurrentMask) }
+        });
+        const maskTransitionInput = checkbox("mask-transition", "Transition", true, applyCurrentMask);
+        const maskTransitionDurationInput = range("mask-transition-duration", "Transition ms", 0, 30000, 1400, 50, 0, applyCurrentMask);
+        const maskTransitionSpreadInput = range("mask-transition-spread", "Transition spread", 0, 1, 0, 0.01, 2, applyCurrentMask);
+        const maskLoadPreserveColorInput = checkbox("mask-load-preserve-color", "Load colors", false, () => {});
+        const maskLoadApplyInput = checkbox("mask-load-apply", "Apply loaded mask", true, () => {});
+        const maskLoadAlphaInput = range("mask-load-alpha", "Alpha threshold", 0, 1, 0.01, 0.01, 2, () => {});
+        const maskGapInput = inputNumber("mask-load-gap", "Particle gap", 0, 1, applyCurrentMask);
+        const maskLoadXInput = inputNumber("mask-load-x", "Image X", 0, 1, () => {});
+        const maskLoadYInput = inputNumber("mask-load-y", "Image Y", 0, 1, () => {});
+        let maskFileObjectUrl = null;
+        const loadMaskFromSource = async (source) => {
+            const result = await this.loadMask(source, {
+                apply: maskLoadApplyInput.checked,
+                preserveColor: maskLoadPreserveColorInput.checked,
+                alphaThreshold: number(maskLoadAlphaInput.value, 0.01),
+                particleGap: Math.max(0, Math.floor(number(maskGapInput.value, 0))),
+                x: number(maskLoadXInput.value, 0),
+                y: number(maskLoadYInput.value, 0),
+                maskMode: maskModeInput.value,
+                scatter: number(maskScatterInput.value, 0),
+                scatterShape: maskScatterShapeInput.value,
+                anchor: {
+                    x: number(maskAnchorXInput.value, 0),
+                    y: number(maskAnchorYInput.value, 0),
+                    z: number(maskAnchorZInput.value, -2),
+                    space: "bounds"
+                },
+                rotation: parseRotationVector(maskRotationInput.value),
+                transition: maskTransitionInput.checked,
+                transitionDuration: number(maskTransitionDurationInput.value, 1400),
+                transitionSpread: number(maskTransitionSpreadInput.value, 0)
+            });
+            if (Number.isFinite(result?.maskIndex) && result.maskIndex >= 0) {
+                maskSelectInput.value = String(result.maskIndex);
+            }
+            refreshMaskSelect();
+            return result;
+        };
+        const maskFileInput = InputBuilder.file("mask-file", "", {
+            label: "Local image",
+            attributes: { accept: "image/*" },
+            on: {
+                change: async (event) => {
+                    const file = event.currentTarget?.files?.[0] || event.currentTarget?.nativeInput?.files?.[0];
+                    if (!file) return;
+                    if (maskFileObjectUrl) URL.revokeObjectURL(maskFileObjectUrl);
+                    maskFileObjectUrl = URL.createObjectURL(file);
+                    await loadMaskFromSource(maskFileObjectUrl);
+                    if (builtForm) saveDebugSettings(builtForm);
+                }
+            }
+        });
+
+        form.add(
+            fieldset("Camera", [
+                range("camera-pan-x", "Pan X", -10, 10, this.cameraPan.x, 0.01, 2, (value) => {
+                    this.cameraPan.x = number(value, 0);
+                    applyCamera();
+                }),
+                range("camera-pan-y", "Pan Y", -10, 10, this.cameraPan.y, 0.01, 2, (value) => {
+                    this.cameraPan.y = number(value, 0);
+                    applyCamera();
+                }),
+                range("camera-yaw", "Yaw", -10, 10, this.cameraAngle.yaw, 0.01, 2, (value) => {
+                    this.cameraAngle.yaw = number(value, 0);
+                    applyCamera();
+                }),
+                range("camera-pitch", "Pitch", -10, 10, this.cameraAngle.pitch, 0.01, 2, (value) => {
+                    this.cameraAngle.pitch = number(value, 0);
+                    applyCamera();
+                }),
+                range("camera-pan-scale", "Pan scale", 0, 5, this.cameraPanScale, 0.05, 2, (value) => {
+                    this.cameraPanScale = number(value, 1);
+                    applyCamera();
+                }),
+                range("camera-angle-scale", "Angle scale", 0, 5, this.cameraAngleScale, 0.05, 2, (value) => {
+                    this.cameraAngleScale = number(value, 1);
+                    applyCamera();
+                }),
+                range("camera-depth-effect", "Depth effect", 0, 4, this.cameraDepthEffect, 0.05, 2, (value) => {
+                    this.cameraDepthEffect = number(value, 1);
+                    applyCamera();
+                }),
+                range("camera-max-step", "Max step", 0.001, 1, this.cameraMaxStep, 0.001, 3, (value) => {
+                    this.cameraMaxStep = Math.max(0.0001, number(value, 0.04));
+                    applyCamera();
+                })
+            ]),
+            fieldset("Mask", [
+                maskSelectInput,
+                maskSourceInput,
+                maskFileInput,
+                action("load-mask", "Load mask", async (event) => {
+                    event.preventDefault();
+                    const source = String(maskSourceInput.value || "").trim();
+                    if (!source) return;
+                    await loadMaskFromSource(source);
+                }),
+                maskLoadApplyInput,
+                maskLoadPreserveColorInput,
+                maskLoadAlphaInput,
+                maskGapInput,
+                maskLoadXInput,
+                maskLoadYInput,
+                maskModeInput,
+                maskScatterInput,
+                maskScatterShapeInput,
+                maskAnchorXInput,
+                maskAnchorYInput,
+                maskAnchorZInput,
+                maskRotationInput,
+                maskTransitionInput,
+                maskTransitionDurationInput,
+                maskTransitionSpreadInput,
+                action("clear-mask", "Clear mask", (event) => {
+                    event.preventDefault();
+                    this.clearMask();
+                })
+            ])
+        );
+
+        const emitterToggle = checkbox("emitter-active", "Enable emitter", !!this.emitter, () => applyEmitter());
+        const emitterRateInput = inputNumber("emitter-rate", "Rate", this.emitter?.rate || 10, 1, () => applyEmitter());
+        const emitterDirectionInput = InputBuilder.direction(
+            "emitter-direction",
+            directionVector(this.emitter?.directionVec || this.emitter?.direction || 0),
+            {
+                label: "Direction",
+                attributes: {
+                    "default-x": 1,
+                    "default-y": 0,
+                    "default-z": 0
+                },
+                on: { input: onValue(() => applyEmitter()), change: onValue(() => applyEmitter()) }
+            }
+        );
+        const emitterSpeedInput = range("emitter-speed", "Speed", 0, 5, this.emitter?.speed || 0.2, 0.01, 2, () => applyEmitter());
+        const emitterSpreadInput = range("emitter-spread", "Spread", 0, 6.283, this.emitter?.spread || Math.PI / 8, 0.01, 3, () => applyEmitter());
+        const emitterSizeInput = range("emitter-size", "Size", 0.1, 10, this.emitter?.size || 1, 0.1, 2, () => applyEmitter());
+        const emitterLifeInput = range("emitter-life", "Life", 0.1, 20, this.emitter?.life || 2, 0.1, 2, () => applyEmitter());
+        const emitterXInput = range("emitter-x", "X", -10, 10, this.emitter?.position?.x || 0, 0.01, 2, () => applyEmitter());
+        const emitterYInput = range("emitter-y", "Y", -10, 10, this.emitter?.position?.y || 0, 0.01, 2, () => applyEmitter());
+        const emitterDefaultZ = Number.isFinite(Number(this.emitter?.position?.z))
+            ? Number(this.emitter.position.z)
+            : Number(this.orbitPoint[2]) || -2;
+        const emitterZInput = range("emitter-z", "Z", -20, 0, emitterDefaultZ, 0.01, 2, () => applyEmitter());
+
+        function emitterConfig() {
+            const directionVec = parseDirectionVector(emitterDirectionInput.value);
+            return {
+                particlesPerSecond: number(emitterRateInput.value, 10),
+                direction: Math.atan2(directionVec.y, directionVec.x),
+                directionVec,
+                speed: number(emitterSpeedInput.value, 0.2),
+                spread: number(emitterSpreadInput.value, Math.PI / 8),
+                size: number(emitterSizeInput.value, 1),
+                lifespan: number(emitterLifeInput.value, 2),
+                x: number(emitterXInput.value, 0),
+                y: number(emitterYInput.value, 0),
+                z: number(emitterZInput.value, -2)
+            };
+        }
+
+        const applyEmitter = () => {
+            if (!emitterToggle.checked) {
+                this.removeEmitter();
+                return;
+            }
+            this.addEmitter(emitterConfig());
+        };
+
+        form.add(
+            toggleSection(
+                "Emitter",
+                emitterToggle,
+                [
+                    emitterRateInput,
+                    emitterDirectionInput,
+                    emitterSpeedInput,
+                    emitterSpreadInput,
+                    emitterSizeInput,
+                    emitterLifeInput,
+                    emitterXInput,
+                    emitterYInput,
+                    emitterZInput,
+                    action("emitter-burst", "Burst 25", (event) => {
+                        event.preventDefault();
+                        if (!this.emitter) this.addEmitter(emitterConfig());
+                        this.emitter?.burst?.(25);
+                        this._syncStageFromParticles();
+                    })
+                ],
+                applyEmitter
+            ),
+            fieldset("Actions", [
+                range("scatter-min-push", "Scatter min", 0, 5, 0.1, 0.05, 2, () => {}),
+                range("scatter-max-push", "Scatter max", 0, 5, 0.6, 0.05, 2, () => {}),
+                range("scatter-jitter", "Scatter jitter", 0, 1, 0.05, 0.01, 2, () => {}),
+                action("scatter-now", "Scatter", (event) => {
+                    event.preventDefault();
+                    const formEl = event.currentTarget.closest("form");
+                    this.scatter({
+                        minPush: number(formEl.elements["scatter-min-push"]?.value, 0.1),
+                        maxPush: number(formEl.elements["scatter-max-push"]?.value, 0.6),
+                        jitter: number(formEl.elements["scatter-jitter"]?.value, 0.05)
+                    });
+                }),
+                range("jitter-amount", "Jitter amount", 0, 1, 0.05, 0.01, 2, () => {}),
+                action("jitter-now", "Jitter", (event) => {
+                    event.preventDefault();
+                    const formEl = event.currentTarget.closest("form");
+                    this.jitter(number(formEl.elements["jitter-amount"]?.value, 0.05));
+                }),
+                InputBuilder.text("snapshot-name", "debug", { label: "Snapshot name" }),
+                action("capture-snapshot", "Capture", (event) => {
+                    event.preventDefault();
+                    const formEl = event.currentTarget.closest("form");
+                    this.captureSnapshot(formEl.elements["snapshot-name"]?.value || "debug");
+                }),
+                action("restore-snapshot", "Restore", (event) => {
+                    event.preventDefault();
+                    const formEl = event.currentTarget.closest("form");
+                    this.restoreSnapshot(formEl.elements["snapshot-name"]?.value || "debug");
+                })
+            ])
+        );
+
+        builtForm = form.build();
+        builtForm.addEventListener("input", () => saveDebugSettings(builtForm));
+        builtForm.addEventListener("change", () => saveDebugSettings(builtForm));
+        card.appendChild(builtForm);
+        document.body.appendChild(card);
+        restoreDebugSettings(builtForm);
+        saveDebugSettings(builtForm);
+        this._debugPanel = card;
+        return card;
     }
 
     /**
@@ -151,8 +1034,8 @@ class WebGLParticleSystem {
 
         const elapsed = Math.max(0, nowMs - transition.startTimeMs);
         const durationMs = Math.max(1, Number(transition.durationMs) || 1);
-        const progress = Math.min(1, elapsed / durationMs);
-        const eased = this._easeMaskTransition(progress);
+        const spread = Math.max(0, Math.min(1, Number(transition.spread) || 0));
+        const totalDurationMs = durationMs * (1 + spread);
         const positionCount = Math.min(
             this.particles.positions.length,
             transition.fromPositions.length,
@@ -167,13 +1050,25 @@ class WebGLParticleSystem {
         for (let i = 0; i < positionCount; i += 1) {
             const from = transition.fromPositions[i];
             const to = transition.toPositions[i];
+            const particleIndex = Math.floor(i / 3);
+            const delay = spread ? createSeededRandom((particleIndex + 1) * 2654435761)() * durationMs * spread : 0;
+            const progress = Math.max(0, Math.min(1, (elapsed - delay) / durationMs));
+            const eased = this._easeMaskTransition(progress);
             this.particles.positions[i] = from + (to - from) * eased;
         }
 
         for (let i = 0; i < colorCount; i += 1) {
             const from = transition.fromColors[i];
             const to = transition.toColors[i];
-            this.particles.colors[i] = from + (to - from) * eased;
+            if (i % 4 === 3) {
+                this.particles.colors[i] = to;
+            } else {
+                const particleIndex = Math.floor(i / 4);
+                const delay = spread ? createSeededRandom((particleIndex + 1) * 2654435761)() * durationMs * spread : 0;
+                const progress = Math.max(0, Math.min(1, (elapsed - delay) / durationMs));
+                const eased = this._easeMaskTransition(progress);
+                this.particles.colors[i] = from + (to - from) * eased;
+            }
         }
 
         if (Number.isFinite(transition.count) && transition.count >= 0) {
@@ -182,7 +1077,13 @@ class WebGLParticleSystem {
 
         this._syncStageFromParticles();
 
-        if (progress >= 1) {
+        if (elapsed >= totalDurationMs) {
+            this.particles.positions.set(transition.toPositions);
+            this.particles.colors.set(transition.toColors);
+            if (Number.isFinite(transition.count) && transition.count >= 0) {
+                this.particles.count = Math.max(0, Math.min(this.maxParticles, Math.floor(transition.count)));
+            }
+            this._syncStageFromParticles();
             this._maskTransition = null;
             return false;
         }
@@ -252,6 +1153,7 @@ class WebGLParticleSystem {
         this.uRepel = this.feedback.addUniform("uRepel", VariableTypes.BOOL, false);
         this.uOrbit = this.feedback.addUniform("uOrbit", VariableTypes.BOOL, false);
         this.uOrbitFieldRadius = this.feedback.addUniform("uOrbitFieldRadius", VariableTypes.FLOAT, 1.2);
+        this.uOrbitEscape = this.feedback.addUniform("uOrbitEscape", VariableTypes.FLOAT_VEC2, [0.0, 1.0]);
         this.uRepelFieldRadius = this.feedback.addUniform("uRepelFieldRadius", VariableTypes.FLOAT, 1.2);
         // Gravity (world units/sec^2) and friction (damping per second)
         this.uGravity = this.feedback.addUniform("uGravity", VariableTypes.FLOAT_VEC3, [0.0, 0.0, 0.0]);
@@ -283,6 +1185,7 @@ class WebGLParticleSystem {
 
             float time = uScene[2];
             float delta = uScene[3];
+            bool gravityActive = length(uGravity) > 0.000001;
 
             float near = -1.0 / uProjectionMatrix[2][2];
             float far = uProjectionMatrix[2][3] / (1.0 + uProjectionMatrix[2][2]);
@@ -323,10 +1226,27 @@ class WebGLParticleSystem {
 
                 vec3 repelDirection = away / targetDistance;
                 if (targetDistance <= fieldRadius) {
-                    float influence = 1.0 - smoothstep(targetRadius, fieldRadius, targetDistance);
-                    float repelSpeed = (0.002 + influence * 0.038) * uMotion.z * influence;
-                    position += repelDirection * repelSpeed;
-                    position.z += (target.z - position.z) * (0.012 + 0.03 * influence);
+                    float insideRadius = 1.0 - step(targetRadius, targetDistance);
+                    float falloff = 1.0 - smoothstep(targetRadius, fieldRadius, targetDistance);
+                    float influence = max(insideRadius, falloff);
+                    float radiusCorrection = max(0.0, targetRadius - targetDistance);
+                    float softDisplacement = falloff * targetRadius * 0.45;
+                    vec3 displacedHome = home + repelDirection * (radiusCorrection + softDisplacement) * uMotion.z;
+                    float repelLerp = clamp(delta * (8.0 + 18.0 * influence), 0.0, 0.35);
+                    position += (displacedHome - position) * repelLerp;
+                    position.z += (target.z - position.z) * (0.004 + 0.012 * influence);
+                    float settle = clamp(delta * (5.0 + 5.0 * (1.0 - influence)), 0.0, 1.0);
+                    velocity *= (1.0 - settle);
+                } else {
+                    vec3 toHome = home - position;
+                    float homeDistance = length(toHome);
+                    if (homeDistance > 0.0001) {
+                        float homeLerp = 1.0 - exp(-max(0.0, delta) * 5.0);
+                        homeLerp = clamp(homeLerp, 0.0, 0.18);
+                        position += toHome * homeLerp;
+                    }
+                    float settle = clamp(delta * 8.0, 0.0, 1.0);
+                    velocity *= (1.0 - settle);
                 }
 
             } else if (uOrbit) {
@@ -353,8 +1273,11 @@ class WebGLParticleSystem {
 
                     vec3 dir = rel / d;
                     float pullScale = max(0.0, uMotion.w);
+                    float escapeSeed = random(float(index) * 19.19 + 23.0);
+                    float escapeActive = step(escapeSeed, clamp(uOrbitEscape.x, 0.0, 1.0));
                     float fieldInfluence = 1.0 - smoothstep(targetRadius, fieldRadius, d);
                     float convergeRate = (0.04 + (0.18 * pullScale)) * max(0.02, fieldInfluence);
+                    convergeRate *= mix(1.0, 0.12, escapeActive);
                     float radialLerp = 1.0 - exp(-convergeRate * max(0.0, delta));
                     radialLerp = clamp(radialLerp, 0.0, 0.05 * max(0.1, fieldInfluence));
                     float desiredRadius = mix(d, targetRadius, radialLerp);
@@ -382,9 +1305,14 @@ class WebGLParticleSystem {
                     }
                     tangent = tangent / max(0.0001, tangentLen);
 
-                    float orbitSpeed = (0.0015 + 0.0035 * random(float(index) + 13.0)) * uMotion.y;
+                    float orbitSpeed = (0.09 + 0.21 * random(float(index) + 13.0)) * uMotion.y;
                     float ringLock = 1.0 - clamp(abs(desiredRadius - targetRadius) / (targetRadius * 8.0), 0.0, 1.0);
-                    position += tangent * orbitSpeed * (0.2 + 0.8 * ringLock) * max(0.0, fieldInfluence);
+                    float flare = pow(max(0.0, sin(time * (0.45 + escapeSeed * 1.35) + escapeSeed * 6.2831853)), 10.0);
+                    float escapePush = escapeActive * max(0.0, uOrbitEscape.y) * (0.012 + flare * 0.085) * delta;
+                    position += tangent * orbitSpeed * delta * (0.2 + 0.8 * ringLock) * max(0.0, fieldInfluence);
+                    position += dir * escapePush * max(0.0, fieldInfluence);
+                    float orbitSettle = clamp(delta * (8.0 + 12.0 * max(0.0, fieldInfluence)), 0.0, 1.0);
+                    velocity *= (1.0 - orbitSettle * (1.0 - escapeActive * 0.65));
 
                 } else {
                     // Outside orbit reach (based on original/home position), ease back home.
@@ -398,7 +1326,7 @@ class WebGLParticleSystem {
                     float settle = clamp(delta * 8.0, 0.0, 1.0);
                     velocity *= (1.0 - settle);
                 }
-            } else {
+            } else if (!gravityActive) {
                 // Orbit is off: settle particles back toward home.
                 vec3 toHome = home - position;
                 float homeDistance = length(toHome);
@@ -425,9 +1353,10 @@ class WebGLParticleSystem {
                     position.y = absoluteDriftY;
                     driftAbsolute = true;
                 } else {
-                    // Relative: accumulate from current position.
-                    position.x += wobbleX * driftAmount;
-                    position.y += wobbleY * driftAmount;
+                    // Relative: apply drift as velocity so low speeds move slowly instead of frame-jittering.
+                    float driftStep = driftAmount * driftSpeed * max(0.0, delta);
+                    position.x += wobbleX * driftStep;
+                    position.y += wobbleY * driftStep;
                 }
             }
 
@@ -445,32 +1374,7 @@ class WebGLParticleSystem {
                 absoluteDriftY += cameraShift.y;
             }
 
-            if (position.x < boundLeft) {
-                position.x = boundRight;
-                home.x = position.x;
-            }
-            if (position.x > boundRight) {
-                position.x = boundLeft;
-                home.x = position.x;
-            }
-            if (position.y < boundBottom) {
-                position.y = boundTop;
-                home.y = position.y;
-            }
-            if (position.y > boundTop) {
-                position.y = boundBottom;
-                home.y = position.y;
-            }
-            if (position.z < -far) {
-                position.z = -near;
-                home.z = position.z;
-            }
-            if (position.z > -near) {
-                position.z = -far;
-                home.z = position.z;
-            }
-
-            // Integrate velocity with gravity and friction
+            // Integrate velocity with gravity and friction.
             velocity += uGravity * delta;
             float damp = clamp(uFriction * delta, 0.0, 1.0);
             velocity = velocity * (1.0 - damp);
@@ -483,6 +1387,33 @@ class WebGLParticleSystem {
             if (driftAbsolute) {
                 position.x = absoluteDriftX;
                 position.y = absoluteDriftY;
+            }
+
+            bool wrapActive = !gravityActive && !uRepel && !uOrbit;
+
+            if (wrapActive && position.x < boundLeft) {
+                position.x = boundRight;
+                home.x = position.x;
+            }
+            if (wrapActive && position.x > boundRight) {
+                position.x = boundLeft;
+                home.x = position.x;
+            }
+            if (wrapActive && position.y < boundBottom) {
+                position.y = boundTop;
+                home.y = position.y;
+            }
+            if (wrapActive && position.y > boundTop) {
+                position.y = boundBottom;
+                home.y = position.y;
+            }
+            if (wrapActive && position.z < -far) {
+                position.z = -near;
+                home.z = position.z;
+            }
+            if (wrapActive && position.z > -near) {
+                position.z = -far;
+                home.z = position.z;
             }
 
             aPositionOut = position;
@@ -511,13 +1442,19 @@ class WebGLParticleSystem {
         this.aColor = vertex.addInput("aColor", VariableTypes.FLOAT_VEC4, this.particles.colors);
         this.feedbackColor.addChild(this.aColor);
 
-        vertex.addOutput("particleStateColor", VariableTypes.FLOAT_VEC3);
+        vertex.addOutput("particleStateColor", VariableTypes.FLOAT_VEC4);
         this.uProjectionMatrix = vertex.addUniform(
             "uProjectionMatrix",
             VariableTypes.FLOAT_MAT4,
             this.particles.projection.matrix
         );
         this.uRenderCamera = vertex.addUniform("uRenderCamera", VariableTypes.FLOAT_VEC4, [0.0, 0.0, 1.0, 1.0]);
+        this.uRenderWrap = vertex.addUniform("uRenderWrap", VariableTypes.FLOAT, 1.0);
+        this.uPointSize = vertex.addUniform("uPointSize", VariableTypes.FLOAT_VEC2, [
+            this.particleSize,
+            this.minParticleSize
+        ]);
+        this.uParticleShape = fragment.addUniform("uParticleShape", VariableTypes.INT, this._particleShapeMode());
 
         vertex.main(`
             vec3 renderPosition = aPosition;
@@ -535,19 +1472,34 @@ class WebGLParticleSystem {
                 max(0.0, uRenderCamera.z) *
                 0.08 *
                 parallax;
-            vec2 renderSize = max(vec2(0.0001), vec2(halfWidth * 2.0, halfHeight * 2.0));
-            renderPosition.x = mod(renderPosition.x + halfWidth, renderSize.x) - halfWidth;
-            renderPosition.y = mod(renderPosition.y + halfHeight, renderSize.y) - halfHeight;
+            if (uRenderWrap > 0.5) {
+                vec2 renderSize = max(vec2(0.0001), vec2(halfWidth * 2.0, halfHeight * 2.0));
+                renderPosition.x = mod(renderPosition.x + halfWidth, renderSize.x) - halfWidth;
+                renderPosition.y = mod(renderPosition.y + halfHeight, renderSize.y) - halfHeight;
+            }
             gl_Position = uProjectionMatrix * vec4(renderPosition, 1.0);
             float depth = max(0.2, abs(renderPosition.z));
-            gl_PointSize = max(1.5, ${this.particleSize} / depth);
-            particleStateColor = aColor.rgb;
+            gl_PointSize = max(uPointSize.y, uPointSize.x / depth);
+            particleStateColor = aColor;
         `);
 
         fragment.setPrecision("high", "float");
         fragment.addOutput("fragColor", VariableTypes.FLOAT_VEC4);
-        fragment.addInput("particleStateColor", VariableTypes.FLOAT_VEC3);
-        fragment.main(`fragColor = vec4(particleStateColor, 1.0);`);
+        fragment.addInput("particleStateColor", VariableTypes.FLOAT_VEC4);
+        fragment.main(`
+            if (particleStateColor.a <= 0.001) discard;
+            vec2 particleUv = gl_PointCoord - vec2(0.5);
+            float particleDistance = length(particleUv);
+            if (uParticleShape == 1 && particleDistance > 0.5) discard;
+
+            float shapeAlpha = 1.0;
+            if (uParticleShape == 2) {
+                shapeAlpha = smoothstep(0.5, 0.38, particleDistance);
+                if (shapeAlpha <= 0.001) discard;
+            }
+
+            fragColor = vec4(particleStateColor.rgb, particleStateColor.a * shapeAlpha);
+        `);
 
         this.program = this.webgl.build();
 
@@ -633,7 +1585,8 @@ class WebGLParticleSystem {
      * @param {number[]} vec3
      */
     setGravity(vec3) {
-        if (this.uGravity) this.uGravity.value = [Number(vec3[0] || 0), Number(vec3[1] || 0), Number(vec3[2] || 0)];
+        this.gravity = [Number(vec3[0] || 0), Number(vec3[1] || 0), Number(vec3[2] || 0)];
+        if (this.uGravity) this.uGravity.value = this.gravity;
     }
 
     /**
@@ -641,7 +1594,8 @@ class WebGLParticleSystem {
      * @param {number} value
      */
     setFriction(value) {
-        if (this.uFriction) this.uFriction.value = Number(value) || 0;
+        this.friction = Number(value) || 0;
+        if (this.uFriction) this.uFriction.value = this.friction;
     }
 
     /**
@@ -653,6 +1607,7 @@ class WebGLParticleSystem {
     setParticleColor(color) {
         const resolved = normalizeColorInput(color);
         if (!resolved || !this.particles?.colors) return;
+        if (typeof color === "string") this.particleColor = color;
 
         if (typeof this.particles.setStateDefaults === "function") {
             this.particles.setStateDefaults({ color: resolved.slice() });
@@ -661,13 +1616,342 @@ class WebGLParticleSystem {
         const count = Math.max(0, Math.min(this.maxParticles, this.particles.count || 0));
         for (let i = 0; i < count; i += 1) {
             const i4 = i * 4;
+            const alpha = Number.isFinite(this.particles.colors[i4 + 3]) ? this.particles.colors[i4 + 3] : resolved[3];
             this.particles.colors[i4] = resolved[0];
             this.particles.colors[i4 + 1] = resolved[1];
             this.particles.colors[i4 + 2] = resolved[2];
-            this.particles.colors[i4 + 3] = resolved[3];
+            this.particles.colors[i4 + 3] = alpha;
         }
 
         this._syncFeedbackVariable(this.feedbackColor, this.particles.colors);
+    }
+
+    /**
+     * Sets render point size controls without rebuilding the particle simulation.
+     *
+     * @param {number} size
+     * @param {number} minSize
+     */
+    setParticleRenderSize(size = this.particleSize, minSize = this.minParticleSize) {
+        const nextSize = Math.max(0.1, Number(size) || this.particleSize || 1);
+        const nextMinSize = Math.max(0.1, Number(minSize) || this.minParticleSize || 1);
+        this.particleSize = nextSize;
+        this.minParticleSize = nextMinSize;
+        if (this.uPointSize) this.uPointSize.value = [nextSize, nextMinSize];
+    }
+
+    _particleShapeMode(shape = this.particleShape) {
+        switch (String(shape || "").toLowerCase()) {
+            case "circle":
+                return 1;
+            case "soft-circle":
+            case "soft":
+                return 2;
+            default:
+                return 0;
+        }
+    }
+
+    setParticleShape(shape = "square") {
+        const normalized = String(shape || "square").toLowerCase();
+        this.particleShape = ["circle", "soft-circle", "soft"].includes(normalized)
+            ? normalized === "soft" ? "soft-circle" : normalized
+            : "square";
+        if (this.uParticleShape) this.uParticleShape.value = this._particleShapeMode();
+    }
+
+    _createCrosshairElement(color) {
+        const crosshair = document.createElement("div");
+        crosshair.style.cssText = [
+            "position:fixed",
+            "left:0",
+            "top:0",
+            "width:22px",
+            "height:22px",
+            "transform:translate(-50%, -50%)",
+            "pointer-events:none",
+            "z-index:9999",
+            "display:none"
+        ].join(";");
+
+        const horizontal = document.createElement("div");
+        horizontal.style.cssText = [
+            "position:absolute",
+            "left:0",
+            "top:50%",
+            "width:100%",
+            "height:1px",
+            `background:${color}`,
+            "transform:translateY(-50%)",
+            "box-shadow:0 0 2px rgba(0,0,0,0.8)"
+        ].join(";");
+
+        const vertical = document.createElement("div");
+        vertical.style.cssText = [
+            "position:absolute",
+            "left:50%",
+            "top:0",
+            "width:1px",
+            "height:100%",
+            `background:${color}`,
+            "transform:translateX(-50%)",
+            "box-shadow:0 0 2px rgba(0,0,0,0.8)"
+        ].join(";");
+
+        const ring = document.createElement("div");
+        ring.style.cssText = [
+            "position:absolute",
+            "left:50%",
+            "top:50%",
+            "width:7px",
+            "height:7px",
+            `border:1px solid ${color}`,
+            "border-radius:50%",
+            "transform:translate(-50%, -50%)",
+            "box-shadow:0 0 2px rgba(0,0,0,0.8)"
+        ].join(";");
+
+        const radiusRing = document.createElement("div");
+        radiusRing.style.cssText = [
+            "position:absolute",
+            "left:50%",
+            "top:50%",
+            "width:0",
+            "height:0",
+            `border:1px solid ${color}`,
+            "border-radius:50%",
+            "transform:translate(-50%, -50%)",
+            "opacity:0.85",
+            "box-shadow:0 0 2px rgba(0,0,0,0.8)"
+        ].join(";");
+
+        const reachRing = document.createElement("div");
+        reachRing.style.cssText = [
+            "position:absolute",
+            "left:50%",
+            "top:50%",
+            "width:0",
+            "height:0",
+            `border:1px dashed ${color}`,
+            "border-radius:50%",
+            "transform:translate(-50%, -50%)",
+            "opacity:0.5",
+            "box-shadow:0 0 2px rgba(0,0,0,0.8)"
+        ].join(";");
+
+        const cone = document.createElement("div");
+        cone.style.cssText = [
+            "position:absolute",
+            "left:50%",
+            "top:50%",
+            "width:0",
+            "height:0",
+            "transform-origin:0 50%",
+            "pointer-events:none",
+            "display:none"
+        ].join(";");
+
+        crosshair._radiusRing = radiusRing;
+        crosshair._reachRing = reachRing;
+        crosshair._cone = cone;
+        crosshair._color = color;
+        crosshair.append(cone, reachRing, radiusRing, horizontal, vertical, ring);
+        return crosshair;
+    }
+
+    _ensureDebugCrosshairLayer() {
+        if (this._debugCrosshairLayer?.root?.isConnected) return this._debugCrosshairLayer;
+
+        const root = document.createElement("div");
+        root.style.cssText = "position:fixed;left:0;top:0;pointer-events:none;z-index:9999";
+        const orbit = this._createCrosshairElement("#35d0ff");
+        const repel = this._createCrosshairElement("#ff5a66");
+        const mask = this._createCrosshairElement("#b8ff4d");
+        const emitter = this._createCrosshairElement("#ffc247");
+        root.append(orbit, repel, mask, emitter);
+        document.body.appendChild(root);
+        this._debugCrosshairLayer = { root, orbit, repel, mask, emitter };
+        return this._debugCrosshairLayer;
+    }
+
+    _projectWorldPointToViewport(point) {
+        if (!this.canvas || !this.particles?.projection) return null;
+        const x = Number(point?.[0]);
+        const y = Number(point?.[1]);
+        const z = Number(point?.[2]);
+        if (![x, y, z].every(Number.isFinite)) return null;
+
+        let bounds;
+        try {
+            bounds = this.particles.projection.getBoundsAtDepth(z);
+        } catch (_error) {
+            return null;
+        }
+
+        const width = bounds.right - bounds.left;
+        const height = bounds.top - bounds.bottom;
+        if (!width || !height) return null;
+
+        const rect = this.canvas.getBoundingClientRect();
+        const nx = (x - bounds.left) / width;
+        const ny = (bounds.top - y) / height;
+        return {
+            x: rect.left + nx * rect.width,
+            y: rect.top + ny * rect.height,
+            scaleX: rect.width / width,
+            scaleY: rect.height / height,
+            visible: nx >= 0 && nx <= 1 && ny >= 0 && ny <= 1
+        };
+    }
+
+    _setCrosshairRingSize(ring, radiusPx) {
+        if (!ring) return;
+        const size = Math.max(0, Number(radiusPx) || 0) * 2;
+        ring.style.width = `${size}px`;
+        ring.style.height = `${size}px`;
+        ring.style.display = size > 0 ? "block" : "none";
+    }
+
+    _setCrosshairCone(element, projected, cone = null) {
+        const coneElement = element?._cone;
+        if (!coneElement) return;
+        if (!cone) {
+            coneElement.style.display = "none";
+            return;
+        }
+
+        const direction = cone.direction || {};
+        const dx = Number(direction.x) || 0;
+        const dy = Number(direction.y) || 0;
+        const length = Math.hypot(dx, dy);
+        if (length <= 0.000001) {
+            coneElement.style.display = "none";
+            return;
+        }
+
+        const unitScale = (Math.abs(projected.scaleX) + Math.abs(projected.scaleY)) * 0.5;
+        const coneLength = Math.max(0.05, Number(cone.length) || 0) * unitScale;
+        const spread = Math.max(0, Math.min(Math.PI * 2, Number(cone.spread) || 0));
+        const halfWidth = Math.tan(Math.min(spread * 0.5, Math.PI * 0.49)) * coneLength;
+        const angleDeg = (Math.atan2(-dy, dx) * 180) / Math.PI;
+        const color = element._color || "#ffffff";
+        const height = Math.max(1, Math.abs(halfWidth) * 2);
+
+        coneElement.style.display = "block";
+        coneElement.style.width = `${coneLength}px`;
+        coneElement.style.height = `${height}px`;
+        coneElement.style.marginTop = `${height * -0.5}px`;
+        coneElement.style.transform = `rotate(${angleDeg}deg)`;
+        coneElement.style.background = `linear-gradient(90deg, ${color}55, ${color}10)`;
+        coneElement.style.clipPath = "polygon(0 50%, 100% 0, 100% 100%)";
+        coneElement.style.borderLeft = `1px solid ${color}`;
+    }
+
+    _updateCrosshairElement(element, point, reachRadius = null, cone = null) {
+        const projected = this._projectWorldPointToViewport(point);
+        if (!projected || !projected.visible) {
+            element.style.display = "none";
+            return;
+        }
+        const radius = Math.max(0, Number(point?.[3]) || 0);
+        const reach = Math.max(radius, Number(reachRadius) || 0);
+        const unitScale = (Math.abs(projected.scaleX) + Math.abs(projected.scaleY)) * 0.5;
+
+        element.style.display = "block";
+        element.style.left = `${projected.x}px`;
+        element.style.top = `${projected.y}px`;
+        this._setCrosshairRingSize(element._radiusRing, radius * unitScale);
+        this._setCrosshairRingSize(element._reachRing, reach * unitScale);
+        this._setCrosshairCone(element, projected, cone);
+    }
+
+    _updateDebugCrosshairOverlay() {
+        if (this.debugCrosshairMode === "none") {
+            if (this._debugCrosshairLayer) {
+                this._debugCrosshairLayer.orbit.style.display = "none";
+                this._debugCrosshairLayer.repel.style.display = "none";
+                this._debugCrosshairLayer.mask.style.display = "none";
+                this._debugCrosshairLayer.emitter.style.display = "none";
+            }
+            return;
+        }
+
+        const layer = this._ensureDebugCrosshairLayer();
+        const showOrbit = ["orbit", "both", "all"].includes(this.debugCrosshairMode);
+        const showRepel = ["repel", "both", "all"].includes(this.debugCrosshairMode);
+        const showMask = ["mask", "all"].includes(this.debugCrosshairMode);
+        const showEmitter = ["emitter", "all"].includes(this.debugCrosshairMode);
+
+        const orbitRadius = Math.max(0.0001, Number(this.orbitPoint[3]) || 0.4);
+        const orbitReach =
+            Number.isFinite(Number(this.orbitFieldRadius)) && Number(this.orbitFieldRadius) > 0
+                ? Math.max(orbitRadius, Number(this.orbitFieldRadius))
+                : orbitRadius * 3;
+        const repelRadius = this._scaleRepelDistance(Math.max(0.0001, Number(this.repelPoint[3]) || 0.4));
+        const repelReach =
+            Number.isFinite(Number(this.repelFieldRadius)) && Number(this.repelFieldRadius) > 0
+                ? Math.max(repelRadius, this._scaleRepelDistance(Number(this.repelFieldRadius)))
+                : repelRadius * 3;
+
+        if (showOrbit) this._updateCrosshairElement(layer.orbit, this.orbitPoint, orbitReach);
+        else layer.orbit.style.display = "none";
+
+        if (showRepel) this._updateCrosshairElement(layer.repel, this._scaledRepelPointArray(), repelReach);
+        else layer.repel.style.display = "none";
+
+        if (showMask && this.particles?.activeMaskTransform?.anchor) {
+            const transform = this.particles.activeMaskTransform;
+            const anchor = transform.anchor;
+            this._updateCrosshairElement(
+                layer.mask,
+                [anchor.x, anchor.y, anchor.z, 0],
+                Number(transform.scatterRadius) || 0
+            );
+        } else {
+            layer.mask.style.display = "none";
+        }
+
+        if (showEmitter && this.emitter) {
+            const direction = this.emitter.directionVec || {
+                x: Math.cos(Number(this.emitter.direction) || 0),
+                y: Math.sin(Number(this.emitter.direction) || 0),
+                z: 0
+            };
+            const point = [
+                Number(this.emitter.position?.x) || 0,
+                Number(this.emitter.position?.y) || 0,
+                Number(this.emitter.position?.z) || -2,
+                0
+            ];
+            this._updateCrosshairElement(layer.emitter, point, 0, {
+                direction,
+                spread: Number(this.emitter.spread) || 0,
+                length: Math.max(0.2, Number(this.emitter.speed) || 0.2)
+            });
+        } else {
+            layer.emitter.style.display = "none";
+        }
+    }
+
+    setDebugCrosshair(mode = "none") {
+        const nextMode = String(mode || "none").toLowerCase();
+        this.debugCrosshairMode = ["orbit", "repel", "mask", "emitter", "both", "all"].includes(nextMode)
+            ? nextMode
+            : "none";
+        this._updateDebugCrosshairOverlay();
+    }
+
+    _scaleRepelDistance(value) {
+        return Math.max(0.0001, (Number(value) || 0) * REPEL_RADIUS_SCALE);
+    }
+
+    _scaledRepelPointArray() {
+        return [
+            Number(this.repelPoint[0]) || 0,
+            Number(this.repelPoint[1]) || 0,
+            Number(this.repelPoint[2]) || 0,
+            this._scaleRepelDistance(this.repelPoint[3] || 0.4)
+        ];
     }
 
     /**
@@ -703,6 +1987,7 @@ class WebGLParticleSystem {
             this._maskTransition = {
                 startTimeMs: NaN,
                 durationMs: transitionDurationMs,
+                spread: Math.max(0, Math.min(1, Number(buildOptions?.transitionSpread ?? buildOptions?.randomizeTransition ?? 0) || 0)),
                 fromPositions,
                 toPositions,
                 fromColors,
@@ -744,13 +2029,32 @@ class WebGLParticleSystem {
 
         const maskIndex = await this.particles.loadMask(source, isOptionsResolver ? options : maskOptions);
         if (apply) {
+            const loadedOptions = this.particles.masks?.[maskIndex]?.options || {};
             const applyOptions = { ...buildOptions };
             if (applyOptions.preserveMaskColor === undefined && maskOptions.preserveColor !== undefined) {
                 applyOptions.preserveMaskColor = maskOptions.preserveColor === true;
             }
-            for (const key of ["maskMode", "mode", "append", "scatter", "anchor", "maskAnchor", "rotation", "rotate", "maskRotation"]) {
+            for (const key of [
+                "maskMode",
+                "mode",
+                "append",
+                "scatter",
+                "anchor",
+                "maskAnchor",
+                "rotation",
+                "rotate",
+                "maskRotation",
+                "transition",
+                "transitionDuration",
+                "duration",
+                "transitionSpread",
+                "randomizeTransition"
+            ]) {
                 if (applyOptions[key] === undefined && maskOptions[key] !== undefined) {
                     applyOptions[key] = maskOptions[key];
+                }
+                if (applyOptions[key] === undefined && loadedOptions[key] !== undefined) {
+                    applyOptions[key] = loadedOptions[key];
                 }
             }
             this.applyMask(maskIndex, applyOptions);
@@ -837,7 +2141,7 @@ class WebGLParticleSystem {
      * Enables/disables orbit mode and optional target update.
      *
      * @param {boolean} enabled
-     * @param {{x?:number,y?:number,z?:number,radius?:number,fieldRadius?:number}} [options={}]
+     * @param {{x?:number,y?:number,z?:number,radius?:number,fieldRadius?:number,escape?:number,escapePush?:number}} [options={}]
      */
     setOrbit(enabled, options = {}) {
         if (options.x !== undefined) this.orbitPoint[0] = Number(options.x) || 0;
@@ -849,6 +2153,12 @@ class WebGLParticleSystem {
         if (options.fieldRadius !== undefined) {
             const nextField = Number(options.fieldRadius);
             this.orbitFieldRadius = Number.isFinite(nextField) && nextField > 0 ? nextField : null;
+        }
+        if (options.escape !== undefined) {
+            this.orbitEscape = Math.max(0, Math.min(1, Number(options.escape) || 0));
+        }
+        if (options.escapePush !== undefined) {
+            this.orbitEscapePush = Math.max(0, Number(options.escapePush) || 0);
         }
         this.orbit.value = enabled ? 1 : 0;
         if (enabled) this.repel.value = 0;
@@ -900,7 +2210,7 @@ class WebGLParticleSystem {
     /**
      * Applies motion multiplier values.
      *
-     * @param {{drift?:number,driftSpeed?:number,driftType?:"relative"|"absolute",orbitSpeed?:number,repelStrength?:number,orbitPull?:number}} [config={}]
+     * @param {{drift?:number,driftSpeed?:number,driftType?:"relative"|"absolute",orbitSpeed?:number,repelStrength?:number,orbitPull?:number,orbitEscape?:number,orbitEscapePush?:number}} [config={}]
      */
     setMotion(config = {}) {
         if (config.drift !== undefined) this.driftScale = Math.min(1, Math.max(0, Number(config.drift) || 0));
@@ -915,6 +2225,12 @@ class WebGLParticleSystem {
         if (config.repelStrength !== undefined)
             this.repelStrengthScale = Math.max(0, Number(config.repelStrength) || 0);
         if (config.orbitPull !== undefined) this.orbitPullScale = Math.max(0, Number(config.orbitPull) || 0);
+        if (config.orbitEscape !== undefined) {
+            this.orbitEscape = Math.max(0, Math.min(1, Number(config.orbitEscape) || 0));
+        }
+        if (config.orbitEscapePush !== undefined) {
+            this.orbitEscapePush = Math.max(0, Number(config.orbitEscapePush) || 0);
+        }
     }
 
     /**
@@ -1132,9 +2448,12 @@ class WebGLParticleSystem {
         const { gl } = this;
         if (!this.running || !this.feedback) return;
 
-        this.time.last = this.time.current || 0;
         this.time.current = time / 1000;
-        this.time.delta = this.time.current - this.time.last;
+        if (!this.time.last) {
+            this.time.last = this.time.current;
+        }
+        this.time.delta = Math.min(0.05, Math.max(0, this.time.current - this.time.last));
+        this.time.last = this.time.current;
 
         const maskTransitionActive = this._applyMaskTransition(time);
 
@@ -1193,23 +2512,29 @@ class WebGLParticleSystem {
             this._previousCameraAngle.yaw += cameraDeltaYaw;
             this._previousCameraAngle.pitch += cameraDeltaPitch;
             const orbitRadius = Math.max(0.0001, Number(this.orbitPoint[3]) || 0.4);
-            const repelRadius = Math.max(0.0001, Number(this.repelPoint[3]) || 0.4);
+            const repelRadius = this._scaleRepelDistance(Math.max(0.0001, Number(this.repelPoint[3]) || 0.4));
             const orbitFieldRadius =
                 Number.isFinite(Number(this.orbitFieldRadius)) && Number(this.orbitFieldRadius) > 0
                     ? Math.max(orbitRadius, Number(this.orbitFieldRadius))
                     : orbitRadius * 3;
             const repelFieldRadius =
                 Number.isFinite(Number(this.repelFieldRadius)) && Number(this.repelFieldRadius) > 0
-                    ? Math.max(repelRadius, Number(this.repelFieldRadius))
+                    ? Math.max(repelRadius, this._scaleRepelDistance(Number(this.repelFieldRadius)))
                     : repelRadius * 3;
             if (this.uOrbitFieldRadius) this.uOrbitFieldRadius.value = orbitFieldRadius;
+            if (this.uOrbitEscape) {
+                this.uOrbitEscape.value = [
+                    Math.max(0, Math.min(1, Number(this.orbitEscape) || 0)),
+                    Math.max(0, Number(this.orbitEscapePush) || 0)
+                ];
+            }
             if (this.uRepelFieldRadius) this.uRepelFieldRadius.value = repelFieldRadius;
 
             if (this.uRepel && this.repel.dirty && (this.uRepel.value = this.repel.value) !== false) {
                 this.repel.save();
             }
             if (this.repel.value === 1) {
-                this.uTargetPoint.value = this.repelPoint.toArray();
+                this.uTargetPoint.value = this._scaledRepelPointArray();
             }
 
             if (this.uOrbit && this.orbit.dirty && (this.uOrbit.value = this.orbit.value) !== false) {
@@ -1232,6 +2557,21 @@ class WebGLParticleSystem {
                 Number(this.cameraDepthEffect) || 0
             ];
         }
+        if (this.uRenderWrap) {
+            const gravityActive = Math.hypot(
+                Number(this.gravity?.[0]) || 0,
+                Number(this.gravity?.[1]) || 0,
+                Number(this.gravity?.[2]) || 0
+            ) > 0.000001;
+            this.uRenderWrap.value = !gravityActive && this.repel.value !== 1 && this.orbit.value !== 1 ? 1 : 0;
+        }
+        if (this.uPointSize) {
+            this.uPointSize.value = [Number(this.particleSize) || 1, Number(this.minParticleSize) || 1];
+        }
+        if (this.uParticleShape) {
+            this.uParticleShape.value = this._particleShapeMode();
+        }
+        this._updateDebugCrosshairOverlay();
         gl.clearColor(0, 0, 0, 0);
         gl.enable(gl.DEPTH_TEST);
         gl.depthMask(true);
@@ -1253,6 +2593,10 @@ class WebGLParticleSystem {
      */
     addEmitter(config = {}) {
         if (!this.particles) return null;
+        if (this.emitter) {
+            this.emitter.configure(config);
+            return this.emitter;
+        }
         this.emitter = new EmitterAdapter(this.particles, config);
         return this.emitter;
     }

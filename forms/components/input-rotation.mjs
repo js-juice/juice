@@ -2,32 +2,32 @@
 
 /**
  * AUTODOC:START
- * Component: <input-direction>
- * Class: InputDirectionComponent
- * Overview: 3D unit-direction control with arcball interaction, SVG visualization, and axis value editing.
+ * Component: <input-rotation>
+ * Class: InputRotationComponent
+ * Overview: 3D Euler-rotation control with arcball interaction, SVG visualization, and axis value editing.
  *
  * Features:
- * - Drag-to-rotate arcball UI for directional vectors.
+ * - Drag-to-rotate arcball UI for 3D rotations.
  * - Live axis readout and optional numeric axis editing mode.
- * - Serializes values to normalized `x,y,z` text for form submission.
- * - Supports default vector components via attributes.
+ * - Serializes values to `x,y,z` Euler radians for form submission.
+ * - Supports default rotation components via attributes.
  *
  * Example:
- * `<input-direction label="Light Direction" default-x="0" default-y="0.4" default-z="-1"></input-direction>`
+ * `<input-rotation label="Mask Rotation" default-x="0" default-y="0" default-z="0"></input-rotation>`
  *
  * Attribute Reference:
- * - `value`: Current direction as `x,y,z`.
- * - `default-x`, `default-y`, `default-z`: Fallback vector components used when `value` is not provided.
+ * - `value`: Current rotation as `x,y,z`.
+ * - `default-x`, `default-y`, `default-z`: Fallback Euler radians used when `value` is not provided.
  *
  * Property Reference:
  * - Inherits base InputComponent properties (`value`, `disabled`, `nativeInput`, ...).
  *
  * CSS Variables:
- * - `--direction-sphere-stroke`: Sphere outline color.
- * - `--direction-x-ring-color`, `--direction-y-ring-color`, `--direction-z-ring-color`: Axis ring colors.
- * - `--direction-line-color`: Direction line color.
- * - `--direction-marker-fill`, `--direction-marker-stroke`: Endpoint marker styling.
- * - `--direction-display-color`: Axis readout text color.
+ * - `--rotation-sphere-stroke`: Sphere outline color.
+ * - `--rotation-x-ring-color`, `--rotation-y-ring-color`, `--rotation-z-ring-color`: Axis ring colors.
+ * - `--rotation-line-color`: rotation line color.
+ * - `--rotation-marker-fill`, `--rotation-marker-stroke`: Endpoint marker styling.
+ * - `--rotation-display-color`: Axis readout text color.
  * - Inherits shared InputComponent variables.
  *
  * Part Names:
@@ -44,9 +44,9 @@ const RADIUS = 50;
 const EPSILON = 1e-6;
 const VECTOR_SYNC_EPSILON = 1e-3;
 const RING_SEGMENTS = 80;
-const BASE_DIRECTION = { x: 0, y: 0, z: -1 };
+const BASE_ROTATION_VECTOR = { x: 0, y: 0, z: -1 };
 
-class InputDirectionComponent extends InputComponent {
+class InputRotationComponent extends InputComponent {
     // TODO(refactor): Extract quaternion/vector math utilities to a shared module to shrink this class.
     /**
      * Lists attributes that are observed for runtime updates.
@@ -62,9 +62,9 @@ class InputDirectionComponent extends InputComponent {
      */
     constructor() {
         super({ _layout: "label:default:input:>:native:status:<:validation" });
-        this.inputType = "direction";
+        this.inputType = "rotation";
 
-        this._vector = { x: 0, y: 0, z: -1 };
+        this._vector = { x: 0, y: 0, z: 0 };
         this._orientation = { x: 0, y: 0, z: 0, w: 1 };
         this._dragPointerId = null;
         this._dragArcballVector = null;
@@ -74,8 +74,8 @@ class InputDirectionComponent extends InputComponent {
         this._isSyncingAxisInputs = false;
 
         this._dom.canvas = null;
-        this._dom.directionLine = null;
-        this._dom.directionMarker = null;
+        this._dom.rotationLine = null;
+        this._dom.rotationMarker = null;
         this._dom.ringX = null;
         this._dom.ringY = null;
         this._dom.ringZ = null;
@@ -103,7 +103,7 @@ class InputDirectionComponent extends InputComponent {
                 aspectRatio: "1 / 1",
                 position: "relative"
             },
-            ".direction-canvas": {
+            ".rotation-canvas": {
                 width: "100%",
                 height: "100%",
                 display: "block",
@@ -111,54 +111,54 @@ class InputDirectionComponent extends InputComponent {
                 userSelect: "none",
                 cursor: "grab"
             },
-            ".direction-canvas:active": {
+            ".rotation-canvas:active": {
                 cursor: "grabbing"
             },
-            ":host([disabled]) .direction-canvas": {
+            ":host([disabled]) .rotation-canvas": {
                 cursor: "not-allowed",
                 opacity: "0.65"
             },
-            ".direction-sphere": {
-                //fill: "var(--direction-sphere-bg, rgba(194, 204, 212, 0.5))",
+            ".rotation-sphere": {
+                //fill: "var(--rotation-sphere-bg, rgba(194, 204, 212, 0.5))",
                 fill: "url(#sphere-grad)",
-                stroke: "var(--direction-sphere-stroke, rgba(50, 62, 76, 0.35))",
+                stroke: "var(--rotation-sphere-stroke, rgba(50, 62, 76, 0.35))",
                 strokeWidth: "1"
             },
-            ".direction-ring": {
+            ".rotation-ring": {
                 fill: "none",
                 strokeWidth: "2",
                 pointerEvents: "stroke",
                 cursor: "grab"
             },
-            ".direction-ring:active": {
+            ".rotation-ring:active": {
                 cursor: "grabbing"
             },
-            ".direction-ring.x": {
-                stroke: "var(--direction-x-ring-color, rgba(226, 76, 57, 0.85))"
+            ".rotation-ring.x": {
+                stroke: "var(--rotation-x-ring-color, rgba(226, 76, 57, 0.85))"
             },
-            ".direction-ring.y": {
-                stroke: "var(--direction-y-ring-color, rgba(66, 167, 86, 0.85))"
+            ".rotation-ring.y": {
+                stroke: "var(--rotation-y-ring-color, rgba(66, 167, 86, 0.85))"
             },
-            ".direction-ring.z": {
-                stroke: "var(--direction-z-ring-color, rgba(66, 120, 214, 0.85))"
+            ".rotation-ring.z": {
+                stroke: "var(--rotation-z-ring-color, rgba(66, 120, 214, 0.85))"
             },
-            ".direction-line": {
+            ".rotation-line": {
                 fill: "none",
-                stroke: "var(--direction-line-color, rgba(20, 28, 35, 0.92))",
+                stroke: "var(--rotation-line-color, rgba(20, 28, 35, 0.92))",
                 strokeWidth: "1",
                 strokeLinecap: "round",
                 pointerEvents: "none"
             },
-            ".direction-marker": {
-                fill: "var(--direction-marker-fill, #f5d505)",
-                stroke: "var(--direction-marker-stroke, #666666)",
+            ".rotation-marker": {
+                fill: "var(--rotation-marker-fill, #f5d505)",
+                stroke: "var(--rotation-marker-stroke, #666666)",
                 strokeWidth: "1",
                 pointerEvents: "none"
             },
             ".native-wrapper": {
                 display: "none"
             },
-            ".direction-inputs": {
+            ".rotation-inputs": {
                 marginTop: "0.5rem",
                 display: "grid",
                 gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
@@ -166,7 +166,7 @@ class InputDirectionComponent extends InputComponent {
             },
             ".axis-field": {
                 display: "flex",
-                flexDirection: "column",
+                flexrotation: "column",
                 gap: "0.2rem"
             },
             ".axis-label": {
@@ -184,25 +184,25 @@ class InputDirectionComponent extends InputComponent {
                 padding: "0.2rem 0.35rem",
                 fontSize: "0.8rem"
             },
-            ".direction-inputs": {
+            ".rotation-inputs": {
                 display: "none"
             },
-            ".direction-display": {
+            ".rotation-display": {
                 position: "relative",
                 display: "flex",
                 gap: "1rem",
-                flexDirection: "row",
+                flexrotation: "row",
                 justifyContent: "center",
                 marginTop: "0rem",
-                color: "var(--direction-display-color, #FFFFFF)",
+                color: "var(--rotation-display-color, #FFFFFF)",
                 background: "rgba(0,0,0,0.7)",
                 borderRadius: "5px",
                 padding: "0.25rem"
             },
-            ".direction-display .axis-display": {
+            ".rotation-display .axis-display": {
                 fontSize: "0.65rem",
                 fontWeight: "500",
-                color: "var(--direction-display-color, #FFFFFF)",
+                color: "var(--rotation-display-color, #FFFFFF)",
                 width: "calc(33.333% - 0.66rem)"
             },
             ".pivit-marker": {
@@ -223,10 +223,10 @@ class InputDirectionComponent extends InputComponent {
             ".edit-btn:hover": {
                 cursor: "pointer"
             },
-            ".edit-mode .direction-inputs": {
+            ".edit-mode .rotation-inputs": {
                 display: "flex"
             },
-            ".edit-mode .direction-display": {
+            ".edit-mode .rotation-display": {
                 display: "none"
             }
         };
@@ -240,29 +240,29 @@ class InputDirectionComponent extends InputComponent {
         const defaultField = document.createElement("div");
         defaultField.className = "default-field";
         const svg = document.createElementNS(SVG_NS, "svg");
-        svg.setAttribute("class", "direction-canvas");
+        svg.setAttribute("class", "rotation-canvas");
         svg.setAttribute("viewBox", `0 0 ${VIEWBOX_SIZE} ${VIEWBOX_SIZE}`);
         svg.setAttribute("aria-hidden", "true");
 
         const sphere = this._makeSvgNode("circle", {
-            class: "direction-sphere",
+            class: "rotation-sphere",
             cx: CENTER,
             cy: CENTER,
             r: RADIUS - 3
         });
 
-        const ringX = this._makeSvgNode("path", { class: "direction-ring x", d: "", "data-axis": "x" });
-        const ringY = this._makeSvgNode("path", { class: "direction-ring y", d: "", "data-axis": "y" });
-        const ringZ = this._makeSvgNode("path", { class: "direction-ring z", d: "", "data-axis": "z" });
+        const ringX = this._makeSvgNode("path", { class: "rotation-ring x", d: "", "data-axis": "x" });
+        const ringY = this._makeSvgNode("path", { class: "rotation-ring y", d: "", "data-axis": "y" });
+        const ringZ = this._makeSvgNode("path", { class: "rotation-ring z", d: "", "data-axis": "z" });
         const line = this._makeSvgNode("line", {
-            class: "direction-line",
+            class: "rotation-line",
             x1: CENTER,
             y1: CENTER,
             x2: CENTER,
             y2: CENTER
         });
         const marker = this._makeSvgNode("circle", {
-            class: "direction-marker",
+            class: "rotation-marker",
             cx: CENTER,
             cy: CENTER,
             r: 4
@@ -303,8 +303,8 @@ class InputDirectionComponent extends InputComponent {
         this._dom.ringX = ringX;
         this._dom.ringY = ringY;
         this._dom.ringZ = ringZ;
-        this._dom.directionLine = line;
-        this._dom.directionMarker = marker;
+        this._dom.rotationLine = line;
+        this._dom.rotationMarker = marker;
 
         this._bindCanvasEvents(svg);
 
@@ -322,7 +322,7 @@ class InputDirectionComponent extends InputComponent {
         this._display = {};
 
         const displayWrap = document.createElement("div");
-        displayWrap.className = "direction-display";
+        displayWrap.className = "rotation-display";
 
         const editBtn = document.createElement("a");
         editBtn.className = "edit-btn";
@@ -370,7 +370,7 @@ class InputDirectionComponent extends InputComponent {
      */
     _renderAxisInputs() {
         const wrap = document.createElement("div");
-        wrap.className = "direction-inputs";
+        wrap.className = "rotation-inputs";
 
         const createAxisField = (axisKey) => {
             const field = document.createElement("label");
@@ -384,8 +384,8 @@ class InputDirectionComponent extends InputComponent {
             input.className = "axis-input";
             input.type = "number";
             input.step = "0.01";
-            input.min = "-1";
-            input.max = "1";
+            input.min = "-6.283";
+            input.max = "6.283";
             input.inputMode = "decimal";
 
             field.appendChild(caption);
@@ -490,7 +490,7 @@ class InputDirectionComponent extends InputComponent {
         }
 
         this._drawRings();
-        this._drawDirection();
+        this._drawrotation();
         this._syncAxisInputs();
         this._syncAxisDisplay();
 
@@ -501,31 +501,32 @@ class InputDirectionComponent extends InputComponent {
     }
 
     /**
-      * Updates indicator geometry for the current direction vector.
+      * Updates indicator geometry for the current rotation vector.
      * @returns {*} Derived internal value or completion status.
      */
-    _drawDirection() {
-        if (!this._dom.directionLine || !this._dom.directionMarker) return;
+    _drawrotation() {
+        if (!this._dom.rotationLine || !this._dom.rotationMarker) return;
 
-        const endX = CENTER + this._vector.x * RADIUS;
-        const endY = CENTER - this._vector.y * RADIUS;
+        const indicator = this._rotateVector(BASE_ROTATION_VECTOR, this._orientation);
+        const endX = CENTER + indicator.x * RADIUS;
+        const endY = CENTER - indicator.y * RADIUS;
 
-        this._dom.directionLine.setAttribute("x1", String(CENTER));
-        this._dom.directionLine.setAttribute("y1", String(CENTER));
-        this._dom.directionLine.setAttribute("x2", String(endX));
-        this._dom.directionLine.setAttribute("y2", String(endY));
+        this._dom.rotationLine.setAttribute("x1", String(CENTER));
+        this._dom.rotationLine.setAttribute("y1", String(CENTER));
+        this._dom.rotationLine.setAttribute("x2", String(endX));
+        this._dom.rotationLine.setAttribute("y2", String(endY));
 
-        this._dom.directionMarker.setAttribute("cx", String(endX));
-        this._dom.directionMarker.setAttribute("cy", String(endY));
+        this._dom.rotationMarker.setAttribute("cx", String(endX));
+        this._dom.rotationMarker.setAttribute("cy", String(endY));
 
-        const isBack = this._vector.z > 0;
-        this._dom.directionLine.style.opacity = isBack ? "0.45" : "1";
-        this._dom.directionLine.style.strokeDasharray = isBack ? "4 3" : "";
-        this._dom.directionMarker.style.opacity = isBack ? "0.55" : "1";
+        const isBack = indicator.z > 0;
+        this._dom.rotationLine.style.opacity = isBack ? "0.45" : "1";
+        this._dom.rotationLine.style.strokeDasharray = isBack ? "4 3" : "";
+        this._dom.rotationMarker.style.opacity = isBack ? "0.55" : "1";
     }
 
     /**
-      * Draws base/progress rings for directional magnitude visualization.
+      * Draws base/progress rings for rotational magnitude visualization.
      * @returns {*} Derived internal value or completion status.
      */
     _drawRings() {
@@ -713,7 +714,7 @@ class InputDirectionComponent extends InputComponent {
         if (!delta) return;
 
         this._orientation = this._normalizeQuaternion(this._multiplyQuaternion(delta, this._orientation));
-        this._vector = this._normalizeVector(this._rotateVector(BASE_DIRECTION, this._orientation));
+        this._vector = this._eulerFromQuaternion(this._orientation);
         this._dragMoved = true;
         this._commitVectorToHost(emitEventName);
     }
@@ -727,9 +728,9 @@ class InputDirectionComponent extends InputComponent {
         if (Math.abs(delta) <= EPSILON) return;
 
         const next = { ...this._vector };
-        next[this._dragAxis] = Math.max(-1, Math.min(1, next[this._dragAxis] + delta));
-        this._vector = this._normalizeVector(next);
-        this._orientation = this._quaternionFromUnitVectors(BASE_DIRECTION, this._vector);
+        next[this._dragAxis] += delta;
+        this._vector = this._normalizeRotation(next);
+        this._orientation = this._quaternionFromEuler(this._vector);
         this._dragMoved = true;
         this._commitVectorToHost(emitEventName);
     }
@@ -786,7 +787,7 @@ class InputDirectionComponent extends InputComponent {
     _getFormValue() {
         const name = this.getAttribute("name") || this._dom.native?.name || "";
         if (!name) return this._dom.native?.value ?? "";
-        const vector = this._normalizeVector(this._vector);
+        const vector = this._normalizeRotation(this._vector);
         const data = new FormData();
         data.append(`${name}[x]`, this._formatFloat(vector.x));
         data.append(`${name}[y]`, this._formatFloat(vector.y));
@@ -795,7 +796,7 @@ class InputDirectionComponent extends InputComponent {
     }
 
     /**
-      * Projects pointer coordinates onto a virtual arcball for 3D direction control.
+      * Projects pointer coordinates onto a virtual arcball for 3D rotation control.
      * @param {*} event - Event payload.
      * @returns {*} Projected unit vector on the arcball surface.
      */
@@ -829,12 +830,12 @@ class InputDirectionComponent extends InputComponent {
      * @returns {*} Derived internal value or completion status.
      */
     _setVectorFromExternal(vector, { syncNative = false, syncHost = false } = {}) {
-        const normalized = this._normalizeVector(vector);
-        this._vector = normalized;
-        this._orientation = this._quaternionFromUnitVectors(BASE_DIRECTION, normalized);
+        const rotation = this._normalizeRotation(vector);
+        this._vector = rotation;
+        this._orientation = this._quaternionFromEuler(rotation);
 
         if (syncNative && this._dom.native) {
-            this._dom.native.value = this._serializeVector(normalized);
+            this._dom.native.value = this._serializeVector(rotation);
         }
 
         if (syncHost && this._dom.native) {
@@ -848,10 +849,10 @@ class InputDirectionComponent extends InputComponent {
      * @returns {*} Derived value.
      */
     _resolveDefaultVector() {
-        return this._normalizeVector({
+        return this._normalizeRotation({
             x: this._readNumberAttribute("default-x", 0),
             y: this._readNumberAttribute("default-y", 0),
-            z: this._readNumberAttribute("default-z", -1)
+            z: this._readNumberAttribute("default-z", 0)
         });
     }
 
@@ -895,6 +896,17 @@ class InputDirectionComponent extends InputComponent {
         if (magnitude <= EPSILON) return { x: 0, y: 0, z: -1 };
 
         return { x: nx / magnitude, y: ny / magnitude, z: nz / magnitude };
+    }
+
+    _normalizeRotation(value) {
+        const x = Number(value?.x);
+        const y = Number(value?.y);
+        const z = Number(value?.z);
+        return {
+            x: Number.isFinite(x) ? x : 0,
+            y: Number.isFinite(y) ? y : 0,
+            z: Number.isFinite(z) ? z : 0
+        };
     }
 
     /**
@@ -945,6 +957,41 @@ class InputDirectionComponent extends InputComponent {
             y: a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x,
             z: a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w
         };
+    }
+
+    _quaternionFromEuler(rotation) {
+        const halfX = (Number(rotation.x) || 0) * 0.5;
+        const halfY = (Number(rotation.y) || 0) * 0.5;
+        const halfZ = (Number(rotation.z) || 0) * 0.5;
+        const cx = Math.cos(halfX);
+        const sx = Math.sin(halfX);
+        const cy = Math.cos(halfY);
+        const sy = Math.sin(halfY);
+        const cz = Math.cos(halfZ);
+        const sz = Math.sin(halfZ);
+
+        return this._normalizeQuaternion({
+            x: sx * cy * cz - cx * sy * sz,
+            y: cx * sy * cz + sx * cy * sz,
+            z: cx * cy * sz - sx * sy * cz,
+            w: cx * cy * cz + sx * sy * sz
+        });
+    }
+
+    _eulerFromQuaternion(quaternion) {
+        const q = this._normalizeQuaternion(quaternion);
+        const sinrCosp = 2 * (q.w * q.x + q.y * q.z);
+        const cosrCosp = 1 - 2 * (q.x * q.x + q.y * q.y);
+        const x = Math.atan2(sinrCosp, cosrCosp);
+
+        const sinp = 2 * (q.w * q.y - q.z * q.x);
+        const y = Math.abs(sinp) >= 1 ? Math.sign(sinp) * (Math.PI / 2) : Math.asin(sinp);
+
+        const sinyCosp = 2 * (q.w * q.z + q.x * q.y);
+        const cosyCosp = 1 - 2 * (q.y * q.y + q.z * q.z);
+        const z = Math.atan2(sinyCosp, cosyCosp);
+
+        return { x, y, z };
     }
 
     /**
@@ -1003,7 +1050,7 @@ class InputDirectionComponent extends InputComponent {
      */
     _parseVector(raw) {
         if (raw === null || raw === undefined) return null;
-        if (typeof raw === "object") return this._normalizeVector(raw);
+        if (typeof raw === "object") return this._normalizeRotation(raw);
 
         const text = String(raw).trim();
         if (!text) return null;
@@ -1016,7 +1063,7 @@ class InputDirectionComponent extends InputComponent {
         const z = Number(matches[2]);
         if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return null;
 
-        return this._normalizeVector({ x, y, z });
+        return this._normalizeRotation({ x, y, z });
     }
 
     /**
@@ -1025,7 +1072,7 @@ class InputDirectionComponent extends InputComponent {
      * @returns {*} Serialized vector string value.
      */
     _serializeVector(vector) {
-        const v = this._normalizeVector(vector);
+        const v = this._normalizeRotation(vector);
         return `${this._formatFloat(v.x)},${this._formatFloat(v.y)},${this._formatFloat(v.z)}`;
     }
 
@@ -1056,4 +1103,5 @@ class InputDirectionComponent extends InputComponent {
     }
 }
 
-customElements.define("input-direction", InputDirectionComponent);
+customElements.define("input-rotation", InputRotationComponent);
+

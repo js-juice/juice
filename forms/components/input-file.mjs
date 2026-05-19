@@ -2,13 +2,13 @@
  * AUTODOC:START
  * Component: <input-file>
  * Class: InputFileComponent
- * Overview: Styled file-picker trigger built on InputComponent that proxies clicks to a hidden native file input.
+ * Overview: Styled file-picker trigger that proxies clicks to a hidden native file input.
  *
  * Features:
  * - Reuses button-like label/icon rendering for file selection UX.
  * - Supports single or multiple file selection.
  * - Mirrors accept/name/disabled semantics to the underlying file input.
- * - Emits button-click style events for host orchestration.
+ * - Exposes `files`, `nativeInput`, and input/change events for integrations.
  *
  * Example:
  * `<input-file label="Upload" accept=".png,.jpg" multiple></input-file>`
@@ -20,6 +20,8 @@
  * - `name`, `disabled`, `aria-label`: Native input semantics.
  *
  * Property Reference:
+ * - `files`: Selected FileList.
+ * - `nativeInput`: Underlying native file input.
  * - `disabled`: Getter/setter for disabled state.
  * - `click()`: Programmatic trigger click.
  *
@@ -32,10 +34,9 @@
  * AUTODOC:END
  */
 
-import InputComponent from "./input-component.mjs";
 import { getJuiceConfig } from "../../config/juice-config.mjs";
 
-class InputFileComponent extends InputComponent {
+class InputFileComponent extends HTMLElement {
     static tag = "input-file";
 
     static get observedAttributes() {
@@ -46,16 +47,19 @@ class InputFileComponent extends InputComponent {
         super();
         this._shadow = this.attachShadow({ mode: "open" });
         this._boundClick = (event) => this._handleButtonClick(event);
+        this._boundNativeInput = () => this.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+        this._boundNativeChange = () => this.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
         this._boundSlotChange = () => this._syncIconVisibility();
-
-        this._acceptedTypes = this.getAttribute("accept") || "";
-        this._multiple = this.hasAttribute("multiple");
 
         this._shadow.innerHTML = `
             <style>
                 :host {
                     display: inline-block;
                     box-sizing: border-box;
+                }
+
+                input[type="file"] {
+                    display: none;
                 }
 
                 button {
@@ -127,6 +131,7 @@ class InputFileComponent extends InputComponent {
                     white-space: nowrap;
                 }
             </style>
+            <input id="native" type="file">
             <button id="button" type="button" part="button">
                 <span class="content">
                     <span class="icon-wrap" aria-hidden="true">
@@ -138,54 +143,39 @@ class InputFileComponent extends InputComponent {
             </button>
         `;
 
+        this._native = this._shadow.getElementById("native");
         this._button = this._shadow.getElementById("button");
         this._label = this._shadow.getElementById("label");
         this._iconText = this._shadow.getElementById("icon-text");
         this._iconSlot = this._shadow.getElementById("icon-slot");
     }
 
-    _createNativeControl() {
-        const input = document.createElement("input");
-        input.type = "file";
-        input.classList.add("native");
-        return input;
-    }
-
     connectedCallback() {
         this._button.addEventListener("click", this._boundClick);
+        this._native.addEventListener("input", this._boundNativeInput);
+        this._native.addEventListener("change", this._boundNativeChange);
         this._iconSlot.addEventListener("slotchange", this._boundSlotChange);
         this._syncAll();
     }
 
     disconnectedCallback() {
         this._button.removeEventListener("click", this._boundClick);
+        this._native.removeEventListener("input", this._boundNativeInput);
+        this._native.removeEventListener("change", this._boundNativeChange);
         this._iconSlot.removeEventListener("slotchange", this._boundSlotChange);
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
         if (oldValue === newValue) return;
-
-        if (
-            name === "label" ||
-            name === "icon" ||
-            name === "bgcolor" ||
-            name === "color" ||
-            name === "disabled" ||
-            name === "type" ||
-            name === "name" ||
-            name === "value" ||
-            name === "aria-label"
-        ) {
-            this._syncAll();
-        }
+        this._syncAll();
     }
 
     _syncAll() {
-        if (!this._button) return;
+        if (!this._button || !this._native) return;
 
         const label = this.getAttribute("label");
         const fallbackLabel = this.textContent ? this.textContent.trim() : "";
-        this._label.textContent = label != null ? label : fallbackLabel || "Submit";
+        this._label.textContent = label != null ? label : fallbackLabel || "Choose file";
 
         const icon = this.getAttribute("icon");
         this._iconText.textContent = icon || "";
@@ -194,23 +184,17 @@ class InputFileComponent extends InputComponent {
 
         const formsConfig = getJuiceConfig("forms") || {};
         const theme = formsConfig.theme || {};
-        const fallbackBg = theme.inputButtonBgColor || "#2f5ea6";
-        const fallbackColor = theme.inputButtonColor || "#ffffff";
-        const bg = this.getAttribute("bgcolor") || fallbackBg;
-        const color = this.getAttribute("color") || fallbackColor;
-        this.style.setProperty("--input-button-bgcolor", bg);
-        this.style.setProperty("--input-button-color", color);
-
-        const type = this.getAttribute("type") || "button";
-        this._button.type = type;
+        this.style.setProperty("--input-button-bgcolor", this.getAttribute("bgcolor") || theme.inputButtonBgColor || "#2f5ea6");
+        this.style.setProperty("--input-button-color", this.getAttribute("color") || theme.inputButtonColor || "#ffffff");
 
         const name = this.getAttribute("name");
-        if (name == null) this._button.removeAttribute("name");
-        else this._button.setAttribute("name", name);
+        if (name == null) this._native.removeAttribute("name");
+        else this._native.setAttribute("name", name);
 
-        const value = this.getAttribute("value");
-        if (value == null) this._button.removeAttribute("value");
-        else this._button.setAttribute("value", value);
+        this._native.accept = this.getAttribute("accept") || "";
+        this._native.multiple = this.hasAttribute("multiple");
+        this._native.disabled = this.disabled;
+        this._button.disabled = this.disabled;
 
         const aria = this.getAttribute("aria-label");
         if (aria != null) {
@@ -220,8 +204,6 @@ class InputFileComponent extends InputComponent {
         } else {
             this._button.removeAttribute("aria-label");
         }
-
-        this._button.disabled = this.disabled;
     }
 
     _syncIconVisibility() {
@@ -241,34 +223,44 @@ class InputFileComponent extends InputComponent {
             return;
         }
 
-        this._dom.native.click();
-
-        const detail = {
-            name: this.getAttribute("name") || "",
-            value: this.getAttribute("value") || "",
-            label: this._label?.textContent || "",
-            source: this
-        };
+        this._native.click();
 
         this.dispatchEvent(
             new CustomEvent("input-button-click", {
-                detail,
+                detail: {
+                    name: this.getAttribute("name") || "",
+                    value: this.value,
+                    label: this._label?.textContent || "",
+                    source: this
+                },
                 bubbles: true,
                 composed: true
             })
         );
-
-        const inlineHandler = this.getAttribute("onclick");
-        if (inlineHandler && /^[A-Za-z_$][\w$]*$/.test(inlineHandler)) {
-            const fn = globalThis[inlineHandler];
-            if (typeof fn === "function") {
-                fn.call(this, event);
-            }
-        }
     }
 
     click() {
         this._button?.click();
+    }
+
+    get files() {
+        return this._native?.files || null;
+    }
+
+    get nativeInput() {
+        return this._native || null;
+    }
+
+    get value() {
+        return Array.from(this.files || [])
+            .map((file) => file.name)
+            .join(",");
+    }
+
+    set value(value) {
+        if ((value === "" || value === null || value === undefined) && this._native) {
+            this._native.value = "";
+        }
     }
 
     get disabled() {
@@ -281,8 +273,8 @@ class InputFileComponent extends InputComponent {
     }
 }
 
-if (!customElements.get(InputButtonComponent.tag)) {
-    customElements.define(InputButtonComponent.tag, InputButtonComponent);
+if (!customElements.get(InputFileComponent.tag)) {
+    customElements.define(InputFileComponent.tag, InputFileComponent);
 }
 
-export default InputButtonComponent;
+export default InputFileComponent;
