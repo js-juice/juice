@@ -278,19 +278,19 @@ class Juice {
     }
 
     async import(section, path, properties = []) {
-<<<<<<< Updated upstream
+        let modulePath;
         const sectionPath = typeof section === "string" ? section.replace(/\/+$/, "") : "";
         const relativePath = typeof path === "string" ? path.replace(/^\/+/, "") : "";
-        const joinedPath = relativePath ? `${sectionPath}/${relativePath}` : sectionPath;
-        const relativeModulePath = joinedPath.startsWith(".") ? joinedPath : `./${joinedPath}`;
-        const modulePath = relativeModulePath.endsWith(".mjs") ? relativeModulePath : `${relativeModulePath}.mjs`;
-=======
-        const importSection = this.importSections[section];
-        if (importSection && !path) {
-            path = importSection.include;
+        if (relativePath !== "") {
+            const joinedPath = relativePath ? `${sectionPath}/${relativePath}` : sectionPath;
+            modulePath = joinedPath.startsWith(".") ? joinedPath : `./${joinedPath}`;
+        } else if (!section.includes("/")) {
+            const importSection = this.importSections[section];
+            if (importSection && !path) {
+                path = importSection.include;
+            }
+            modulePath = `./${section}${path ? `/${path}` : ""}${path.endsWith(".mjs") ? "" : ".mjs"}`;
         }
-        const modulePath = `./${section}${path ? `/${path}` : ""}${path.endsWith(".mjs") ? "" : ".mjs"}`;
->>>>>>> Stashed changes
         if (this._cache[modulePath]) {
             return properties.length
                 ? properties.reduce((acc, property) => (acc[property] = this._cache[modulePath][property]), {})
