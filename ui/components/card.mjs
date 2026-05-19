@@ -161,6 +161,7 @@ class CardComponent extends Component.HTMLElement {
     static html() {
         return `<div class="card-body">
             <header id="header">
+            <div class="hide-icon"></div>
             <div id="drag-icon"><div class="vert"></div><div class="horz"></div></div>
             ${this.title ? `<h1>${this.title}</h1>` : ""}
                 <slot name="title"></slot>
@@ -219,8 +220,14 @@ class CardComponent extends Component.HTMLElement {
         if (this.draggable) {
             this._setupDraggable();
         }
-        this.ref("html").style.setProperty("--card-width", Number.isFinite(Number(this.width)) ? this.width + "px" : "auto");
-        this.ref("html").style.setProperty("--card-height", Number.isFinite(Number(this.height)) ? this.height + "px" : "auto");
+        this.ref("html").style.setProperty(
+            "--card-width",
+            Number.isFinite(Number(this.width)) ? this.width + "px" : "auto"
+        );
+        this.ref("html").style.setProperty(
+            "--card-height",
+            Number.isFinite(Number(this.height)) ? this.height + "px" : "auto"
+        );
 
         if (this.title) {
         }
