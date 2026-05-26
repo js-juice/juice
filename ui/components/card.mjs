@@ -1,5 +1,5 @@
 import Component from "../component.mjs";
-
+import Template from "../../core/Template/Template.mjs";
 class CardComponent extends Component.HTMLElement {
     static tag = "ui-card";
     static config = {
@@ -323,7 +323,10 @@ class CardComponent extends Component.HTMLElement {
         </div>`;
     }
 
-    loadTemplate(templateFile, payload) {}
+    loadTemplate(tpl, context, options = {}) {
+        const template = new Template(options);
+        return template.mount(this.ref("html"), tpl, context);
+    }
 
     toggleVisibility(e) {
         e.preventDefault();

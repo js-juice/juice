@@ -4,9 +4,7 @@
  * @module template/template
  */
 
-import nodePath from "node:path";
-import EventEmitter from "node:events";
-import { fileURLToPath } from "node:url";
+import EventEmitter from "../Event/Emitter.mjs";
 import TokenContent from "./content.mjs";
 
 /**
@@ -26,7 +24,7 @@ import TokenContent from "./content.mjs";
 class TemplateEngine extends EventEmitter {
     constructor({ root } = {}) {
         super();
-        this.root = root || nodePath.dirname(fileURLToPath(import.meta.url));
+        this.root = root || new URL(".", import.meta.url).href;
     }
 
     /**

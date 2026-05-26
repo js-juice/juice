@@ -3,10 +3,9 @@
  * @module template/token
  */
 
-import path from "path";
-import EventEmitter from "events";
+import EventEmitter from "../Event/Emitter.mjs";
 import { safeEval, findTokensInString } from "../Util/Eval.mjs";
-import TokenContent from "./content.mjs";
+import TokenContent, { resolveTemplateLocation } from "./content.mjs";
 
 /**
  * Generates a short random ID.
@@ -171,7 +170,7 @@ class Token extends EventEmitter {
                 const contextId = (this.contextId = body);
 
                 this.bindings = body.split(",").map((b) => b.trim());
-                const incPath = path.resolve(this.parent.root, args[0]).replace(/\\/g, "/");
+                const incPath = resolveTemplateLocation(this.parent.root, args[0]).replace(/\\/g, "/");
                 if (incPath.includes("{{")) {
                 }
 

@@ -3,11 +3,13 @@
  * @module template/content
  */
 
-import EventEmitter from "node:events";
+import EventEmitter from "../Event/Emitter.mjs";
 import Token from "./token.mjs";
 import Context from "./context.mjs";
-import path from "node:path";
-import fs from "node:fs";
+
+const nodeProcess = globalThis.process;
+const nodeFs = nodeProcess?.getBuiltinModule?.("node:fs");
+const nodePath = nodeProcess?.getBuiltinModule?.("node:path");
 
 /**
  * Generates a short random ID.
@@ -19,8 +21,25 @@ function shortId(length = 8) {
         .slice(2, 2 + length);
 }
 
-function dir(path) {
-    return path.substring(0, Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\")));
+function isUrl(value) {
+    return /^[a-zA-Z]+:\/\//.test(value);
+}
+
+function dir(location) {
+    const index = Math.max(location.lastIndexOf("/"), location.lastIndexOf("\\"));
+    return index > -1 ? location.substring(0, index) : "";
+}
+
+function asBase(location) {
+    return location && /[\\/]$/.test(location) ? location : `${location}/`;
+}
+
+export function resolveTemplateLocation(root, location) {
+    if (!root) return location;
+    if (isUrl(root)) return new URL(location, asBase(root)).href;
+    if (nodePath) return nodePath.resolve(root, location);
+    if (root.startsWith("/")) return new URL(location, `${globalThis.location?.origin || ""}${asBase(root)}`).pathname;
+    return `${asBase(root)}${location.replace(/^\.?[\\/]/, "")}`;
 }
 
 function getValueFromPath(obj, path, _default = "") {
@@ -43,15 +62,21 @@ export class TokenContent extends EventEmitter {
     static async load(content, root) {
         if (typeof content !== "string") return content;
 
-        if (/^[a-zA-Z]+:\/\//.test(content) && !/^file:\/\//i.test(content)) {
+        if (isUrl(content) && !/^file:\/\//i.test(content)) {
             const response = await fetch(content);
             return { string: await response.text(), root: dir(content) };
         }
 
         if (/^([a-zA-Z]:[\\/]|[\\.]{0,2}[\\/]|[\\/])/.test(content)) {
-            const filePath = root ? path.resolve(root, content) : content;
+            const filePath = resolveTemplateLocation(root, content);
             try {
-                const template = fs.readFileSync(filePath, "utf-8").toString();
+                if (nodeFs && !isUrl(filePath)) {
+                    const template = nodeFs.readFileSync(filePath, "utf-8").toString();
+                    return { string: template, root: dir(filePath) };
+                }
+                const response = await fetch(filePath);
+                if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+                const template = await response.text();
                 return { string: template, root: dir(filePath) };
             } catch (err) {
                 return { string: `<!-- Failed to load ${filePath}: ${err.message} -->`, root: dir(filePath) };
