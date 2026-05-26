@@ -139,7 +139,7 @@ class Juice {
     }
 
     dev() {
-        this.import("./core/Dev/Log.mjs");
+        this.import("core", "Dev/Log.mjs");
     }
 
     async db(type, name, models) {
@@ -277,26 +277,60 @@ class Juice {
         };
     }
 
-    async import(section, path, properties = []) {
-        let modulePath;
-        const sectionPath = typeof section === "string" ? section.replace(/\/+$/, "") : "";
-        const relativePath = typeof path === "string" ? path.replace(/^\/+/, "") : "";
-        if (relativePath !== "") {
-            const joinedPath = relativePath ? `${sectionPath}/${relativePath}` : sectionPath;
-            modulePath = joinedPath.startsWith(".") ? joinedPath : `./${joinedPath}`;
-        } else if (!section.includes("/")) {
-            const importSection = this.importSections[section];
-            if (importSection && !path) {
-                path = importSection.include;
+    parseImportArgs(...args) {
+        let section,
+            path,
+            modulePath,
+            properties = {};
+
+        if (!args[0]) {
+            throw new Error("No Import args specified.");
+        }
+
+        if (typeof args[args.length - 1] == "object") {
+            properties = args.pop();
+        }
+
+        if (args.length == 1) {
+            if (args[0].includes("/")) {
+                const parts = args[0].split("/");
+                section = parts.shift();
+                path = parts.join("/");
+                return { section, path, modulePath: [section, path].join("/"), properties };
+            } else {
+                section = args[0];
+                const importSection = this.importSections[section];
+                if (importSection && !path) {
+                    path = importSection.include;
+                    return { section, path, modulePath: [section, path].join("/"), properties };
+                } else {
+                    throw new Error("Import Section not defined cant auto import");
+                }
             }
-            modulePath = `./${section}${path ? `/${path}` : ""}${path.endsWith(".mjs") ? "" : ".mjs"}`;
+        } else if (args.length > 1) {
+            section = args.shift();
+            path = args.join("/");
+            modulePath = [section, path].join("/");
+            return { section, path, modulePath, properties };
+        }
+    }
+
+    async import() {
+        let section, modulePath, properties;
+        try {
+            ({ section, modulePath, properties } = this.parseImportArgs(...arguments));
+        } catch (e) {
+            console.error(`${e} juice import error in provided arguments`, arguments);
+            return;
         }
         if (this._cache[modulePath]) {
             return properties.length
                 ? properties.reduce((acc, property) => (acc[property] = this._cache[modulePath][property]), {})
                 : this._cache[modulePath];
         }
-        const module = await import(modulePath);
+
+        const moduleUrl = new URL(`./${modulePath}`, import.meta.url).href;
+        const module = await import(moduleUrl);
         let m = {};
         if (Array.isArray(properties) && properties.length > 0) {
             m = {};
