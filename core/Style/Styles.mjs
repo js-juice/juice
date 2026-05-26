@@ -72,23 +72,24 @@ class Style {
 
     text() {
         return `${this.className} { 
-        ${this.propertyText()}
-        }
-		`;
+    ${this.propertyText()}
+}
+`;
     }
 
     propertyText() {
-        var txt = ``;
+        var txt = "";
+        const arr = [];
         for (let prop in this.properties) {
             var k = prop.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
-            txt += "\t" + k;
+
             if (typeof this.properties[prop] == "object") {
-                txt += "{ " + this.toText(this.properties[prop]) + " } ";
+                txt += k + "{ " + this.toText(this.properties[prop]) + " } ";
             } else {
-                txt += ":" + this.properties[prop] + ";" + "\n";
+                arr.push(k + ": " + this.properties[prop] + ";");
             }
         }
-        return txt;
+        return arr.length ? arr.join(`\n \t`) : txt;
     }
 }
 

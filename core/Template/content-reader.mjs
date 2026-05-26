@@ -1,7 +1,6 @@
 /**
  * Content reader for template parsing.
- * Reads and tokenizes template content for processing.
- * @module Template/ContentReader
+ * @module template/content-reader
  */
 
 import ReaderBase from "../Reader/ReaderBase.mjs";
@@ -19,10 +18,7 @@ class ContentReader extends ReaderBase {
     }
 
     getTokens() {
-        const self = this;
         const str = this.content.slice(this.index);
-        console.log("Reading Blocks", this.content, this.index);
-
         const tokens = [];
         let depth = 0;
         let start = -1;

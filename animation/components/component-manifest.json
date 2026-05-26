@@ -1,8 +1,53 @@
 {
-  "generatedAt": "2026-02-27T21:42:55.462Z",
+  "generatedAt": "2026-05-23T22:03:44.804Z",
   "root": "animation/components",
-  "count": 13,
+  "count": 16,
   "componentsByTag": {
+    "animation-anchor": {
+      "file": "animation/components/anchor.mjs",
+      "extends": "HTMLElement",
+      "baseComponent": {
+        "name": "HTMLElement",
+        "file": null,
+        "methods": [
+          {
+            "name": "html",
+            "params": [
+              "data"
+            ],
+            "description": "Performs the html operation."
+          },
+          {
+            "name": "attributeChangedCallback",
+            "params": [
+              "name",
+              "oldValue",
+              "value"
+            ],
+            "description": "Performs the attributeChangedCallback operation."
+          }
+        ]
+      },
+      "attributes": [],
+      "methods": [
+        {
+          "name": "html",
+          "params": [
+            "data"
+          ],
+          "description": "Performs the html operation."
+        },
+        {
+          "name": "attributeChangedCallback",
+          "params": [
+            "name",
+            "oldValue",
+            "value"
+          ],
+          "description": "Performs the attributeChangedCallback operation."
+        }
+      ]
+    },
     "animation-body": {
       "file": "animation/components/body.mjs",
       "extends": "Component.HTMLElement",
@@ -40,7 +85,8 @@
           {
             "name": "writeStyleVars",
             "params": [
-              "vars"
+              "vars",
+              "target"
             ],
             "description": "Performs the writeStyleVars operation."
           },
@@ -65,6 +111,11 @@
               "...properties"
             ],
             "description": "Performs the clean operation."
+          },
+          {
+            "name": "scheduleRenderEvent",
+            "params": [],
+            "description": "Performs the scheduleRenderEvent operation."
           },
           {
             "name": "connectedCallback",
@@ -112,6 +163,14 @@
             "name": "compileData",
             "params": [],
             "description": "Performs the compileData operation."
+          },
+          {
+            "name": "parseAttributeValue",
+            "params": [
+              "value",
+              "type"
+            ],
+            "description": "Performs the parseAttributeValue operation."
           },
           {
             "name": "attributeChangedCallback",
@@ -234,7 +293,7 @@
           "params": [
             "data"
           ],
-          "description": "Performs the html operation."
+          "description": "Executes html."
         },
         {
           "name": "freezeAt",
@@ -243,12 +302,12 @@
             "y",
             "z"
           ],
-          "description": "Performs the freezeAt operation."
+          "description": "Executes freezeAt."
         },
         {
           "name": "beforeCreate",
           "params": [],
-          "description": "Performs the beforeCreate operation."
+          "description": "Executes beforeCreate."
         },
         {
           "name": "setAnchor",
@@ -263,7 +322,7 @@
             "x",
             "y"
           ],
-          "description": "Moves the component or its internal state."
+          "description": "Executes moveTo."
         },
         {
           "name": "onPropertyChanged",
@@ -272,7 +331,7 @@
             "previous",
             "value"
           ],
-          "description": "Lifecycle/event hook: onPropertyChanged."
+          "description": "Handles propertychanged events."
         },
         {
           "name": "onAttributeChanged",
@@ -281,19 +340,19 @@
             "prevous",
             "value"
           ],
-          "description": "Lifecycle/event hook: onAttributeChanged."
+          "description": "Handles attributechanged events."
         },
         {
           "name": "isInViewport",
           "params": [],
-          "description": "Performs the isInViewport operation."
+          "description": "Executes isInViewport."
         },
         {
           "name": "update",
           "params": [
             "time"
           ],
-          "description": "Updates internal animation state."
+          "description": "Updates internal state from incoming values."
         },
         {
           "name": "render",
@@ -301,6 +360,11 @@
             "time"
           ],
           "description": "Renders the component state to DOM/canvas."
+        },
+        {
+          "name": "onFirstConnect",
+          "params": [],
+          "description": "Lifecycle/event hook: onFirstConnect."
         },
         {
           "name": "setOffset",
@@ -313,7 +377,7 @@
         {
           "name": "absolutePosition",
           "params": [],
-          "description": "Performs the absolutePosition operation."
+          "description": "Executes absolutePosition."
         },
         {
           "name": "viewerPosition",
@@ -335,12 +399,12 @@
         {
           "name": "topParent",
           "params": [],
-          "description": "Performs the topParent operation."
+          "description": "Executes topParent."
         },
         {
           "name": "onAnimationConnect",
           "params": [],
-          "description": "Lifecycle/event hook: onAnimationConnect."
+          "description": "Handles animationconnect events."
         }
       ]
     },
@@ -381,7 +445,8 @@
           {
             "name": "writeStyleVars",
             "params": [
-              "vars"
+              "vars",
+              "target"
             ],
             "description": "Performs the writeStyleVars operation."
           },
@@ -406,6 +471,11 @@
               "...properties"
             ],
             "description": "Performs the clean operation."
+          },
+          {
+            "name": "scheduleRenderEvent",
+            "params": [],
+            "description": "Performs the scheduleRenderEvent operation."
           },
           {
             "name": "connectedCallback",
@@ -453,6 +523,14 @@
             "name": "compileData",
             "params": [],
             "description": "Performs the compileData operation."
+          },
+          {
+            "name": "parseAttributeValue",
+            "params": [
+              "value",
+              "type"
+            ],
+            "description": "Performs the parseAttributeValue operation."
           },
           {
             "name": "attributeChangedCallback",
@@ -527,7 +605,7 @@
           "params": [
             "data"
           ],
-          "description": "Performs the html operation."
+          "description": "Executes html."
         },
         {
           "name": "polorControl",
@@ -535,12 +613,12 @@
             "velocity",
             "angle"
           ],
-          "description": "Performs the polorControl operation."
+          "description": "Executes polorControl."
         },
         {
           "name": "beforeCreate",
           "params": [],
-          "description": "Performs the beforeCreate operation."
+          "description": "Executes beforeCreate."
         },
         {
           "name": "setAnchor",
@@ -555,7 +633,7 @@
             "x",
             "y"
           ],
-          "description": "Moves the component or its internal state."
+          "description": "Executes move."
         },
         {
           "name": "moveTo",
@@ -563,7 +641,7 @@
             "x",
             "y"
           ],
-          "description": "Moves the component or its internal state."
+          "description": "Executes moveTo."
         },
         {
           "name": "movePolor",
@@ -571,29 +649,29 @@
             "dist",
             "angle"
           ],
-          "description": "Moves the component or its internal state."
+          "description": "Executes movePolor."
         },
         {
           "name": "onFirstConnect",
           "params": [],
-          "description": "Lifecycle/event hook: onFirstConnect."
+          "description": "Handles firstconnect events."
         },
         {
           "name": "update",
           "params": [],
-          "description": "Updates internal animation state."
+          "description": "Updates internal state from incoming values."
         },
         {
           "name": "render",
           "params": [],
-          "description": "Renders the component state to DOM/canvas."
+          "description": "Renders output from current module state."
         },
         {
           "name": "onChildren",
           "params": [
             "children"
           ],
-          "description": "Lifecycle/event hook: onChildren."
+          "description": "Handles children events."
         },
         {
           "name": "onPropertyChanged",
@@ -602,12 +680,12 @@
             "prevous",
             "value"
           ],
-          "description": "Lifecycle/event hook: onPropertyChanged."
+          "description": "Handles propertychanged events."
         }
       ]
     },
-    "animation-container": {
-      "file": "animation/components/container.mjs",
+    "animation-component": {
+      "file": "animation/components/animation-component.mjs",
       "extends": "Component.HTMLElement",
       "baseComponent": {
         "name": "Component.HTMLElement",
@@ -643,7 +721,8 @@
           {
             "name": "writeStyleVars",
             "params": [
-              "vars"
+              "vars",
+              "target"
             ],
             "description": "Performs the writeStyleVars operation."
           },
@@ -668,6 +747,11 @@
               "...properties"
             ],
             "description": "Performs the clean operation."
+          },
+          {
+            "name": "scheduleRenderEvent",
+            "params": [],
+            "description": "Performs the scheduleRenderEvent operation."
           },
           {
             "name": "connectedCallback",
@@ -715,6 +799,342 @@
             "name": "compileData",
             "params": [],
             "description": "Performs the compileData operation."
+          },
+          {
+            "name": "parseAttributeValue",
+            "params": [
+              "value",
+              "type"
+            ],
+            "description": "Performs the parseAttributeValue operation."
+          },
+          {
+            "name": "attributeChangedCallback",
+            "params": [
+              "property",
+              "oldValue",
+              "newValue"
+            ],
+            "description": "Invoked each time one of the custom element's attributes is added, removed, or changed."
+          }
+        ]
+      },
+      "attributes": [
+        {
+          "name": "width",
+          "type": "int",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "height",
+          "type": "int",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "scale",
+          "type": "number",
+          "default": 1,
+          "linked": true
+        },
+        {
+          "name": "x",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "z",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "vx",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "vy",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "vz",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "r",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "rx",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "ry",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "rz",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "offset",
+          "type": "string",
+          "default": 0,
+          "linked": null
+        },
+        {
+          "name": "anchor",
+          "type": "string",
+          "default": "{ x: 0.5, y: 0.5 }",
+          "linked": null
+        },
+        {
+          "name": "origin",
+          "type": "string",
+          "default": "{ x: 0.5, y: 0.5 }",
+          "linked": null
+        },
+        {
+          "name": "debug",
+          "type": "exists",
+          "default": false,
+          "linked": true
+        },
+        {
+          "name": "position",
+          "type": null,
+          "default": null,
+          "linked": null
+        }
+      ],
+      "methods": [
+        {
+          "name": "html",
+          "params": [
+            "data"
+          ],
+          "description": "Performs the html operation."
+        },
+        {
+          "name": "beforeCreate",
+          "params": [],
+          "description": "Executes beforeCreate."
+        },
+        {
+          "name": "freezeAt",
+          "params": [
+            "x",
+            "y",
+            "z"
+          ],
+          "description": "Executes freezeAt."
+        },
+        {
+          "name": "moveTo",
+          "params": [
+            "x",
+            "y"
+          ],
+          "description": "Executes moveTo."
+        },
+        {
+          "name": "move",
+          "params": [
+            "x",
+            "y"
+          ],
+          "description": "Moves the component or its internal state."
+        },
+        {
+          "name": "onFirstConnect",
+          "params": [],
+          "description": "Lifecycle/event hook: onFirstConnect."
+        },
+        {
+          "name": "isInViewport",
+          "params": [],
+          "description": "Performs the isInViewport operation."
+        },
+        {
+          "name": "update",
+          "params": [],
+          "description": "Updates internal animation state."
+        },
+        {
+          "name": "render",
+          "params": [],
+          "description": "Renders the component state to DOM/canvas."
+        },
+        {
+          "name": "onPropertyChanged",
+          "params": [
+            "property",
+            "previous",
+            "value"
+          ],
+          "description": "Lifecycle/event hook: onPropertyChanged."
+        },
+        {
+          "name": "onAttributeChanged",
+          "params": [
+            "property",
+            "previous",
+            "value"
+          ],
+          "description": "Lifecycle/event hook: onAttributeChanged."
+        },
+        {
+          "name": "onAnimationConnect",
+          "params": [],
+          "description": "Handles animationconnect events."
+        }
+      ]
+    },
+    "animation-container": {
+      "file": "animation/components/container.mjs",
+      "extends": "Component.HTMLElement",
+      "baseComponent": {
+        "name": "Component.HTMLElement",
+        "file": "ui/component.mjs",
+        "methods": [
+          {
+            "name": "initialize",
+            "params": [],
+            "description": "Initializes the static configuration of the component."
+          },
+          {
+            "name": "html",
+            "params": [
+              "data"
+            ],
+            "description": "Performs the html operation."
+          },
+          {
+            "name": "setStyleVar",
+            "params": [
+              "key",
+              "value"
+            ],
+            "description": "Sets stylevar values."
+          },
+          {
+            "name": "setStyleVars",
+            "params": [
+              "vars"
+            ],
+            "description": "Sets stylevars values."
+          },
+          {
+            "name": "writeStyleVars",
+            "params": [
+              "vars",
+              "target"
+            ],
+            "description": "Performs the writeStyleVars operation."
+          },
+          {
+            "name": "setDefined",
+            "params": [
+              "prop",
+              "value"
+            ],
+            "description": "Sets defined values."
+          },
+          {
+            "name": "dirty",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the dirty operation."
+          },
+          {
+            "name": "clean",
+            "params": [
+              "...properties"
+            ],
+            "description": "Performs the clean operation."
+          },
+          {
+            "name": "scheduleRenderEvent",
+            "params": [],
+            "description": "Performs the scheduleRenderEvent operation."
+          },
+          {
+            "name": "connectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is appended into a document-connected element."
+          },
+          {
+            "name": "disconnectedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is disconnected from the document's DOM"
+          },
+          {
+            "name": "ref",
+            "params": [
+              "id"
+            ],
+            "description": "Get Element ref from template"
+          },
+          {
+            "name": "adoptedCallback",
+            "params": [],
+            "description": "Invoked each time the custom element is moved to a new document."
+          },
+          {
+            "name": "setRef",
+            "params": [
+              "ref",
+              "el"
+            ],
+            "description": "Sets ref values."
+          },
+          {
+            "name": "slot",
+            "params": [
+              "name"
+            ],
+            "description": "Performs the slot operation."
+          },
+          {
+            "name": "computedName",
+            "params": [],
+            "description": "Performs the computedName operation."
+          },
+          {
+            "name": "compileData",
+            "params": [],
+            "description": "Performs the compileData operation."
+          },
+          {
+            "name": "parseAttributeValue",
+            "params": [
+              "value",
+              "type"
+            ],
+            "description": "Performs the parseAttributeValue operation."
           },
           {
             "name": "attributeChangedCallback",
@@ -771,7 +1191,7 @@
           "params": [
             "data"
           ],
-          "description": "Performs the html operation."
+          "description": "Executes html."
         },
         {
           "name": "setAnchor",
@@ -783,7 +1203,7 @@
         {
           "name": "beforeCreate",
           "params": [],
-          "description": "Performs the beforeCreate operation."
+          "description": "Executes beforeCreate."
         },
         {
           "name": "onPropertyChanged",
@@ -792,24 +1212,24 @@
             "prevous",
             "value"
           ],
-          "description": "Lifecycle/event hook: onPropertyChanged."
+          "description": "Handles propertychanged events."
         },
         {
           "name": "update",
           "params": [],
-          "description": "Updates internal animation state."
+          "description": "Updates internal state from incoming values."
         },
         {
           "name": "render",
           "params": [],
-          "description": "Renders the component state to DOM/canvas."
+          "description": "Renders output from current module state."
         },
         {
           "name": "onCustomChildReady",
           "params": [
             "child"
           ],
-          "description": "Lifecycle/event hook: onCustomChildReady."
+          "description": "Handles customchildready events."
         }
       ]
     },
@@ -850,7 +1270,8 @@
           {
             "name": "writeStyleVars",
             "params": [
-              "vars"
+              "vars",
+              "target"
             ],
             "description": "Performs the writeStyleVars operation."
           },
@@ -875,6 +1296,11 @@
               "...properties"
             ],
             "description": "Performs the clean operation."
+          },
+          {
+            "name": "scheduleRenderEvent",
+            "params": [],
+            "description": "Performs the scheduleRenderEvent operation."
           },
           {
             "name": "connectedCallback",
@@ -922,6 +1348,14 @@
             "name": "compileData",
             "params": [],
             "description": "Performs the compileData operation."
+          },
+          {
+            "name": "parseAttributeValue",
+            "params": [
+              "value",
+              "type"
+            ],
+            "description": "Performs the parseAttributeValue operation."
           },
           {
             "name": "attributeChangedCallback",
@@ -964,19 +1398,19 @@
         {
           "name": "html",
           "params": [],
-          "description": "Performs the html operation."
+          "description": "Executes html."
         },
         {
           "name": "onFirstConnect",
           "params": [],
-          "description": "Lifecycle/event hook: onFirstConnect."
+          "description": "Handles firstconnect events."
         },
         {
           "name": "onChildren",
           "params": [
             "children"
           ],
-          "description": "Lifecycle/event hook: onChildren."
+          "description": "Handles children events."
         },
         {
           "name": "setup",
@@ -988,14 +1422,14 @@
           "params": [
             "time"
           ],
-          "description": "Updates internal animation state."
+          "description": "Updates internal state from incoming values."
         },
         {
           "name": "render",
           "params": [
             "time"
           ],
-          "description": "Renders the component state to DOM/canvas."
+          "description": "Renders output from current module state."
         }
       ]
     },
@@ -1036,7 +1470,8 @@
           {
             "name": "writeStyleVars",
             "params": [
-              "vars"
+              "vars",
+              "target"
             ],
             "description": "Performs the writeStyleVars operation."
           },
@@ -1061,6 +1496,11 @@
               "...properties"
             ],
             "description": "Performs the clean operation."
+          },
+          {
+            "name": "scheduleRenderEvent",
+            "params": [],
+            "description": "Performs the scheduleRenderEvent operation."
           },
           {
             "name": "connectedCallback",
@@ -1108,6 +1548,14 @@
             "name": "compileData",
             "params": [],
             "description": "Performs the compileData operation."
+          },
+          {
+            "name": "parseAttributeValue",
+            "params": [
+              "value",
+              "type"
+            ],
+            "description": "Performs the parseAttributeValue operation."
           },
           {
             "name": "attributeChangedCallback",
@@ -1185,7 +1633,8 @@
           {
             "name": "writeStyleVars",
             "params": [
-              "vars"
+              "vars",
+              "target"
             ],
             "description": "Performs the writeStyleVars operation."
           },
@@ -1210,6 +1659,11 @@
               "...properties"
             ],
             "description": "Performs the clean operation."
+          },
+          {
+            "name": "scheduleRenderEvent",
+            "params": [],
+            "description": "Performs the scheduleRenderEvent operation."
           },
           {
             "name": "connectedCallback",
@@ -1259,6 +1713,14 @@
             "description": "Performs the compileData operation."
           },
           {
+            "name": "parseAttributeValue",
+            "params": [
+              "value",
+              "type"
+            ],
+            "description": "Performs the parseAttributeValue operation."
+          },
+          {
             "name": "attributeChangedCallback",
             "params": [
               "property",
@@ -1287,19 +1749,19 @@
         {
           "name": "onFirstConnect",
           "params": [],
-          "description": "Lifecycle/event hook: onFirstConnect."
+          "description": "Handles firstconnect events."
         },
         {
           "name": "updatePosition",
           "params": [],
-          "description": "Updates internal animation state."
+          "description": "Updates internal state from incoming values."
         },
         {
           "name": "html",
           "params": [
             "data"
           ],
-          "description": "Performs the html operation."
+          "description": "Executes html."
         },
         {
           "name": "onAttributeChange",
@@ -1308,12 +1770,12 @@
             "oldValue",
             "newValue"
           ],
-          "description": "Lifecycle/event hook: onAttributeChange."
+          "description": "Handles attributechange events."
         }
       ]
     },
     "animation-minimap": {
-      "file": "animation/components/preview.mjs",
+      "file": "animation/components/minimap.mjs",
       "extends": "Component.HTMLElement",
       "baseComponent": {
         "name": "Component.HTMLElement",
@@ -1349,7 +1811,8 @@
           {
             "name": "writeStyleVars",
             "params": [
-              "vars"
+              "vars",
+              "target"
             ],
             "description": "Performs the writeStyleVars operation."
           },
@@ -1374,6 +1837,11 @@
               "...properties"
             ],
             "description": "Performs the clean operation."
+          },
+          {
+            "name": "scheduleRenderEvent",
+            "params": [],
+            "description": "Performs the scheduleRenderEvent operation."
           },
           {
             "name": "connectedCallback",
@@ -1421,6 +1889,14 @@
             "name": "compileData",
             "params": [],
             "description": "Performs the compileData operation."
+          },
+          {
+            "name": "parseAttributeValue",
+            "params": [
+              "value",
+              "type"
+            ],
+            "description": "Performs the parseAttributeValue operation."
           },
           {
             "name": "attributeChangedCallback",
@@ -1481,29 +1957,29 @@
         {
           "name": "html",
           "params": [],
-          "description": "Performs the html operation."
+          "description": "Executes html."
         },
         {
           "name": "beforeCreate",
           "params": [],
-          "description": "Performs the beforeCreate operation."
+          "description": "Executes beforeCreate."
         },
         {
           "name": "onFirstConnect",
           "params": [],
-          "description": "Lifecycle/event hook: onFirstConnect."
+          "description": "Handles firstconnect events."
         },
         {
           "name": "onPropertyChanged",
           "params": [
             "property"
           ],
-          "description": "Lifecycle/event hook: onPropertyChanged."
+          "description": "Handles propertychanged events."
         },
         {
           "name": "onDisconnect",
           "params": [],
-          "description": "Lifecycle/event hook: onDisconnect."
+          "description": "Handles disconnect events."
         }
       ]
     },
@@ -1544,7 +2020,8 @@
           {
             "name": "writeStyleVars",
             "params": [
-              "vars"
+              "vars",
+              "target"
             ],
             "description": "Performs the writeStyleVars operation."
           },
@@ -1569,6 +2046,11 @@
               "...properties"
             ],
             "description": "Performs the clean operation."
+          },
+          {
+            "name": "scheduleRenderEvent",
+            "params": [],
+            "description": "Performs the scheduleRenderEvent operation."
           },
           {
             "name": "connectedCallback",
@@ -1616,6 +2098,14 @@
             "name": "compileData",
             "params": [],
             "description": "Performs the compileData operation."
+          },
+          {
+            "name": "parseAttributeValue",
+            "params": [
+              "value",
+              "type"
+            ],
+            "description": "Performs the parseAttributeValue operation."
           },
           {
             "name": "attributeChangedCallback",
@@ -1706,55 +2196,55 @@
         {
           "name": "html",
           "params": [],
-          "description": "Performs the html operation."
+          "description": "Executes html."
         },
         {
           "name": "hasExplicitAttribute",
           "params": [
             "name"
           ],
-          "description": "Performs the hasExplicitAttribute operation."
+          "description": "Executes hasExplicitAttribute."
         },
         {
           "name": "updateDisplaySize",
           "params": [],
-          "description": "Updates internal animation state."
+          "description": "Updates internal state from incoming values."
         },
         {
           "name": "syncFromSheet",
           "params": [
             "sheet"
           ],
-          "description": "Performs the syncFromSheet operation."
+          "description": "Executes syncFromSheet."
         },
         {
           "name": "onFirstConnect",
           "params": [],
-          "description": "Lifecycle/event hook: onFirstConnect."
+          "description": "Handles firstconnect events."
         },
         {
           "name": "update",
           "params": [
             "data"
           ],
-          "description": "Updates internal animation state."
+          "description": "Updates internal state from incoming values."
         },
         {
           "name": "render",
           "params": [
             "force"
           ],
-          "description": "Renders the component state to DOM/canvas."
+          "description": "Renders output from current module state."
         },
         {
           "name": "next",
           "params": [],
-          "description": "Navigates animation frame state."
+          "description": "Executes next."
         },
         {
           "name": "prev",
           "params": [],
-          "description": "Navigates animation frame state."
+          "description": "Executes prev."
         },
         {
           "name": "addSheet",
@@ -1764,7 +2254,7 @@
             "height",
             "options"
           ],
-          "description": "Adds sheet data or elements."
+          "description": "Executes addSheet."
         },
         {
           "name": "onPropertyChanged",
@@ -1773,7 +2263,7 @@
             "old",
             "value"
           ],
-          "description": "Lifecycle/event hook: onPropertyChanged."
+          "description": "Handles propertychanged events."
         }
       ]
     },
@@ -1814,7 +2304,8 @@
           {
             "name": "writeStyleVars",
             "params": [
-              "vars"
+              "vars",
+              "target"
             ],
             "description": "Performs the writeStyleVars operation."
           },
@@ -1839,6 +2330,11 @@
               "...properties"
             ],
             "description": "Performs the clean operation."
+          },
+          {
+            "name": "scheduleRenderEvent",
+            "params": [],
+            "description": "Performs the scheduleRenderEvent operation."
           },
           {
             "name": "connectedCallback",
@@ -1888,6 +2384,14 @@
             "description": "Performs the compileData operation."
           },
           {
+            "name": "parseAttributeValue",
+            "params": [
+              "value",
+              "type"
+            ],
+            "description": "Performs the parseAttributeValue operation."
+          },
+          {
             "name": "attributeChangedCallback",
             "params": [
               "property",
@@ -1918,6 +2422,12 @@
           "linked": true
         },
         {
+          "name": "background",
+          "type": "string",
+          "default": "transparent",
+          "linked": true
+        },
+        {
           "name": "x",
           "type": "number",
           "default": 0,
@@ -1927,12 +2437,6 @@
           "name": "y",
           "type": "number",
           "default": 0,
-          "linked": null
-        },
-        {
-          "name": "anchor",
-          "type": "string",
-          "default": "left top",
           "linked": null
         },
         {
@@ -1950,13 +2454,25 @@
         {
           "name": "fps",
           "type": "number",
-          "default": 10,
+          "default": 60,
           "linked": true
         },
         {
           "name": "state",
           "type": "string",
           "default": "initial",
+          "linked": null
+        },
+        {
+          "name": "anchor",
+          "type": "object",
+          "default": "{ x: 0.5, y: 0.5 }",
+          "linked": null
+        },
+        {
+          "name": "origin",
+          "type": "object",
+          "default": "{ x: 0.5, y: 0.5 }",
           "linked": null
         },
         {
@@ -1972,12 +2488,12 @@
           "params": [
             "data"
           ],
-          "description": "Performs the html operation."
+          "description": "Executes html."
         },
         {
           "name": "beforeCreate",
           "params": [],
-          "description": "Performs the beforeCreate operation."
+          "description": "Executes beforeCreate."
         },
         {
           "name": "moveTo",
@@ -1985,7 +2501,7 @@
             "x",
             "y"
           ],
-          "description": "Moves the component or its internal state."
+          "description": "Executes moveTo."
         },
         {
           "name": "move",
@@ -1993,7 +2509,7 @@
             "x",
             "y"
           ],
-          "description": "Moves the component or its internal state."
+          "description": "Executes move."
         },
         {
           "name": "onAttributeChanged",
@@ -2002,7 +2518,7 @@
             "prevous",
             "value"
           ],
-          "description": "Lifecycle/event hook: onAttributeChanged."
+          "description": "Handles attributechanged events."
         },
         {
           "name": "onPropertyChanged",
@@ -2011,7 +2527,7 @@
             "prevous",
             "value"
           ],
-          "description": "Lifecycle/event hook: onPropertyChanged."
+          "description": "Handles propertychanged events."
         },
         {
           "name": "addBackground",
@@ -2019,66 +2535,90 @@
             "element",
             "options"
           ],
-          "description": "Adds background data or elements."
+          "description": "Executes addBackground."
         },
         {
           "name": "update",
           "params": [
             "time"
           ],
-          "description": "Updates internal animation state."
+          "description": "Updates internal state from incoming values."
         },
         {
           "name": "render",
           "params": [
             "data"
           ],
-          "description": "Renders the component state to DOM/canvas."
+          "description": "Renders output from current module state."
         },
         {
           "name": "onCustomChildReady",
           "params": [
             "child"
           ],
-          "description": "Lifecycle/event hook: onCustomChildReady."
+          "description": "Handles customchildready events."
         },
         {
           "name": "addAnimator",
           "params": [
             "animator"
           ],
-          "description": "Adds animator data or elements."
-        },
-        {
-          "name": "setAnchor",
-          "params": [
-            "anchorPosition"
-          ],
-          "description": "Sets anchor values."
+          "description": "Executes addAnimator."
         },
         {
           "name": "onFirstConnect",
           "params": [],
-          "description": "Lifecycle/event hook: onFirstConnect."
+          "description": "Handles firstconnect events."
         },
         {
           "name": "onViewerConnect",
           "params": [
             "viewer"
           ],
-          "description": "Lifecycle/event hook: onViewerConnect."
+          "description": "Handles viewerconnect events."
         },
         {
           "name": "onViewerDisconnect",
           "params": [
             "viewer"
           ],
-          "description": "Lifecycle/event hook: onViewerDisconnect."
+          "description": "Handles viewerdisconnect events."
         },
         {
           "name": "onDisconnect",
           "params": [],
-          "description": "Lifecycle/event hook: onDisconnect."
+          "description": "Handles disconnect events."
+        },
+        {
+          "name": "addLayer",
+          "params": [
+            "name",
+            "options"
+          ],
+          "description": "Executes addLayer."
+        },
+        {
+          "name": "appendLayer",
+          "params": [
+            "name",
+            "options"
+          ],
+          "description": "Executes appendLayer."
+        },
+        {
+          "name": "prependLayer",
+          "params": [
+            "name",
+            "options"
+          ],
+          "description": "Executes prependLayer."
+        },
+        {
+          "name": "layer",
+          "params": [
+            "indexOrName"
+          ],
+          "description": "Executes layer."
         }
       ]
     },
@@ -2119,7 +2659,8 @@
           {
             "name": "writeStyleVars",
             "params": [
-              "vars"
+              "vars",
+              "target"
             ],
             "description": "Performs the writeStyleVars operation."
           },
@@ -2144,6 +2685,11 @@
               "...properties"
             ],
             "description": "Performs the clean operation."
+          },
+          {
+            "name": "scheduleRenderEvent",
+            "params": [],
+            "description": "Performs the scheduleRenderEvent operation."
           },
           {
             "name": "connectedCallback",
@@ -2193,6 +2739,14 @@
             "description": "Performs the compileData operation."
           },
           {
+            "name": "parseAttributeValue",
+            "params": [
+              "value",
+              "type"
+            ],
+            "description": "Performs the parseAttributeValue operation."
+          },
+          {
             "name": "attributeChangedCallback",
             "params": [
               "property",
@@ -2215,6 +2769,12 @@
           "type": "number",
           "default": 0,
           "linked": null
+        },
+        {
+          "name": "inline",
+          "type": "exists",
+          "default": false,
+          "linked": true
         }
       ],
       "methods": [
@@ -2223,24 +2783,24 @@
           "params": [
             "data"
           ],
-          "description": "Performs the html operation."
+          "description": "Executes html."
         },
         {
           "name": "beforeCreate",
           "params": [],
-          "description": "Performs the beforeCreate operation."
+          "description": "Executes beforeCreate."
         },
         {
           "name": "onFirstConnect",
           "params": [],
-          "description": "Lifecycle/event hook: onFirstConnect."
+          "description": "Handles firstconnect events."
         },
         {
           "name": "shouldSample",
           "params": [
             "time"
           ],
-          "description": "Performs the shouldSample operation."
+          "description": "Executes shouldSample."
         },
         {
           "name": "setStat",
@@ -2256,14 +2816,14 @@
             "key",
             "value"
           ],
-          "description": "Adds stat data or elements."
+          "description": "Executes addStat."
         },
         {
           "name": "update",
           "params": [
             "time"
           ],
-          "description": "Updates internal animation state."
+          "description": "Updates internal state from incoming values."
         }
       ]
     },
@@ -2304,7 +2864,8 @@
           {
             "name": "writeStyleVars",
             "params": [
-              "vars"
+              "vars",
+              "target"
             ],
             "description": "Performs the writeStyleVars operation."
           },
@@ -2329,6 +2890,11 @@
               "...properties"
             ],
             "description": "Performs the clean operation."
+          },
+          {
+            "name": "scheduleRenderEvent",
+            "params": [],
+            "description": "Performs the scheduleRenderEvent operation."
           },
           {
             "name": "connectedCallback",
@@ -2376,6 +2942,14 @@
             "name": "compileData",
             "params": [],
             "description": "Performs the compileData operation."
+          },
+          {
+            "name": "parseAttributeValue",
+            "params": [
+              "value",
+              "type"
+            ],
+            "description": "Performs the parseAttributeValue operation."
           },
           {
             "name": "attributeChangedCallback",
@@ -2436,54 +3010,54 @@
         {
           "name": "html",
           "params": [],
-          "description": "Performs the html operation."
+          "description": "Executes html."
         },
         {
           "name": "beforeCreate",
           "params": [],
-          "description": "Performs the beforeCreate operation."
+          "description": "Executes beforeCreate."
         },
         {
           "name": "onFirstConnect",
           "params": [],
-          "description": "Lifecycle/event hook: onFirstConnect."
+          "description": "Handles firstconnect events."
         },
         {
           "name": "onDisconnect",
           "params": [],
-          "description": "Lifecycle/event hook: onDisconnect."
+          "description": "Handles disconnect events."
         },
         {
           "name": "onPropertyChanged",
           "params": [
             "property"
           ],
-          "description": "Lifecycle/event hook: onPropertyChanged."
+          "description": "Handles propertychanged events."
         },
         {
           "name": "onPlay",
           "params": [],
-          "description": "Lifecycle/event hook: onPlay."
+          "description": "Handles play events."
         },
         {
           "name": "onPause",
           "params": [],
-          "description": "Lifecycle/event hook: onPause."
+          "description": "Handles pause events."
         },
         {
           "name": "onReset",
           "params": [],
-          "description": "Lifecycle/event hook: onReset."
+          "description": "Handles reset events."
         },
         {
           "name": "onStepForward",
           "params": [],
-          "description": "Lifecycle/event hook: onStepForward."
+          "description": "Handles stepforward events."
         },
         {
           "name": "onStepBack",
           "params": [],
-          "description": "Lifecycle/event hook: onStepBack."
+          "description": "Handles stepback events."
         },
         {
           "name": "onSpeedInput",
@@ -2491,7 +3065,7 @@
             "event",
             "input"
           ],
-          "description": "Lifecycle/event hook: onSpeedInput."
+          "description": "Handles speedinput events."
         },
         {
           "name": "onReverseChange",
@@ -2499,7 +3073,7 @@
             "event",
             "input"
           ],
-          "description": "Lifecycle/event hook: onReverseChange."
+          "description": "Handles reversechange events."
         }
       ]
     },
@@ -2540,7 +3114,8 @@
           {
             "name": "writeStyleVars",
             "params": [
-              "vars"
+              "vars",
+              "target"
             ],
             "description": "Performs the writeStyleVars operation."
           },
@@ -2565,6 +3140,11 @@
               "...properties"
             ],
             "description": "Performs the clean operation."
+          },
+          {
+            "name": "scheduleRenderEvent",
+            "params": [],
+            "description": "Performs the scheduleRenderEvent operation."
           },
           {
             "name": "connectedCallback",
@@ -2612,6 +3192,14 @@
             "name": "compileData",
             "params": [],
             "description": "Performs the compileData operation."
+          },
+          {
+            "name": "parseAttributeValue",
+            "params": [
+              "value",
+              "type"
+            ],
+            "description": "Performs the parseAttributeValue operation."
           },
           {
             "name": "attributeChangedCallback",
@@ -2662,6 +3250,18 @@
           "linked": true
         },
         {
+          "name": "frame",
+          "type": "exists",
+          "default": false,
+          "linked": true
+        },
+        {
+          "name": "origin",
+          "type": "string",
+          "default": "center",
+          "linked": null
+        },
+        {
           "name": "stats",
           "type": null,
           "default": null,
@@ -2670,11 +3270,16 @@
       ],
       "methods": [
         {
+          "name": "debugHTML",
+          "params": [],
+          "description": "Performs the debugHTML operation."
+        },
+        {
           "name": "html",
           "params": [
             "data"
           ],
-          "description": "Performs the html operation."
+          "description": "Executes html."
         },
         {
           "name": "onResize",
@@ -2682,75 +3287,75 @@
             "w",
             "h"
           ],
-          "description": "Lifecycle/event hook: onResize."
+          "description": "Handles resize events."
         },
         {
           "name": "onStageConnect",
           "params": [
             "stage"
           ],
-          "description": "Lifecycle/event hook: onStageConnect."
+          "description": "Handles stageconnect events."
         },
         {
           "name": "onTargetConnect",
           "params": [
             "target"
           ],
-          "description": "Lifecycle/event hook: onTargetConnect."
+          "description": "Handles targetconnect events."
         },
         {
           "name": "onChildren",
           "params": [
             "children"
           ],
-          "description": "Lifecycle/event hook: onChildren."
+          "description": "Handles children events."
         },
         {
           "name": "onCustomChildReady",
           "params": [
             "child"
           ],
-          "description": "Lifecycle/event hook: onCustomChildReady."
+          "description": "Handles customchildready events."
         },
         {
           "name": "update",
           "params": [
             "time"
           ],
-          "description": "Updates internal animation state."
+          "description": "Updates internal state from incoming values."
         },
         {
           "name": "render",
           "params": [],
-          "description": "Renders the component state to DOM/canvas."
+          "description": "Renders output from current module state."
         },
         {
           "name": "onCustomChildConnect",
           "params": [
             "child"
           ],
-          "description": "Lifecycle/event hook: onCustomChildConnect."
+          "description": "Handles customchildconnect events."
         },
         {
           "name": "updateCamera",
           "params": [
             "time"
           ],
-          "description": "Updates internal animation state."
+          "description": "Updates internal state from incoming values."
         },
         {
           "name": "follow",
           "params": [
             "target"
           ],
-          "description": "Performs the follow operation."
+          "description": "Executes follow."
         },
         {
           "name": "onAssetAdded",
           "params": [
             "asset"
           ],
-          "description": "Lifecycle/event hook: onAssetAdded."
+          "description": "Handles assetadded events."
         },
         {
           "name": "onPropertyChanged",
@@ -2759,53 +3364,134 @@
             "previous",
             "value"
           ],
-          "description": "Lifecycle/event hook: onPropertyChanged."
+          "description": "Handles propertychanged events."
         },
         {
           "name": "onFirstConnect",
           "params": [],
-          "description": "Lifecycle/event hook: onFirstConnect."
+          "description": "Handles firstconnect events."
         },
         {
           "name": "onDisconnect",
           "params": [],
-          "description": "Lifecycle/event hook: onDisconnect."
+          "description": "Handles disconnect events."
         },
         {
           "name": "onTimelineReady",
           "params": [],
-          "description": "Lifecycle/event hook: onTimelineReady."
+          "description": "Handles timelineready events."
+        }
+      ]
+    },
+    "particle-emitter": {
+      "file": "animation/components/particle-emitter.mjs",
+      "extends": "AnimationComponent",
+      "baseComponent": {
+        "name": "AnimationComponent",
+        "file": "animation/components/animation-component.mjs",
+        "methods": [
+          {
+            "name": "html",
+            "params": [
+              "data"
+            ],
+            "description": "Performs the html operation."
+          },
+          {
+            "name": "beforeCreate",
+            "params": [],
+            "description": "Executes beforeCreate."
+          },
+          {
+            "name": "freezeAt",
+            "params": [
+              "x",
+              "y",
+              "z"
+            ],
+            "description": "Executes freezeAt."
+          },
+          {
+            "name": "moveTo",
+            "params": [
+              "x",
+              "y"
+            ],
+            "description": "Executes moveTo."
+          },
+          {
+            "name": "move",
+            "params": [
+              "x",
+              "y"
+            ],
+            "description": "Moves the component or its internal state."
+          },
+          {
+            "name": "onFirstConnect",
+            "params": [],
+            "description": "Lifecycle/event hook: onFirstConnect."
+          },
+          {
+            "name": "isInViewport",
+            "params": [],
+            "description": "Performs the isInViewport operation."
+          },
+          {
+            "name": "update",
+            "params": [],
+            "description": "Updates internal animation state."
+          },
+          {
+            "name": "render",
+            "params": [],
+            "description": "Renders the component state to DOM/canvas."
+          },
+          {
+            "name": "onPropertyChanged",
+            "params": [
+              "property",
+              "previous",
+              "value"
+            ],
+            "description": "Lifecycle/event hook: onPropertyChanged."
+          },
+          {
+            "name": "onAttributeChanged",
+            "params": [
+              "property",
+              "previous",
+              "value"
+            ],
+            "description": "Lifecycle/event hook: onAttributeChanged."
+          },
+          {
+            "name": "onAnimationConnect",
+            "params": [],
+            "description": "Handles animationconnect events."
+          }
+        ]
+      },
+      "attributes": [],
+      "methods": [
+        {
+          "name": "setBehaviorFrames",
+          "params": [
+            "property",
+            "keyframes",
+            "fps"
+          ],
+          "description": "Sets behaviorframes values."
         },
         {
-          "name": "addLayer",
-          "params": [
-            "name",
-            "options"
-          ],
-          "description": "Adds layer data or elements."
+          "name": "bodyHTML",
+          "params": [],
+          "description": "Performs the bodyHTML operation."
         },
         {
-          "name": "appendLayer",
-          "params": [
-            "name",
-            "options"
-          ],
-          "description": "Performs the appendLayer operation."
-        },
-        {
-          "name": "prependLayer",
-          "params": [
-            "name",
-            "options"
-          ],
-          "description": "Performs the prependLayer operation."
-        },
-        {
-          "name": "layer",
-          "params": [
-            "indexOrName"
-          ],
-          "description": "Performs the layer operation."
+          "name": "onCreate",
+          "params": [],
+          "description": "Lifecycle/event hook: onCreate."
         }
       ]
     },
@@ -2846,7 +3532,8 @@
           {
             "name": "writeStyleVars",
             "params": [
-              "vars"
+              "vars",
+              "target"
             ],
             "description": "Performs the writeStyleVars operation."
           },
@@ -2871,6 +3558,11 @@
               "...properties"
             ],
             "description": "Performs the clean operation."
+          },
+          {
+            "name": "scheduleRenderEvent",
+            "params": [],
+            "description": "Performs the scheduleRenderEvent operation."
           },
           {
             "name": "connectedCallback",
@@ -2920,6 +3612,14 @@
             "description": "Performs the compileData operation."
           },
           {
+            "name": "parseAttributeValue",
+            "params": [
+              "value",
+              "type"
+            ],
+            "description": "Performs the parseAttributeValue operation."
+          },
+          {
             "name": "attributeChangedCallback",
             "params": [
               "property",
@@ -2954,13 +3654,461 @@
           "type": "number",
           "default": 100,
           "linked": true
+        },
+        {
+          "name": "particles",
+          "type": "int",
+          "default": 2000,
+          "linked": true
+        },
+        {
+          "name": "emit-rate",
+          "type": "number",
+          "default": 10,
+          "linked": true
+        },
+        {
+          "name": "mask",
+          "type": "string",
+          "default": "",
+          "linked": true
+        },
+        {
+          "name": "mask-options",
+          "type": "string",
+          "default": "{}",
+          "linked": true
+        },
+        {
+          "name": "particle-color",
+          "type": "string",
+          "default": "#ffffff",
+          "linked": true
+        },
+        {
+          "name": "particle-type",
+          "type": "string",
+          "default": "sphere",
+          "linked": true
+        },
+        {
+          "name": "particle-radius",
+          "type": "number",
+          "default": 0.4,
+          "linked": true
+        },
+        {
+          "name": "particle-size",
+          "type": "number",
+          "default": 3,
+          "linked": true
+        },
+        {
+          "name": "min-particle-size",
+          "type": "number",
+          "default": 1.5,
+          "linked": true
+        },
+        {
+          "name": "particle-shape",
+          "type": "string",
+          "default": "square",
+          "linked": true
+        },
+        {
+          "name": "drift",
+          "type": "number",
+          "default": 0.1,
+          "linked": true
+        },
+        {
+          "name": "drift-speed",
+          "type": "number",
+          "default": 1,
+          "linked": true
+        },
+        {
+          "name": "drift-type",
+          "type": "string",
+          "default": "relative",
+          "linked": true
+        },
+        {
+          "name": "orbit-speed",
+          "type": "number",
+          "default": 1.5,
+          "linked": true
+        },
+        {
+          "name": "orbit-pull",
+          "type": "number",
+          "default": 1,
+          "linked": true
+        },
+        {
+          "name": "orbit-escape",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "orbit-escape-push",
+          "type": "number",
+          "default": 1,
+          "linked": true
+        },
+        {
+          "name": "repel-strength",
+          "type": "number",
+          "default": 1,
+          "linked": true
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "default": "idle",
+          "linked": true
+        },
+        {
+          "name": "orbit",
+          "type": "exists",
+          "default": false,
+          "linked": true
+        },
+        {
+          "name": "repel",
+          "type": "exists",
+          "default": false,
+          "linked": true
+        },
+        {
+          "name": "target-x",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "target-y",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "target-z",
+          "type": "number",
+          "default": -4,
+          "linked": true
+        },
+        {
+          "name": "orbit-radius",
+          "type": "number",
+          "default": 0.4,
+          "linked": true
+        },
+        {
+          "name": "repel-radius",
+          "type": "number",
+          "default": 0.4,
+          "linked": true
+        },
+        {
+          "name": "orbit-reach",
+          "type": "number",
+          "default": 1.2,
+          "linked": true
+        },
+        {
+          "name": "repel-reach",
+          "type": "number",
+          "default": 1.2,
+          "linked": true
+        },
+        {
+          "name": "gravity",
+          "type": "string",
+          "default": "0,0,0",
+          "linked": true
+        },
+        {
+          "name": "gravity-x",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "gravity-y",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "gravity-z",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "friction",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "mask-width",
+          "type": "number",
+          "default": 1,
+          "linked": true
+        },
+        {
+          "name": "mask-height",
+          "type": "number",
+          "default": 1,
+          "linked": true
+        },
+        {
+          "name": "mask-align",
+          "type": "string",
+          "default": "center",
+          "linked": true
+        },
+        {
+          "name": "mask-mode",
+          "type": "string",
+          "default": "replace",
+          "linked": true
+        },
+        {
+          "name": "mask-scatter",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "mask-scatter-shape",
+          "type": "string",
+          "default": "box",
+          "linked": true
+        },
+        {
+          "name": "mask-anchor-x",
+          "type": "number",
+          "default": null,
+          "linked": true
+        },
+        {
+          "name": "mask-anchor-y",
+          "type": "number",
+          "default": null,
+          "linked": true
+        },
+        {
+          "name": "mask-anchor-z",
+          "type": "number",
+          "default": null,
+          "linked": true
+        },
+        {
+          "name": "mask-rotation",
+          "type": "string",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "mask-x",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "mask-y",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "mask-z",
+          "type": "number",
+          "default": -2,
+          "linked": true
+        },
+        {
+          "name": "preserve-color",
+          "type": "exists",
+          "default": false,
+          "linked": true
+        },
+        {
+          "name": "particle-gap",
+          "type": "int",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "alpha-threshold",
+          "type": "number",
+          "default": 1,
+          "linked": true
+        },
+        {
+          "name": "transition",
+          "type": "boolean",
+          "default": true,
+          "linked": true
+        },
+        {
+          "name": "transition-duration",
+          "type": "number",
+          "default": 1400,
+          "linked": true
+        },
+        {
+          "name": "transition-spread",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "max-speed",
+          "type": "number",
+          "default": 0.03,
+          "linked": true
+        },
+        {
+          "name": "camera-pan-x",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "camera-pan-y",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "camera-yaw",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "camera-pitch",
+          "type": "number",
+          "default": 0,
+          "linked": true
+        },
+        {
+          "name": "camera-pan-scale",
+          "type": "number",
+          "default": 1,
+          "linked": true
+        },
+        {
+          "name": "camera-angle-scale",
+          "type": "number",
+          "default": 1,
+          "linked": true
+        },
+        {
+          "name": "camera-depth-effect",
+          "type": "number",
+          "default": 1,
+          "linked": true
+        },
+        {
+          "name": "camera-max-step",
+          "type": "number",
+          "default": 0.04,
+          "linked": true
+        },
+        {
+          "name": "emitter",
+          "type": "exists",
+          "default": false,
+          "linked": true
+        },
+        {
+          "name": "emitter-config",
+          "type": "string",
+          "default": "{}",
+          "linked": true
+        },
+        {
+          "name": "max-particles",
+          "type": null,
+          "default": null,
+          "linked": null
+        },
+        {
+          "name": "radius",
+          "type": null,
+          "default": null,
+          "linked": null
+        },
+        {
+          "name": "target",
+          "type": null,
+          "default": null,
+          "linked": null
+        },
+        {
+          "name": "camera-pan",
+          "type": null,
+          "default": null,
+          "linked": null
+        },
+        {
+          "name": "camera-angle",
+          "type": null,
+          "default": null,
+          "linked": null
+        },
+        {
+          "name": "mask-position",
+          "type": null,
+          "default": null,
+          "linked": null
+        },
+        {
+          "name": "mask-anchor",
+          "type": null,
+          "default": null,
+          "linked": null
+        },
+        {
+          "name": "mask-preserve-color",
+          "type": null,
+          "default": null,
+          "linked": null
+        },
+        {
+          "name": "mask-particle-gap",
+          "type": null,
+          "default": null,
+          "linked": null
+        },
+        {
+          "name": "spawn-volume",
+          "type": null,
+          "default": null,
+          "linked": null
         }
       ],
       "methods": [
         {
           "name": "html",
           "params": [],
-          "description": "Performs the html operation."
+          "description": "Executes html."
+        },
+        {
+          "name": "openDebugPanel",
+          "params": [],
+          "description": "Performs the openDebugPanel operation."
+        },
+        {
+          "name": "getViewer",
+          "params": [],
+          "description": "Returns active WebGL particle viewer when available."
         },
         {
           "name": "addForce",
@@ -2969,46 +4117,44 @@
             "vx",
             "vy"
           ],
-          "description": "Adds force data or elements."
+          "description": "Registers an external force descriptor on the component instance."
         },
         {
           "name": "removeForce",
           "params": [
             "force"
           ],
-          "description": "Performs the removeForce operation."
-        },
-        {
-          "name": "showControls",
-          "params": [],
-          "description": "Performs the showControls operation."
-        },
-        {
-          "name": "hideControls",
-          "params": [],
-          "description": "Performs the hideControls operation."
+          "description": "Removes a registered force descriptor."
         },
         {
           "name": "beforeCreate",
           "params": [],
-          "description": "Performs the beforeCreate operation."
+          "description": "Legacy local arrays kept for optional non-WebGL/debug paths."
         },
         {
           "name": "update",
           "params": [
             "time"
           ],
-          "description": "Updates internal animation state."
+          "description": "Legacy update hook for non-WebGL/debug paths."
         },
         {
           "name": "render",
           "params": [],
-          "description": "Renders the component state to DOM/canvas."
+          "description": "Legacy render hook for non-WebGL/debug paths."
         },
         {
           "name": "build",
           "params": [],
-          "description": "Performs the build operation."
+          "description": "Seeds local fallback arrays; active WebGL simulation uses engine-side buffers."
+        },
+        {
+          "name": "getRenderSize",
+          "params": [
+            "width",
+            "height"
+          ],
+          "description": "Computes render size from explicit params or host element metrics."
         },
         {
           "name": "onResize",
@@ -3016,12 +4162,268 @@
             "width",
             "height"
           ],
-          "description": "Lifecycle/event hook: onResize."
+          "description": "Resizes canvas and syncs projection uniforms/matrices."
         },
         {
           "name": "onFirstConnect",
           "params": [],
-          "description": "Lifecycle/event hook: onFirstConnect."
+          "description": "First-connect lifecycle:"
+        },
+        {
+          "name": "setParticleCount",
+          "params": [
+            "nextCount",
+            "force"
+          ],
+          "description": "Recreates the particle engine with a new max particle count."
+        },
+        {
+          "name": "setMask",
+          "params": [
+            "source",
+            "options"
+          ],
+          "description": "Loads and applies a mask to the active WebGL particle stage."
+        },
+        {
+          "name": "setMaskSettings",
+          "params": [
+            "settings"
+          ],
+          "description": "Updates mask placement settings and reapplies the active mask when possible."
+        },
+        {
+          "name": "loadMask",
+          "params": [
+            "source",
+            "options"
+          ],
+          "description": "Loads a mask image to the WebGL particle system."
+        },
+        {
+          "name": "applyMask",
+          "params": [
+            "maskIndex",
+            "buildOptions"
+          ],
+          "description": "Applies a preloaded mask index to active particles."
+        },
+        {
+          "name": "clearMask",
+          "params": [
+            "buildOptions"
+          ],
+          "description": "Clears active mask influence and rebuilds random particle seed."
+        },
+        {
+          "name": "setValue",
+          "params": [
+            "name",
+            "value"
+          ],
+          "description": "Sets a runtime particle property (supports vector index notation)."
+        },
+        {
+          "name": "setParticleColor",
+          "params": [
+            "color"
+          ],
+          "description": "Sets a single default particle color for active particles and future rebuilds."
+        },
+        {
+          "name": "setParticleRenderSize",
+          "params": [
+            "size",
+            "minSize"
+          ],
+          "description": "Sets particlerendersize values."
+        },
+        {
+          "name": "setParticleShape",
+          "params": [
+            "shape"
+          ],
+          "description": "Sets particleshape values."
+        },
+        {
+          "name": "setGravity",
+          "params": [
+            "gravity"
+          ],
+          "description": "Sets simulation gravity."
+        },
+        {
+          "name": "setFriction",
+          "params": [
+            "value"
+          ],
+          "description": "Sets simulation friction."
+        },
+        {
+          "name": "setTarget",
+          "params": [
+            "x",
+            "y",
+            "z",
+            "radius"
+          ],
+          "description": "Sets shared orbit/repel target."
+        },
+        {
+          "name": "setOrbit",
+          "params": [
+            "enabled",
+            "options"
+          ],
+          "description": "Enables/disables orbit mode."
+        },
+        {
+          "name": "setRepel",
+          "params": [
+            "enabled",
+            "options"
+          ],
+          "description": "Enables/disables repel mode."
+        },
+        {
+          "name": "setMode",
+          "params": [
+            "mode"
+          ],
+          "description": "Sets interaction mode."
+        },
+        {
+          "name": "setMotion",
+          "params": [
+            "config"
+          ],
+          "description": "Applies motion multipliers to particle simulation."
+        },
+        {
+          "name": "setCameraPan",
+          "params": [
+            "x",
+            "y"
+          ],
+          "description": "Sets fake camera pan in world units."
+        },
+        {
+          "name": "moveCameraPan",
+          "params": [
+            "x",
+            "y"
+          ],
+          "description": "Adds fake camera pan movement in world units."
+        },
+        {
+          "name": "setCameraAngle",
+          "params": [
+            "yaw",
+            "pitch"
+          ],
+          "description": "Sets fake camera yaw/pitch values."
+        },
+        {
+          "name": "moveCameraAngle",
+          "params": [
+            "yaw",
+            "pitch"
+          ],
+          "description": "Adds fake camera yaw/pitch movement."
+        },
+        {
+          "name": "setCameraMotion",
+          "params": [
+            "config"
+          ],
+          "description": "Sets fake camera movement multipliers."
+        },
+        {
+          "name": "setCameraDepthEffect",
+          "params": [
+            "value"
+          ],
+          "description": "Sets fake camera depth parallax strength."
+        },
+        {
+          "name": "addEmitter",
+          "params": [
+            "config"
+          ],
+          "description": "Adds or replaces the active WebGL emitter adapter."
+        },
+        {
+          "name": "getEmitter",
+          "params": [],
+          "description": "Returns the active emitter adapter."
+        },
+        {
+          "name": "removeEmitter",
+          "params": [],
+          "description": "Removes the active WebGL emitter adapter."
+        },
+        {
+          "name": "scatter",
+          "params": [
+            "options"
+          ],
+          "description": "Scatters particles from a center point."
+        },
+        {
+          "name": "jitter",
+          "params": [
+            "amount",
+            "options"
+          ],
+          "description": "Applies random positional jitter to active particles."
+        },
+        {
+          "name": "captureSnapshot",
+          "params": [
+            "name"
+          ],
+          "description": "Captures a named snapshot of particle state."
+        },
+        {
+          "name": "restoreSnapshot",
+          "params": [
+            "name"
+          ],
+          "description": "Restores a named snapshot of particle state."
+        },
+        {
+          "name": "reset",
+          "params": [
+            "options"
+          ],
+          "description": "Resets particle state to a snapshot."
+        },
+        {
+          "name": "getBounds",
+          "params": [],
+          "description": "Gets bounds of active particles."
+        },
+        {
+          "name": "start",
+          "params": [],
+          "description": "Starts simulation if viewer is initialized."
+        },
+        {
+          "name": "stop",
+          "params": [],
+          "description": "Stops simulation if viewer is initialized."
+        },
+        {
+          "name": "applyMotionConfig",
+          "params": [
+            "config"
+          ],
+          "description": "Applies motion scale multipliers to the active engine instance."
+        },
+        {
+          "name": "onDisconnect",
+          "params": [],
+          "description": "Disconnect lifecycle: stop renderer and clean observers/listeners."
         },
         {
           "name": "onPropertyChanged",
@@ -3030,14 +4432,14 @@
             "prevous",
             "value"
           ],
-          "description": "Lifecycle/event hook: onPropertyChanged."
+          "description": "Property change hook (reserved for future width/height/reactive behavior)."
         },
         {
-          "name": "mask",
+          "name": "onAttributeChanged",
           "params": [
-            "source"
+            "property"
           ],
-          "description": "Performs the mask operation."
+          "description": "Applies attribute-only aliases that are not component properties."
         }
       ]
     }

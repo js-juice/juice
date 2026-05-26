@@ -106,7 +106,11 @@ class WebGLParticleSystem {
         this.orbitFieldRadius = null;
         this.orbitEscape = 0;
         this.orbitEscapePush = 1;
+        this.orbitMode = "3d";
+        this.orbitPlaneAngle = 0;
         this.repelFieldRadius = null;
+        this.repelMode = "3d";
+        this.repelPlaneAngle = 0;
 
         // uMotion = [driftScale, orbitSpeedScale, repelStrengthScale, orbitPullScale]
         this.driftScale = 1.0;
@@ -129,6 +133,8 @@ class WebGLParticleSystem {
         this._maskTransition = null;
         this.emitter = null;
         this.debugCrosshairMode = "none";
+        this.debugCrosshairPreviewMode = "none";
+        this._debugCrosshairPreviewTimer = 0;
         this._debugCrosshairLayer = null;
 
         this.particles = new ParticleStateBuffer(maxParticles, canvas.width, canvas.height);
@@ -139,20 +145,66 @@ class WebGLParticleSystem {
         this.setupWebGL();
     }
 
-    openDebugPanel() {
+    openDebugPanel(options = {}) {
         juice.import("forms");
+        const world = options.world || this.worldElement || null;
+        const worlds = Array.isArray(options.worlds) ? options.worlds : [];
+        const instanceCount = Number(options.instanceCount) || 0;
+        const instanceIndex = Number.isFinite(Number(options.instanceIndex)) ? Number(options.instanceIndex) : -1;
+        const instanceLabel = world?.id
+            ? `#${world.id}`
+            : instanceCount > 1 && instanceIndex >= 0
+              ? `instance ${instanceIndex + 1}`
+              : "";
         if (this._debugPanel?.isConnected) {
             this._debugPanel.style.display = "";
+            this._debugPanel.setAttribute("title", `Particle World Control`);
+            if (instanceLabel) this._debugPanel.setAttribute("description", instanceLabel);
             return this._debugPanel;
         }
 
         const card = document.createElement("ui-card");
         card.setAttribute("draggable", "true");
+
+        card.setAttribute("container", "window");
+        card.setAttribute("collapsed", "");
         card.setAttribute("width", 360);
         card.setAttribute("title", "Particle World Control");
+        if (instanceLabel) {
+            card.setAttribute("description", instanceLabel);
+        }
+
+        if (worlds.length > 1) {
+            const picker = document.createElement("label");
+            picker.style.display = "grid";
+            picker.style.gap = "0.25rem";
+            picker.style.marginBottom = "0.75rem";
+            picker.textContent = "Particle World";
+
+            const select = document.createElement("input-select");
+            worlds.forEach((item, index) => {
+                const option = document.createElement("option");
+                option.value = String(index);
+                option.textContent = item.id ? `#${item.id}` : `Instance ${index + 1}`;
+                option.selected = item === world;
+                select.appendChild(option);
+            });
+            select.addEventListener("change", () => {
+                const next = worlds[Number(select.value)];
+                if (!next || next === world) return;
+                card.style.display = "none";
+                next.openDebugPanel();
+            });
+
+            picker.appendChild(select);
+            card.appendChild(picker);
+        }
 
         const form = new FormBuilder("particle-controls", "Particle System Controls");
-        const storageKey = `juice:webgl-particle-system:debug-panel:${this.canvas?.id || "default"}`;
+        const storageId =
+            world?.id ||
+            (instanceCount > 1 && instanceIndex >= 0 ? `instance-${instanceIndex + 1}` : this.canvas?.id || "default");
+        const storageKey = `juice:webgl-particle-system:debug-panel:${storageId}`;
         let restoringDebugSettings = false;
         const readDebugSettings = () => {
             try {
@@ -292,6 +344,10 @@ class WebGLParticleSystem {
                 on: { "input-button-click": fn }
             });
         const fieldset = (label, controls) => new FormFieldSet(label, controls).build();
+        const previewCrosshair = (mode, fn) => (value, control, event) => {
+            this.previewDebugCrosshair(mode);
+            if (typeof fn === "function") fn(value, control, event);
+        };
         const toggleSection = (label, toggle, controls, sync) => {
             const section = document.createElement("input-fieldset");
             section.setAttribute("label", label);
@@ -337,12 +393,11 @@ class WebGLParticleSystem {
             };
             const lines = [
                 `const world = document.querySelector("particle-world");`,
-                `const viewer = world.getViewer();`,
                 ``,
-                `viewer.setParticleRenderSize(${numericSetting("particle-size", this.particleSize)}, ${numericSetting("min-particle-size", this.minParticleSize)});`,
-                `viewer.setParticleShape(${JSON.stringify(setting("particle-shape", this.particleShape))});`,
-                `viewer.setParticleColor(${JSON.stringify(setting("particle-color", this.particleColor || "#ffffff"))});`,
-                `viewer.setMotion(${codeValue({
+                `world.setParticleRenderSize(${numericSetting("particle-size", this.particleSize)}, ${numericSetting("min-particle-size", this.minParticleSize)});`,
+                `world.setParticleShape(${JSON.stringify(setting("particle-shape", this.particleShape))});`,
+                `world.setParticleColor(${JSON.stringify(setting("particle-color", this.particleColor || "#ffffff"))});`,
+                `world.setMotion(${codeValue({
                     drift: numericSetting("drift", this.driftScale),
                     driftSpeed: numericSetting("drift-speed", this.driftSpeedScale),
                     driftType: setting("drift-type", this.driftType),
@@ -352,37 +407,41 @@ class WebGLParticleSystem {
                     orbitEscapePush: numericSetting("orbit-escape-push", this.orbitEscapePush),
                     repelStrength: numericSetting("repel-strength", this.repelStrengthScale)
                 })});`,
-                `viewer.setGravity(${codeValue([
+                `world.setGravity(${codeValue([
                     numericSetting("gravity-x", this.gravity[0]),
                     numericSetting("gravity-y", this.gravity[1]),
                     numericSetting("gravity-z", this.gravity[2])
                 ])});`,
-                `viewer.setFriction(${numericSetting("friction", this.friction)});`,
-                `viewer.setCameraPan(${numericSetting("camera-pan-x", this.cameraPan.x)}, ${numericSetting("camera-pan-y", this.cameraPan.y)});`,
-                `viewer.setCameraAngle(${numericSetting("camera-yaw", this.cameraAngle.yaw)}, ${numericSetting("camera-pitch", this.cameraAngle.pitch)});`,
-                `viewer.setCameraMotion(${codeValue({
+                `world.setFriction(${numericSetting("friction", this.friction)});`,
+                `world.setCameraPan(${numericSetting("camera-pan-x", this.cameraPan.x)}, ${numericSetting("camera-pan-y", this.cameraPan.y)});`,
+                `world.setCameraAngle(${numericSetting("camera-yaw", this.cameraAngle.yaw)}, ${numericSetting("camera-pitch", this.cameraAngle.pitch)});`,
+                `world.setCameraMotion(${codeValue({
                     panScale: numericSetting("camera-pan-scale", this.cameraPanScale),
                     angleScale: numericSetting("camera-angle-scale", this.cameraAngleScale),
                     depthEffect: numericSetting("camera-depth-effect", this.cameraDepthEffect),
                     maxStep: numericSetting("camera-max-step", this.cameraMaxStep)
                 })});`,
-                `viewer.setDebugCrosshair(${JSON.stringify(setting("crosshair-mode", this.debugCrosshairMode))});`,
+                `world.setDebugCrosshair(${JSON.stringify(setting("crosshair-mode", this.debugCrosshairMode))});`,
                 ``,
-                `viewer.setOrbit(${booleanSetting("orbit-active", false)}, ${codeValue({
+                `world.setOrbit(${booleanSetting("orbit-active", false)}, ${codeValue({
                     x: numericSetting("orbit-x", this.orbitPoint[0]),
                     y: numericSetting("orbit-y", this.orbitPoint[1]),
                     z: numericSetting("orbit-z", this.orbitPoint[2]),
                     radius: numericSetting("orbit-radius", this.orbitPoint[3] || 0.4),
                     fieldRadius: numericSetting("orbit-reach", this.orbitFieldRadius || 0) || null,
                     escape: numericSetting("orbit-escape", this.orbitEscape),
-                    escapePush: numericSetting("orbit-escape-push", this.orbitEscapePush)
+                    escapePush: numericSetting("orbit-escape-push", this.orbitEscapePush),
+                    mode: setting("orbit-mode", this.orbitMode),
+                    planeAngle: numericSetting("orbit-plane-angle", this.orbitPlaneAngle)
                 })});`,
-                `viewer.setRepel(${booleanSetting("repel-active", false)}, ${codeValue({
+                `world.setRepel(${booleanSetting("repel-active", false)}, ${codeValue({
                     x: numericSetting("repel-x", this.repelPoint[0]),
                     y: numericSetting("repel-y", this.repelPoint[1]),
                     z: numericSetting("repel-z", this.repelPoint[2]),
                     radius: numericSetting("repel-radius", this.repelPoint[3] || 0.4),
-                    fieldRadius: numericSetting("repel-reach", this.repelFieldRadius || 0) || null
+                    fieldRadius: numericSetting("repel-reach", this.repelFieldRadius || 0) || null,
+                    mode: setting("repel-mode", this.repelMode),
+                    planeAngle: numericSetting("repel-plane-angle", this.repelPlaneAngle)
                 })});`
             ];
             const maskSource = String(setting("mask-source", "") || "").trim();
@@ -399,14 +458,17 @@ class WebGLParticleSystem {
                     })});`
                 );
             } else if (setting("mask-index", "") !== "") {
-                lines.push(``, `viewer.applyMask(${Math.floor(numericSetting("mask-index", 0))}, ${codeValue(maskSettings)});`);
+                lines.push(
+                    ``,
+                    `world.applyMask(${Math.floor(numericSetting("mask-index", 0))}, ${codeValue(maskSettings)});`
+                );
             }
 
             if (booleanSetting("emitter-active", false)) {
                 const emitterDirection = vectorSetting("emitter-direction", parseDirectionVector, "1,0,0");
                 lines.push(
                     ``,
-                    `viewer.addEmitter(${codeValue({
+                    `world.addEmitter(${codeValue({
                         particlesPerSecond: numericSetting("emitter-rate", 10),
                         direction: Math.atan2(emitterDirection.y, emitterDirection.x),
                         directionVec: emitterDirection,
@@ -420,7 +482,7 @@ class WebGLParticleSystem {
                     })});`
                 );
             } else {
-                lines.push(``, `viewer.removeEmitter();`);
+                lines.push(``, `world.removeEmitter();`);
             }
             return lines.join("\n");
         };
@@ -447,17 +509,20 @@ class WebGLParticleSystem {
                     "box-shadow:0 12px 30px rgba(0,0,0,0.35)"
                 ].join(";");
                 const header = document.createElement("div");
-                header.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:8px;font:600 13px system-ui,sans-serif;";
+                header.style.cssText =
+                    "display:flex;align-items:center;justify-content:space-between;gap:8px;font:600 13px system-ui,sans-serif;";
                 const title = document.createElement("span");
                 title.textContent = "Particle world code";
                 const close = document.createElement("button");
                 close.type = "button";
                 close.textContent = "Close";
-                close.style.cssText = "font:12px system-ui,sans-serif;padding:4px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.28);background:transparent;color:inherit;cursor:pointer;";
+                close.style.cssText =
+                    "font:12px system-ui,sans-serif;padding:4px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.28);background:transparent;color:inherit;cursor:pointer;";
                 close.addEventListener("click", () => panel.remove());
                 header.append(title, close);
                 const pre = document.createElement("pre");
-                pre.style.cssText = "margin:0;overflow:auto;white-space:pre;max-height:calc(100vh - 104px);font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;";
+                pre.style.cssText =
+                    "margin:0;overflow:auto;white-space:pre;max-height:calc(100vh - 104px);font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;";
                 panel.append(header, pre);
                 document.body.appendChild(panel);
                 this._debugCodePanel = panel;
@@ -520,11 +585,23 @@ class WebGLParticleSystem {
                 ),
                 InputBuilder.color("particle-color", this.particleColor || "#ffffff", {
                     label: "Particle color",
-                    on: { input: onValue((value) => this.setParticleColor(value)), change: onValue((value) => this.setParticleColor(value)) }
+                    on: {
+                        input: onValue((value) => this.setParticleColor(value)),
+                        change: onValue((value) => this.setParticleColor(value))
+                    }
                 }),
-                range("max-speed", "Initial max speed", 0, 1, this.particles?.config?.maxSpeed ?? 0.03, 0.005, 3, (value) => {
-                    if (this.particles?.config) this.particles.config.maxSpeed = Math.max(0, number(value, 0));
-                })
+                range(
+                    "max-speed",
+                    "Initial max speed",
+                    0,
+                    1,
+                    this.particles?.config?.maxSpeed ?? 0.03,
+                    0.005,
+                    3,
+                    (value) => {
+                        if (this.particles?.config) this.particles.config.maxSpeed = Math.max(0, number(value, 0));
+                    }
+                )
             ]),
             fieldset("Motion", [
                 range("drift", "Drift", 0, 1, this.driftScale, 0.01, 2, (value) => {
@@ -579,11 +656,7 @@ class WebGLParticleSystem {
                         { value: "all", label: "All" }
                     ],
                     applyCrosshair
-                ),
-                action("view-code", "View code", (event) => {
-                    event.preventDefault();
-                    showDebugCode();
-                })
+                )
             ])
         );
 
@@ -602,7 +675,9 @@ class WebGLParticleSystem {
                 radius: this.orbitPoint[3],
                 fieldRadius: this.orbitFieldRadius,
                 escape: this.orbitEscape,
-                escapePush: this.orbitEscapePush
+                escapePush: this.orbitEscapePush,
+                mode: this.orbitMode,
+                planeAngle: this.orbitPlaneAngle
             });
         };
         const syncRepel = () => {
@@ -616,7 +691,9 @@ class WebGLParticleSystem {
                 y: this.repelPoint[1],
                 z: this.repelPoint[2],
                 radius: this.repelPoint[3],
-                fieldRadius: this.repelFieldRadius
+                fieldRadius: this.repelFieldRadius,
+                mode: this.repelMode,
+                planeAngle: this.repelPlaneAngle
             });
         };
 
@@ -624,74 +701,246 @@ class WebGLParticleSystem {
         repelToggle = checkbox("repel-active", "Enable repel", this.repel.value === 1, syncRepel);
 
         form.add(
-            toggleSection("Orbit", orbitToggle, [
-                range("orbit-speed", "Speed", 0, 8, this.orbitSpeedScale, 0.05, 2, (value) => {
-                    this.orbitSpeedScale = number(value, this.orbitSpeedScale);
-                    applyMotion();
-                }),
-                range("orbit-pull", "Pull", 0, 8, this.orbitPullScale, 0.05, 2, (value) => {
-                    this.orbitPullScale = number(value, this.orbitPullScale);
-                    applyMotion();
-                }),
-                range("orbit-escape", "Escape", 0, 1, this.orbitEscape, 0.01, 2, (value) => {
-                    this.orbitEscape = Math.max(0, Math.min(1, number(value, 0)));
-                    syncOrbit();
-                    applyMotion();
-                }),
-                range("orbit-escape-push", "Escape push", 0, 5, this.orbitEscapePush, 0.05, 2, (value) => {
-                    this.orbitEscapePush = Math.max(0, number(value, 1));
-                    syncOrbit();
-                    applyMotion();
-                }),
-                range("orbit-x", "X", -10, 10, this.orbitPoint[0], 0.01, 2, (value) => {
-                    this.orbitPoint[0] = number(value, 0);
-                    syncOrbit();
-                }),
-                range("orbit-y", "Y", -10, 10, this.orbitPoint[1], 0.01, 2, (value) => {
-                    this.orbitPoint[1] = number(value, 0);
-                    syncOrbit();
-                }),
-                range("orbit-z", "Z", -20, 0, this.orbitPoint[2], 0.01, 2, (value) => {
-                    this.orbitPoint[2] = number(value, -2);
-                    syncOrbit();
-                }),
-                range("orbit-radius", "Radius", 0.01, 10, this.orbitPoint[3] || 0.4, 0.01, 2, (value) => {
-                    this.orbitPoint[3] = Math.max(0.0001, number(value, 0.4));
-                    syncOrbit();
-                }),
-                range("orbit-reach", "Reach", 0, 20, this.orbitFieldRadius || 0, 0.05, 2, (value) => {
-                    const next = number(value, 0);
-                    this.orbitFieldRadius = next > 0 ? next : null;
-                    syncOrbit();
-                })
-            ], syncOrbit),
-            toggleSection("Repel", repelToggle, [
-                range("repel-strength", "Strength", 0, 8, this.repelStrengthScale, 0.05, 2, (value) => {
-                    this.repelStrengthScale = number(value, this.repelStrengthScale);
-                    applyMotion();
-                }),
-                range("repel-x", "X", -10, 10, this.repelPoint[0], 0.01, 2, (value) => {
-                    this.repelPoint[0] = number(value, 0);
-                    syncRepel();
-                }),
-                range("repel-y", "Y", -10, 10, this.repelPoint[1], 0.01, 2, (value) => {
-                    this.repelPoint[1] = number(value, 0);
-                    syncRepel();
-                }),
-                range("repel-z", "Z", -20, 0, this.repelPoint[2], 0.01, 2, (value) => {
-                    this.repelPoint[2] = number(value, -2);
-                    syncRepel();
-                }),
-                range("repel-radius", "Radius", 0.01, 10, this.repelPoint[3] || 0.4, 0.01, 2, (value) => {
-                    this.repelPoint[3] = Math.max(0.0001, number(value, 0.4));
-                    syncRepel();
-                }),
-                range("repel-reach", "Reach", 0, 20, this.repelFieldRadius || 0, 0.05, 2, (value) => {
-                    const next = number(value, 0);
-                    this.repelFieldRadius = next > 0 ? next : null;
-                    syncRepel();
-                })
-            ], syncRepel)
+            toggleSection(
+                "Orbit",
+                orbitToggle,
+                [
+                    select(
+                        "orbit-mode",
+                        "Mode",
+                        this.orbitMode,
+                        [
+                            { value: "3d", label: "3D" },
+                            { value: "2d", label: "2D plane" }
+                        ],
+                        (value) => {
+                            this.previewDebugCrosshair("orbit");
+                            this.orbitMode = value === "2d" ? "2d" : "3d";
+                            syncOrbit();
+                        }
+                    ),
+                    range(
+                        "orbit-plane-angle",
+                        "Plane angle",
+                        -3.142,
+                        3.142,
+                        this.orbitPlaneAngle,
+                        0.01,
+                        3,
+                        previewCrosshair("orbit", (value) => {
+                            this.orbitPlaneAngle = number(value, 0);
+                            syncOrbit();
+                        })
+                    ),
+                    range("orbit-speed", "Speed", 0, 8, this.orbitSpeedScale, 0.05, 2, (value) => {
+                        this.orbitSpeedScale = number(value, this.orbitSpeedScale);
+                        applyMotion();
+                    }),
+                    range(
+                        "orbit-pull",
+                        "Pull",
+                        0,
+                        8,
+                        this.orbitPullScale,
+                        0.05,
+                        2,
+                        previewCrosshair("orbit", (value) => {
+                            this.orbitPullScale = number(value, this.orbitPullScale);
+                            applyMotion();
+                        })
+                    ),
+                    range("orbit-escape", "Escape", 0, 1, this.orbitEscape, 0.01, 2, (value) => {
+                        this.orbitEscape = Math.max(0, Math.min(1, number(value, 0)));
+                        syncOrbit();
+                        applyMotion();
+                    }),
+                    range("orbit-escape-push", "Escape push", 0, 5, this.orbitEscapePush, 0.05, 2, (value) => {
+                        this.orbitEscapePush = Math.max(0, number(value, 1));
+                        syncOrbit();
+                        applyMotion();
+                    }),
+                    range(
+                        "orbit-x",
+                        "X",
+                        -10,
+                        10,
+                        this.orbitPoint[0],
+                        0.01,
+                        2,
+                        previewCrosshair("orbit", (value) => {
+                            this.orbitPoint[0] = number(value, 0);
+                            syncOrbit();
+                        })
+                    ),
+                    range(
+                        "orbit-y",
+                        "Y",
+                        -10,
+                        10,
+                        this.orbitPoint[1],
+                        0.01,
+                        2,
+                        previewCrosshair("orbit", (value) => {
+                            this.orbitPoint[1] = number(value, 0);
+                            syncOrbit();
+                        })
+                    ),
+                    range(
+                        "orbit-z",
+                        "Z",
+                        -20,
+                        0,
+                        this.orbitPoint[2],
+                        0.01,
+                        2,
+                        previewCrosshair("orbit", (value) => {
+                            this.orbitPoint[2] = number(value, -2);
+                            syncOrbit();
+                        })
+                    ),
+                    range(
+                        "orbit-radius",
+                        "Radius",
+                        0.01,
+                        10,
+                        this.orbitPoint[3] || 0.4,
+                        0.01,
+                        2,
+                        previewCrosshair("orbit", (value) => {
+                            this.orbitPoint[3] = Math.max(0.0001, number(value, 0.4));
+                            syncOrbit();
+                        })
+                    ),
+                    range(
+                        "orbit-reach",
+                        "Reach",
+                        0,
+                        20,
+                        this.orbitFieldRadius || 0,
+                        0.05,
+                        2,
+                        previewCrosshair("orbit", (value) => {
+                            const next = number(value, 0);
+                            this.orbitFieldRadius = next > 0 ? next : null;
+                            syncOrbit();
+                        })
+                    )
+                ],
+                syncOrbit
+            ),
+            toggleSection(
+                "Repel",
+                repelToggle,
+                [
+                    select(
+                        "repel-mode",
+                        "Mode",
+                        this.repelMode,
+                        [
+                            { value: "3d", label: "3D" },
+                            { value: "2d", label: "2D plane" }
+                        ],
+                        (value) => {
+                            this.previewDebugCrosshair("repel");
+                            this.repelMode = value === "2d" ? "2d" : "3d";
+                            syncRepel();
+                        }
+                    ),
+                    range(
+                        "repel-plane-angle",
+                        "Plane angle",
+                        -3.142,
+                        3.142,
+                        this.repelPlaneAngle,
+                        0.01,
+                        3,
+                        previewCrosshair("repel", (value) => {
+                            this.repelPlaneAngle = number(value, 0);
+                            syncRepel();
+                        })
+                    ),
+                    range(
+                        "repel-strength",
+                        "Strength",
+                        0,
+                        8,
+                        this.repelStrengthScale,
+                        0.05,
+                        2,
+                        previewCrosshair("repel", (value) => {
+                            this.repelStrengthScale = number(value, this.repelStrengthScale);
+                            applyMotion();
+                        })
+                    ),
+                    range(
+                        "repel-x",
+                        "X",
+                        -10,
+                        10,
+                        this.repelPoint[0],
+                        0.01,
+                        2,
+                        previewCrosshair("repel", (value) => {
+                            this.repelPoint[0] = number(value, 0);
+                            syncRepel();
+                        })
+                    ),
+                    range(
+                        "repel-y",
+                        "Y",
+                        -10,
+                        10,
+                        this.repelPoint[1],
+                        0.01,
+                        2,
+                        previewCrosshair("repel", (value) => {
+                            this.repelPoint[1] = number(value, 0);
+                            syncRepel();
+                        })
+                    ),
+                    range(
+                        "repel-z",
+                        "Z",
+                        -20,
+                        0,
+                        this.repelPoint[2],
+                        0.01,
+                        2,
+                        previewCrosshair("repel", (value) => {
+                            this.repelPoint[2] = number(value, -2);
+                            syncRepel();
+                        })
+                    ),
+                    range(
+                        "repel-radius",
+                        "Radius",
+                        0.01,
+                        10,
+                        this.repelPoint[3] || 0.4,
+                        0.01,
+                        2,
+                        previewCrosshair("repel", (value) => {
+                            this.repelPoint[3] = Math.max(0.0001, number(value, 0.4));
+                            syncRepel();
+                        })
+                    ),
+                    range(
+                        "repel-reach",
+                        "Reach",
+                        0,
+                        20,
+                        this.repelFieldRadius || 0,
+                        0.05,
+                        2,
+                        previewCrosshair("repel", (value) => {
+                            const next = number(value, 0);
+                            this.repelFieldRadius = next > 0 ? next : null;
+                            syncRepel();
+                        })
+                    )
+                ],
+                syncRepel
+            )
         );
 
         const maskOptions = () =>
@@ -732,7 +981,13 @@ class WebGLParticleSystem {
             refreshMaskSelect();
         };
         let maskSelectInput;
-        maskSelectInput = select("mask-index", "Loaded mask", Number.isFinite(this.maskIndex) ? String(this.maskIndex) : "", maskOptions(), applyCurrentMask);
+        maskSelectInput = select(
+            "mask-index",
+            "Loaded mask",
+            Number.isFinite(this.maskIndex) ? String(this.maskIndex) : "",
+            maskOptions(),
+            applyCurrentMask
+        );
         const maskSourceInput = InputBuilder.text("mask-source", "", { label: "Source" });
         const maskModeInput = select(
             "mask-mode",
@@ -768,8 +1023,26 @@ class WebGLParticleSystem {
             on: { input: onValue(applyCurrentMask), change: onValue(applyCurrentMask) }
         });
         const maskTransitionInput = checkbox("mask-transition", "Transition", true, applyCurrentMask);
-        const maskTransitionDurationInput = range("mask-transition-duration", "Transition ms", 0, 30000, 1400, 50, 0, applyCurrentMask);
-        const maskTransitionSpreadInput = range("mask-transition-spread", "Transition spread", 0, 1, 0, 0.01, 2, applyCurrentMask);
+        const maskTransitionDurationInput = range(
+            "mask-transition-duration",
+            "Transition ms",
+            0,
+            30000,
+            1400,
+            50,
+            0,
+            applyCurrentMask
+        );
+        const maskTransitionSpreadInput = range(
+            "mask-transition-spread",
+            "Transition spread",
+            0,
+            1,
+            0,
+            0.01,
+            2,
+            applyCurrentMask
+        );
         const maskLoadPreserveColorInput = checkbox("mask-load-preserve-color", "Load colors", false, () => {});
         const maskLoadApplyInput = checkbox("mask-load-apply", "Apply loaded mask", true, () => {});
         const maskLoadAlphaInput = range("mask-load-alpha", "Alpha threshold", 0, 1, 0.01, 0.01, 2, () => {});
@@ -903,12 +1176,31 @@ class WebGLParticleSystem {
                 on: { input: onValue(() => applyEmitter()), change: onValue(() => applyEmitter()) }
             }
         );
-        const emitterSpeedInput = range("emitter-speed", "Speed", 0, 5, this.emitter?.speed || 0.2, 0.01, 2, () => applyEmitter());
-        const emitterSpreadInput = range("emitter-spread", "Spread", 0, 6.283, this.emitter?.spread || Math.PI / 8, 0.01, 3, () => applyEmitter());
-        const emitterSizeInput = range("emitter-size", "Size", 0.1, 10, this.emitter?.size || 1, 0.1, 2, () => applyEmitter());
-        const emitterLifeInput = range("emitter-life", "Life", 0.1, 20, this.emitter?.life || 2, 0.1, 2, () => applyEmitter());
-        const emitterXInput = range("emitter-x", "X", -10, 10, this.emitter?.position?.x || 0, 0.01, 2, () => applyEmitter());
-        const emitterYInput = range("emitter-y", "Y", -10, 10, this.emitter?.position?.y || 0, 0.01, 2, () => applyEmitter());
+        const emitterSpeedInput = range("emitter-speed", "Speed", 0, 5, this.emitter?.speed || 0.2, 0.01, 2, () =>
+            applyEmitter()
+        );
+        const emitterSpreadInput = range(
+            "emitter-spread",
+            "Spread",
+            0,
+            6.283,
+            this.emitter?.spread || Math.PI / 8,
+            0.01,
+            3,
+            () => applyEmitter()
+        );
+        const emitterSizeInput = range("emitter-size", "Size", 0.1, 10, this.emitter?.size || 1, 0.1, 2, () =>
+            applyEmitter()
+        );
+        const emitterLifeInput = range("emitter-life", "Life", 0.1, 20, this.emitter?.life || 2, 0.1, 2, () =>
+            applyEmitter()
+        );
+        const emitterXInput = range("emitter-x", "X", -10, 10, this.emitter?.position?.x || 0, 0.01, 2, () =>
+            applyEmitter()
+        );
+        const emitterYInput = range("emitter-y", "Y", -10, 10, this.emitter?.position?.y || 0, 0.01, 2, () =>
+            applyEmitter()
+        );
         const emitterDefaultZ = Number.isFinite(Number(this.emitter?.position?.z))
             ? Number(this.emitter.position.z)
             : Number(this.orbitPoint[2]) || -2;
@@ -990,6 +1282,10 @@ class WebGLParticleSystem {
                     event.preventDefault();
                     const formEl = event.currentTarget.closest("form");
                     this.restoreSnapshot(formEl.elements["snapshot-name"]?.value || "debug");
+                }),
+                action("view-javascript", "View JavaScript", (event) => {
+                    event.preventDefault();
+                    showDebugCode();
                 })
             ])
         );
@@ -999,7 +1295,6 @@ class WebGLParticleSystem {
         builtForm.addEventListener("change", () => saveDebugSettings(builtForm));
         card.appendChild(builtForm);
         document.body.appendChild(card);
-        restoreDebugSettings(builtForm);
         saveDebugSettings(builtForm);
         this._debugPanel = card;
         return card;
@@ -1155,6 +1450,11 @@ class WebGLParticleSystem {
         this.uOrbitFieldRadius = this.feedback.addUniform("uOrbitFieldRadius", VariableTypes.FLOAT, 1.2);
         this.uOrbitEscape = this.feedback.addUniform("uOrbitEscape", VariableTypes.FLOAT_VEC2, [0.0, 1.0]);
         this.uRepelFieldRadius = this.feedback.addUniform("uRepelFieldRadius", VariableTypes.FLOAT, 1.2);
+        this.uInteractionPlane = this.feedback.addUniform(
+            "uInteractionPlane",
+            VariableTypes.FLOAT_VEC4,
+            [0.0, 0.0, 0.0, 0.0]
+        );
         // Gravity (world units/sec^2) and friction (damping per second)
         this.uGravity = this.feedback.addUniform("uGravity", VariableTypes.FLOAT_VEC3, [0.0, 0.0, 0.0]);
         this.uFriction = this.feedback.addUniform("uFriction", VariableTypes.FLOAT, 0.0);
@@ -1186,6 +1486,8 @@ class WebGLParticleSystem {
             float time = uScene[2];
             float delta = uScene[3];
             bool gravityActive = length(uGravity) > 0.000001;
+            vec3 orbitPlaneNormal = normalize(vec3(0.0, sin(uInteractionPlane.y), cos(uInteractionPlane.y)));
+            vec3 repelPlaneNormal = normalize(vec3(0.0, sin(uInteractionPlane.w), cos(uInteractionPlane.w)));
 
             float near = -1.0 / uProjectionMatrix[2][2];
             float far = uProjectionMatrix[2][3] / (1.0 + uProjectionMatrix[2][2]);
@@ -1213,6 +1515,9 @@ class WebGLParticleSystem {
                 float fieldRadius = max(targetRadius, uRepelFieldRadius);
 
                 vec3 away = position - target;
+                if (uInteractionPlane.z > 0.5) {
+                    away -= repelPlaneNormal * dot(away, repelPlaneNormal);
+                }
                 float targetDistance = length(away);
 
                 if (targetDistance < 0.0001) {
@@ -1221,6 +1526,9 @@ class WebGLParticleSystem {
                         cos(time * 1.21 + float(index) * 0.11),
                         0.0
                     );
+                    if (uInteractionPlane.z > 0.5) {
+                        away -= repelPlaneNormal * dot(away, repelPlaneNormal);
+                    }
                     targetDistance = length(away);
                 }
 
@@ -1234,6 +1542,10 @@ class WebGLParticleSystem {
                     vec3 displacedHome = home + repelDirection * (radiusCorrection + softDisplacement) * uMotion.z;
                     float repelLerp = clamp(delta * (8.0 + 18.0 * influence), 0.0, 0.35);
                     position += (displacedHome - position) * repelLerp;
+                    if (uInteractionPlane.z > 0.5) {
+                        vec3 planeRel = position - target;
+                        position -= repelPlaneNormal * dot(planeRel, repelPlaneNormal);
+                    }
                     position.z += (target.z - position.z) * (0.004 + 0.012 * influence);
                     float settle = clamp(delta * (5.0 + 5.0 * (1.0 - influence)), 0.0, 1.0);
                     velocity *= (1.0 - settle);
@@ -1254,10 +1566,17 @@ class WebGLParticleSystem {
                 float targetRadius = max(0.02, uTargetPoint.w);
                 float fieldRadius = max(targetRadius, uOrbitFieldRadius);
                 // Orbit reach is evaluated in XY so depth variation doesn't disqualify most particles.
-                float homeDistanceToTarget = length(home.xy - target.xy);
+                vec3 homeOrbitRel = home - target;
+                if (uInteractionPlane.x > 0.5) {
+                    homeOrbitRel -= orbitPlaneNormal * dot(homeOrbitRel, orbitPlaneNormal);
+                }
+                float homeDistanceToTarget = uInteractionPlane.x > 0.5 ? length(homeOrbitRel) : length(home.xy - target.xy);
                 bool orbitEligible = homeDistanceToTarget <= fieldRadius;
 
                 vec3 rel = position - target;
+                if (uInteractionPlane.x > 0.5) {
+                    rel -= orbitPlaneNormal * dot(rel, orbitPlaneNormal);
+                }
                 float d = length(rel);
 
                 if (orbitEligible) {
@@ -1268,6 +1587,9 @@ class WebGLParticleSystem {
                             fract(sin(a * 1.31) * 28001.8384) * 2.0 - 1.0,
                             fract(sin(a * 1.73) * 13976.1239) * 2.0 - 1.0
                         )) * targetRadius;
+                        if (uInteractionPlane.x > 0.5) {
+                            rel -= orbitPlaneNormal * dot(rel, orbitPlaneNormal);
+                        }
                         d = length(rel);
                     }
 
@@ -1288,11 +1610,13 @@ class WebGLParticleSystem {
                     dir = rel / d;
 
                     float seed = float(index) + 1.0;
-                    vec3 axis = normalize(vec3(
-                        sin(seed * 0.73),
-                        cos(seed * 1.11),
-                        sin(seed * 1.37 + 2.1)
-                    ));
+                    vec3 axis = uInteractionPlane.x > 0.5
+                        ? orbitPlaneNormal
+                        : normalize(vec3(
+                            sin(seed * 0.73),
+                            cos(seed * 1.11),
+                            sin(seed * 1.37 + 2.1)
+                        ));
                     vec3 tangent = cross(axis, dir);
                     float tangentLen = length(tangent);
                     if (tangentLen < 0.0001) {
@@ -1655,7 +1979,9 @@ class WebGLParticleSystem {
     setParticleShape(shape = "square") {
         const normalized = String(shape || "square").toLowerCase();
         this.particleShape = ["circle", "soft-circle", "soft"].includes(normalized)
-            ? normalized === "soft" ? "soft-circle" : normalized
+            ? normalized === "soft"
+                ? "soft-circle"
+                : normalized
             : "square";
         if (this.uParticleShape) this.uParticleShape.value = this._particleShapeMode();
     }
@@ -1751,11 +2077,50 @@ class WebGLParticleSystem {
             "display:none"
         ].join(";");
 
+        const createAxisRing = (style, opacity) => {
+            const axis = document.createElement("div");
+            axis.style.cssText = [
+                "position:absolute",
+                "left:50%",
+                "top:50%",
+                "width:0",
+                "height:0",
+                `border:1px ${style} ${color}`,
+                "border-radius:50%",
+                "transform:translate(-50%, -50%)",
+                `opacity:${opacity}`,
+                "box-shadow:0 0 2px rgba(0,0,0,0.8)",
+                "display:none"
+            ].join(";");
+            return axis;
+        };
+        const radiusRingX = createAxisRing("solid", 0.45);
+        const radiusRingY = createAxisRing("solid", 0.45);
+        const reachRingX = createAxisRing("dashed", 0.3);
+        const reachRingY = createAxisRing("dashed", 0.3);
+
         crosshair._radiusRing = radiusRing;
         crosshair._reachRing = reachRing;
+        crosshair._sphereAxisRings = [
+            { element: radiusRingX, transform: "translate(-50%, -50%) rotateX(68deg)" },
+            { element: radiusRingY, transform: "translate(-50%, -50%) rotateY(68deg)" },
+            { element: reachRingX, transform: "translate(-50%, -50%) rotateX(68deg)" },
+            { element: reachRingY, transform: "translate(-50%, -50%) rotateY(68deg)" }
+        ];
         crosshair._cone = cone;
         crosshair._color = color;
-        crosshair.append(cone, reachRing, radiusRing, horizontal, vertical, ring);
+        crosshair.append(
+            cone,
+            reachRing,
+            reachRingX,
+            reachRingY,
+            radiusRing,
+            radiusRingX,
+            radiusRingY,
+            horizontal,
+            vertical,
+            ring
+        );
         return crosshair;
     }
 
@@ -1804,12 +2169,147 @@ class WebGLParticleSystem {
         };
     }
 
+    viewportToWorldPoint(clientX, clientY, depth = -2) {
+        if (!this.canvas || !this.particles?.projection) return null;
+        const z = Number(depth) || -2;
+        let bounds;
+        try {
+            bounds = this.particles.projection.getBoundsAtDepth(z);
+        } catch (_error) {
+            return null;
+        }
+
+        const rect = this.canvas.getBoundingClientRect();
+        const width = bounds.right - bounds.left;
+        const height = bounds.top - bounds.bottom;
+        if (!rect.width || !rect.height || !width || !height) return null;
+
+        const nx = (Number(clientX) - rect.left) / rect.width;
+        const ny = (Number(clientY) - rect.top) / rect.height;
+        return {
+            x: bounds.left + nx * width,
+            y: bounds.top - ny * height,
+            z
+        };
+    }
+
+    _createInteractionPoint(type, options = {}) {
+        const isRepel = type === "repel";
+        const config = {
+            depth: Number(options.z ?? options.depth ?? -2) || -2,
+            radius: Number(options.radius ?? 0.4) || 0.4,
+            fieldRadius: options.fieldRadius,
+            mode: options.mode,
+            planeAngle: options.planeAngle
+        };
+        let active = false;
+        let currentPoint = null;
+        const apply = (enabled, point = {}) => {
+            const payload = {
+                radius: config.radius,
+                fieldRadius: config.fieldRadius,
+                mode: config.mode,
+                planeAngle: config.planeAngle,
+                ...point
+            };
+            if (isRepel) this.setRepel(enabled, payload);
+            else this.setOrbit(enabled, payload);
+        };
+
+        const moveTo = (clientX, clientY, updateOptions = {}) => {
+            const nextDepth = Number(updateOptions?.z ?? updateOptions?.depth ?? config.depth) || config.depth;
+            const point = this.viewportToWorldPoint(clientX, clientY, nextDepth);
+            if (!point) return handle;
+            currentPoint = point;
+            active = true;
+            apply(true, {
+                ...point,
+                radius: updateOptions?.radius ?? config.radius,
+                fieldRadius: updateOptions?.fieldRadius ?? config.fieldRadius,
+                mode: updateOptions?.mode ?? config.mode,
+                planeAngle: updateOptions?.planeAngle ?? config.planeAngle
+            });
+            return handle;
+        };
+        const position = (x, y, z = config.depth, updateOptions = {}) => {
+            currentPoint = { x, y, z };
+            active = true;
+            apply(true, {
+                x,
+                y,
+                z,
+                radius: updateOptions?.radius ?? config.radius,
+                fieldRadius: updateOptions?.fieldRadius ?? config.fieldRadius,
+                mode: updateOptions?.mode ?? config.mode,
+                planeAngle: updateOptions?.planeAngle ?? config.planeAngle
+            });
+            return handle;
+        };
+        const handle = {
+            moveTo,
+            position,
+            update: (nextOptions = {}) => {
+                if (nextOptions.depth !== undefined || nextOptions.z !== undefined) {
+                    config.depth = Number(nextOptions.z ?? nextOptions.depth) || config.depth;
+                }
+                if (nextOptions.radius !== undefined) {
+                    config.radius = Math.max(0.0001, Number(nextOptions.radius) || config.radius);
+                }
+                if (nextOptions.fieldRadius !== undefined) config.fieldRadius = nextOptions.fieldRadius;
+                if (nextOptions.mode !== undefined) config.mode = nextOptions.mode;
+                if (nextOptions.planeAngle !== undefined) config.planeAngle = nextOptions.planeAngle;
+                if (active && currentPoint) apply(true, currentPoint);
+                return handle;
+            },
+            updateWorld: position,
+            disable: () => {
+                active = false;
+                apply(false);
+                return handle;
+            },
+            remove: () => handle.disable()
+        };
+
+        if (options.x !== undefined || options.y !== undefined) {
+            handle.position(options.x ?? 0, options.y ?? 0, config.depth);
+        }
+
+        return handle;
+    }
+
+    createRepelPoint(options = {}) {
+        return this._createInteractionPoint("repel", options);
+    }
+
+    createOrbitPoint(options = {}) {
+        return this._createInteractionPoint("orbit", options);
+    }
+
     _setCrosshairRingSize(ring, radiusPx) {
         if (!ring) return;
         const size = Math.max(0, Number(radiusPx) || 0) * 2;
         ring.style.width = `${size}px`;
         ring.style.height = `${size}px`;
         ring.style.display = size > 0 ? "block" : "none";
+    }
+
+    _setCrosshairSphereRings(element, radiusPx, reachPx, enabled = false) {
+        const rings = element?._sphereAxisRings || [];
+        if (!enabled) {
+            rings.forEach((ring) => {
+                ring.element.style.display = "none";
+            });
+            return;
+        }
+
+        const sizes = [radiusPx, radiusPx, reachPx, reachPx];
+        rings.forEach((ring, index) => {
+            const size = Math.max(0, Number(sizes[index]) || 0) * 2;
+            ring.element.style.width = `${size}px`;
+            ring.element.style.height = `${size}px`;
+            ring.element.style.transform = ring.transform;
+            ring.element.style.display = size > 0 ? "block" : "none";
+        });
     }
 
     _setCrosshairCone(element, projected, cone = null) {
@@ -1847,7 +2347,7 @@ class WebGLParticleSystem {
         coneElement.style.borderLeft = `1px solid ${color}`;
     }
 
-    _updateCrosshairElement(element, point, reachRadius = null, cone = null) {
+    _updateCrosshairElement(element, point, reachRadius = null, cone = null, options = {}) {
         const projected = this._projectWorldPointToViewport(point);
         if (!projected || !projected.visible) {
             element.style.display = "none";
@@ -1860,13 +2360,18 @@ class WebGLParticleSystem {
         element.style.display = "block";
         element.style.left = `${projected.x}px`;
         element.style.top = `${projected.y}px`;
-        this._setCrosshairRingSize(element._radiusRing, radius * unitScale);
-        this._setCrosshairRingSize(element._reachRing, reach * unitScale);
+        const radiusPx = radius * unitScale;
+        const reachPx = reach * unitScale;
+        this._setCrosshairRingSize(element._radiusRing, radiusPx);
+        this._setCrosshairRingSize(element._reachRing, reachPx);
+        this._setCrosshairSphereRings(element, radiusPx, reachPx, options.mode === "3d");
         this._setCrosshairCone(element, projected, cone);
     }
 
     _updateDebugCrosshairOverlay() {
-        if (this.debugCrosshairMode === "none") {
+        const mode =
+            this.debugCrosshairPreviewMode !== "none" ? this.debugCrosshairPreviewMode : this.debugCrosshairMode;
+        if (mode === "none") {
             if (this._debugCrosshairLayer) {
                 this._debugCrosshairLayer.orbit.style.display = "none";
                 this._debugCrosshairLayer.repel.style.display = "none";
@@ -1877,10 +2382,10 @@ class WebGLParticleSystem {
         }
 
         const layer = this._ensureDebugCrosshairLayer();
-        const showOrbit = ["orbit", "both", "all"].includes(this.debugCrosshairMode);
-        const showRepel = ["repel", "both", "all"].includes(this.debugCrosshairMode);
-        const showMask = ["mask", "all"].includes(this.debugCrosshairMode);
-        const showEmitter = ["emitter", "all"].includes(this.debugCrosshairMode);
+        const showOrbit = ["orbit", "both", "all"].includes(mode);
+        const showRepel = ["repel", "both", "all"].includes(mode);
+        const showMask = ["mask", "all"].includes(mode);
+        const showEmitter = ["emitter", "all"].includes(mode);
 
         const orbitRadius = Math.max(0.0001, Number(this.orbitPoint[3]) || 0.4);
         const orbitReach =
@@ -1893,10 +2398,14 @@ class WebGLParticleSystem {
                 ? Math.max(repelRadius, this._scaleRepelDistance(Number(this.repelFieldRadius)))
                 : repelRadius * 3;
 
-        if (showOrbit) this._updateCrosshairElement(layer.orbit, this.orbitPoint, orbitReach);
+        if (showOrbit)
+            this._updateCrosshairElement(layer.orbit, this.orbitPoint, orbitReach, null, { mode: this.orbitMode });
         else layer.orbit.style.display = "none";
 
-        if (showRepel) this._updateCrosshairElement(layer.repel, this._scaledRepelPointArray(), repelReach);
+        if (showRepel)
+            this._updateCrosshairElement(layer.repel, this._scaledRepelPointArray(), repelReach, null, {
+                mode: this.repelMode
+            });
         else layer.repel.style.display = "none";
 
         if (showMask && this.particles?.activeMaskTransform?.anchor) {
@@ -1938,6 +2447,24 @@ class WebGLParticleSystem {
         this.debugCrosshairMode = ["orbit", "repel", "mask", "emitter", "both", "all"].includes(nextMode)
             ? nextMode
             : "none";
+        this._updateDebugCrosshairOverlay();
+    }
+
+    previewDebugCrosshair(mode = "none", duration = 900) {
+        const nextMode = String(mode || "none").toLowerCase();
+        this.debugCrosshairPreviewMode = ["orbit", "repel", "mask", "emitter", "both", "all"].includes(nextMode)
+            ? nextMode
+            : "none";
+        clearTimeout(this._debugCrosshairPreviewTimer);
+        if (this.debugCrosshairPreviewMode !== "none") {
+            this._debugCrosshairPreviewTimer = setTimeout(
+                () => {
+                    this.debugCrosshairPreviewMode = "none";
+                    this._updateDebugCrosshairOverlay();
+                },
+                Math.max(0, Number(duration) || 0)
+            );
+        }
         this._updateDebugCrosshairOverlay();
     }
 
@@ -1987,7 +2514,10 @@ class WebGLParticleSystem {
             this._maskTransition = {
                 startTimeMs: NaN,
                 durationMs: transitionDurationMs,
-                spread: Math.max(0, Math.min(1, Number(buildOptions?.transitionSpread ?? buildOptions?.randomizeTransition ?? 0) || 0)),
+                spread: Math.max(
+                    0,
+                    Math.min(1, Number(buildOptions?.transitionSpread ?? buildOptions?.randomizeTransition ?? 0) || 0)
+                ),
                 fromPositions,
                 toPositions,
                 fromColors,
@@ -2160,6 +2690,8 @@ class WebGLParticleSystem {
         if (options.escapePush !== undefined) {
             this.orbitEscapePush = Math.max(0, Number(options.escapePush) || 0);
         }
+        if (options.mode !== undefined) this.orbitMode = options.mode === "2d" ? "2d" : "3d";
+        if (options.planeAngle !== undefined) this.orbitPlaneAngle = Number(options.planeAngle) || 0;
         this.orbit.value = enabled ? 1 : 0;
         if (enabled) this.repel.value = 0;
         this._syncHomeState();
@@ -2182,6 +2714,8 @@ class WebGLParticleSystem {
             const nextField = Number(options.fieldRadius);
             this.repelFieldRadius = Number.isFinite(nextField) && nextField > 0 ? nextField : null;
         }
+        if (options.mode !== undefined) this.repelMode = options.mode === "2d" ? "2d" : "3d";
+        if (options.planeAngle !== undefined) this.repelPlaneAngle = Number(options.planeAngle) || 0;
         this.repel.value = enabled ? 1 : 0;
         if (enabled) this.orbit.value = 0;
         this._syncHomeState();
@@ -2529,6 +3063,14 @@ class WebGLParticleSystem {
                 ];
             }
             if (this.uRepelFieldRadius) this.uRepelFieldRadius.value = repelFieldRadius;
+            if (this.uInteractionPlane) {
+                this.uInteractionPlane.value = [
+                    this.orbitMode === "2d" ? 1 : 0,
+                    Number(this.orbitPlaneAngle) || 0,
+                    this.repelMode === "2d" ? 1 : 0,
+                    Number(this.repelPlaneAngle) || 0
+                ];
+            }
 
             if (this.uRepel && this.repel.dirty && (this.uRepel.value = this.repel.value) !== false) {
                 this.repel.save();
@@ -2558,11 +3100,12 @@ class WebGLParticleSystem {
             ];
         }
         if (this.uRenderWrap) {
-            const gravityActive = Math.hypot(
-                Number(this.gravity?.[0]) || 0,
-                Number(this.gravity?.[1]) || 0,
-                Number(this.gravity?.[2]) || 0
-            ) > 0.000001;
+            const gravityActive =
+                Math.hypot(
+                    Number(this.gravity?.[0]) || 0,
+                    Number(this.gravity?.[1]) || 0,
+                    Number(this.gravity?.[2]) || 0
+                ) > 0.000001;
             this.uRenderWrap.value = !gravityActive && this.repel.value !== 1 && this.orbit.value !== 1 ? 1 : 0;
         }
         if (this.uPointSize) {

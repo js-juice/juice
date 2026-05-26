@@ -71,6 +71,8 @@ class TrackedView extends Component.HTMLElement {
             viewport
         };
 
+        this.ref("html").style.setProperty("--view-progress", progress);
+
         if (inView && !this._wasInView) {
             this.dispatchEvent(new CustomEvent("enter", { detail, bubbles: true }));
         }

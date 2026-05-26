@@ -557,6 +557,7 @@ if (!world) {
             const readoutRadius = orbitOn ? orbitRadius : repelOn ? repelRadius : orbitRadius;
             tr.textContent = Number(readoutRadius || 0).toFixed(2);
         }
+        syncTargetAttributes();
         syncInteractionForces();
     }
 
@@ -564,6 +565,7 @@ if (!world) {
         if (orbitButton) orbitButton.textContent = orbitOn ? "Orbit: on" : "Orbit: off";
         if (repelButton) repelButton.textContent = repelOn ? "Repel: on" : "Repel: off";
         syncModeToggleInputs();
+        syncModeAttributes();
         syncInteractionForces();
         if ((orbitOn || repelOn) && lastPointerPosition) {
             targetFromPointer(lastPointerPosition);
@@ -622,6 +624,77 @@ if (!world) {
         }
         const parsedValue = parseBooleanish(getControlValue(control));
         return parsedValue === true;
+    }
+
+    function setWorldAttribute(name, value) {
+        if (!world || value === null || value === undefined) return;
+        const next = String(value);
+        if (world.getAttribute(name) === next) return;
+        world.setAttribute(name, next);
+    }
+
+    function setWorldBooleanAttribute(name, enabled) {
+        if (!world) return;
+        if (enabled) {
+            if (!world.hasAttribute(name)) world.setAttribute(name, "");
+        } else if (world.hasAttribute(name)) {
+            world.removeAttribute(name);
+        }
+    }
+
+    function syncTargetAttributes() {
+        setWorldAttribute("target-x", target.x);
+        setWorldAttribute("target-y", target.y);
+        setWorldAttribute("target-z", target.z);
+        setWorldAttribute("particle-radius", target.r);
+        setWorldAttribute("orbit-radius", orbitRadius);
+        setWorldAttribute("repel-radius", repelRadius);
+    }
+
+    function syncModeAttributes() {
+        const mode = orbitOn ? "orbit" : repelOn ? "repel" : "idle";
+        setWorldAttribute("mode", mode);
+        setWorldBooleanAttribute("orbit", orbitOn);
+        setWorldBooleanAttribute("repel", repelOn);
+    }
+
+    function syncEnvironmentAttributes() {
+        setWorldAttribute("particles", environmentState.particles);
+        setWorldAttribute("particle-radius", environmentState.particleRadius);
+        setWorldAttribute("particle-type", environmentState.particleType);
+        setWorldAttribute("particle-color", environmentState.particleColor);
+        setWorldAttribute("drift", environmentState.drift);
+        setWorldAttribute("drift-speed", environmentState.driftSpeed);
+        setWorldAttribute("drift-type", environmentState.driftType);
+        setWorldAttribute("orbit-speed", environmentState.orbitSpeed);
+        setWorldAttribute("orbit-pull", environmentState.orbitPull);
+        setWorldAttribute("repel-strength", environmentState.repelStrength);
+        setWorldAttribute("orbit-reach", environmentState.orbitReach);
+        setWorldAttribute("repel-reach", environmentState.repelReach);
+        setWorldAttribute("gravity-x", environmentState.gravityX);
+        setWorldAttribute("gravity-y", environmentState.gravityY);
+        setWorldAttribute("gravity-z", environmentState.gravityZ);
+        setWorldAttribute("gravity", `${environmentState.gravityX},${environmentState.gravityY},${environmentState.gravityZ}`);
+        setWorldAttribute("friction", environmentState.friction);
+    }
+
+    function syncMaskAttributes(source, options = {}) {
+        const src = String(source || "").trim();
+        if (!src) return;
+        setWorldAttribute("mask", src);
+        setWorldAttribute("mask-options", JSON.stringify(options));
+        if (options.contentBox) {
+            if (options.contentBox.width !== undefined) setWorldAttribute("mask-width", options.contentBox.width);
+            if (options.contentBox.height !== undefined) setWorldAttribute("mask-height", options.contentBox.height);
+        }
+        if (options.position) {
+            setWorldAttribute("mask-align", "custom");
+            if (options.position.x !== undefined) setWorldAttribute("mask-x", options.position.x);
+            if (options.position.y !== undefined) setWorldAttribute("mask-y", options.position.y);
+            if (options.position.z !== undefined) setWorldAttribute("mask-z", options.position.z);
+        }
+        setWorldBooleanAttribute("preserve-color", options.preserveColor === true);
+        if (options.particleGap !== undefined) setWorldAttribute("particle-gap", options.particleGap);
     }
 
     function setControlChecked(control, checked) {
@@ -858,6 +931,8 @@ if (!world) {
         const repelReach = Number(environmentState.repelReach);
         repelFieldRadius = Number.isFinite(repelReach) && repelReach > 0 ? repelReach : null;
 
+        syncEnvironmentAttributes();
+
         if (typeof world.setValue === "function") {
             world.setValue("particleType", environmentState.particleType);
         }
@@ -1081,6 +1156,7 @@ if (!world) {
             applyMaskEnvironmentOptions(controls);
             const resolvedOptions =
                 maskOptions && typeof maskOptions === "object" ? maskOptions : await buildMaskOptions(src, controls);
+            syncMaskAttributes(src, resolvedOptions);
             await world.setMask(src, resolvedOptions);
             activeMaskSource = src;
         } catch (error) {
@@ -1105,6 +1181,7 @@ if (!world) {
             applyMaskEnvironmentOptions(controls);
             const resolvedOptions =
                 maskOptions && typeof maskOptions === "object" ? maskOptions : await buildMaskOptions(src, controls);
+            syncMaskAttributes(src, resolvedOptions);
 
             if (typeof world.loadMask === "function") {
                 await world.loadMask(src, { apply: true, ...resolvedOptions });

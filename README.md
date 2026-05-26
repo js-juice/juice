@@ -50,7 +50,7 @@ Core framework modules shared across the repo.
 - DOM and observation helpers under `core/Dom/`
 - Virtual DOM modules under `core/VirtualDom/`
 - HTML parsing/relinking under `core/HTML/`
-- Templates under `core/Template/`
+- Templates under `core/template/`
 - Style parsing/SASS/CSS helpers under `core/Style/`
 - Stream, file, asset, crypto, portal, client, proxy, queue, and storage helpers
 - Legacy and shared component/form/animation/graphics modules that newer packages can migrate away from over time

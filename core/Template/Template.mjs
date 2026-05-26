@@ -1,46 +1,13 @@
 /**
- * Template engine with live updates, conditionals, loops, and includes.
- * Supports {{expression}}, {{each}}, {{if}}, and {{include}} syntax.
- * @module Template/Template
+ * Template engine with variables, conditionals, loops, and includes.
+ * Supports `{{expression}}`, `{if ...{...}}`, `{each ...{...}}`, and `{include ...{...}}` syntax.
+ * @module template/template
  */
 
 import nodePath from "node:path";
-import fs from "node:fs";
 import EventEmitter from "node:events";
-import { empty } from "../Util/Core.mjs";
-import TokenContent from "./Content.mjs";
-import BlockContext from "./Context.mjs";
-
-/**
- * Template loader for file system and URL sources.
- * @class Loader
- */
-class Loader {
-    /** @type {boolean} Loading state */
-    loading = false;
-    
-    /**
-     * Loads template from file system.
-     * @param {string} filePath - File path
-     * @returns {string} File content or error comment
-     */
-    fromFileSystem(filePath) {
-        try {
-            return fs.readFileSync(filePath, "utf-8").toString();
-        } catch (err) {
-            return `<!-- Failed to load ${filePath}: ${err.message} -->`;
-        }
-    }
-    
-    /**
-     * Loads template from URL.
-     * @param {string} url - Template URL
-     * @returns {Promise<string>} Template content
-     */
-    async fromURL(url) {
-        return fetch(url).then((res) => res.text());
-    }
-}
+import { fileURLToPath } from "node:url";
+import TokenContent from "./content.mjs";
 
 /**
  * Live template engine with reactive bindings and dynamic content.
@@ -52,45 +19,14 @@ class Loader {
  * @fires TemplateEngine#ready When template is parsed and ready
  * @example
  * const engine = new TemplateEngine({
- *   loader: (path) => fs.readFileSync(path, 'utf-8'),
  *   root: './templates'
  * });
- * engine.parse('<h1>{{title}}</h1>', { title: 'Hello' });
+ * const html = await engine.render('<h1>{{title}}</h1>', { title: 'Hello' });
  */
 class TemplateEngine extends EventEmitter {
-    /**
-     * Returns content script for DOM element access.
-     * @returns {Object} Elements object
-     * @static
-     */
-    static contentScript() {
-        const elements = {};
-        document.addEventListener("DOMContentLoaded", () => {
-            elements.page = document.getElementById("[id]");
-            elements.root = document.getElementById("root");
-            elements.sidebar = document.getElementById("sidebar");
-        });
-
-        return elements;
-    }
-
-    constructor({ loader, root } = {}) {
+    constructor({ root } = {}) {
         super();
-        this.blocks = [];
-        this.root = root || nodePath.dirname(import.meta.url);
-        this.loader = loader || ((path) => `<!-- Missing loader for: ${path} -->`);
-        this.bindings = new Map(); // Map key -> array of {el, attr} or {el, isTextNode}
-    }
-
-    /**
-     * Sets template content and triggers parsing.
-     * @type {string}
-     */
-    set template(template) {
-        if (this.tpl === template) return;
-        this._tpl = template;
-        this.load(template);
-        this.parse(this._tpl);
+        this.root = root || nodePath.dirname(fileURLToPath(import.meta.url));
     }
 
     /**
@@ -101,34 +37,34 @@ class TemplateEngine extends EventEmitter {
      * @fires TemplateEngine#ready
      */
     async parse(template, context = {}) {
-        console.log("Parsing Template TPL:", template);
-        template = template.trim();
-        const tokenContent = new TokenContent(template, context, { root: this.root });
-        tokenContent.root = this.root;
+        const tokenContent = new TokenContent(String(template || "").trim(), context, { root: this.root });
         tokenContent.on("ready", () => this.emit("ready"));
         this.content = tokenContent;
+        await tokenContent.ready;
+        return tokenContent;
     }
 
     load(location) {
         return TokenContent.load(location, this.root);
     }
 
-    async render(template, context) {
+    async render(template, context = {}) {
         const { string, root } = await this.load(template);
         this.root = root;
         await this.parse(string, context);
         return this.content.render(context);
     }
 
-    async renderToDataURL(template, context) {
+    async renderToDataURL(template, context = {}) {
         const { string, root } = await this.load(template);
         this.root = root;
         await this.parse(string, context);
         return this.content.renderToDataURL(context);
     }
 
-    async mount(el, template, context) {
-        el.innerHTML = this.render(template, context);
+    async mount(el, template, context = {}) {
+        el.innerHTML = await this.render(template, context);
+        return el;
     }
 }
 

@@ -51,7 +51,7 @@ export class AnimationBody extends Component.HTMLElement {
             vy: { type: "number", route: "velocity.y", default: 0, linked: true },
             vz: { type: "number", route: "velocity.z", default: 0, linked: true },
             offset: { type: "string", default: 0 },
-            r: { type: "number", default: 0, linked: true },
+            r: { type: "number", aliasFor: "rx", linked: true },
             rx: { type: "number", route: "rotation.x", default: 0, linked: true },
             ry: { type: "number", route: "rotation.y", default: 0, linked: true },
             rz: { type: "number", route: "rotation.z", default: 0, linked: true },
@@ -374,7 +374,14 @@ export class AnimationBody extends Component.HTMLElement {
         if (this.debug) console.log(`[${this.constructor.name}] ${property}=${value}`);
         switch (property) {
             case "r":
-                this.rotation.x.value = value;
+            case "rx":
+                this.rotation.x = value;
+                break;
+            case "ry":
+                this.rotation.y = value;
+                break;
+            case "rz":
+                this.rotation.z = value;
                 break;
             case "anchor":
                 this.setAnchor(value);

@@ -204,15 +204,16 @@ class SpriteSheet {
             const w = Math.min(1, sheet.xInterval);
             const h = Math.min(1, sheet.yInterval);
             sheet.coords = [0, h, w, h, 0, 0, 0, 0, w, h, w, 0];
+            this.ready = true;
 
             if (config.activate !== false) {
                 this.useSheet(index, {
                     frame: config.frame ?? this._frame,
                     resize: config.resize !== false,
                 });
+                this.render(true);
             }
 
-            this.ready = true;
             if (config.activate === false && config.render) this.render(true);
             return sheet;
         });

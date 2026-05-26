@@ -1,15 +1,12 @@
 /**
- * Template token for variable substitution and live updates.
- * Manages template tokens with context binding and event handling.
- * @module Template/Token
+ * Template token for variable substitution, blocks, and includes.
+ * @module template/token
  */
 
-import ContentReader from "./ContentReader.mjs";
-import TokenContent from "./Content.mjs";
-import fs from "fs";
 import path from "path";
 import EventEmitter from "events";
 import { safeEval, findTokensInString } from "../Util/Eval.mjs";
+import TokenContent from "./content.mjs";
 
 /**
  * Generates a short random ID.
@@ -28,36 +25,9 @@ function getValueFromPath(obj, path, _default = "") {
     }, obj);
 }
 
-function renderTemplate(template, data) {
-    return template.replace(/{(.*?){(.*?)}(.*?)}/g, (_, key, body, footer) => {
-        const value = getValueFromPath(data, key.trim());
-        return value !== undefined ? value : "";
-    });
-}
-
-class Loader {
-    loading = false;
-    fromFileSystem(filePath) {
-        try {
-            return fs.readFileSync(filePath, "utf-8").toString();
-        } catch (err) {
-            return `<!-- Failed to load ${filePath}: ${err.message} -->`;
-        }
-    }
-    async fromURL(url) {
-        return fetch(url).then((res) => res.text());
-    }
-
-    load(path) {
-        if (path.startsWith("http")) return this.fromURL(path);
-        return this.fromFileSystem(path);
-    }
-}
-
 class Token extends EventEmitter {
     constructor(source, context = false, parent = null, inHTMLTag = false) {
         super();
-        //  console.log("CREATING TOKEN", source);
         this.data = {};
         this.source = {};
         this.firstRender = true;
@@ -116,9 +86,16 @@ class Token extends EventEmitter {
     async parse() {
         this.parsing = true;
         const raw = this.string.trim();
-        console.log("Raw Token", raw);
         const parsed = /^\{(.*?)\{([\s\S]*)\}(.*?)\}$/m.exec(raw);
-        console.log(parsed);
+        if (!parsed) {
+            this.parsing = false;
+            this.isReady = true;
+            this.render = () => raw;
+            this.config = { type: "text" };
+            this._callReady();
+            return true;
+        }
+
         const command = parsed[1].trim();
         let body = parsed[2].trim();
         const footer = parsed[3].trim();
@@ -186,7 +163,6 @@ class Token extends EventEmitter {
                 content.on("ready", () => {
                     this.parsing = false;
                     this.isReady = true;
-                    console.log("EACH tokenContent READY");
                     this._callReady();
                 });
             } else if (type === "include") {
@@ -206,13 +182,10 @@ class Token extends EventEmitter {
                 this.template = string;
                 this.root = root;
 
-                let context = this.context;
-
                 const content = new TokenContent(string, this.context, { root, parent: this });
                 content.on("ready", () => {
                     this.parsing = false;
                     this.isReady = true;
-                    console.log("INCLUDE tokenContent READY");
                     this._callReady();
                 });
 
@@ -236,6 +209,12 @@ class Token extends EventEmitter {
             this.container = container;
         }
 
+        if (!this.isReady && !["each", "include"].includes(this.type)) {
+            this.parsing = false;
+            this.isReady = true;
+            this._callReady();
+        }
+
         return true;
     }
 
@@ -251,7 +230,6 @@ class Token extends EventEmitter {
                 case "each":
                     const values = CONTEXT.map((data) => {
                         const ctx = { [this.config.item]: data };
-                        // console.log("EACH CONTEXT ITEM", ctx);
                         return templateVars.content.render(ctx);
                     });
 
@@ -277,7 +255,6 @@ class Token extends EventEmitter {
                 rendered = config.value;
             }
         }
-        // console.log("IF RENDERED", rendered);
         return rendered;
     }
 
@@ -285,16 +262,13 @@ class Token extends EventEmitter {
         if (context) this.setContext(context);
 
         const value = this.computeValue(context);
-        // console.log("EACH TEMP Var", templateVars), value;
         const rendered = [this.container.rendered, value, this.container.close];
-        // console.log("EACH RENDERED", rendered);
         return rendered.join("\n");
     }
 
     renderInclude(context) {
         if (context) this.setContext(context);
         const { templateVars } = this;
-        // console.log("RENDER INC", templateVars.content.render(this.context), templateVars.root);
         return this.container.rendered + "\n" + this.computeValue(context) + "\n" + this.container.close;
     }
 

@@ -31,7 +31,7 @@ export const operators = {
  */
 export function safeEval(string, tokens = {}) {
     try {
-        const result = new Function("tokens", prepareTokensInString(string));
+        const result = new Function("tokens", prepareTokensInString(string, tokens));
         return result(tokens);
     } catch (e) {
         console.error(e);

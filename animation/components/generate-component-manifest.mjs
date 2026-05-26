@@ -175,6 +175,34 @@ function parsePropertyObjects(configBody) {
     if (!propertiesBlock) return [];
 
     const text = propertiesBlock.body;
+    const readObjectProperty = (objectText, propertyName) => {
+        const propertyMatch = new RegExp(`${propertyName}\\s*:`).exec(objectText);
+        if (!propertyMatch) return null;
+
+        let i = propertyMatch.index + propertyMatch[0].length;
+        while (i < objectText.length && /\s/.test(objectText[i])) i += 1;
+
+        const start = i;
+        let depth = 0;
+        let quote = "";
+        for (; i < objectText.length; i += 1) {
+            const ch = objectText[i];
+            const prev = objectText[i - 1];
+            if (quote) {
+                if (ch === quote && prev !== "\\") quote = "";
+                continue;
+            }
+            if (ch === "\"" || ch === "'" || ch === "`") {
+                quote = ch;
+                continue;
+            }
+            if (ch === "{" || ch === "[" || ch === "(") depth += 1;
+            if (ch === "}" || ch === "]" || ch === ")") depth -= 1;
+            if (depth === 0 && ch === ",") break;
+        }
+
+        return objectText.slice(start, i).trim();
+    };
     const parseDefaultValue = (raw) => {
         if (!raw) return null;
         const value = raw.trim();
@@ -187,10 +215,10 @@ function parsePropertyObjects(configBody) {
     };
 
     const entries = [];
-    const propRegex = /([A-Za-z_$][\w$-]*)\s*:\s*\{/g;
+    const propRegex = /(?:"([^"]+)"|'([^']+)'|([A-Za-z_$][\w$-]*))\s*:\s*\{/g;
     let match = propRegex.exec(text);
     while (match) {
-        const name = match[1];
+        const name = match[1] || match[2] || match[3];
         const objectStart = match.index + match[0].length - 1;
         let depth = 1;
         let i = objectStart + 1;
@@ -202,18 +230,32 @@ function parsePropertyObjects(configBody) {
         }
         const objectText = text.slice(objectStart + 1, i);
         const typeMatch = objectText.match(/type\s*:\s*["']([^"']+)["']/);
-        const defaultMatch = objectText.match(/default\s*:\s*([^,\n}]+)/);
         const linkedMatch = objectText.match(/linked\s*:\s*(true|false)/);
         entries.push({
             name,
             type: typeMatch ? typeMatch[1] : null,
-            default: parseDefaultValue(defaultMatch ? defaultMatch[1] : null),
+            default: parseDefaultValue(readObjectProperty(objectText, "default")),
             linked: linkedMatch ? linkedMatch[1] === "true" : null,
         });
         propRegex.lastIndex = i + 1;
         match = propRegex.exec(text);
     }
     return entries;
+}
+
+function parseStaticStringArray(source, propertyName) {
+    const regex = new RegExp(`static\\s+${propertyName}\\s*=\\s*\\[`);
+    const match = regex.exec(source);
+    if (!match) return [];
+
+    const openIndex = source.indexOf("[", match.index);
+    const block = findBalancedBlock(source, openIndex, "[", "]");
+    if (!block) return [];
+
+    return block.body
+        .split(",")
+        .map((value) => value.trim().replace(/^["']|["']$/g, ""))
+        .filter(Boolean);
 }
 
 function parseObservedArrays(source) {
@@ -233,7 +275,10 @@ function parseObservedArrays(source) {
 
     return {
         all: extract("all"),
-        attributes: extract("attributes"),
+        attributes: [
+            ...extract("attributes"),
+            ...(body.includes("attributeControls") ? parseStaticStringArray(source, "attributeControls") : []),
+        ],
         properties: extract("properties"),
     };
 }

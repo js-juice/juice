@@ -42,26 +42,11 @@ export class ComponentIndex {
 }
 
 const defaultComponentStyle = `
-    * {
-        box-sizing:border-box;
-    }
-    :host{
-        position:relative;
-        display:block;
-    }
-    :host(.container) .component--html{
-        container: component / inline-size;
-    }
-    .component--styles{
-        display:none;
-    }
-    .component--html{
-        display:block;
-        position:relative;
-        height:100%;
-        width:100%;
-    
-    }
+    * { box-sizing:border-box; }
+    :host{ position:relative; display:block; }
+    :host(.container) .component--html{ container: component / inline-size; }
+    .component--styles{ display:none; }
+    .component--html{ display:block; position:relative; min-height:100%; width:100%; }
 `;
 
 /* Simple Template Creator
@@ -151,6 +136,8 @@ function ComponentCompiler(name, BaseHTMLElement) {
 
             static defaultTemplateData = {};
 
+            static observableDefinitions = [];
+
             //Static Initialization
 
             /**
@@ -189,6 +176,40 @@ function ComponentCompiler(name, BaseHTMLElement) {
                         }
                     }
                 });
+
+                const observableDefinitions = [];
+                this.observedProperties.forEach((property) => {
+                    const config = this.config.properties[property] || {};
+                    if (config.aliasFor) {
+                        observableDefinitions.push({ property, config, aliasFor: config.aliasFor });
+                        return;
+                    }
+                    const routeConfig = config.route;
+                    const routePaths =
+                        routeConfig === undefined ? null : Array.isArray(routeConfig) ? routeConfig : [routeConfig];
+                    const routes = routePaths
+                        ? routePaths.map((path) => {
+                              if (path.includes(".")) {
+                                  const parts = path.split(".");
+                                  const route = parts.pop();
+                                  return { route, parts };
+                              }
+                              return { route: path, parts: null };
+                          })
+                        : [{ route: property, parts: null, defined: true }];
+                    const alias = property
+                        .split("-")
+                        .map((part, index) => (index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1)))
+                        .join("");
+
+                    observableDefinitions.push({
+                        property,
+                        config,
+                        routes,
+                        alias: alias === property ? null : alias
+                    });
+                });
+                this.observableDefinitions = observableDefinitions;
 
                 this.initialized = true;
                 this.initialize = null;
@@ -335,11 +356,11 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 if (this.config.emitter) Emitter.bind(this);
                 //Set debug
                 if (this.config.debug) this.debug = true;
-                //Before Crreate Callback
+                //Before Create Callback
                 if (this.beforeCreate) this.beforeCreate();
                 //Initialize Observable Properties
-                if (this.static.observedProperties.length) {
-                    this.static.observedProperties.forEach((prop) => this.#setObservable(prop));
+                if (this.static.observableDefinitions.length) {
+                    this.static.observableDefinitions.forEach((definition) => this.#setObservable(definition));
                 }
 
                 ["beforeHTML", "html", "afterHTML"].map((placement) => {
@@ -399,7 +420,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
             }
 
             writeStyleVars(vars, target = null) {
-                const root = target || this.shadowRoot?.host || this.root || this;
+                const root = target || this.ref("html") || this.shadowRoot?.host || this.root || this;
                 if (!root || !root.style) return;
                 if (vars) Object.assign(this._.styleVars, vars);
                 root.style.cssText = Object.entries(this._.styleVars)
@@ -506,26 +527,51 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 this[property] = value;
             }
 
-            #setObservable(property, value = null) {
-                const config = this.config.properties[property] || {};
-
-                let routes = [{ route: property, parent: this._defined }];
-                if (config.route !== undefined) {
-                    if (!Array.isArray(config.route)) config.route = [config.route];
-                    routes = config.route.map((path) => {
-                        if (path.includes(".")) {
-                            const parts = path.split(".");
-                            const route = parts.pop();
-                            const parent = parts.reduce((acc, part) => acc && acc[part], this);
-                            return { route, parent };
-                        } else {
-                            return { route: path, parent: this };
+            #setObservable(definition, value = null) {
+                if (definition.aliasFor) {
+                    const { property, config, aliasFor } = definition;
+                    Object.defineProperty(this, property, {
+                        get: () => this[aliasFor],
+                        set: (newValue) => {
+                            this[aliasFor] = newValue;
                         }
                     });
+
+                    if (config.linked && this.hasAttribute(property)) {
+                        const attributeValue = this.getAttribute(property);
+                        this[aliasFor] =
+                            config.type === "exists"
+                                ? true
+                                : this.parseAttributeValue(attributeValue, config.attrtype || config.type || "string");
+                    }
+                    return;
                 }
+
+                const { property, config, alias } = definition;
+                const routes = definition.routes.map((route) => ({
+                    route: route.route,
+                    parent: route.defined
+                        ? this._defined
+                        : route.parts
+                          ? route.parts.reduce((acc, part) => acc && acc[part], this)
+                          : this
+                }));
+
+                let hasInitialValue = false;
 
                 if (this[property] !== undefined) {
                     value = this[property];
+                    hasInitialValue = true;
+                } else if (config.linked && this.hasAttribute(property)) {
+                    const attributeValue = this.getAttribute(property);
+                    value =
+                        config.type === "exists"
+                            ? true
+                            : this.parseAttributeValue(attributeValue, config.attrtype || config.type || "string");
+                    hasInitialValue = true;
+                }
+
+                if (hasInitialValue) {
                     routes.forEach((r) => (r.parent[r.route] = value));
                     delete this[property];
                 }
@@ -579,12 +625,8 @@ function ComponentCompiler(name, BaseHTMLElement) {
                     }
                 });
 
-                const aliases = property
-                    .split("-")
-                    .map((part, index) => (index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1)))
-                    .join("");
-                if (aliases !== property) {
-                    Object.defineProperty(this, aliases, {
+                if (alias) {
+                    Object.defineProperty(this, alias, {
                         get: () => this[property],
                         set: (value) => {
                             this[property] = value;
@@ -1028,6 +1070,40 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 return this;
             }
 
+            parseAttributeValue(value, type) {
+                let subtype = null;
+                if (type.startsWith("array")) {
+                } else if (type.endsWith("[]")) {
+                    if (type.includes("[")) {
+                        const subtypes = type.match(/\[(\w+)\]/)[1];
+                        return JSON.parse(value).map((item) => this.parseAttributeValue(item, subtypes));
+                    } else {
+                        return JSON.parse(value);
+                    }
+                }
+                switch (type) {
+                    case "string":
+                        return String(value);
+                    case "number":
+                        return Number(value);
+                    case "date":
+                        return new Date(value);
+                    case "json":
+                        return JSON.parse(value);
+                    case "array":
+                        return JSON.parse(value);
+                    case "int":
+                        return parseInt(value);
+                    case "float":
+                        return parseFloat(value);
+                    case "bool":
+                    case "boolean":
+                        return value === "true" || value === true;
+                    default:
+                        return value;
+                }
+            }
+
             /**
              *  @method attributeChangedCallback
              *  Invoked each time one of the custom element's attributes is added, removed, or changed.
@@ -1036,36 +1112,49 @@ function ComponentCompiler(name, BaseHTMLElement) {
 
             attributeChangedCallback(property, oldValue, newValue) {
                 const { attrtype, type, unit, linked } = this.config.properties[property] || {};
+                const types = [attrtype, type].filter(Boolean);
 
+                if (!types.length) return;
                 if (oldValue === newValue) return;
 
-                if (newValue === null) {
-                    if (this.hasAttribute(property)) this.removeAttribute(property);
-
-                    if (!this._defined.connected) {
-                        this.#stash("onAttributeDeleted", property);
-                    } else if (this.onAttributeDeleted) {
-                        this.onAttributeDeleted(property);
-                    }
-                }
-
-                if (oldValue === null && this.onAttributeAdded) {
-                    if (this.hasAttribute(property)) {
-                        if (!this._defined.connected) {
-                            this.#stash("onAttributeAdded", property);
-                        } else {
-                            this.onAttributeAdded(property);
-                        }
-                    }
+                const action = newValue === null ? "Deleted" : oldValue === null ? "Added" : "Changed";
+                if (!this._defined.connected) {
+                    this.#stash("onAttribute" + action, property);
+                } else if (this["onAttribute" + action]) {
+                    this["onAttribute" + action](property);
                 }
 
                 if (unit && typeof newValue === "string") {
-                    if (unit === "percent" && newValue.includes("%")) {
-                        newValue = Number(newValue.replace("%", "")) / 100;
+                    if (["percent", "%"].includes(unit) && newValue.includes("%")) {
+                        newValue = parseFloat(newValue) / 100;
+                    } else if (["px"].includes(unit) && newValue.includes("px")) {
+                        newValue = parseFloat(newValue);
                     }
                 }
 
-                switch (attrtype || type) {
+                if (types[0].startsWith("array")) {
+                    if (types[0].includes("[")) {
+                        const itemTypes = types[0].match(/\[(\w+)\]/)[1];
+                        types[1] = itemTypes.split(/[|,]/);
+                    }
+                    types[0] = "array";
+                }
+
+                switch (types[0]) {
+                    case "array":
+                        if (types[1]) {
+                            newValue = newValue.split(",").map((item) => {
+                                item = item.trim();
+                                if (types[1].includes("number")) item = parseFloat(item);
+                                if (types[1].includes("int")) item = parseInt(item);
+                                if (types[1].includes("string")) item = String(item);
+                                if (types[1].includes("boolean")) item = item === "true";
+                                return item;
+                            });
+                        } else {
+                            newValue = newValue.split(",").map((item) => item.trim());
+                        }
+                        break;
                     case "int":
                         newValue = parseInt(newValue);
                     case "number":

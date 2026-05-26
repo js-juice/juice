@@ -1,15 +1,13 @@
 /**
- * Template content management with token replacement.
- * Handles template parsing, variable substitution, and live updates.
- * @module Template/Content
+ * Template content management with token extraction and rendering.
+ * @module template/content
  */
 
 import EventEmitter from "node:events";
-import Token from "./Token.mjs";
-import Context from "./Context.mjs";
+import Token from "./token.mjs";
+import Context from "./context.mjs";
 import path from "node:path";
 import fs from "node:fs";
-import { type } from "node:os";
 
 /**
  * Generates a short random ID.
@@ -25,32 +23,42 @@ function dir(path) {
     return path.substring(0, Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\")));
 }
 
+function getValueFromPath(obj, path, _default = "") {
+    return path.split(".").reduce((acc, part) => {
+        if (acc === undefined || acc === null) return _default;
+        return acc[part];
+    }, obj);
+}
+
 export class TokenContent extends EventEmitter {
+    ready;
+
     static renderToken(token, data) {
         return token.template.replace(/{(.*?){(.*?)}(.*?)}/g, (_, key, body, footer) => {
             const value = getValueFromPath(data, key.trim());
             return value !== undefined ? value : "";
         });
     }
-    static load(content, root) {
+
+    static async load(content, root) {
         if (typeof content !== "string") return content;
-        return new Promise((resolve, reject) => {
-            if (/^[a-zA-Z]+:\/\//.test(content) && !/^file:\/\//i.test(content)) {
-                return fetch(content).then((res) => {
-                    return { string: res.text(), root: dir(content) };
-                });
-            } else if (/^([a-zA-Z]:[\\/]|[\\.]{0,2}[\\/]|[\\/])/.test(content)) {
-                let filePath = root ? path.resolve(root, content) : content;
-                try {
-                    const template = fs.readFileSync(filePath, "utf-8").toString();
-                    return resolve({ string: template, root: dir(filePath) });
-                } catch (err) {
-                    return resolve(`<!-- Failed to load ${filePath}: ${err.message} -->`);
-                }
-            } else {
-                return resolve({ string: content, root: root });
+
+        if (/^[a-zA-Z]+:\/\//.test(content) && !/^file:\/\//i.test(content)) {
+            const response = await fetch(content);
+            return { string: await response.text(), root: dir(content) };
+        }
+
+        if (/^([a-zA-Z]:[\\/]|[\\.]{0,2}[\\/]|[\\/])/.test(content)) {
+            const filePath = root ? path.resolve(root, content) : content;
+            try {
+                const template = fs.readFileSync(filePath, "utf-8").toString();
+                return { string: template, root: dir(filePath) };
+            } catch (err) {
+                return { string: `<!-- Failed to load ${filePath}: ${err.message} -->`, root: dir(filePath) };
             }
-        });
+        }
+
+        return { string: content, root };
     }
 
     static extract(string, open = "{", close = "}", parent) {
@@ -97,7 +105,7 @@ export class TokenContent extends EventEmitter {
                     maxDepth = 0;
                     token.end = i;
                     token.string = string.slice(token.start, token.end + 1);
-                    const t = new Token(token, this.context, parent, inHTMLTag);
+                    const t = new Token(token, parent?.context, parent, inHTMLTag);
                     token = {};
                     tokens.push(t);
                     splitContent.push(t);
@@ -119,15 +127,13 @@ export class TokenContent extends EventEmitter {
 
     constructor(string, context, options = {}) {
         super();
-        //console.log("CREATING TOKEN CONTENT", string);
         this.tokens = [];
         this.string = string;
-        this.isClientSide = typeof window !== "undefined" && typeof window.document !== "undefined";
 
         if (context) this.setContext(context);
         if (options.root) this.root = options.root;
         if (options.parent) this.parent = options.parent;
-        this.prepare();
+        this.ready = this.prepare();
     }
 
     setRoot(root) {
@@ -145,9 +151,6 @@ export class TokenContent extends EventEmitter {
     }
 
     async prepare() {
-        if (this.isClientSide) {
-            this.string = TokenContent.queryTokens();
-        }
         const prepared = TokenContent.extract(this.string, "{", "}", this);
         this.tokens = prepared.tokens;
         this.content = prepared.content;
@@ -159,11 +162,9 @@ export class TokenContent extends EventEmitter {
         let rendered = this.template.slice();
         const configs = {};
         for (const token of this.tokens) {
-            //console.log(token);
+            if (!token.render) continue;
             const value = token.render(context);
-            //console.log("VALUE", value);
-            if (token.render) rendered = rendered.replace(token.placeholder, value);
-            else console.log("NO RENDER FN", token);
+            rendered = rendered.replace(token.placeholder, value);
             configs[token.id] = token.config;
         }
         const contentConfig = { root: this.root, context: context, configs };
@@ -173,7 +174,6 @@ export class TokenContent extends EventEmitter {
         } else {
             rendered += "\n\n" + tokenContent + "\n\n";
         }
-        //console.log("CONTENT RENDERED", rendered);
         return rendered;
     }
 

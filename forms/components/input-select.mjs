@@ -107,7 +107,7 @@ class InputSelect extends InputComponent {
      * @returns {*} List of observed attribute names.
      */
     static get observedAttributes() {
-        return [...super.observedAttributes, "options", "force-native"];
+        return [...super.observedAttributes, "options", "force-native", "editable"];
     }
 
     /**
@@ -115,7 +115,7 @@ class InputSelect extends InputComponent {
      * @returns {*} void.
      */
     constructor() {
-        super({ _layout: "label:input:>:native:status:div.tab:<:validation" });
+        super({ _layout: "label:input:>:native:status:div.edit-tab:div.tab:<:validation" });
         this.inputType = "select";
         this.syncCharWidth = false;
         this._options = [];
@@ -129,6 +129,7 @@ class InputSelect extends InputComponent {
         this._viewportListener = null;
         this._scrollParents = [];
         this._openIntent = false;
+        this._editingCustomValue = false;
     }
 
     /**
@@ -179,6 +180,40 @@ class InputSelect extends InputComponent {
                 left: "50%",
                 top: "50%",
                 transform: "translate(-50%, -50%)"
+            },
+            ".edit-tab": {
+                display: "none",
+                position: "relative",
+                flex: "0 0 auto",
+                width: "var(--input-height)",
+                height: "var(--input-height)",
+                borderLeft: "1px solid #c8c8c8",
+                background: "linear-gradient(0deg, rgba(204, 204, 204, 1) 0%, rgba(224, 224, 224, 1) 100%)"
+            },
+            ":host([editable]) .edit-tab": {
+                display: "block"
+            },
+            ":host(.editing-custom-value) .edit-tab": {
+                background: "var(--form-accent-color, #0059ff)"
+            },
+            ".select-edit": {
+                display: "grid",
+                placeItems: "center",
+                width: "100%",
+                height: "100%",
+                padding: 0,
+                border: 0,
+                background: "transparent",
+                color: "var(--form-accent-color, #0059ff)",
+                cursor: "text"
+            },
+            ":host(.editing-custom-value) .select-edit": {
+                color: "#ffffff"
+            },
+            ".select-edit svg": {
+                display: "block",
+                width: "16px",
+                height: "16px"
             },
             ":host(.has-validation) .tab::after": {
                 background: "var(--validation-color, var(--form-accent-color), #0059f)"
@@ -531,6 +566,17 @@ class InputSelect extends InputComponent {
         this._optionList = document.createElement("ul");
         this._optionList.className = "select-options";
         this._wireframe.root.appendChild(this._optionList);
+
+        const editTab = this._wireframe.root.querySelector(".edit-tab");
+        if (editTab && !editTab.querySelector(".select-edit")) {
+            const edit = document.createElement("button");
+            edit.type = "button";
+            edit.className = "select-edit";
+            edit.setAttribute("aria-label", "Edit value");
+            edit.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M11.8 1.6 14.4 4.2 5.6 13H3v-2.6l8.8-8.8Zm-.9 2.3L4 10.8V12h1.2l6.9-6.9-1.2-1.2Z"/></svg>`;
+            editTab.appendChild(edit);
+            this._editButton = edit;
+        }
     }
 
     _setSelectedByValue(value) {
@@ -538,7 +584,7 @@ class InputSelect extends InputComponent {
         const option = this._options.find((o) => o.value === normalized) || null;
         this.selected = {
             value: normalized,
-            label: option ? option.label : "",
+            label: option ? option.label : this.hasAttribute("editable") ? normalized : "",
             description: option ? option.description || "" : ""
         };
     }
@@ -688,6 +734,11 @@ class InputSelect extends InputComponent {
         this._descriptionEl.textContent = this.selected.description || this.getAttribute("description") || "";
     }
 
+    _onNativeInputEvent() {
+        if (!this._editingCustomValue) return;
+        this.selected = { value: this._dom.native.value, label: this._dom.native.value, description: "" };
+    }
+
     /**
      * Opens or closes the custom option list UI.
      * @returns {*} void.
@@ -728,19 +779,49 @@ class InputSelect extends InputComponent {
         if (this._customBoundNative === this._dom.native && this._customBoundList === this._optionList) return;
         this._customBoundNative = this._dom.native;
         this._customBoundList = this._optionList;
+        this._dom.native.readOnly = true;
 
         this._wireframe.input.addEventListener("click", () => {
+            if (this._editingCustomValue) return;
             this._expandOptionList();
         });
 
         this._dom.native.addEventListener("focus", () => {
+            if (this._editingCustomValue) return;
             this._expandOptionList();
+        });
+
+        this._dom.native.addEventListener("input", () => {
+            if (!this._editingCustomValue) return;
+            this.selected = { value: this._dom.native.value, label: this._dom.native.value, description: "" };
         });
 
         this._dom.native.addEventListener("blur", () => {
             setTimeout(() => {
+                if (this._editingCustomValue) {
+                    this.selected = { value: this._dom.native.value, label: this._dom.native.value, description: "" };
+                    this._editingCustomValue = false;
+                    this.classList.remove("editing-custom-value");
+                    this._dom.native.readOnly = true;
+                    this._syncHostFromNative();
+                    this._updateFormValue();
+                    this.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+                }
                 this._closeOptionList();
             }, 120);
+        });
+
+        this._editButton?.addEventListener("click", (event) => {
+            if (!this.hasAttribute("editable")) return;
+            event.preventDefault();
+            event.stopPropagation();
+            this._closeOptionList();
+            this._editingCustomValue = true;
+            this.classList.add("editing-custom-value");
+            this._dom.native.readOnly = false;
+            this._dom.native.value = this.selected.value || this._dom.native.value || "";
+            this._dom.native.focus();
+            this._dom.native.select();
         });
 
         this._optionList.addEventListener("click", (event) => {

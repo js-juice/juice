@@ -67,8 +67,7 @@ class AnimationStage extends Component.HTMLElement {
                     zIndex: 0
                 },
                 ":host(.viewer-connected)": {
-                    position: "absolute",
-                    transform: "translate( calc( var(--origin-x) * -100% ), calc( var( --origin-y ) * -100%) )"
+                    position: "absolute"
                 },
                 "#html": {
                     position: "absolute",
@@ -96,7 +95,6 @@ class AnimationStage extends Component.HTMLElement {
                     top: 0,
                     left: 0,
                     zIndex: -1
-                    //transform: "translate( calc( var(--origin-x, 0) * -100% ), calc( var(--origin-y, 0) * -100% ) )"
                 },
                 'slot[name="world-background"]': {
                     pointerEvents: "auto",
@@ -111,13 +109,11 @@ class AnimationStage extends Component.HTMLElement {
                 "slot:not([name])": {
                     position: "absolute",
                     display: "block",
-                    left: "calc( var(--origin-x, 0) * 100% )",
-                    top: "calc( var(--origin-y, 0) * 100% )"
+                    left: "var(--anchor-x, 0%)",
+                    top: "var(--anchor-y, 0%)"
                 },
                 "animation-anchor": {
                     zIndex: 1,
-                    left: "calc( var( --origin-x, 0 ) * 100% )",
-                    top: "calc( var( --origin-y, 0 ) * 100% )",
                     transform: "translate(var(--stage-x, 0), var(--stage-y, 0))"
                 }
             }
@@ -138,8 +134,6 @@ class AnimationStage extends Component.HTMLElement {
                 <slot></slot>
             </div> 
         </animation-anchor>
-        
-        
         `;
     }
 
@@ -342,7 +336,11 @@ class AnimationStage extends Component.HTMLElement {
         console.log("Child ready for animation stage", { child });
         this.animatorChildren.add(child);
 
-        this.animation.tree.addAsset(child, this);
+        if (this.viewer?.onAssetAdded) {
+            this.viewer.onAssetAdded(child);
+        } else {
+            this.animation.tree.addAsset(child, this);
+        }
     }
 
     /**
@@ -408,6 +406,9 @@ class AnimationStage extends Component.HTMLElement {
         this.viewer.addEventListener("resize", this._viewerResizeHandler);
         this._refreshPlacement();
         this.classList.add("viewer-connected");
+        this.animatorChildren.forEach((child) => {
+            if (child?.animate) this.viewer.onAssetAdded(child);
+        });
     }
 
     /**

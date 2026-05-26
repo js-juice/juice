@@ -93,13 +93,15 @@
  * - `setParticleColor(color)` changes active/default particle color.
  * - `setTarget(x, y, z, radius)` updates the shared orbit/repel target.
  * - `setOrbit(enabled, options)`, `setRepel(enabled, options)`, and `setMode(mode)` change interaction mode.
+ * - `createRepelPoint(options)` and `createOrbitPoint(options)` return handles with `moveTo()`, `position()`, `update()`, and `disable()`.
  * - `setMotion(config)` / `applyMotionConfig(config)` update drift/orbit/repel motion.
  * - `setCameraPan(x, y)`, `moveCameraPan(x, y)`, `setCameraAngle(yaw, pitch)`, `moveCameraAngle(yaw, pitch)`,
  *   `setCameraMotion(config)`, and `setCameraDepthEffect(value)` control the fake depth/parallax camera.
+ * - `setDebugCrosshair(mode)` controls the particle debug overlay.
  * - `setGravity([x, y, z])` and `setFriction(value)` update simulation environment.
  * - `addEmitter(config)`, `removeEmitter()`, and `getEmitter()` control the WebGL emitter adapter.
  * - `scatter(options)`, `jitter(amount, options)`, `captureSnapshot(name)`, `restoreSnapshot(name)`, `reset(options)`,
- *   `getBounds()`, `start()`, `stop()`, `getViewer()`, and `setValue(name, value)` are also callable on the element.
+ *   `getBounds()`, `start()`, `stop()`, `particles`, and `setValue(name, value)` are also callable on the element.
  */
 
 import Component from "../../ui/component.mjs";
@@ -353,7 +355,14 @@ class ParticleWorldComponent extends Component.HTMLElement {
     openDebugPanel() {
         const viewer = this.getViewer();
         if (!viewer?.openDebugPanel) return;
-        viewer.openDebugPanel();
+        const root = this.getRootNode?.() || document;
+        const worlds = Array.from(root.querySelectorAll?.("particle-world") || document.querySelectorAll("particle-world"));
+        viewer.openDebugPanel({
+            world: this,
+            worlds,
+            instanceCount: worlds.length,
+            instanceIndex: worlds.indexOf(this)
+        });
     }
 
     _propertyName(attribute) {
@@ -580,7 +589,16 @@ class ParticleWorldComponent extends Component.HTMLElement {
     }
 
     /**
-     * Returns active WebGL particle viewer when available.
+     * Returns the active particle renderer when available.
+     *
+     * @returns {WebGLParticleSystem|null}
+     */
+    get particles() {
+        return this.particleViewer || null;
+    }
+
+    /**
+     * Legacy alias for the active particle renderer.
      *
      * @returns {WebGLParticleSystem|null}
      */
@@ -739,6 +757,7 @@ class ParticleWorldComponent extends Component.HTMLElement {
                     minParticleSize: this._readNumber("min-particle-size", 1.5),
                     particleShape: this._readSetting("particle-shape", "square")
                 });
+                this.particleViewer.worldElement = this;
                 this.particleViewer.start();
                 this._applyEngineAttributes({ applyMask: true, rebuildFreeParticles: true });
             } catch (error) {
@@ -805,6 +824,7 @@ class ParticleWorldComponent extends Component.HTMLElement {
             minParticleSize: this._readNumber("min-particle-size", 1.5),
             particleShape: this._readSetting("particle-shape", "square")
         });
+        this.particleViewer.worldElement = this;
         this.particleViewer.start();
         this._applyEngineAttributes({ applyMask: true, rebuildFreeParticles: true });
         this.dispatchEvent(new CustomEvent("particle-count", { detail: { value } }));
@@ -1025,6 +1045,18 @@ class ParticleWorldComponent extends Component.HTMLElement {
         viewer.setMode(mode);
     }
 
+    createRepelPoint(options = {}) {
+        const viewer = this.getViewer();
+        if (!viewer?.createRepelPoint) return null;
+        return viewer.createRepelPoint(options);
+    }
+
+    createOrbitPoint(options = {}) {
+        const viewer = this.getViewer();
+        if (!viewer?.createOrbitPoint) return null;
+        return viewer.createOrbitPoint(options);
+    }
+
     /**
      * Applies motion multipliers to particle simulation.
      *
@@ -1104,6 +1136,12 @@ class ParticleWorldComponent extends Component.HTMLElement {
         const viewer = this.getViewer();
         if (!viewer?.setCameraDepthEffect) return;
         viewer.setCameraDepthEffect(value);
+    }
+
+    setDebugCrosshair(mode = "none") {
+        const viewer = this.getViewer();
+        if (!viewer?.setDebugCrosshair) return;
+        viewer.setDebugCrosshair(mode);
     }
 
     /**

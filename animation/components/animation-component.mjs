@@ -3,14 +3,13 @@
  * Provides position, rotation, scale, and velocity properties for animations.
  * @module Components/Animation/AnimationComponent
  */
-import Anchor from "./anchor.mjs";
-import { parseAnchor } from "../anchor.mjs";
 import { type } from "../../core/Util/Core.mjs";
 import Component from "../../ui/component.mjs";
 import AnimationValue from "../properties/Value.mjs";
 import { Rotation3D } from "../properties/Rotation.mjs";
 import { Vector3D, Vector2D } from "../properties/Vector.mjs";
 import AnimationComponentUtil from "./util.mjs";
+import "./anchor.mjs";
 /**
  * Base component class for animated elements with 3D transformation properties.
  * @class AnimationComponent
@@ -37,7 +36,7 @@ export class AnimationComponent extends Component.HTMLElement {
             vx: { type: "number", route: "velocity.x", default: 0, linked: true },
             vy: { type: "number", route: "velocity.y", default: 0, linked: true },
             vz: { type: "number", route: "velocity.z", default: 0, linked: true },
-            r: { type: "number", route: "rotation.x", default: 0, linked: true },
+            r: { type: "number", aliasFor: "rx", linked: true },
             rx: { type: "number", route: "rotation.x", default: 0, linked: true },
             ry: { type: "number", route: "rotation.y", default: 0, linked: true },
             rz: { type: "number", route: "rotation.z", default: 0, linked: true },
@@ -62,11 +61,11 @@ export class AnimationComponent extends Component.HTMLElement {
 
     static html(data = {}) {
         return `
-            <animation-anchor>
+            <animation-anchor id="anchor">
                 <div id="body">
                     <slot></slot>
-                </div>  
-            </animation-anchor>
+                </div>
+            </animation-anchor>  
         `;
     }
 
@@ -78,19 +77,22 @@ export class AnimationComponent extends Component.HTMLElement {
                 pointer-events: none; 
                 width: 0px;
                 height: 0px;
-                left: var(--origin-x, 0);
-                top: var(--origin-y, 0);
+                left: 0px;
+                top: 0px;
+                transform: translate3d(var(--x, 0px), var(--y, 0px), var(--z, 0px));
             }
             #body {
                 position: absolute;
-                transform-origin: calc( var(--anchor-x, 0) * 100% ) calc( var(--anchor-y, 0) * 100%);
-                transform: scale(var(--scale, 1)) rotate(var(--rotation, 0));
+  
             }
             #body slot{
                 position: relative;
                 display: block;
-                width: auto;
-                height: auto;
+                width: 100%;
+                height: 100%;
+            }
+            :host([debug]) #body {
+                outline: 1px solid lime;
             }
         `
         ];
@@ -147,46 +149,6 @@ export class AnimationComponent extends Component.HTMLElement {
     }
 
     /**
-     * Returns the current innerContentBox value.
-     * @returns {*} Current innerContentBox value.
-     */
-    get innerContentBox() {
-        const { width: w, height: h, scale, _anchor } = this;
-        const width = w * scale;
-        const height = h * scale;
-        const anchor = {
-            x: _anchor.x * width,
-            y: _anchor.y * height
-        };
-        return {
-            width,
-            height,
-            top: anchor.y,
-            left: anchor.x,
-            right: width - anchor.x,
-            bottom: height - anchor.y
-        };
-    }
-
-    /**
-     * Returns the current bounds value.
-     * @returns {*} Current bounds value.
-     */
-    get bounds() {
-        const self = this;
-        return {
-            x: self.x,
-            y: self.y,
-            width: self.width * self.scale,
-            height: self.height * self.scale,
-            anchor: self._anchor,
-            bottom: () => {
-                return self.y + (1 - self._anchor.y * self.height) * Math.sin(radians(self.rotation.value));
-            }
-        };
-    }
-
-    /**
      * Executes moveTo.
      * @param {*} x - Parameter value.
      * @param {*} y - Parameter value.
@@ -205,6 +167,20 @@ export class AnimationComponent extends Component.HTMLElement {
     onFirstConnect() {
         AnimationComponentUtil.initialize(this);
         AnimationComponentUtil.setDimentions(this);
+        const vars = {
+            "--x": `${this.position.x}px`,
+            "--y": `${this.position.y}px`,
+            "--z": `${this.position.z}px`,
+            "--width": `${this.w.value}px`,
+            "--height": `${this.h.value}px`,
+            "--scale": this.s.value,
+            "--rotation": `${this.rotation.x}deg`,
+            "--rotation-x": `${this.rotation.x}deg`,
+            "--rotation-y": `${this.rotation.y}deg`,
+            "--rotation-z": `${this.rotation.z}deg`
+        };
+        this.writeStyleVars(vars);
+        Object.entries(vars).forEach(([key, value]) => this.style.setProperty(key, value));
     }
 
     isInViewport() {
@@ -236,7 +212,7 @@ export class AnimationComponent extends Component.HTMLElement {
         }
     }
 
-    render() {
+    render(time) {
         if (!this.visible) return;
         const updates = {};
         const debugUpdates = {};
@@ -244,12 +220,12 @@ export class AnimationComponent extends Component.HTMLElement {
         if (this.beforeRender) this.beforeRender(time);
 
         if (this.w.dirty) {
-            updates["--width"] = this.w.value + "px";
+            updates["--width"] = `${this.w.value}px`;
             this.w.save();
         }
 
         if (this.h.dirty) {
-            updates["--height"] = this.h.value + "px";
+            updates["--height"] = `${this.h.value}px`;
             this.h.save();
         }
 
@@ -259,38 +235,90 @@ export class AnimationComponent extends Component.HTMLElement {
         }
 
         if (this.position.dirty) {
-            updates["--x"] = this.position.x + "px";
-            updates["--y"] = this.position.y + "px";
-            updates["--z"] = this.position.z + "px";
+            updates["--x"] = `${this.position.x}px`;
+            updates["--y"] = `${this.position.y}px`;
+            updates["--z"] = `${this.position.z}px`;
             this.position.clean();
         }
 
         if (this.rotation.dirty) {
             updates["--rotation"] = `${this.rotation.x}deg`;
-            updates["--rotationX"] = `${this.rotation.x}deg`;
-            updates["--rotationY"] = `${this.rotation.y}deg`;
-            updates["--rotationZ"] = `${this.rotation.z}deg`;
+            updates["--rotation-x"] = `${this.rotation.x}deg`;
+            updates["--rotation-y"] = `${this.rotation.y}deg`;
+            updates["--rotation-z"] = `${this.rotation.z}deg`;
             this.rotation.clean();
         }
 
         if (Object.keys(updates).length) {
             this.writeStyleVars(updates);
+            Object.entries(updates).forEach(([key, value]) => this.style.setProperty(key, value));
+            if (this.debug) {
+                for (const [key, value] of Object.entries(updates)) {
+                    this.ref("anchor").setDebugValue(key, value);
+                }
+            }
         }
+    }
+
+    get innerContentBox() {
+        const anchorValue =
+            typeof this.anchor === "string" ? parseAnchor(this.anchor) : this.anchor || { x: 0.5, y: 0.5 };
+
+        const width = this.width * this.scale;
+        const height = this.height * this.scale;
+
+        const anchor = {
+            x: anchorValue.x * width,
+            y: anchorValue.y * height
+        };
+
+        return {
+            width,
+            height,
+            top: anchor.y,
+            left: anchor.x,
+            right: width - anchor.x,
+            bottom: height - anchor.y
+        };
     }
 
     onPropertyChanged(property, previous, value) {
         if (this.debug) console.log(`onPropertyChanged[${this.constructor.name}] ${property}=${value}`);
+        if (["r", "rx", "ry", "rz"].includes(property)) {
+            const updates = {
+                "--rotation": `${this.rotation.x}deg`,
+                "--rotation-x": `${this.rotation.x}deg`,
+                "--rotation-y": `${this.rotation.y}deg`,
+                "--rotation-z": `${this.rotation.z}deg`
+            };
+            this.writeStyleVars(updates);
+            Object.entries(updates).forEach(([key, value]) => this.style.setProperty(key, value));
+            if (this.debug && this.ref("anchor")) {
+                Object.entries(updates).forEach(([key, value]) => this.ref("anchor").setDebugValue(key, value));
+            }
+        }
     }
 
     onAttributeChanged(property, previous, value) {
         if (this.debug) console.log(`onAttributeChanged[${this.constructor.name}] ${property}=${value}`);
     }
 
+    clampToBounds(bounds = null) {
+        bounds = bounds || this.bounds;
+        if (this.position.x < bounds.min.x) this.position.x = bounds.min.x;
+        if (this.position.y < bounds.min.y) this.position.y = bounds.min.y;
+        if (this.position.z < bounds.min.z) this.position.z = bounds.min.z;
+
+        if (this.position.x > bounds.max.x) this.position.x = bounds.max.x;
+        if (this.position.y > bounds.max.y) this.position.y = bounds.max.y;
+        if (this.position.z > bounds.max.z) this.position.z = bounds.max.z;
+    }
+
     /**
      * Handles animationconnect events.
      * @returns {*} Result of onAnimationConnect.
      */
-    onAnimationConnect() {
+    onAnimationConnect(viewer) {
         this.parent = this.parentNode;
         let el = this;
         const stack = [this];

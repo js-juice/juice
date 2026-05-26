@@ -14,7 +14,7 @@ import Camera from "./camera.mjs";
 import "./stats.mjs";
 import Animation from "../animation.mjs";
 
-import { parsePosition } from "../anchor.mjs";
+import { parsePosition, toAnchorCSSPosition } from "../anchor.mjs";
 
 /**
  * Viewer component for displaying and controlling animations.
@@ -71,8 +71,8 @@ export class AnimationViewer extends Component.HTMLElement {
                     position: "absolute",
                     width: "0px",
                     height: "0px",
-                    left: "calc( var(--origin-x, 0) * 100% )",
-                    top: "calc( var(--origin-y, 0) * 100% )"
+                    left: 0,
+                    top: 0
                 },
                 "#background": {
                     position: "absolute",
@@ -568,8 +568,8 @@ export class AnimationViewer extends Component.HTMLElement {
             this.origin = { x: originX, y: originY };
         }
 
-        this.ref("html").style.setProperty("--origin-x", this.origin.x);
-        this.ref("html").style.setProperty("--origin-y", this.origin.y);
+        this.ref("html").style.setProperty("--origin-x", toAnchorCSSPosition(this.origin.x));
+        this.ref("html").style.setProperty("--origin-y", toAnchorCSSPosition(this.origin.y));
 
         if (!this.stage) {
             const stageChild = Array.from(this.children).find(

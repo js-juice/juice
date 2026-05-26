@@ -1873,6 +1873,181 @@ function syncControlsMirrorToPreview() {
     }
 }
 
+function readPreviewControlValue(root, selector, fallback = "") {
+    const node = root?.querySelector?.(selector);
+    if (!node) return fallback;
+    const value = node.value;
+    if (value !== null && value !== undefined && String(value).trim().length > 0) return value;
+    const attr = typeof node.getAttribute === "function" ? node.getAttribute("value") : null;
+    if (attr !== null && String(attr).trim().length > 0) return attr;
+    return fallback;
+}
+
+function readPreviewNumber(root, selector, fallback = null) {
+    const value = readPreviewControlValue(root, selector, "");
+    if (value === "") return fallback;
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+}
+
+function normalizeExportScale(value, fallback = 1) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return fallback;
+    return Math.abs(number) > 2 ? number / 100 : number;
+}
+
+function buildExportMaskOptions(fieldset) {
+    const width = normalizeExportScale(readPreviewNumber(fieldset, '[id^="mask-width"]', 100), 1);
+    const height = normalizeExportScale(readPreviewNumber(fieldset, '[id^="mask-height"]', 100), 1);
+    const align = String(readPreviewControlValue(fieldset, '[id^="mask-align"]', "center")).toLowerCase();
+    const options = {
+        contentBox: { width, height },
+        preserveColor: readPreviewControlValue(fieldset, '[id^="mask-color-mode"]', "single") === "preserve"
+    };
+
+    if (align === "custom") {
+        const x = readPreviewNumber(fieldset, '[id^="mask-align-x"]', null);
+        const y = readPreviewNumber(fieldset, '[id^="mask-align-y"]', null);
+        if (x !== null || y !== null) {
+            options.position = {};
+            if (x !== null) options.position.x = x;
+            if (y !== null) options.position.y = y;
+        }
+    } else {
+        options.align = align;
+    }
+
+    const particleGap = readPreviewNumber(fieldset, '[id^="mask-particle-gap"]', null);
+    if (particleGap !== null) options.particleGap = Math.max(0, Math.floor(particleGap));
+
+    return options;
+}
+
+function collectParticleWorldMasks(previewDoc, world) {
+    const masks = [];
+    const fieldsets = Array.from(previewDoc.querySelectorAll(".mask-fieldset"));
+    for (let i = 0; i < fieldsets.length; i += 1) {
+        const fieldset = fieldsets[i];
+        const source = String(readPreviewControlValue(fieldset, '[id^="mask-src"]', "") || "").trim();
+        if (!source) continue;
+        masks.push({
+            source,
+            options: buildExportMaskOptions(fieldset)
+        });
+    }
+
+    if (!masks.length) {
+        const source = String(world?.getAttribute?.("mask") || "").trim();
+        if (source) {
+            let options = {};
+            try {
+                options = JSON.parse(world.getAttribute("mask-options") || "{}");
+            } catch (_error) {
+                options = {};
+            }
+            masks.push({ source, options });
+        }
+    }
+
+    return masks;
+}
+
+function buildParticleWorldExportCode() {
+    const previewDoc = preview?.contentDocument;
+    const world = previewDoc?.querySelector?.("particle-world");
+    if (!world) return "";
+
+    const attributes = {};
+    const names = world.getAttributeNames().sort((a, b) => a.localeCompare(b));
+    for (let i = 0; i < names.length; i += 1) {
+        const name = names[i];
+        attributes[name] = world.getAttribute(name);
+    }
+
+    const masks = collectParticleWorldMasks(previewDoc, world);
+
+    return `import "../../../components/particle-world.mjs";
+
+const attributes = ${JSON.stringify(attributes, null, 4)};
+const masks = ${JSON.stringify(masks, null, 4)};
+
+if (!document.getElementById("particle-world-export-style")) {
+    const style = document.createElement("style");
+    style.id = "particle-world-export-style";
+    style.textContent = \`
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+.particle-world-export-viewport {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: radial-gradient(circle at 20% 20%, #273b60 0%, #101a2b 100%);
+}
+
+.particle-world-export-viewport particle-world {
+    position: absolute;
+    inset: 0;
+}
+\`;
+    document.head.appendChild(style);
+}
+
+let mount = document.getElementById("particle-world-scene");
+if (!mount) {
+    mount = document.createElement("div");
+    mount.id = "particle-world-scene";
+    mount.className = "particle-world-export-viewport";
+    document.body.appendChild(mount);
+}
+
+const world = document.createElement("particle-world");
+world.id = attributes.id || "world";
+
+for (const [name, value] of Object.entries(attributes)) {
+    if (name === "id") continue;
+    world.setAttribute(name, value);
+}
+
+mount.appendChild(world);
+
+await customElements.whenDefined("particle-world");
+if (!world.ready) {
+    await new Promise((resolve) => world.addEventListener("ready", resolve, { once: true }));
+}
+
+for (let i = 0; i < masks.length; i += 1) {
+    const mask = masks[i];
+    if (!mask.source) continue;
+    if (i === 0 && typeof world.setMask === "function") {
+        await world.setMask(mask.source, mask.options || {});
+    } else if (typeof world.loadMask === "function") {
+        await world.loadMask(mask.source, { apply: true, ...(mask.options || {}) });
+    }
+}
+
+export default world;
+`;
+}
+
+function exportParticleWorldScene() {
+    const code = buildParticleWorldExportCode();
+    if (!code) return;
+    const blob = new Blob([code], { type: "text/javascript" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "particle-world-scene.mjs";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+}
+
 /**
  * Executes bindControlsMirror.
  * @returns {*} Result of bindControlsMirror.
@@ -2052,6 +2227,17 @@ function bindControlsMirror() {
         controlsTab.__playgroundControlsMirrorBound = true;
     }
 
+    if (!controlsTab.__playgroundParticleExportBound) {
+        controlsTab.__playgroundParticleExportBound = true;
+        controlsTab.addEventListener("click", (event) => {
+            const button = event.target?.closest?.("#export-particle-world-js");
+            if (!button) return;
+            event.preventDefault();
+            syncControlsMirrorToPreview();
+            exportParticleWorldScene();
+        });
+    }
+
     hideRelocatedPreviewControls();
     syncControlsMirrorToPreview();
 }
@@ -2084,7 +2270,14 @@ function renderPreview() {
                 });
                 const controlsTabHtml = moveNodes.join("\n").trim();
                 if (controlsTabHtml.length) {
-                    setTabContent("controls", `<section id="playground-tab-controls">${controlsTabHtml}</section>`);
+                    const exportButton =
+                        currentSetId === "particle_world"
+                            ? '<div class="controls"><button id="export-particle-world-js" type="button">Export JavaScript</button></div>'
+                            : "";
+                    setTabContent(
+                        "controls",
+                        `${exportButton}<section id="playground-tab-controls">${controlsTabHtml}</section>`
+                    );
                 } else if (typeof disableTab === "function") {
                     disableTab("controls");
                 }

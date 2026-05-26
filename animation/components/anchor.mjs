@@ -10,14 +10,18 @@ class Anchor extends HTMLElement {
 
     constructor() {
         super();
+        this._debug = {};
         this.position = new Vector3D();
         this._shadow = this.attachShadow({ mode: "open" });
-        this._shadow.innerHTML = this.constructor.html();
-        this.contents = this._shadow.querySelector("#html");
-        this.target = this._shadow.querySelector("#target");
         const style = document.createElement("style");
         style.textContent = this.constructor.styles;
         this._shadow.appendChild(style);
+        const temp = document.createElement("template");
+        temp.innerHTML = this.constructor.html();
+
+        this._shadow.appendChild(temp.content.cloneNode(true));
+        this.contents = this._shadow.querySelector("#html");
+        this.target = this._shadow.querySelector("#target");
     }
 
     static get styles() {
@@ -27,19 +31,21 @@ class Anchor extends HTMLElement {
                 pointer-events: none; 
                 width: 0px;
                 height: 0px;
-                
+                left: var(--origin-x, 0%);
+                top: var(--origin-y, 0%);
             }
             #html{
                 position: absolute;
-                width: 0px;
-                height: 0px;
+                width: var(--width, auto);
+                height: var(--height, auto);
+                transform: translate(calc(var(--anchor-x, 0%) * -1), calc(var(--anchor-y, 0%) * -1));
             }
             #target {
                 position: absolute;
-                width: calc( var( --width, auto) * 1px );
-                height: calc( var( --height, auto) * 1px );
-                transform: translate(calc(var(--anchor-x, 0) * -100%), calc(var(--anchor-y, 0) * -100%));
-                transform-origin: calc(var(--anchor-x, 0) * 100%) calc(var(--anchor-y, 0) * 100%);
+                width: 100%;
+                height: 100%;
+                transform: scale(var(--scale, 1)) rotate(var(--rotation, 0deg));
+                transform-origin: var(--anchor-x, 0%) var(--anchor-y, 0%);
             }
             slot{
                 display: block;
@@ -54,6 +60,7 @@ class Anchor extends HTMLElement {
                 border-radius: 50%;
                 width: 10px;
                 height: 10px;
+                z-index: 1
             }
             .vert-line {
                 position: absolute;
@@ -74,41 +81,33 @@ class Anchor extends HTMLElement {
                 background: red;
             }
             .debug-stats {
-                position: "absolute",
-                top: "50%",
-                left: "30px",
-                transform: "translateX(-50%)",
-                transformOrigin: "top left",
-                fontSize: "8px",
-                color: "white",
-                padding: "5px",
-                rotate: "-90deg",
-                whiteSpace: "nowrap"
+                position: absolute;
+                top: 50%;
+                left: 30px;
+                transform: translateX(-50%);
+                transform-origin: top center;
+                font-size: 8px;
+                color: white;
+                padding: 5px;
+                rotate: 0deg;
+                white-space: nowrap;
+                background: rgba(0, 0, 0, 0.5);
             }
-            .debug-stats .bg {
-                position: "absolute",
-                top: "0px",
-                left: "0px",
-                width: "100%",
-                height: "100%",
-                background: "#000",
-                opacity: 0.6,
-                zIndex: -1,
-                borderRadius: "5px"
+        
+            #debug-size:after {
+                content: var(--width) "x" var(--height);
             }
-            .debug-stats .bg:before {
-                display: "block",
-                width: "12px",
-                height: "12px",
-                content: '""',
-                position: "absolute",
-                top: "-6px",
-                left: "calc(50% - 6px)",
-                rotate: "45deg",
-                background: "#000"
-            },
-            .debug-stats .stat:after {
-                content: "attr(data-value)"
+            #debug-position:after {
+                content: var(--x) "," var(--y);
+            }
+            #debug-rotation-x:after {
+                content: var(--rotation) " " var(--rotation-x, 0) "," var(--rotation-y, 0) "," var(--rotation-z, 0);
+            }
+            #debug-scale:after {
+                content: var(--scale)
+            }
+            .stat[data-value]:after {
+                content: attr(data-value);
             }
         `;
     }
@@ -121,9 +120,9 @@ class Anchor extends HTMLElement {
             <div class="horiz-line"></div>
             <div id="debug-stats" class="debug-stats">
                 <div class="bg"></div>
-                <div id="debug-size" class="stat" data-value="0,0">(w,h): </div>
+                <div id="debug-size" class="stat" data-value="0,0">(w,h): <span id="debug-width"></span>x<span id="debug-height"></span></div>
                 <div id="debug-position" class="stat" data-value="0,0">(x,y): </div>
-                <div id="debug-rotation" class="stat" data-value="0,0">(Rotation): </div>
+                <div id="debug-rotation-x" class="stat" data-value="0,0">(Rotation): </div>
                 <div id="debug-scale" class="stat" data-value="1">(Scale): </div>
             </div>
         </div>
@@ -132,6 +131,13 @@ class Anchor extends HTMLElement {
         </div>
         </div>
         `;
+    }
+
+    setDebugValue(name, value) {
+        name = name.replace("--", "");
+        console.log(`Setting debug value ${name} to ${value}`);
+        if (!this._debug[name]) this._debug[name] = this._shadow.querySelector(`#debug-${name}`);
+        if (this._debug[name]) this._debug[name].setAttribute("data-value", value);
     }
 
     attributeChangedCallback(name, oldValue, value) {

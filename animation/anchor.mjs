@@ -18,22 +18,16 @@ const UNITS = ["px", "%"];
  * parsePositionFromLocation('75%'); // 0.75
  */
 export function parsePositionFromLocation(position) {
-    if (position.endsWith("vh") || position.endsWith("vw")) {
-        const vh = window.innerHeight;
-        const vw = window.innerWidth;
-        const relValue = parseFloat(position);
-        if (position.endsWith("vh")) {
-            return relValue / vh;
-        } else {
-            return relValue / vw;
-        }
-    } else if (position.endsWith("%")) {
-        return position.includes("%") ? parseFloat(position) / 100 : position;
-    } else if (position.endsWith("px")) {
-        return parseFloat(position);
+    const value = String(position).trim();
+    if (value.endsWith("vh") || value.endsWith("vw")) {
+        return value;
+    } else if (value.endsWith("%")) {
+        return parseFloat(value) / 100;
+    } else if (value.endsWith("px")) {
+        return parseFloat(value);
     }
 
-    switch (position) {
+    switch (value) {
         case "top":
             return 0;
             break;
@@ -50,7 +44,7 @@ export function parsePositionFromLocation(position) {
             return 0.5;
             break;
         default:
-            return position.includes("%") ? parseFloat(position) / 100 : position;
+            return value.includes("%") ? parseFloat(value) / 100 : value;
     }
 }
 
@@ -79,6 +73,8 @@ export function parseAnchor(position) {
             } else {
                 parsed[axis] = value;
             }
+        } else if (String(value).endsWith("vh") || String(value).endsWith("vw")) {
+            parsed[axis] = String(value);
         } else {
             parsed[axis] = `${value}px`;
         }
@@ -88,6 +84,28 @@ export function parseAnchor(position) {
 
 export function parsePosition(position) {
     return parseAnchor(position);
+}
+
+export function toAnchorCSSPosition(value) {
+    if (typeof value === "number") return `${value * 100}%`;
+    const text = String(value || "").trim();
+    if (!text.length) return "0%";
+    if (text.endsWith("%") || text.endsWith("px") || text.endsWith("vh") || text.endsWith("vw")) return text;
+
+    switch (text) {
+        case "top":
+        case "left":
+            return "0%";
+        case "center":
+            return "50%";
+        case "bottom":
+        case "right":
+            return "100%";
+        default: {
+            const number = Number(text);
+            return Number.isFinite(number) ? `${number * 100}%` : text;
+        }
+    }
 }
 
 /**
