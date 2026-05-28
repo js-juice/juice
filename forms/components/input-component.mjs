@@ -195,6 +195,12 @@ const BASE_STYLES = {
         overflow: "hidden",
         boxSizing: "border-box"
     },
+    ".input-wrapper > label": {
+        lineHeight: "var(--input-height, 30px)",
+        background:
+            "var(--label-inside-bgcolor, linear-gradient(90deg,rgba(219, 217, 217, 1) 0%, rgba(176, 176, 176, 1) 100%))",
+        padding: "0 0.5rem"
+    },
     ".default": {
         display: "block",
         width: "100%",
@@ -301,6 +307,8 @@ const BASE_STYLES = {
 };
 
 class InputComponent extends HTMLElement {
+    static measuredInputHeights = new Map();
+
     // TODO(refactor): Extract layout token parsing/rendering into a dedicated layout engine to reduce base-class surface area.
     /**
      * Form associated is a boolean that indicates whether the custom element has form associated logic.
@@ -373,6 +381,7 @@ class InputComponent extends HTMLElement {
         }
         // Freeze layout after constructor overrides; runtime attribute/property changes are ignored.
         this._layout = this._layout || "label:input";
+        if (this.hasAttribute("label-inline")) this._labelPlacement = "inline";
         // Scaffold/layout-only nodes. Subclasses should not treat these as view widgets.
         this._wireframe = {
             root: render("div.input-root[part='input-root']"),
@@ -695,17 +704,48 @@ class InputComponent extends HTMLElement {
         this._queueValidation();
         this._afterConnected();
 
-        // Set CSS variable for input height so validation status can position relative to it.
-        const inputWrapper = this._shadow.querySelector(".input-wrapper");
-        const rect = inputWrapper.getBoundingClientRect();
-        if (rect.height > 0) {
-            this._wireframe.root.style.setProperty("--input-height", `${rect.height}px`);
-        } else {
-            this._whenVisible(inputWrapper, () => {
-                const rect = inputWrapper.getBoundingClientRect();
-                this._wireframe.root.style.setProperty("--input-height", `${rect.height}px`);
-            });
+        this._syncInputHeight();
+    }
+
+    _syncInputHeight() {
+        const cacheKey = this.tagName.toLowerCase();
+        const cachedHeight = InputComponent.measuredInputHeights.get(cacheKey);
+        if (cachedHeight) {
+            this._wireframe.root.style.setProperty("--input-height", cachedHeight);
+            return;
         }
+
+        const height = this._measureNativeInputHeight();
+        if (height) {
+            InputComponent.measuredInputHeights.set(cacheKey, height);
+            this._wireframe.root.style.setProperty("--input-height", height);
+            return;
+        }
+
+        if (this._dom.native?.type === "hidden") {
+            const fallbackHeight = "30px";
+            InputComponent.measuredInputHeights.set(cacheKey, fallbackHeight);
+            this._wireframe.root.style.setProperty("--input-height", fallbackHeight);
+            return;
+        }
+
+        const inputWrapper = this._shadow.querySelector(".input-wrapper");
+        this._whenVisible(inputWrapper, () => {
+            const visibleHeight = this._measureNativeInputHeight();
+            const resolvedHeight = visibleHeight || "30px";
+            InputComponent.measuredInputHeights.set(cacheKey, resolvedHeight);
+            this._wireframe.root.style.setProperty("--input-height", resolvedHeight);
+        });
+    }
+
+    _measureNativeInputHeight() {
+        const native = this._dom.native;
+        if (!native || native.type === "hidden") return null;
+
+        const rect = native.getBoundingClientRect();
+        if (rect.height > 0) return `${rect.height}px`;
+
+        return null;
     }
 
     _whenVisible(element, callback) {

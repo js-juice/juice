@@ -36,11 +36,7 @@
  */
 
 import { getJuiceConfig } from "../../config/juice-config.mjs";
-import {
-    layout as DEFAULT_LAYOUT_PRESET,
-    presets as DEFAULT_LAYOUT_FIELD_PRESETS,
-    groups as DEFAULT_LAYOUT_GROUPS
-} from "../presets/layout.mjs";
+import DEFAULT_FORMS_CONFIG from "../config.mjs";
 
 const INTERNAL_STYLE_ATTR = "data-juice-forms-style";
 const INTERNAL_FORM_CLASS = "juice-forms-root";
@@ -61,7 +57,7 @@ const FIELD_TAGS = new Set([
     "button"
 ]);
 
-const LAYOUT_DEFAULTS = { ...DEFAULT_LAYOUT_PRESET };
+const LAYOUT_DEFAULTS = { ...DEFAULT_FORMS_CONFIG.layout };
 
 function isPlainObject(value) {
     return value != null && typeof value === "object" && !Array.isArray(value);
@@ -504,7 +500,7 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
      */
     _getMergedPresets(formsConfig) {
         const configured = isPlainObject(formsConfig.presets) ? formsConfig.presets : {};
-        return { ...DEFAULT_LAYOUT_FIELD_PRESETS, ...configured };
+        return { ...(DEFAULT_FORMS_CONFIG.presets || {}), ...configured };
     }
 
     /**
@@ -628,7 +624,7 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
             const layoutConfig = this._buildLayoutConfig(formsConfig);
             const presets = this._getMergedPresets(formsConfig);
             const groupsConfig = {
-                ...(DEFAULT_LAYOUT_GROUPS || {}),
+                ...(DEFAULT_FORMS_CONFIG.groups || {}),
                 ...(isPlainObject(formsConfig.groups) ? formsConfig.groups : {})
             };
             const items = this._collectLayoutItems();

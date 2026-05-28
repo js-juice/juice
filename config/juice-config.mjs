@@ -5,6 +5,7 @@
  */
 
 import DotNotation from "../core/Util/DotNotation.mjs";
+import DEFAULT_CONFIG from "./defaults.mjs";
 
 const root = typeof globalThis !== "undefined" ? globalThis : {};
 
@@ -47,21 +48,6 @@ function deepMerge(target, source) {
     }
     return target;
 }
-
-const DEFAULT_CONFIG = {
-    version: "1.0.0",
-    description: "",
-    repository: {},
-    homepage: "",
-    license: "ISC",
-    dependencies: {},
-    paths: {},
-    forms: {},
-    data: {},
-    ui: {},
-    formatting: {},
-    validation: {}
-};
 
 if (isPlainObject(root.JUICE_CONFIG)) {
     deepMerge(DEFAULT_CONFIG, root.JUICE_CONFIG);

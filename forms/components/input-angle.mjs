@@ -37,9 +37,9 @@ class InputAngleComponent extends InputComponent {
             },
             ".angle-dial": {
                 position: "relative",
-                width: "100%",
+                width: "var(--form-angle-outer-size, 100%)", // 100%",
                 aspectRatio: "1 / 1",
-                border: "1px solid #b7c3cf",
+                border: "var(--form-angle-outer-border, 2px solid #b7c3cf)",
                 borderRadius: "50%",
                 background: "radial-gradient(circle at 38% 34%, #ffffff 0%, #eef3f8 58%, #d7e0eb 100%)",
                 touchAction: "none",
@@ -76,11 +76,13 @@ class InputAngleComponent extends InputComponent {
                 position: "absolute",
                 left: "50%",
                 top: "50%",
-                width: "10px",
-                height: "10px",
+                border: "var(--form-angle-center-border, 0)",
+                width: "var(--form-angle-center-size, 10px)",
+                height: "var(--form-angle-center-size, 10px)",
                 borderRadius: "50%",
-                background: "#172033",
-                transform: "translate(-50%, -50%)"
+                background: "var(--form-angle-center-background, #172033)",
+                transform: "translate(-50%, -50%)",
+                zIndex: 1
             },
             ".angle-value": {
                 position: "absolute",
@@ -90,6 +92,26 @@ class InputAngleComponent extends InputComponent {
                 fontSize: "0.75rem",
                 fontWeight: "700",
                 color: "#172033"
+            },
+            ".angle-grid": {
+                position: "absolute",
+                left: "50%",
+                top: "50%",
+                width: "100%",
+                height: "100%",
+                transform: "translate(-50%, -50%)",
+                zIndex: 0
+            },
+            ".grid-line": {
+                position: "absolute",
+                left: "50%",
+                top: "50%",
+                width: "50%",
+                height: "1px",
+                transformOrigin: "0 50%",
+                transform: "translateY(-50%) rotate(calc( var(--index) * 45deg ))",
+                background: "#d2d2d2",
+                zIndex: -1
             }
         };
     }
@@ -108,15 +130,20 @@ class InputAngleComponent extends InputComponent {
             <div class="angle-dial">
                 <div class="angle-arm"></div>
                 <div class="angle-center"></div>
+                <div class="angle-grid">
+                    ${Array.from({ length: 8 })
+                        .map((_, index) => `<div class="grid-line" style="--index: ${index}"></div>`)
+                        .join("")}
+                </div>
                 <div class="angle-value"></div>
             </div>
-            <input-select label="Unit" options="deg:Degrees,rad:Radians,turn:Turns,grad:Gradians" value="deg"></input-select>
+            ${this.hasAttribute("unit") ? `<input id="unit" type='hidden' name='unit' value='${this.getAttribute("unit")}'>` : `<input-select id="unit" label="Unit" options="deg:Degrees,rad:Radians,turn:Turns,grad:Gradians" value="deg"></input-select>`}
         `;
 
         this._dom.default = field;
         this._dom.dial = field.querySelector(".angle-dial");
         this._dom.valueDisplay = field.querySelector(".angle-value");
-        this._dom.unit = field.querySelector("input-select");
+        this._dom.unit = field.querySelector("#unit");
 
         this._dom.dial.addEventListener("pointerdown", (event) => {
             if (this.disabled) return;
@@ -149,9 +176,13 @@ class InputAngleComponent extends InputComponent {
     }
 
     _afterConnected() {
+        if (this.hasAttribute("unit")) {
+            this.unitSet = true;
+        }
         this.unit = UNITS[this.getAttribute("unit")] ? this.getAttribute("unit") : this.unit;
         this.readValue(this.getAttribute("value"));
-        if (!this._dom.native.value) this._dom.native.value = `${this.format(this.angle * UNITS[this.unit].fromDeg)}${this.unit}`;
+        if (!this._dom.native.value)
+            this._dom.native.value = `${this.format(this.angle * UNITS[this.unit].fromDeg)}${this.unit}`;
         this._syncVisualState();
     }
 
