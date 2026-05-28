@@ -16,6 +16,8 @@
  * Attribute Reference:
  * - `options`: JSON, object path, or CSV/colon syntax describing available options.
  * - `force-native`: Forces native `<select>` rendering instead of custom dropdown UI.
+ * - `view-type="select-bar"`: Renders options as an always-visible single-line segmented select bar.
+ * - `wrap`: Allows select-bar options to wrap onto multiple lines.
  * - `value`: Selected option value.
  * - `default`: Placeholder text used by custom dropdown mode.
  *
@@ -100,6 +102,125 @@ function parseSelectOptions(options) {
     return [];
 }
 
+class SelectOption extends HTMLElement {
+    static tag = "select-option";
+    static get observedAttributes() {
+        return ["value", "label", "description", "icon", "icon-src", "selected"];
+    }
+
+    static get styles() {
+        return {
+            ":host": {
+                display: "block"
+            }
+        };
+    }
+
+    constructor() {
+        super();
+
+        this._selected = false;
+        this._value = this.getAttribute("value") || this.getAttribute("label") || this.innerText;
+        this._label = this.getAttribute("label") || this.innerText;
+        this._description = this.getAttribute("description") || "";
+        this._icon = this.getAttribute("icon") || this.getAttribute("icon-src") || "";
+
+        this._styles = {};
+
+        this._shadowRoot = this.attachShadow({ mode: "open" });
+        this._shadowRoot.innerHTML = `
+        <div class="option">
+            <slot name="icon"></slot>
+            <slot></slot>
+        </div>`;
+
+        this._dom = {
+            icon: this._shadowRoot.querySelector(".option > :first-child"),
+            label: this._shadowRoot.querySelector(".option > :last-child")
+        };
+    }
+
+    get value() {
+        return this.getAttribute("value") || this.getAttribute("label") || this.innerText;
+    }
+
+    set value(value) {
+        this.setAttribute("value", value == null ? "" : String(value));
+    }
+
+    get label() {
+        return this.getAttribute("label") || this.innerText;
+    }
+
+    set label(value) {
+        if (value == null) this.removeAttribute("label");
+        else this.setAttribute("label", String(value));
+    }
+
+    get selected() {
+        return this.hasAttribute("selected");
+    }
+
+    get description() {
+        return this.getAttribute("description") || "";
+    }
+
+    set description(value) {
+        if (value == null) this.removeAttribute("description");
+        else this.setAttribute("description", String(value));
+    }
+
+    get icon() {
+        return this.getAttribute("icon") || this.getAttribute("icon-src") || "";
+    }
+
+    set icon(value) {
+        if (value == null) this.removeAttribute("icon");
+        else this.setAttribute("icon", String(value));
+    }
+
+    set selected(value) {
+        if (value) this.setAttribute("selected", "");
+        else this.removeAttribute("selected");
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (oldValue === newValue) return;
+        switch (name) {
+            case "value":
+                this._value = newValue;
+                break;
+            case "label":
+                this._label = newValue;
+                break;
+            case "description":
+                this._description = newValue;
+                break;
+            case "icon":
+                this._icon = newValue;
+                break;
+            case "icon-src":
+                if (newValue) {
+                    this._icon = new Image();
+                    this._icon.src = newValue;
+                    this._icon.alt = this._label;
+                    this._icon.title = this._label;
+                    this._icon.className = "option-icon";
+                    this._dom.icon.replaceChildren(this._icon);
+                } else {
+                    this._icon = "";
+                    this._dom.icon.replaceChildren();
+                }
+                break;
+            case "selected":
+                this._selected = newValue !== null;
+                break;
+        }
+    }
+}
+
+customElements.define("select-option", SelectOption);
+
 class InputSelect extends InputComponent {
     // TODO(refactor): Consolidate option-source parsing and dropdown interaction state into dedicated helpers.
     /**
@@ -107,7 +228,7 @@ class InputSelect extends InputComponent {
      * @returns {*} List of observed attribute names.
      */
     static get observedAttributes() {
-        return [...super.observedAttributes, "options", "force-native", "editable"];
+        return [...super.observedAttributes, "options", "force-native", "editable", "view", "view-type"];
     }
 
     /**
@@ -247,19 +368,60 @@ class InputSelect extends InputComponent {
             ".select-options.open": {
                 display: "block"
             },
-            ".select-options li": {
+            ".select-options select-option": {
                 color: "#333333",
                 padding: "0.3rem 0.45rem",
                 cursor: "pointer",
                 fontSize: "0.9rem",
                 borderBottom: "1px solid #c8c8c8"
             },
-            ".select-options li:hover": {
+            ".select-options select-option:hover": {
                 backgroundColor: "#efefef"
             },
-            ".select-options li.selected": {
+            ".select-options select-option.selected": {
                 backgroundColor: "var(--selected-option-bg, var(--form-accent-color, #0059ff))",
                 color: "var(--selected-option-color, #ffffff)"
+            },
+            ":host([view='select-bar']) .input-wrapper, :host([view-type='select-bar']) .input-wrapper": {
+                position: "absolute",
+                width: "1px",
+                height: "1px",
+                minHeight: "0",
+                overflow: "hidden",
+                opacity: 0,
+                pointerEvents: "none"
+            },
+            ":host([view='select-bar']) .select-description, :host([view-type='select-bar']) .select-description": {
+                marginTop: "0.4rem"
+            },
+            ".select-options.select-bar-options": {
+                position: "static",
+                display: "flex",
+                flexWrap: "nowrap",
+                width: "100%",
+                maxHeight: "none",
+                overflowX: "auto",
+                overflowY: "hidden",
+                borderRadius: "var(--input-border-radius, 5px)",
+                boxSizing: "border-box"
+            },
+            ":host([wrap]) .select-options.select-bar-options": {
+                flexWrap: "wrap",
+                overflowX: "hidden"
+            },
+            ".select-options.select-bar-options select-option": {
+                flex: "1 0 auto",
+                display: "grid",
+                placeItems: "center",
+                minHeight: "var(--input-height)",
+                padding: "0.35rem 0.7rem",
+                borderBottom: "0",
+                borderRight: "1px solid #c8c8c8",
+                textAlign: "center",
+                whiteSpace: "nowrap"
+            },
+            ".select-options.select-bar-options select-option:last-child": {
+                borderRight: "0"
             },
             ".select-description": {
                 marginTop: "0.35rem",
@@ -273,6 +435,9 @@ class InputSelect extends InputComponent {
             },
             "::slotted(option)": {
                 display: "none"
+            },
+            "::slotted(select-option)": {
+                display: "none"
             }
         };
     }
@@ -283,6 +448,16 @@ class InputSelect extends InputComponent {
      */
     _useNativeMode() {
         return this.hasAttribute("force-native");
+    }
+
+    _getViewType() {
+        return String(this.getAttribute("view-type") || this.getAttribute("view") || "")
+            .trim()
+            .toLowerCase();
+    }
+
+    _useSelectBarMode() {
+        return !this._useNativeMode() && this._getViewType() === "select-bar";
     }
 
     /**
@@ -510,6 +685,12 @@ class InputSelect extends InputComponent {
 
         super.attributeChangedCallback(name, oldValue, newValue);
 
+        if ((name === "view" || name === "view-type") && oldValue !== newValue) {
+            this._renderTemplateOrDefault();
+            this._afterConnected();
+            return;
+        }
+
         if (name === "value" && oldValue !== newValue) {
             const normalized = newValue == null ? "" : String(newValue);
             this._setSelectedByValue(normalized);
@@ -564,7 +745,8 @@ class InputSelect extends InputComponent {
         if (this._useNativeMode()) return;
 
         this._optionList = document.createElement("ul");
-        this._optionList.className = "select-options";
+        this._optionList.className = this._useSelectBarMode() ? "select-options select-bar-options" : "select-options";
+        this._optionList.setAttribute("role", "listbox");
         this._wireframe.root.appendChild(this._optionList);
 
         const editTab = this._wireframe.root.querySelector(".edit-tab");
@@ -596,7 +778,13 @@ class InputSelect extends InputComponent {
     _startOptionObserver() {
         if (this._optionObserver) this._optionObserver.disconnect();
         this._optionObserver = new MutationObserver(() => this._refreshOptions());
-        this._optionObserver.observe(this, { childList: true, subtree: false });
+        this._optionObserver.observe(this, {
+            attributes: true,
+            attributeFilter: ["value", "label", "description", "icon", "icon-src", "selected"],
+            childList: true,
+            characterData: true,
+            subtree: true
+        });
     }
 
     /**
@@ -604,12 +792,19 @@ class InputSelect extends InputComponent {
      * @returns {*} Derived value.
      */
     _readOptions() {
-        const childOptions = Array.from(this.querySelectorAll(":scope > option")).map((option) => ({
-            value: option.value || option.textContent.trim(),
-            label: option.textContent.trim(),
-            description: option.getAttribute("description") || option.dataset.description || "",
-            selected: option.hasAttribute("selected")
-        }));
+        const childOptions = Array.from(this.querySelectorAll(":scope > option, :scope > select-option")).map(
+            (option) => {
+                const label = option.label || option.getAttribute("label") || option.textContent.trim();
+                return {
+                    value: option.value || option.getAttribute("value") || label,
+                    label,
+                    icon: option.icon || option.getAttribute("icon-src") || option.dataset.icon || "",
+                    description:
+                        option.description || option.getAttribute("description") || option.dataset.description || "",
+                    selected: option.selected || option.hasAttribute("selected")
+                };
+            }
+        );
         if (childOptions.length) return childOptions;
 
         if (this.hasAttribute("options")) {
@@ -644,20 +839,37 @@ class InputSelect extends InputComponent {
             }
         } else if (this._optionList) {
             this._optionList.replaceChildren();
-            this._options.unshift({
-                label: defaultValue || "Select an option",
-                value: "",
-                description: "",
-                selected: this.value === ""
-            });
+            if (!this._useSelectBarMode()) {
+                this._options.unshift({
+                    label: defaultValue || "Select an option",
+                    value: "",
+                    description: "",
+                    selected: this.value === ""
+                });
+            }
             for (let i = 0; i < this._options.length; i += 1) {
                 const optionData = this._options[i];
-                const li = document.createElement("li");
+                const li = document.createElement("select-option");
+
+                li.value = optionData.value;
                 li.dataset.value = optionData.value;
+                li.setAttribute("value", optionData.value);
                 li.textContent = optionData.label;
+                li.setAttribute("role", "option");
+                li.setAttribute("aria-selected", "false");
+
+                if (optionData.icon) {
+                    const icon = document.createElement("div");
+                    icon.setAttribute("aria-hidden", "true");
+                    icon.setAttribute("slot", "icon");
+                    icon.classList.add("icon", ...optionData.icon.split(" "));
+                    li.appendChild(icon);
+                }
                 if (optionData.selected) {
                     this.value = optionData.value;
                     li.classList.add("selected");
+                    li.selected = true;
+                    li.setAttribute("aria-selected", "true");
                     this._dom.labelValue.value = optionData.label;
                     this.selected = {
                         value: optionData.value,
@@ -711,11 +923,19 @@ class InputSelect extends InputComponent {
             const nativeOption = Array.from(this._dom.native.options).find((o) => o.value === option.value);
             if (nativeOption) nativeOption.selected = true;
         } else if (this._optionList) {
-            const li = this._optionList.querySelector(`li[data-value="${option.value}"]`);
+            const li = Array.from(this._optionList.querySelectorAll("select-option")).find(
+                (item) => item.value === option.value
+            );
             if (li) {
-                const currentlySelected = this._optionList.querySelector("li.selected");
-                if (currentlySelected) currentlySelected.classList.remove("selected");
+                const currentlySelected = this._optionList.querySelector("select-option.selected");
+                if (currentlySelected) {
+                    currentlySelected.classList.remove("selected");
+                    currentlySelected.selected = false;
+                    currentlySelected.setAttribute("aria-selected", "false");
+                }
                 li.classList.add("selected");
+                li.selected = true;
+                li.setAttribute("aria-selected", "true");
             }
         }
 
@@ -744,6 +964,7 @@ class InputSelect extends InputComponent {
      * @returns {*} void.
      */
     _expandOptionList() {
+        if (this._useSelectBarMode()) return;
         if (!this._optionList) return;
         if (this.expanded) {
             this._closeOptionList();
@@ -781,15 +1002,17 @@ class InputSelect extends InputComponent {
         this._customBoundList = this._optionList;
         this._dom.native.readOnly = true;
 
-        this._wireframe.input.addEventListener("click", () => {
-            if (this._editingCustomValue) return;
-            this._expandOptionList();
-        });
+        if (!this._useSelectBarMode()) {
+            this._wireframe.input.addEventListener("click", () => {
+                if (this._editingCustomValue) return;
+                this._expandOptionList();
+            });
 
-        this._dom.native.addEventListener("focus", () => {
-            if (this._editingCustomValue) return;
-            this._expandOptionList();
-        });
+            this._dom.native.addEventListener("focus", () => {
+                if (this._editingCustomValue) return;
+                this._expandOptionList();
+            });
+        }
 
         this._dom.native.addEventListener("input", () => {
             if (!this._editingCustomValue) return;
@@ -825,10 +1048,10 @@ class InputSelect extends InputComponent {
         });
 
         this._optionList.addEventListener("click", (event) => {
-            const target = event.target;
-            if (!(target instanceof HTMLElement) || target.tagName !== "LI") return;
+            const target = event.target instanceof HTMLElement ? event.target.closest("select-option") : null;
+            if (!target || !this._optionList.contains(target)) return;
             this._dom.native.blur();
-            const value = target.dataset.value || "";
+            const value = target.value || target.dataset.value || "";
             this.value = value;
             this._selectOptionByValue(value);
 
