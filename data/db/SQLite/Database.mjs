@@ -60,12 +60,19 @@ class SQLiteDatabase extends Database {
         return result !== undefined;
     }
 
-    createTable(tableName, columnDefinitions) {
+    createTable(tableName, columnDefinitions, Model = {}) {
         const columns = Object.keys(columnDefinitions)
             .map((column) => `${column} ${columnDefinitions[column]}`)
             .join(", ");
         const query = `CREATE TABLE IF NOT EXISTS ${tableName} (${columns})`;
         const result = this.db.exec(query);
+
+        for (const column of Model.schema) {
+            if (Model.schema[column].index || Model.indexes.includes(column)) {
+                this.db.exec(`CREATE UNIQUE INDEX ${tableName}_${column} ON ${tableName} (${column})`);
+            }
+        }
+
         if (result.error) {
             console.error(`Failed to create table ${tableName}:`, result.error);
             return false;
@@ -257,7 +264,7 @@ class SQLiteDatabase extends Database {
 
         // Get the current schema for the table.
         const dbTableSchemaExists = this.schema[tableName] ? true : false;
-        
+
         // Get the compiled fields for the model.
         const modelfields = Migration.compileFields(Model.schema, Model);
         // Set a flag to indicate whether migrations should be used to update
@@ -267,7 +274,7 @@ class SQLiteDatabase extends Database {
         // If the table does not exist, create it.
         if (!dbTableSchemaExists) {
             // Create the table.
-            this.createTable(tableName, modelfields);
+            this.createTable(tableName, modelfields, Model);
 
             // If the model has an onCreate method, call it.
             if (Model.onCreate) Model.onCreate();

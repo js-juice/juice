@@ -28,6 +28,7 @@ class Model extends EventEmitter {
     static key = null;
     static tableName = "";
     static primaryKey = "id";
+    static indexes = [];
     static primaryLabel;
     static foreignKey;
     static localKey;
