@@ -10,6 +10,7 @@ import "./core/Dev/Log.mjs";
 import { blendClasses } from "./core/Util/Class.mjs";
 import _config from "./config/juice-config.mjs";
 import path from "./core/Util/Path.mjs";
+import { createStyleManager } from "./core/Style/Styles.mjs";
 
 export const root = typeof globalThis !== "undefined" ? globalThis : {};
 const nodeProcess = root.process?.versions?.node && typeof root.process.cwd === "function" ? root.process : null;
@@ -128,6 +129,7 @@ class Juice {
         this.eventRegistry = {};
         this.config = JUICE_CONFIG;
         this._cache = {};
+        this._styleSheets = new WeakMap();
         this.callStack = [];
         this.config.merge(
             {
@@ -201,6 +203,19 @@ class Juice {
         return relative;
     }
 
+    styles(options = {}) {
+        const normalizedOptions =
+            typeof options === "string" ||
+            options === document ||
+            options === document?.head ||
+            options instanceof Element ||
+            options instanceof ShadowRoot
+                ? { scope: options }
+                : options || {};
+
+        return createStyleManager(this._styleSheets, normalizedOptions);
+    }
+
     /**
      * Wraps a function to track its calls in the call stack.
      * @param {Function} fn - The function to track
@@ -272,7 +287,7 @@ class Juice {
     get importSections() {
         return {
             forms: {
-                include: "include.mjs"
+                import: "import.mjs"
             }
         };
     }
@@ -301,7 +316,7 @@ class Juice {
                 section = args[0];
                 const importSection = this.importSections[section];
                 if (importSection && !path) {
-                    path = importSection.include;
+                    path = importSection.import;
                     return { section, path, modulePath: [section, path].join("/"), properties };
                 } else {
                     throw new Error("Import Section not defined cant auto import");

@@ -243,4 +243,104 @@ class StyleSheet {
     }
 }
 
+function resolveStyleTarget(target) {
+    if (typeof document === "undefined") {
+        return null;
+    }
+
+    if (!target || target === "global" || target === document || target === document.head) {
+        return document.head;
+    }
+
+    if (typeof target === "string") {
+        const selected = document.querySelector(target);
+        if (!selected) {
+            throw new Error(`Style target not found: ${target}`);
+        }
+        return selected.shadowRoot || selected;
+    }
+
+    return target.shadowRoot || target;
+}
+
+function getStyleContainer(target) {
+    if (!target) {
+        throw new Error("Styles are only available in a document context.");
+    }
+
+    if (target === document.head) {
+        return target;
+    }
+
+    if (target instanceof ShadowRoot) {
+        return target;
+    }
+
+    return target;
+}
+
+function getStyleSheetId(name, target) {
+    const scopeName = target === document.head ? "global" : "target";
+    const safeName = String(name || "default").replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "") || "default";
+    return `juice-style--${scopeName}--${safeName}`;
+}
+
+function findStyleTag(container, id) {
+    const children = container.querySelectorAll ? container.querySelectorAll("style") : [];
+
+    for (let i = 0; i < children.length; i += 1) {
+        if (children[i].id === id) {
+            return children[i];
+        }
+    }
+
+    return null;
+}
+
+function getStyleSheetCache(registry, container) {
+    let targetCache = registry.get(container);
+
+    if (!targetCache) {
+        targetCache = new Map();
+        registry.set(container, targetCache);
+    }
+
+    return targetCache;
+}
+
+export function createStyleManager(registry, { name = "default", target = "global", scope = target } = {}) {
+    const styleTarget = resolveStyleTarget(scope);
+    const container = getStyleContainer(styleTarget);
+    const id = getStyleSheetId(name, styleTarget);
+    const targetCache = getStyleSheetCache(registry, container);
+
+    let styleSheet = targetCache.get(name);
+    if (!styleSheet) {
+        const existing = findStyleTag(container, id);
+        styleSheet = new StyleSheet(id, existing || undefined);
+        if (!existing) {
+            container.appendChild(styleSheet.create());
+        }
+        targetCache.set(name, styleSheet);
+    }
+
+    return {
+        clear() {
+            styleSheet.clear();
+            return this;
+        },
+        append(styles) {
+            styleSheet.add(styles);
+            return this;
+        },
+        replace(styles) {
+            styleSheet.clear();
+            if (styles !== undefined && styles !== null) {
+                styleSheet.add(styles);
+            }
+            return this;
+        }
+    };
+}
+
 export { Styles as default, Style, StyleSheet };
