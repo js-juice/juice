@@ -108,14 +108,6 @@ class SelectOption extends HTMLElement {
         return ["value", "label", "description", "icon", "icon-src", "selected"];
     }
 
-    static get styles() {
-        return {
-            ":host": {
-                display: "block"
-            }
-        };
-    }
-
     constructor() {
         super();
 
@@ -125,10 +117,22 @@ class SelectOption extends HTMLElement {
         this._description = this.getAttribute("description") || "";
         this._icon = this.getAttribute("icon") || this.getAttribute("icon-src") || "";
 
-        this._styles = {};
-
         this._shadowRoot = this.attachShadow({ mode: "open" });
         this._shadowRoot.innerHTML = `
+        <style>
+            :host {
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .option {
+                display: flex;
+                align-items: center;
+                width: 100%;
+                box-sizing: border-box;
+            }
+        </style>
         <div class="option">
             <slot name="icon"></slot>
             <slot></slot>
@@ -141,7 +145,8 @@ class SelectOption extends HTMLElement {
     }
 
     get value() {
-        return this.getAttribute("value") || this.getAttribute("label") || this.innerText;
+        if (this.hasAttribute("value")) return this.getAttribute("value");
+        return this.getAttribute("label") || this.innerText;
     }
 
     set value(value) {
@@ -251,6 +256,8 @@ class InputSelect extends InputComponent {
         this._scrollParents = [];
         this._openIntent = false;
         this._editingCustomValue = false;
+        this._activeOptionIndex = -1;
+        this._customKeydownHandler = (event) => this._handleCustomSelectKeydown(event);
     }
 
     /**
@@ -284,8 +291,8 @@ class InputSelect extends InputComponent {
             ".tab": {
                 position: "relative",
                 flex: "0 0 auto",
-                width: "var(--input-height)",
-                height: "var(--input-height)",
+                width: "var(--input-control-size)",
+                height: "var(--input-control-size)",
                 borderLeft: "1px solid #c8c8c8",
                 background: "linear-gradient(0deg, rgba(204, 204, 204, 1) 0%, rgba(224, 224, 224, 1) 100%)"
             },
@@ -293,8 +300,9 @@ class InputSelect extends InputComponent {
                 content: "''",
                 display: "block",
                 position: "absolute",
-                "--s": "40%",
+                "--s": "var(--select-arrow-size, 5px)",
                 width: "50%",
+                maxWidth: "var(--select-arrow-max-width, 50%)",
                 aspectRatio: "5/3",
                 clipPath: "polygon(0 0,0 var(--s),50% 100%,100% var(--s),100% 0,50% calc(100% - var(--s)))",
                 background: "var(--select-arrow-color, var(--form-accent-color, #0059ff))",
@@ -306,8 +314,8 @@ class InputSelect extends InputComponent {
                 display: "none",
                 position: "relative",
                 flex: "0 0 auto",
-                width: "var(--input-height)",
-                height: "var(--input-height)",
+                width: "var(--input-control-size)",
+                height: "var(--input-control-size)",
                 borderLeft: "1px solid #c8c8c8",
                 background: "linear-gradient(0deg, rgba(204, 204, 204, 1) 0%, rgba(224, 224, 224, 1) 100%)"
             },
@@ -377,6 +385,10 @@ class InputSelect extends InputComponent {
             },
             ".select-options select-option:hover": {
                 backgroundColor: "#efefef"
+            },
+            ".select-options select-option.active": {
+                outline: "2px solid var(--form-accent-color, #0059ff)",
+                outlineOffset: "-2px"
             },
             ".select-options select-option.selected": {
                 backgroundColor: "var(--selected-option-bg, var(--form-accent-color, #0059ff))",
@@ -603,9 +615,14 @@ class InputSelect extends InputComponent {
         if (this._optionList) {
             this._optionList.classList.remove("open");
         }
+        if (this._dom.native) {
+            this._dom.native.setAttribute("aria-expanded", "false");
+            this._dom.native.removeAttribute("aria-activedescendant");
+        }
         this.style.zIndex = "";
         this.classList.remove("open-below", "open-above");
         this.expanded = false;
+        this._queueFieldFeedbackPosition();
         if (!preserveIntent) {
             this._openIntent = false;
         }
@@ -625,12 +642,14 @@ class InputSelect extends InputComponent {
                 this.style.zIndex = "100000";
                 this._optionList.classList.add("open");
                 this.expanded = true;
+                this._dom.native.setAttribute("aria-expanded", "true");
             } else {
                 return;
             }
         }
 
         const hostRect = this.getBoundingClientRect();
+        const rootRect = this._wireframe?.root?.getBoundingClientRect?.() || hostRect;
         const inputRect = this._wireframe?.input?.getBoundingClientRect?.() || hostRect;
         const clipRect = this._getScrollClipRect();
 
@@ -648,24 +667,30 @@ class InputSelect extends InputComponent {
 
         const useAbove = topSpace > bottomSpace && listHeight > bottomSpace;
 
-        // Use fixed positioning with viewport coordinates so the list escapes
-        // any overflow:hidden/auto scroll container that would clip it.
-
         this._optionList.style.minWidth = `${inputRect.width}px`;
+        this._optionList.style.left = `${inputRect.left - rootRect.left}px`;
 
         if (useAbove) {
             const maxH = Math.max(60, topSpace - 4);
             this._optionList.style.maxHeight = `${maxH}px`;
-            this._optionList.style.bottom = `100%`;
+            this._optionList.style.bottom = `${rootRect.bottom - inputRect.top}px`;
             this._optionList.style.top = "";
             this.classList.add("open-above");
         } else {
             const maxH = Math.max(60, bottomSpace - 4);
             this._optionList.style.maxHeight = `${maxH}px`;
-            this._optionList.style.top = `100%`;
+            this._optionList.style.top = `${inputRect.bottom - rootRect.top}px`;
             this._optionList.style.bottom = "";
             this.classList.add("open-below");
         }
+        this._queueFieldFeedbackPosition();
+    }
+
+    _getFieldFeedbackPlacementPreference() {
+        if (!this.expanded) return super._getFieldFeedbackPlacementPreference();
+        if (this.classList.contains("open-below")) return "above";
+        if (this.classList.contains("open-above")) return "below";
+        return super._getFieldFeedbackPlacementPreference();
     }
 
     /**
@@ -747,7 +772,12 @@ class InputSelect extends InputComponent {
         this._optionList = document.createElement("ul");
         this._optionList.className = this._useSelectBarMode() ? "select-options select-bar-options" : "select-options";
         this._optionList.setAttribute("role", "listbox");
+        this._optionList.id = `select-list-${Math.random().toString(36).slice(2, 10)}`;
         this._wireframe.root.appendChild(this._optionList);
+        this._dom.native.setAttribute("role", "combobox");
+        this._dom.native.setAttribute("aria-haspopup", "listbox");
+        this._dom.native.setAttribute("aria-controls", this._optionList.id);
+        this._dom.native.setAttribute("aria-expanded", "false");
 
         const editTab = this._wireframe.root.querySelector(".edit-tab");
         if (editTab && !editTab.querySelector(".select-edit")) {
@@ -795,8 +825,9 @@ class InputSelect extends InputComponent {
         const childOptions = Array.from(this.querySelectorAll(":scope > option, :scope > select-option")).map(
             (option) => {
                 const label = option.label || option.getAttribute("label") || option.textContent.trim();
+                const value = option.hasAttribute("value") ? option.getAttribute("value") : label;
                 return {
-                    value: option.value || option.getAttribute("value") || label,
+                    value,
                     label,
                     icon: option.icon || option.getAttribute("icon-src") || option.dataset.icon || "",
                     description:
@@ -852,9 +883,8 @@ class InputSelect extends InputComponent {
                 const li = document.createElement("select-option");
 
                 li.value = optionData.value;
-                li.dataset.value = optionData.value;
-                li.setAttribute("value", optionData.value);
                 li.textContent = optionData.label;
+                li.id = `${this._optionList.id}-option-${i}`;
                 li.setAttribute("role", "option");
                 li.setAttribute("aria-selected", "false");
 
@@ -951,7 +981,7 @@ class InputSelect extends InputComponent {
         if (this._descriptionEl.parentNode !== this._wireframe.root) {
             this._wireframe.root.appendChild(this._descriptionEl);
         }
-        this._descriptionEl.textContent = this.selected.description || this.getAttribute("description") || "";
+        this._descriptionEl.textContent = this.selected.description || "";
     }
 
     _onNativeInputEvent() {
@@ -974,8 +1004,91 @@ class InputSelect extends InputComponent {
         this._openIntent = true;
         this._optionList.classList.add("open");
         this.expanded = true;
+        this._dom.native.setAttribute("aria-expanded", "true");
+        this._activateSelectedOption();
         this._startViewportListeners();
         this._positionOptionList();
+    }
+
+    _getOptionElements() {
+        return this._optionList
+            ? Array.from(this._optionList.querySelectorAll("select-option"))
+            : [];
+    }
+
+    _setActiveOption(index) {
+        const options = this._getOptionElements();
+        if (!options.length) {
+            this._activeOptionIndex = -1;
+            this._dom.native.removeAttribute("aria-activedescendant");
+            return;
+        }
+
+        const nextIndex = Math.max(0, Math.min(index, options.length - 1));
+        options.forEach((option, optionIndex) => {
+            option.classList.toggle("active", optionIndex === nextIndex);
+        });
+        this._activeOptionIndex = nextIndex;
+        const active = options[nextIndex];
+        this._dom.native.setAttribute("aria-activedescendant", active.id);
+        active.scrollIntoView({ block: "nearest" });
+    }
+
+    _activateSelectedOption() {
+        const options = this._getOptionElements();
+        const selectedIndex = options.findIndex((option) => option.classList.contains("selected"));
+        this._setActiveOption(selectedIndex >= 0 ? selectedIndex : 0);
+    }
+
+    _moveActiveOption(offset) {
+        const options = this._getOptionElements();
+        if (!options.length) return;
+        const start = this._activeOptionIndex >= 0 ? this._activeOptionIndex : 0;
+        this._setActiveOption((start + offset + options.length) % options.length);
+    }
+
+    _commitActiveOption() {
+        const option = this._getOptionElements()[this._activeOptionIndex];
+        if (!option) return;
+        const value = option.value;
+        this.value = value;
+        this._selectOptionByValue(value);
+        this.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+        this.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+        this._closeOptionList();
+        this._syncSelectedDescription();
+    }
+
+    _handleCustomSelectKeydown(event) {
+        if (this._editingCustomValue) return;
+
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            if (!this.expanded) this._expandOptionList();
+            this._moveActiveOption(event.key === "ArrowDown" ? 1 : -1);
+            return;
+        }
+        if (event.key === "Home" || event.key === "End") {
+            if (!this.expanded) return;
+            event.preventDefault();
+            const options = this._getOptionElements();
+            this._setActiveOption(event.key === "Home" ? 0 : options.length - 1);
+            return;
+        }
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            if (this.expanded) this._commitActiveOption();
+            else this._expandOptionList();
+            return;
+        }
+        if (event.key === "Escape" && this.expanded) {
+            event.preventDefault();
+            this._closeOptionList();
+            return;
+        }
+        if (event.key === "Tab") {
+            this._closeOptionList();
+        }
     }
 
     /**
@@ -1001,6 +1114,8 @@ class InputSelect extends InputComponent {
         this._customBoundNative = this._dom.native;
         this._customBoundList = this._optionList;
         this._dom.native.readOnly = true;
+        this._dom.native.removeEventListener("keydown", this._customKeydownHandler);
+        this._dom.native.addEventListener("keydown", this._customKeydownHandler);
 
         if (!this._useSelectBarMode()) {
             this._wireframe.input.addEventListener("click", () => {
@@ -1051,7 +1166,7 @@ class InputSelect extends InputComponent {
             const target = event.target instanceof HTMLElement ? event.target.closest("select-option") : null;
             if (!target || !this._optionList.contains(target)) return;
             this._dom.native.blur();
-            const value = target.value || target.dataset.value || "";
+            const value = target.value;
             this.value = value;
             this._selectOptionByValue(value);
 

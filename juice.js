@@ -287,7 +287,8 @@ class Juice {
     get importSections() {
         return {
             forms: {
-                import: "import.mjs"
+                import: "import.mjs",
+                load: () => import("./forms/import.mjs")
             }
         };
     }
@@ -330,6 +331,16 @@ class Juice {
         }
     }
 
+    /**
+     * Imports a registered Juice library or an explicit module path.
+     * Registered libraries are cached and exposed on the Juice instance.
+     *
+     * @example
+     * await juice.import("forms");
+     * juice.forms.refresh();
+     *
+     * @returns {Promise<Object|undefined>} Imported library or module namespace.
+     */
     async import() {
         let section, modulePath, properties;
         try {
@@ -338,15 +349,28 @@ class Juice {
             console.error(`${e} juice import error in provided arguments`, arguments);
             return;
         }
+
+        const isSectionImport = modulePath === `${section}/${this.importSections[section]?.import}`;
+
         if (this._cache[modulePath]) {
-            return properties.length
-                ? properties.reduce((acc, property) => (acc[property] = this._cache[modulePath][property]), {})
+            const cachedModule = Array.isArray(properties) && properties.length
+                ? properties.reduce((selected, property) => {
+                      selected[property] = this._cache[modulePath][property];
+                      return selected;
+                  }, {})
                 : this._cache[modulePath];
+
+            if (isSectionImport) {
+                this[section] = cachedModule;
+            }
+
+            return cachedModule;
         }
 
+        const sectionLoader = isSectionImport ? this.importSections[section]?.load : null;
         const moduleUrl = new URL(`./${modulePath}`, import.meta.url).href;
-        const module = await import(moduleUrl);
-        let m = {};
+        const module = sectionLoader ? await sectionLoader() : await import(/* @vite-ignore */ moduleUrl);
+        let m;
         if (Array.isArray(properties) && properties.length > 0) {
             m = {};
             for (let i = 0; i < properties.length; i++) {
@@ -355,11 +379,23 @@ class Juice {
                     m[property] = module[property];
                 }
             }
+        } else if (isSectionImport && module.default) {
+            m = module.default;
+            Object.entries(module).forEach(([name, value]) => {
+                if (name !== "default" && !(name in m)) {
+                    m[name] = value;
+                }
+            });
         } else {
             m = module;
         }
 
         this._cache[modulePath] = m;
+
+        if (isSectionImport) {
+            this[section] = m;
+        }
+
         return m;
     }
 

@@ -135,6 +135,7 @@ class RuleParser {
         }
         return rules;
     }
+
 }
 
 export default RuleParser;

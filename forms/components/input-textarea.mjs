@@ -1,5 +1,3 @@
-
-
 /**
  * AUTODOC:START
  * Component: <input-textarea>
@@ -33,7 +31,7 @@ import InputComponent from "./input-component.mjs";
 
 class InputTextarea extends InputComponent {
     /**
-       * Returns component-scoped style definitions used to generate CSS.
+     * Returns component-scoped style definitions used to generate CSS.
      * @returns {*} Style definition map used for generated component CSS.
      */
     get _styles() {
@@ -49,8 +47,8 @@ class InputTextarea extends InputComponent {
                 width: "100%",
                 padding: "0.2rem",
                 boxSizing: "border-box",
-                width: "25px",
-                height: "25px"
+                width: "var(--input-control-size)",
+                height: "var(--input-control-size)"
             },
             textarea: {
                 margin: "0.2rem",
@@ -65,7 +63,7 @@ class InputTextarea extends InputComponent {
         };
     }
     /**
-        * Initializes component state, DOM references, and default behavior.
+     * Initializes component state, DOM references, and default behavior.
      * @returns {*} void.
      */
     constructor() {
@@ -74,7 +72,7 @@ class InputTextarea extends InputComponent {
     }
 
     /**
-      * Creates the hidden native input used for form integration.
+     * Creates the hidden native input used for form integration.
      * @returns {*} Configured native input element.
      */
     _createNativeControl() {

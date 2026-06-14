@@ -106,12 +106,13 @@ Provided by `data/validate/Presets.mjs`:
 - Required/value: `required`, `empty`, `notEmpty`, `null`, `in`, `equals`
 - Type: `string`, `text`, `number`, `array`, `boolean`, `object`, `int`, `integer`, `timestamp`
 - Range/length: `min`, `max`, `length`
-- Format: `email`, `phone`, `address`, `postal`, `chars`, `sha256`
+- Format: `email`, `url`, `phone`, `address`, `postal`, `chars`, `sha256`
 
 Behavior notes:
 
 - Empty non-required values are treated as valid.
 - Empty + `required` returns only the `required` failure for that pass.
+- `url` accepts HTTP(S) URLs with a valid DNS domain.
 
 ## Public API
 

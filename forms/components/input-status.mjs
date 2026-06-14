@@ -18,6 +18,7 @@
  * Attribute Reference:
  * - `state`: One of `info`, `warning`, `error`/`x`, `success`, or empty for idle.
  * - `size`: Pixel size of the status badge.
+ * - `fill`: Fills the dimensions provided by the parent container.
  * - `icon-only`: Hides ring/fill and shows icon only.
  * - `colored`: Applies state color to icon in icon-only mode.
  * - `color`: Explicit icon color override in icon-only mode.
@@ -41,7 +42,7 @@ class InputStatus extends HTMLElement {
      * @returns {*} List of observed attribute names.
      */
     static get observedAttributes() {
-        return ["size", "state", "icon-only", "color", "colored"];
+        return ["size", "fill", "state", "icon-only", "color", "colored"];
     }
 
     /**
@@ -247,7 +248,7 @@ class InputStatus extends HTMLElement {
      */
     attributeChangedCallback(name, oldValue, newValue) {
         if (oldValue === newValue) return;
-        if (name === "size") this._applySize();
+        if (name === "size" || name === "fill") this._applySize();
         if (name === "state" || name === "icon-only" || name === "color" || name === "colored") {
             this._applyState(this.state);
         }
@@ -382,8 +383,9 @@ class InputStatus extends HTMLElement {
         };
 
         const size = this.size;
-        this._refs.wrapper.style.width = `${size}px`;
-        this._refs.wrapper.style.height = `${size}px`;
+        const dimension = this.hasAttribute("fill") ? "100%" : `${size}px`;
+        this._refs.wrapper.style.width = dimension;
+        this._refs.wrapper.style.height = dimension;
 
         const stroke = this._refs.stroke;
         const strokeWidth = size / 4;
@@ -399,8 +401,8 @@ class InputStatus extends HTMLElement {
 
         const sizeStyle = `
             :host{
-                width:${size}px;
-                height:${size}px;
+                width:${dimension};
+                height:${dimension};
             }
             .graphic svg .info-1{
                 stroke-width: 10;

@@ -257,6 +257,8 @@ function createRuleMessage(rule, fallback) {
             return `Property "${property}" must be between ${normalized.args[0]} and ${normalized.args[1]}.`;
         case "email":
             return `Property "${property}" must be a valid email address.`;
+        case "url":
+            return `Property "${property}" must be a valid URL with a domain.`;
         case "phone":
             return `Property "${property}" must be a valid phone number.`;
         case "address":
@@ -370,6 +372,16 @@ export class EmailValidationError extends ValidationError {
     constructor(rule) {
         super(rule, { message: createRuleMessage(rule, "Value is not a valid email address.") });
         assignTypedError(this, "EmailValidationError", "EMAIL_INVALID");
+    }
+}
+
+/**
+ * URL format/domain failure.
+ */
+export class UrlValidationError extends ValidationError {
+    constructor(rule) {
+        super(rule, { message: createRuleMessage(rule, "Value is not a valid URL with a domain.") });
+        assignTypedError(this, "UrlValidationError", "URL_INVALID");
     }
 }
 

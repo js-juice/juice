@@ -1,673 +1,786 @@
-
-
 /**
- * AUTODOC:START
- * Component: <form-info>
- * Class: FormInfo
- * Overview: Form-level status panel that shows description text, aggregate validation messages, and form actions.
- *
- * Features:
- * - Renders error/warning/info message blocks with status icon switching.
- * - Aggregates per-field validation events into a field error list.
- * - Supports `undo` and `revert` actions when bound to a form history source.
- * - Auto-binds to the nearest `juice-forms`/`form` host or to an explicit target via `for`.
- *
- * Example:
- * `<form-info for="profileForm" description="Profile settings are saved automatically."></form-info>`
- *
- * Attribute Reference:
- * - `description`: Inline descriptive text shown above message rows.
- * - `error`: Explicit override for form-level error message.
- * - `warning`: Explicit override for form-level warning message.
- * - `message`: Explicit override for neutral/information message.
- * - `for`: ID of a `juice-forms` element or native `form` to observe for validation events.
- *
- * Property Reference:
- * - `error`: Getter/setter mapped to the `error` attribute.
- * - `warning`: Getter/setter mapped to the `warning` attribute.
- * - `message`: Getter/setter mapped to the `message` attribute.
- *
- * CSS Variables:
- * - None.
- *
- * Part Names:
- * - None.
- * AUTODOC:END
+ * Form-level progress summary and field checklist.
  */
 
+const FIELD_SELECTOR = [
+    "input-text",
+    "input-textarea",
+    "input-select",
+    "input-checkbox",
+    "input-radio",
+    "input-number",
+    "input-range",
+    "input-file",
+    "[validation]",
+    "[validate]"
+].join(",");
+
+const STATUS_LABELS = {
+    complete: "Complete",
+    invalid: "Error",
+    incomplete: "Incomplete",
+    untouched: "Not started"
+};
+
 class FormInfo extends HTMLElement {
-    // TODO(refactor): Split validation aggregation/state management into a dedicated helper to reduce class size.
-    /**
-     * Lists attributes that are observed for runtime updates.
-     * @returns {*} List of observed attribute names.
-     */
     static get observedAttributes() {
         return ["error", "warning", "message", "description", "for"];
     }
 
-    /**
-        * Initializes component state, DOM references, and default behavior.
-     * @returns {*} void.
-     */
     constructor() {
         super();
         this._shadow = this.attachShadow({ mode: "open" });
         this._form = null;
         this._hooks = {};
         this._historyBound = false;
-        this._managedMessages = {
-            error: "",
-            warning: "",
-            message: ""
-        };
-        this._fieldValidation = new Map();
         this._validationTarget = null;
-        this._onValidationChange = this._onValidationChange.bind(this);
+        this._fieldStates = [];
+        this._fieldObserver = null;
+        this._refreshFrame = 0;
+        this._onValidationChange = () => this._queueRefresh();
+        this._onFieldActivity = () => this._queueRefresh();
+        this._onDocumentPointerDown = (event) => {
+            if (!this._open || event.composedPath().includes(this)) return;
+            this._setOpen(false);
+        };
+        this._onDocumentKeyDown = (event) => {
+            if (event.key === "Escape" && this._open) {
+                this._setOpen(false);
+                this._refs.toggle.focus();
+            }
+        };
 
         this._shadow.innerHTML = `
             <style>
                 :host {
                     display: block;
-                    margin-top: 1rem;
+                    width: 100%;
+                    margin: 0;
+                    box-sizing: border-box;
+                    font-family: var(--form-font-family, system-ui, sans-serif);
+                }
+
+                *, *::before, *::after {
+                    box-sizing: border-box;
                 }
 
                 .form-info {
-                    display: flex;
-                    flex-direction: row;
-                    align-items: center;
-                    gap: 1rem;
-                    padding-bottom: 1rem;
-                }
-
-                .form-message {
-                    width: 100%;
                     position: relative;
-                }
-
-                .description {
-                    width: 75%;
-                }
-
-                .messages {
-                    display: none;
-                    flex-direction: row;
-                    align-items: flex-end;
-                    gap: 0.75rem;
-                    padding-top: 0.5rem;
-                }
-
-                .form-info.has-message .messages {
-                    display: flex;
-                }
-
-                .icon-wrap {
-                    width: 20px;
-                    height: 20px;
-                    flex: 0 0 auto;
-                }
-
-                .message {
                     width: 100%;
                 }
 
-                .message > div:empty {
+                .summary {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 1rem;
+                    width: 100%;
+                    min-height: var(--input-control-size, 38px);
+                    padding: 0.55rem 0.7rem 0.55rem 0.85rem;
+                    border: var(--input-border, 1px solid #c8c8c8);
+                    border-radius: var(--input-border-radius, 5px);
+                    background: var(--input-bgcolor, #fff);
+                }
+
+                .summary-copy {
+                    display: flex;
+                    flex-wrap: wrap;
+                    align-items: baseline;
+                    gap: 0.3rem 0.75rem;
+                    min-width: 0;
+                }
+
+                .progress {
+                    color: var(--form-label-color, #293241);
+                    font-size: 0.9rem;
+                }
+
+                .health {
+                    color: #5f6b7a;
+                    font-size: 0.8rem;
+                }
+
+                .health.has-errors {
+                    color: var(--juice-validation-color-invalid, #d41111);
+                }
+
+                .toggle {
+                    display: grid;
+                    place-items: center;
+                    flex: 0 0 auto;
+                    width: 34px;
+                    height: 34px;
+                    padding: 5px;
+                    border: 0;
+                    border-radius: 5px;
+                    color: var(--form-accent-color, #0059bf);
+                    background: transparent;
+                    cursor: pointer;
+                }
+
+                .toggle:hover,
+                .toggle:focus-visible,
+                .toggle[aria-expanded="true"] {
+                    background: color-mix(in srgb, currentColor 12%, transparent);
+                    outline: none;
+                }
+
+                .toggle svg {
+                    width: 100%;
+                    height: 100%;
+                    fill: none;
+                    stroke: currentColor;
+                    stroke-width: 1.8;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                }
+
+                .popover {
+                    position: absolute;
+                    z-index: 100100;
+                    top: calc(100% + 0.5rem);
+                    right: 0;
+                    width: min(760px, calc(100vw - 2rem));
+                    max-height: min(70vh, 620px);
+                    overflow: auto;
+                    border: var(--input-border, 1px solid #c8c8c8);
+                    border-radius: 8px;
+                    background: var(--input-bgcolor, #fff);
+                    box-shadow: 0 18px 50px rgb(0 0 0 / 20%);
+                }
+
+                .popover[hidden] {
                     display: none;
                 }
 
-                .error-message {
-                    color: #D41111;
+                .popover-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 1rem;
+                    padding: 0.8rem 1rem;
+                    border-bottom: 1px solid #d9e1ea;
                 }
 
-                .warning-message {
-                    color: #FFAB1A;
+                .popover-title {
+                    margin: 0;
+                    color: var(--form-label-color, #293241);
+                    font-size: 0.95rem;
                 }
 
-                .field-errors {
-                    display: none;
-                    margin-top: 0.5rem;
-                    padding-left: 1.75rem;
+                .popover-summary {
+                    color: #5f6b7a;
+                    font-size: 0.78rem;
                 }
 
-                .form-info.has-field-errors .field-errors {
-                    display: block;
+                .details {
+                    display: grid;
+                    grid-template-columns: minmax(180px, 0.75fr) minmax(280px, 1.25fr);
+                    gap: 1rem;
+                    padding: 1rem;
                 }
 
-                .field-error-list {
-                    list-style: none;
+                .map-panel,
+                .checklist-panel {
+                    min-width: 0;
+                }
+
+                .section-title {
+                    margin: 0 0 0.55rem;
+                    color: var(--form-label-color, #293241);
+                    font-size: 0.72rem;
+                    font-weight: 800;
+                    text-transform: uppercase;
+                }
+
+                .form-map {
+                    position: relative;
+                    width: 100%;
+                    min-height: 190px;
+                    border: 1px solid #d9e1ea;
+                    border-radius: 6px;
+                    background: #f7f9fc;
+                    overflow: hidden;
+                }
+
+                .map-field {
+                    position: absolute;
+                    min-width: 18px;
+                    min-height: 14px;
+                    padding: 0;
+                    border: 1px solid rgb(0 0 0 / 16%);
+                    border-radius: 4px;
+                    cursor: pointer;
+                    appearance: none;
+                    transition: opacity 140ms ease, filter 140ms ease;
+                }
+
+                .form-map.has-highlight .map-field:not(.is-highlighted) {
+                    opacity: 0.5;
+                }
+
+                .complete {
+                    --field-status-color: var(--juice-validation-color-valid, #73c322);
+                }
+
+                .invalid {
+                    --field-status-color: var(--juice-validation-color-invalid, #d41111);
+                }
+
+                .incomplete,
+                .untouched {
+                    --field-status-color: var(--juice-validation-color-incomplete, #ffab1a);
+                }
+
+                .map-field {
+                    background: var(--field-status-color);
+                }
+
+                .legend {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 0.4rem 0.75rem;
+                    margin-top: 0.55rem;
+                    color: #5f6b7a;
+                    font-size: 0.7rem;
+                }
+
+                .legend span::before {
+                    content: "";
+                    display: inline-block;
+                    width: 8px;
+                    height: 8px;
+                    margin-right: 0.3rem;
+                    border-radius: 2px;
+                    background: var(--field-status-color);
+                }
+
+                .field-list {
+                    display: grid;
+                    gap: 0.45rem;
                     margin: 0;
                     padding: 0;
-                    display: flex;
-                    flex-direction: column;
+                    list-style: none;
+                }
+
+                .field-item {
+                    display: grid;
+                    grid-template-columns: auto minmax(0, 1fr) auto;
+                    gap: 0.55rem;
+                    align-items: start;
+                    padding: 0.5rem;
+                    border: 1px solid #d9e1ea;
+                    border-left: 4px solid var(--field-status-color);
+                    border-radius: 5px;
+                    background: #fff;
+                    cursor: pointer;
+                    transition: border-color 140ms ease, box-shadow 140ms ease;
+                }
+
+                .field-item.is-highlighted {
+                    border-color: var(--field-status-color);
+                    box-shadow: 0 0 0 2px color-mix(in srgb, var(--field-status-color) 18%, transparent);
+                }
+
+                .field-status-icon {
+                    width: 18px;
+                    height: 18px;
+                }
+
+                .field-copy {
+                    min-width: 0;
+                }
+
+                .field-name {
+                    display: block;
+                    color: #293241;
+                    font-size: 0.82rem;
+                }
+
+                .field-message {
+                    display: block;
+                    margin-top: 0.18rem;
+                    color: #5f6b7a;
+                    font-size: 0.72rem;
+                    line-height: 1.3;
+                }
+
+                .field-state {
+                    color: var(--field-status-color);
+                    font-size: 0.68rem;
+                    font-weight: 800;
+                    text-transform: uppercase;
+                }
+
+                .callouts {
+                    display: none;
                     gap: 0.35rem;
+                    padding: 0 1rem 1rem;
+                    font-size: 0.78rem;
                 }
 
-                .field-error-item {
-                    display: flex;
-                    align-items: flex-start;
-                    gap: 0.35rem;
-                    color: #3a3a3a;
-                    line-height: 1.2;
-                    font-size: 0.9em;
+                .callouts.has-content {
+                    display: grid;
                 }
 
-                .field-error-item .field-icon {
-                    flex: 0 0 auto;
-                    margin-top: 0.05rem;
-                }
-
-                .field-error-item .field-name {
-                    font-weight: 700;
-                    margin-right: 0.3rem;
-                }
-
-                .field-error-item.invalid .field-name {
-                    color: #D41111;
-                }
-
-                .field-error-item.incomplete .field-name {
-                    color: #B26A00;
-                }
+                .callout-error { color: #d41111; }
+                .callout-warning { color: #b26a00; }
+                .callout-message { color: #007cc7; }
 
                 .actions {
+                    display: none;
+                    justify-content: flex-end;
+                    gap: 0.5rem;
+                    padding: 0.75rem 1rem;
+                    border-top: 1px solid #d9e1ea;
+                }
+
+                .form-info.has-history .actions {
                     display: flex;
-                    flex-direction: row;
-                    align-items: flex-end;
-                    gap: 0.75rem;
-                    white-space: nowrap;
                 }
 
                 .action {
-                    display: none;
-                    align-items: center;
-                    gap: 0.4rem;
-                    color: #b9b9b9;
-                    cursor: pointer;
-                    background: none;
                     border: 0;
-                    padding: 0;
+                    background: transparent;
+                    color: #5f6b7a;
                     font: inherit;
-                }
-
-                .form-info.has-history .action {
-                    display: inline-flex;
-                }
-
-                .action .btn-icon {
-                    width: 20px;
-                    height: 20px;
-                }
-
-                .action .btn-label {
+                    font-size: 0.75rem;
+                    font-weight: 800;
                     text-transform: uppercase;
-                    font-weight: 700;
-                    line-height: 20px;
+                    cursor: pointer;
                 }
 
-                .action.undo:hover {
-                    color: #FFAB1A;
-                }
+                @media (max-width: 640px) {
+                    .details {
+                        grid-template-columns: 1fr;
+                    }
 
-                .action.revert:hover {
-                    color: #D41111;
+                    .form-map {
+                        min-height: 150px;
+                    }
                 }
             </style>
             <div class="form-info" data-ref="wrapper">
-                <div class="form-message">
-                    <div class="description" data-ref="description"><slot></slot></div>
-                    <div class="messages">
-                        <div class="icon-wrap">
-                            <input-status data-ref="status-icon" size="20"></input-status>
-                        </div>
-                        <div class="message">
-                            <div class="form-message-text" data-ref="form-message"></div>
-                            <div class="error-message" data-ref="error-message"></div>
-                            <div class="warning-message" data-ref="warning-message"></div>
-                        </div>
+                <div class="summary" role="status" aria-live="polite">
+                    <div class="summary-copy">
+                        <strong class="progress" data-ref="progress">Completed 0 of 0 fields</strong>
+                        <span class="health" data-ref="health">No errors</span>
                     </div>
-                    <div class="field-errors" data-ref="field-errors">
-                        <ul class="field-error-list" data-ref="field-error-list"></ul>
-                    </div>
-                </div>
-                <div class="actions">
-                    <button type="button" class="action undo" data-action="undo">
-                        <span class="btn-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50">
-                                <g fill="currentColor">
-                                    <path d="M20.45,15.28V9.6c0-1.37-1.66-2.06-2.63-1.09L7.39,18.94c-0.6,0.6-0.6,1.58,0,2.18l10.43,10.43 c0.97,0.97,2.63,0.28,2.63-1.09v-5.01c6.07,1.55,10.77,7.2,11.62,14.2c0.16,1.32,1.33,2.29,2.67,2.29h4.63 c1.62,0,2.85-1.41,2.68-3.02C40.77,26.69,31.8,16.91,20.45,15.28z"></path>
-                                </g>
-                            </svg>
-                        </span>
-                        <span class="btn-label">undo</span>
-                    </button>
-                    <button type="button" class="action revert" data-action="revert">
-                        <span class="btn-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50">
-                                <g fill="currentColor">
-                                    <path d="M27.67,6.98c-0.12-0.02-0.24-0.02-0.36-0.02V2.12c0-1.07-1.3-1.61-2.05-0.85L17.12,9.4c-0.47,0.47-0.47,1.23,0,1.7 l8.13,8.13c0.76,0.76,2.05,0.22,2.05-0.85v-4.32c4.42,1.17,7.73,5.62,7.73,10.93c0,6.2-4.5,11.25-10.03,11.25 c-4.96,0-9.09-4.05-9.89-9.35c-0.17-1.1-1.15-1.89-2.27-1.89h-2.4c-1.4,0-2.48,1.24-2.29,2.62c1.19,8.82,8.3,15.62,16.86,15.62 c9.39,0,17.03-8.19,17.03-18.25C42.03,15.91,35.8,8.35,27.67,6.98z"></path>
-                                </g>
-                            </svg>
-                        </span>
-                        <span class="btn-label">revert</span>
+                    <button type="button" class="toggle" data-ref="toggle" aria-expanded="false"
+                        aria-label="Open form checklist" title="Open form checklist">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M9 6h11M9 12h11M9 18h11"/>
+                            <path d="m3.5 6 1.4 1.4L7.5 4.8M3.5 12l1.4 1.4 2.6-2.6M3.5 18l1.4 1.4 2.6-2.6"/>
+                        </svg>
                     </button>
                 </div>
+                <section class="popover" data-ref="popover" role="dialog" tabindex="-1" hidden>
+                    <header class="popover-header">
+                        <h2 class="popover-title">Form checklist</h2>
+                        <span class="popover-summary" data-ref="popover-summary"></span>
+                    </header>
+                    <div class="details">
+                        <section class="map-panel">
+                            <h3 class="section-title">Form map</h3>
+                            <div class="form-map" data-ref="form-map"></div>
+                            <div class="legend">
+                                <span class="complete">Complete</span>
+                                <span class="invalid">Error</span>
+                                <span class="untouched">Not started</span>
+                            </div>
+                        </section>
+                        <section class="checklist-panel">
+                            <h3 class="section-title">Fields</h3>
+                            <ol class="field-list" data-ref="field-list"></ol>
+                        </section>
+                    </div>
+                    <div class="callouts" data-ref="callouts">
+                        <div class="callout-error" data-ref="error-message"></div>
+                        <div class="callout-warning" data-ref="warning-message"></div>
+                        <div class="callout-message" data-ref="form-message"></div>
+                    </div>
+                    <footer class="actions">
+                        <button type="button" class="action" data-action="undo">Undo</button>
+                        <button type="button" class="action" data-action="revert">Revert</button>
+                    </footer>
+                </section>
             </div>
         `;
 
         this._refs = {};
-        const allRefs = this._shadow.querySelectorAll("[data-ref]");
-        for (let i = 0; i < allRefs.length; i += 1) {
-            const key = allRefs[i].getAttribute("data-ref");
-            this._refs[key] = allRefs[i];
-        }
+        this._shadow.querySelectorAll("[data-ref]").forEach((element) => {
+            this._refs[element.getAttribute("data-ref")] = element;
+        });
+        const checklistId = `form-info-checklist-${Math.random().toString(36).slice(2, 10)}`;
+        const title = this._shadow.querySelector(".popover-title");
+        this._refs.popover.id = checklistId;
+        title.id = `${checklistId}-title`;
+        this._refs.popover.setAttribute("aria-labelledby", title.id);
+        this._refs.toggle.setAttribute("aria-controls", checklistId);
     }
 
-    /**
-     * Runs setup logic when the element is connected to the document.
-     * @returns {*} void.
-     */
     connectedCallback() {
-        const actionButtons = this._shadow.querySelectorAll("[data-action]");
-        for (let i = 0; i < actionButtons.length; i += 1) {
-            actionButtons[i].addEventListener("click", () => {
-                this._runAction(actionButtons[i].getAttribute("data-action"));
-            });
-        }
+        this._refs.toggle.addEventListener("click", () => this._setOpen(!this._open));
+        this._shadow.querySelectorAll("[data-action]").forEach((button) => {
+            button.addEventListener("click", () => this._runAction(button.getAttribute("data-action")));
+        });
+        document.addEventListener("pointerdown", this._onDocumentPointerDown);
+        document.addEventListener("keydown", this._onDocumentKeyDown);
         this._tryAutoBindValidation();
         this._syncView();
     }
 
-    /**
-     * Responds to observed attribute changes and synchronizes state.
-     * @param {*} name - Attribute or field name.
-     * @param {*} oldValue - Previous value.
-     * @param {*} newValue - Next value.
-     * @returns {*} void.
-     */
+    disconnectedCallback() {
+        document.removeEventListener("pointerdown", this._onDocumentPointerDown);
+        document.removeEventListener("keydown", this._onDocumentKeyDown);
+        this._unbindValidationSource();
+        if (this._refreshFrame) cancelAnimationFrame(this._refreshFrame);
+    }
+
     attributeChangedCallback(name, oldValue, newValue) {
         if (oldValue === newValue) return;
-        if (name === "description") {
-            const desc = this._refs.description;
-            if (newValue != null && newValue !== "") {
-                desc.textContent = newValue;
-            } else {
-                desc.innerHTML = "<slot></slot>";
-            }
-        }
-        if (name === "for") {
-            this._tryAutoBindValidation(true);
-        }
+        if (name === "for") this._tryAutoBindValidation(true);
         this._syncView();
     }
 
-    /**
-      * Registers an action callback for a named component action.
-     * @param {*} action - Action identifier.
-     * @param {*} fn - Callback function.
-     * @returns {*} void.
-     */
     hook(action, fn) {
-        if (typeof fn === "function") {
-            this._hooks[action] = fn;
-        }
+        if (typeof fn === "function") this._hooks[action] = fn;
     }
 
-    /**
-      * Binds the component to a form instance and related integrations.
-     * @param {*} form - Form element or form-like host.
-     * @returns {*} void.
-     */
     bindForm(form) {
         this._form = form;
         const history = form && form.history;
         if (history && !this._historyBound && typeof history.on === "function") {
-            history.on("notEmpty", () => {
-                this._refs.wrapper.classList.add("has-history");
-            });
-            history.on("empty", () => {
-                this._refs.wrapper.classList.remove("has-history");
-            });
+            history.on("notEmpty", () => this._refs.wrapper.classList.add("has-history"));
+            history.on("empty", () => this._refs.wrapper.classList.remove("has-history"));
             this._historyBound = true;
         }
-
-        const validationSource = this._resolveValidationSource(form);
-        this._bindValidationSource(validationSource);
+        this._bindValidationSource(this._resolveValidationSource(form));
     }
 
-    /**
-      * Resolves effective validation source configuration.
-     * @param {*} source - Source element or input.
-     * @returns {*} Derived value.
-     */
     _resolveValidationSource(source) {
         if (!source) return null;
         if (source instanceof HTMLFormElement) return source;
-
-        if (
-            source instanceof HTMLElement &&
-            source.tagName.toLowerCase() === "juice-forms" &&
-            source.form instanceof HTMLFormElement
-        ) {
-            return source.form;
+        if (source instanceof HTMLElement && source.tagName.toLowerCase() === "juice-forms") {
+            return source.form instanceof HTMLFormElement ? source.form : null;
         }
-
-        if (source.form instanceof HTMLFormElement) {
-            return source.form;
-        }
-
-        return null;
+        return source.form instanceof HTMLFormElement ? source.form : null;
     }
 
-    /**
-      * Attempts to discover and bind the nearest validation controller.
-     * @param {*} force - Whether to force a full rebuild.
-     * @returns {*} Derived internal value or completion status.
-     */
     _tryAutoBindValidation(force = false) {
         if (this._validationTarget && !force) return;
-        let target = null;
         const forId = (this.getAttribute("for") || "").trim();
-
-        if (forId) {
-            const byId = document.getElementById(forId);
-            target = this._resolveValidationSource(byId) || null;
-        }
-
-        if (!target) {
-            const closestHost = this.closest("juice-forms, form");
-            target = this._resolveValidationSource(closestHost) || null;
-        }
-
+        const explicit = forId ? document.getElementById(forId) : null;
+        const closest = this.closest("juice-forms, form");
+        const target = this._resolveValidationSource(explicit) || this._resolveValidationSource(closest);
         this._bindValidationSource(target);
-        if (!this._form && target) {
-            this._form = target;
-        }
+        if (!this._form && target) this._form = target;
     }
 
-    /**
-       * Subscribes to validation-source events and keeps validation state synchronized.
-     * @param {*} target - Target element receiving updates.
-     * @returns {*} void.
-     */
     _bindValidationSource(target) {
-        if (this._validationTarget === target) return;
-
-        if (this._validationTarget) {
-            this._validationTarget.removeEventListener("validation:change", this._onValidationChange);
+        if (this._validationTarget === target) {
+            this._queueRefresh();
+            return;
         }
-
+        this._unbindValidationSource();
         this._validationTarget = target;
-        this._fieldValidation.clear();
-
-        if (this._validationTarget) {
-            this._validationTarget.addEventListener("validation:change", this._onValidationChange);
-            this._primeValidationState();
-        } else {
-            this._syncFieldErrorList();
+        if (!target) {
+            this._fieldStates = [];
+            this._renderProgress();
+            return;
         }
+
+        target.addEventListener("validation:change", this._onValidationChange);
+        target.addEventListener("input", this._onFieldActivity);
+        target.addEventListener("change", this._onFieldActivity);
+        target.addEventListener("focusout", this._onFieldActivity);
+        this._fieldObserver = new MutationObserver(() => this._queueRefresh());
+        this._fieldObserver.observe(target, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            attributeFilter: ["label", "name", "value", "checked", "validation-state"]
+        });
+        this._refreshFieldStates();
     }
 
-    /**
-      * Initializes validation UI state from current fields.
-     * @returns {*} Derived internal value or completion status.
-     */
-    _primeValidationState() {
+    _unbindValidationSource() {
+        const target = this._validationTarget;
+        if (target) {
+            target.removeEventListener("validation:change", this._onValidationChange);
+            target.removeEventListener("input", this._onFieldActivity);
+            target.removeEventListener("change", this._onFieldActivity);
+            target.removeEventListener("focusout", this._onFieldActivity);
+        }
+        if (this._fieldObserver) this._fieldObserver.disconnect();
+        this._fieldObserver = null;
+        this._validationTarget = null;
+    }
+
+    _queueRefresh() {
+        if (this._refreshFrame) cancelAnimationFrame(this._refreshFrame);
+        this._refreshFrame = requestAnimationFrame(() => {
+            this._refreshFrame = 0;
+            this._refreshFieldStates();
+        });
+    }
+
+    _refreshFieldStates() {
         if (!this._validationTarget) return;
-        const fields = this._validationTarget.querySelectorAll(
-            "input-text,input-textarea,input-select,input-checkbox,input-radio,[validation],[validate]"
+        const groups = new Map();
+        const fields = Array.from(this._validationTarget.querySelectorAll(FIELD_SELECTOR))
+            .filter((field) => !field.disabled && !field.hasAttribute("disabled"));
+
+        fields.forEach((field, index) => {
+            const property = (field.getAttribute("name") || field.id || `field-${index + 1}`).trim();
+            if (!groups.has(property)) groups.set(property, []);
+            groups.get(property).push(field);
+        });
+
+        this._fieldStates = Array.from(groups.entries()).map(([property, groupedFields], index) =>
+            this._createFieldState(property, groupedFields, index)
+        );
+        this._renderProgress();
+    }
+
+    _createFieldState(property, fields, index) {
+        const primary = fields[0];
+        const values = fields.map((field) => this._fieldValue(field));
+        const hasValue = values.some((value) => value !== "" && value !== false && value != null);
+        const touched = fields.some((field) => field.classList.contains("touched")) || hasValue;
+        const rawStates = fields.map((field) => (field.getAttribute("validation-state") || "none").toLowerCase());
+        const messages = fields.flatMap((field) =>
+            Array.isArray(field._validationMessages) ? field._validationMessages.filter(Boolean) : []
         );
 
-        for (let i = 0; i < fields.length; i += 1) {
-            const field = fields[i];
-            const messages = Array.isArray(field._validationMessages)
-                ? field._validationMessages
-                : [];
-            const status = field.getAttribute("validation-state") || "none";
-            this._setFieldValidationState(field, {
-                status,
-                messages,
-                message: messages[0] || ""
-            });
+        let status = "untouched";
+        if (touched && rawStates.includes("invalid")) status = "invalid";
+        else if (touched && (rawStates.includes("incomplete") || !hasValue)) status = "incomplete";
+        else if (hasValue && !rawStates.includes("invalid") && !rawStates.includes("incomplete")) status = "complete";
+
+        return {
+            index: index + 1,
+            property,
+            label: primary.getAttribute("label") || primary.getAttribute("name") || `Field ${index + 1}`,
+            fields,
+            primary,
+            status,
+            messages
+        };
+    }
+
+    _fieldValue(field) {
+        const type = String(field.getAttribute("type") || field.type || "").toLowerCase();
+        const checkableHost = /checkbox|radio/.test(field.tagName.toLowerCase());
+        if (type === "checkbox" || type === "radio" || ("checked" in field && checkableHost)) {
+            return field.checked ? field.value || true : false;
         }
-
-        this._syncFieldErrorList();
+        return field.value == null ? field.getAttribute("value") || "" : field.value;
     }
 
-    /**
-      * Normalizes state into a safe internal representation.
-     * @param {*} state - Input value for state.
-     * @returns {*} Derived value.
-     */
-    _normalizeState(state) {
-        const normalized = String(state || "").toLowerCase();
-        if (normalized === "invalid") return "invalid";
-        if (normalized === "incomplete") return "incomplete";
-        if (normalized === "valid") return "valid";
-        return "none";
-    }
+    _renderProgress() {
+        const total = this._fieldStates.length;
+        const completed = this._fieldStates.filter((field) => field.status === "complete").length;
+        const errors = this._fieldStates.filter((field) => field.status === "invalid").length;
+        const remaining = total - completed;
 
-    /**
-      * Returns the display label used for validation messages for a field.
-     * @param {*} field - Field element being processed.
-     * @param {*} property - Input value for property.
-     * @returns {*} Derived internal value or completion status.
-     */
-    _displayNameForField(field, property) {
-        const fallback = property || "Field";
-        if (!field || typeof field.getAttribute !== "function") return fallback;
-        return field.getAttribute("label") || field.getAttribute("name") || fallback;
-    }
+        this._refs.progress.textContent = `Completed ${completed} of ${total} fields`;
+        this._refs.health.textContent = errors
+            ? `${errors} ${errors === 1 ? "error" : "errors"}`
+            : remaining
+              ? `No errors · ${remaining} remaining`
+              : "No errors";
+        this._refs.health.classList.toggle("has-errors", errors > 0);
+        this._refs["popover-summary"].textContent = `${completed}/${total} complete`;
 
-    /**
-     * Updates internal component state and applies side effects.
-     * @param {*} field - Field element being processed.
-     * @param {*} detail - Event detail payload.
-     * @returns {*} Derived internal value or completion status.
-     */
-    _setFieldValidationState(field, detail = {}) {
-        const property = String(
-            detail.property ||
-            (field && typeof field.getAttribute === "function" ? field.getAttribute("name") : "") ||
-            ""
-        ).trim();
-
-        if (!property) return;
-
-        const status = this._normalizeState(detail.status);
-        const messages = Array.isArray(detail.messages)
-            ? detail.messages.filter(Boolean)
-            : [];
-        const message = detail.message || messages[0] || "";
-
-        if ((status === "invalid" || status === "incomplete") && message) {
-            this._fieldValidation.set(property, {
-                property,
-                label: this._displayNameForField(field, property),
-                message,
-                status,
-                color: detail.color || ""
-            });
-        } else {
-            this._fieldValidation.delete(property);
-        }
-    }
-
-    /**
-      * Handles validation change events and updates component state.
-     * @param {*} event - Event payload.
-     * @returns {*} void.
-     */
-    _onValidationChange(event) {
-        const field = event.target;
-        const detail = event.detail || {};
-        this._setFieldValidationState(field, detail);
-        this._syncFieldErrorList();
-    }
-
-    /**
-      * Synchronizes field error list between state, attributes, and UI.
-     * @returns {*} void.
-     */
-    _syncFieldErrorList() {
-        const list = this._refs["field-error-list"];
-        if (!list) return;
-
-        list.replaceChildren();
-        const entries = Array.from(this._fieldValidation.values()).sort((a, b) =>
-            a.label.localeCompare(b.label)
-        );
-
-        for (let i = 0; i < entries.length; i += 1) {
-            const entry = entries[i];
-            const item = document.createElement("li");
-            item.className = `field-error-item ${entry.status === "incomplete" ? "incomplete" : "invalid"}`;
-
-            const icon = document.createElement("input-status");
-            icon.className = "field-icon";
-            icon.setAttribute("size", "14");
-            icon.setAttribute("icon-only", "");
-            icon.setAttribute("colored", "");
-            icon.setAttribute("state", entry.status === "incomplete" ? "warning" : "error");
-            if (entry.color) {
-                icon.setAttribute("color", entry.color);
-            }
-
-            const text = document.createElement("div");
-            const name = document.createElement("span");
-            name.className = "field-name";
-            name.textContent = entry.label;
-
-            const message = document.createElement("span");
-            message.className = "field-message";
-            message.textContent = entry.message;
-
-            text.append(name, message);
-            item.append(icon, text);
-            list.appendChild(item);
-        }
-
-        const invalidCount = entries.filter((entry) => entry.status === "invalid").length;
-        const incompleteCount = entries.filter((entry) => entry.status === "incomplete").length;
-        const invalidPlural = invalidCount === 1 ? "field" : "fields";
-        const incompletePlural = incompleteCount === 1 ? "field" : "fields";
-
-        this._managedMessages.error = invalidCount > 0
-            ? `${invalidCount} ${invalidPlural} need attention.`
-            : "";
-        this._managedMessages.warning = invalidCount === 0 && incompleteCount > 0
-            ? `${incompleteCount} ${incompletePlural} are still incomplete.`
-            : "";
-        this._managedMessages.message = "";
-
+        this._renderFieldList();
+        this._renderFormMap();
         this._syncView();
     }
 
-    /**
-        * Executes a registered action callback by action id.
-     * @param {*} action - Input value for action.
-     * @returns {*} void.
-     */
+    _renderFieldList() {
+        const list = this._refs["field-list"];
+        list.replaceChildren();
+        this._fieldStates.forEach((field) => {
+            const item = document.createElement("li");
+            item.className = `field-item ${field.status}`;
+            item.tabIndex = 0;
+            item.dataset.fieldIndex = String(field.index);
+
+            const icon = document.createElement("input-status");
+            icon.className = "field-status-icon";
+            icon.setAttribute("size", "18");
+            icon.setAttribute("icon-only", "");
+            icon.setAttribute("colored", "");
+            icon.setAttribute("state", this._statusIconState(field.status));
+
+            const copy = document.createElement("div");
+            copy.className = "field-copy";
+            const name = document.createElement("strong");
+            name.className = "field-name";
+            name.textContent = field.label;
+            const message = document.createElement("span");
+            message.className = "field-message";
+            message.textContent = field.messages.join(" ") || this._defaultFieldMessage(field.status);
+            copy.append(name, message);
+
+            const state = document.createElement("span");
+            state.className = "field-state";
+            state.textContent = STATUS_LABELS[field.status];
+
+            item.append(icon, copy, state);
+            item.addEventListener("pointerenter", () => this._highlightField(field.index));
+            item.addEventListener("pointerleave", () => this._clearFieldHighlight());
+            item.addEventListener("focus", () => this._highlightField(field.index));
+            item.addEventListener("blur", () => this._clearFieldHighlight());
+            item.addEventListener("click", () => this._focusField(field));
+            item.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    this._focusField(field);
+                }
+            });
+            list.appendChild(item);
+        });
+    }
+
+    _renderFormMap() {
+        const map = this._refs["form-map"];
+        map.replaceChildren();
+        if (!this._validationTarget || !this._fieldStates.length) return;
+
+        const formRect = this._validationTarget.getBoundingClientRect();
+        if (!formRect.width || !formRect.height) return;
+
+        this._fieldStates.forEach((field) => {
+            const rects = field.fields
+                .map((element) => element.getBoundingClientRect())
+                .filter((rect) => rect.width > 0 && rect.height > 0);
+            if (!rects.length) return;
+
+            const left = Math.min(...rects.map((rect) => rect.left));
+            const top = Math.min(...rects.map((rect) => rect.top));
+            const right = Math.max(...rects.map((rect) => rect.right));
+            const bottom = Math.max(...rects.map((rect) => rect.bottom));
+            const block = document.createElement("button");
+            block.type = "button";
+            block.className = `map-field ${field.status}`;
+            block.dataset.fieldIndex = String(field.index);
+            block.title = `${field.label}: ${STATUS_LABELS[field.status]}`;
+            block.style.left = `${Math.max(0, (left - formRect.left) / formRect.width * 100)}%`;
+            block.style.top = `${Math.max(0, (top - formRect.top) / formRect.height * 100)}%`;
+            block.style.width = `${Math.min(100, (right - left) / formRect.width * 100)}%`;
+            block.style.height = `${Math.min(100, (bottom - top) / formRect.height * 100)}%`;
+            block.addEventListener("pointerenter", () => this._highlightField(field.index));
+            block.addEventListener("pointerleave", () => this._clearFieldHighlight());
+            block.addEventListener("focus", () => this._highlightField(field.index));
+            block.addEventListener("blur", () => this._clearFieldHighlight());
+            block.addEventListener("click", () => this._focusField(field));
+            map.appendChild(block);
+        });
+    }
+
+    _statusIconState(status) {
+        if (status === "complete") return "success";
+        if (status === "invalid") return "error";
+        return "warning";
+    }
+
+    _highlightField(index) {
+        const selector = `[data-field-index="${index}"]`;
+        this._refs["form-map"].classList.add("has-highlight");
+        this._shadow.querySelectorAll(".map-field, .field-item").forEach((element) => {
+            element.classList.toggle("is-highlighted", element.matches(selector));
+        });
+    }
+
+    _clearFieldHighlight() {
+        this._refs["form-map"].classList.remove("has-highlight");
+        this._shadow.querySelectorAll(".is-highlighted").forEach((element) => {
+            element.classList.remove("is-highlighted");
+        });
+    }
+
+    _defaultFieldMessage(status) {
+        if (status === "complete") return "This field is complete.";
+        if (status === "invalid") return "This field needs attention.";
+        if (status === "incomplete") return "Finish entering this field.";
+        return "This field has not been started.";
+    }
+
+    _focusField(field) {
+        this._setOpen(false);
+        const target = field.primary;
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        requestAnimationFrame(() => {
+            if (target._dom && typeof target._dom.native?.focus === "function") target._dom.native.focus();
+            else if (typeof target.focus === "function") target.focus();
+        });
+    }
+
+    _setOpen(open) {
+        this._open = Boolean(open);
+        this._refs.popover.hidden = !this._open;
+        this._refs.toggle.setAttribute("aria-expanded", String(this._open));
+        this._refs.toggle.setAttribute("aria-label", this._open ? "Close form checklist" : "Open form checklist");
+        if (this._open) {
+            this._refreshFieldStates();
+            requestAnimationFrame(() => {
+                this._renderFormMap();
+                const firstField = this._refs["field-list"].querySelector(".field-item");
+                (firstField || this._refs.popover).focus();
+            });
+        }
+    }
+
     _runAction(action) {
         if (!this._form) return;
-
         if (action === "undo" && typeof this._form.undo === "function") {
             this._form.undo();
         } else if (action === "revert") {
             if (typeof this._form.fill === "function" && "default" in this._form) {
                 this._form.fill(this._form.default);
             }
-            if (
-                this._form.history &&
-                typeof this._form.history.reset === "function"
-            ) {
-                this._form.history.reset();
-            }
+            if (typeof this._form.history?.reset === "function") this._form.history.reset();
         }
-
-        if (this._hooks[action]) {
-            this._hooks[action]();
-        }
+        if (this._hooks[action]) this._hooks[action]();
+        this._queueRefresh();
     }
 
-    /**
-      * Synchronizes view between state, attributes, and UI.
-     * @returns {*} void.
-     */
     _syncView() {
-        const error = this.getAttribute("error") || this._managedMessages.error;
-        const warning = this.getAttribute("warning") || this._managedMessages.warning;
-        const message = this.getAttribute("message") || this._managedMessages.message;
-
-        this._refs["error-message"].textContent = error || "";
-        this._refs["warning-message"].textContent = warning || "";
-        this._refs["form-message"].textContent = message || "";
-
-        const hasFieldErrors = this._fieldValidation.size > 0;
-        this._refs.wrapper.classList.toggle("has-error", !!error);
-        this._refs.wrapper.classList.toggle("has-warning", !!warning);
-        this._refs.wrapper.classList.toggle("has-info", !!message);
-        this._refs.wrapper.classList.toggle("has-message", !!(error || warning || message));
-        this._refs.wrapper.classList.toggle("has-field-errors", hasFieldErrors);
-
-        if (error) {
-            this._refs["status-icon"].setAttribute("state", "error");
-        } else if (warning) {
-            this._refs["status-icon"].setAttribute("state", "warning");
-        } else if (message) {
-            this._refs["status-icon"].setAttribute("state", "info");
-        } else {
-            this._refs["status-icon"].setAttribute("state", "idle");
-        }
+        const description = this.getAttribute("description") || "";
+        const error = this.getAttribute("error") || "";
+        const warning = this.getAttribute("warning") || "";
+        const slottedDescription = String(this.textContent || "").trim();
+        const message = this.getAttribute("message") || description || slottedDescription;
+        this._refs["error-message"].textContent = error;
+        this._refs["warning-message"].textContent = warning;
+        this._refs["form-message"].textContent = message;
+        this._refs.callouts.classList.toggle("has-content", Boolean(error || warning || message));
     }
 
-    /**
-        * Returns the current error message.
-     * @returns {*} Current error message.
-     */
     get error() {
         return this.getAttribute("error");
     }
 
-    /**
-     * Updates the `error` value.
-     * @param {*} value - Assigned value.
-     * @returns {*} void
-     */
     set error(value) {
         if (value == null || value === "") this.removeAttribute("error");
         else this.setAttribute("error", value);
     }
 
-    /**
-        * Returns the current warning message.
-     * @returns {*} Current warning message.
-     */
     get warning() {
         return this.getAttribute("warning");
     }
 
-    /**
-     * Updates the `warning` value.
-     * @param {*} value - Assigned value.
-     * @returns {*} void
-     */
     set warning(value) {
         if (value == null || value === "") this.removeAttribute("warning");
         else this.setAttribute("warning", value);
     }
 
-    /**
-        * Returns the current informational message.
-     * @returns {*} Current informational message.
-     */
     get message() {
         return this.getAttribute("message");
     }
 
-    /**
-     * Updates the `message` value.
-     * @param {*} value - Assigned value.
-     * @returns {*} void
-     */
     set message(value) {
         if (value == null || value === "") this.removeAttribute("message");
         else this.setAttribute("message", value);

@@ -117,6 +117,89 @@ const BUILT_IN_FORMATTERS = {
  */
 const PRESET_FORMATTERS = { ...BUILT_IN_FORMATTERS };
 
+const FORMATTER_METADATA = {
+    upper: {
+        description: "Converts the value to uppercase.",
+        example: "EXAMPLE TEXT",
+        format: "All letters uppercase."
+    },
+    lower: {
+        description: "Converts the value to lowercase.",
+        example: "example text",
+        format: "All letters lowercase."
+    },
+    ucword: {
+        description: "Capitalizes the first word.",
+        example: "Example text",
+        format: "First word begins with an uppercase letter."
+    },
+    ucwords: {
+        description: "Capitalizes each word.",
+        example: "Example Text",
+        format: "Each word begins with an uppercase letter."
+    },
+    dashed: {
+        description: "Converts the value to lowercase dashed text.",
+        example: "example-text",
+        format: "Lowercase words separated by hyphens."
+    },
+    computize: {
+        description: "Converts the value to a computer-safe identifier.",
+        example: "example_text",
+        format: "Lowercase words separated by underscores."
+    },
+    camel: {
+        description: "Converts the value to camel case.",
+        example: "exampleText",
+        format: "First word lowercase; following words begin uppercase with no spaces."
+    },
+    camelCase: {
+        description: "Converts the value to camel case.",
+        example: "exampleText",
+        format: "First word lowercase; following words begin uppercase with no spaces."
+    },
+    pascalCase: {
+        description: "Converts the value to Pascal case.",
+        example: "ExampleText",
+        format: "Every word begins uppercase with no spaces."
+    },
+    studly: {
+        description: "Converts the value to studly case.",
+        example: "ExampleText",
+        format: "Every word begins uppercase with no spaces."
+    },
+    unStudly: {
+        description: "Splits a studly-cased value into words.",
+        example: "example text",
+        format: "Words separated by spaces."
+    },
+    unPascal: {
+        description: "Splits a Pascal-cased value using the configured separator.",
+        example: "example_text",
+        format: "Words separated by the configured separator."
+    },
+    trim: {
+        description: "Removes whitespace from the beginning and end.",
+        example: "Example text",
+        format: "No leading or trailing whitespace."
+    },
+    digits: {
+        description: "Removes all non-numeric characters.",
+        example: "5551234567",
+        format: "Digits only; non-numeric characters are removed."
+    },
+    tpl: {
+        description: "Formats digits using the supplied template.",
+        example: "(555) 555-5555",
+        format: "Digits arranged according to the configured template."
+    },
+    template: {
+        description: "Formats digits using the supplied template.",
+        example: "(555) 555-5555",
+        format: "Digits arranged according to the configured template."
+    }
+};
+
 /**
  * Normalize formatter names for registry keys.
  * @param {*} name - Formatter name.
@@ -130,25 +213,28 @@ function normalizeFormatterName(name) {
  * Register a single formatter function by name.
  * @param {string} name - Formatter name.
  * @param {Function} formatter - Formatter implementation.
+ * @param {{description?: string, example?: string, format?: string}} [metadata] - Field feedback metadata.
  * @returns {boolean} True when formatter was registered.
  */
-export function registerFormatter(name, formatter) {
+export function registerFormatter(name, formatter, metadata = {}) {
     const formatterName = normalizeFormatterName(name);
     if (!formatterName || typeof formatter !== "function") return false;
     PRESET_FORMATTERS[formatterName] = formatter;
+    FORMATTER_METADATA[formatterName] = { ...(metadata || {}) };
     return true;
 }
 
 /**
  * Register multiple formatters from a map.
  * @param {Record<string, Function>} [formatters={}] - Formatter map.
+ * @param {Record<string, {description?: string, example?: string, format?: string}>} [metadata={}]
  * @returns {boolean} Always true after processing input map.
  */
-export function registerFormatters(formatters = {}) {
+export function registerFormatters(formatters = {}, metadata = {}) {
     const entries = Object.entries(formatters || {});
     for (let i = 0; i < entries.length; i += 1) {
         const [name, formatter] = entries[i];
-        registerFormatter(name, formatter);
+        registerFormatter(name, formatter, metadata[name]);
     }
     return true;
 }
@@ -161,9 +247,15 @@ export function getFormatters() {
     return { ...PRESET_FORMATTERS };
 }
 
+export function getFormatterMetadata(name) {
+    const formatterName = normalizeFormatterName(name);
+    return { ...(FORMATTER_METADATA[formatterName] || {}) };
+}
+
 export default {
     applyDigitTemplate,
     getFormatters,
+    getFormatterMetadata,
     registerFormatter,
     registerFormatters
 };

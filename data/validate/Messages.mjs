@@ -13,11 +13,13 @@ const ALIASES = {};
  * @type {Record<string, string>}
  */
 const MESSAGES = {
+    name: "%s must include at least two words",
     min: "%s must be minimum of %s chars long",
     max: "%s must be maximum of %s chars long",
     length: "%s must be between %s and %s chars long",
     int: "%s must be an integer",
     email: "%s must be a valid email",
+    url: "%s must be a valid URL with a domain",
     phone: "%s must be a valid phone number",
     address: "%s must be a valid street address",
     postal: "%s must be a valid postal code",

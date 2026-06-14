@@ -3076,11 +3076,13 @@ p {
 */
 a.button {
   display: inline-block;
-  padding: 0.65rem 1rem;
+  padding: 0 1rem;
   border-radius: 8px;
   font-family: "Proxima Nova", Georgia, sans-serif;
-  background: #bb1414;
+  background: var(--secondary-color);
   margin: 0 0.5rem;
+  min-height: 48px;
+  line-height:48px;
 }
 a.button\:dark {
   background: #1b2020;

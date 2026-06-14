@@ -1,4 +1,4 @@
-# Validation UI Controller
+# Validation Field Adapter
 
 UI/form integration layer for validation.
 
@@ -6,7 +6,7 @@ This folder contains modules that bind `data/validate/*` core logic to form comp
 
 ## Modules
 
-- `components/validation/FieldValidationController.mjs`
+- `components/validation/validation-controller.mjs`
 - `components/validation/ErrorTagRenderer.mjs`
 
 ## Examples
@@ -16,14 +16,15 @@ This folder contains modules that bind `data/validate/*` core logic to form comp
 
 ## What FieldValidationController Does
 
-`FieldValidationController` is used by `components/input-component.js` and is responsible for:
+`FieldValidationController` is used by `components/input-component.mjs` and is responsible for:
 
 - deriving rule strings from explicit attributes and native constraints
 - creating/updating the core validator (`Validator.make(...)`)
 - running validation and mapping errors to `ElementInternals.setValidity(...)`
-- applying host status classes and `validation-state`
-- emitting DOM validation events
-- resolving status colors from global config and host overrides
+
+Rule parsing, normalization, argument handling, and declaration merging are owned by
+`data/validate/Rules/Parser.mjs`. Field presentation remains owned by `InputComponent`,
+including status classes, colors, icons, feedback, and DOM validation events.
 
 ## Rule Sources on Inputs
 
@@ -106,7 +107,7 @@ State meanings:
 
 ## Host State and Styling Hooks
 
-Applied by controller:
+Applied by `InputComponent`:
 
 - classes: `has-validation`, `is-valid`, `is-incomplete`, `is-invalid`
 - attribute: `validation-state="valid|incomplete|invalid"` (removed for `none`)

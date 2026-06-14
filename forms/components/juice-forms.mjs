@@ -36,6 +36,7 @@
  */
 
 import { getJuiceConfig } from "../../config/juice-config.mjs";
+import RuleParser from "../../data/validate/Rules/Parser.mjs";
 import DEFAULT_FORMS_CONFIG from "../config.mjs";
 
 const INTERNAL_STYLE_ATTR = "data-juice-forms-style";
@@ -89,24 +90,23 @@ function normalizeSpan(span) {
 
 function parseValidationMax(field) {
     if (!field || typeof field.getAttribute !== "function") return null;
+    const inputType = String(field.getAttribute("type") || field.inputType || "")
+        .trim()
+        .toLowerCase();
+    if (["number", "range", "date", "time", "week", "month", "datetime-local"].includes(inputType)) {
+        return null;
+    }
+
     const validationText = (
         field.getAttribute("validation") || field.getAttribute("validate") || ""
     ).trim();
     if (!validationText) return null;
 
-    const tokens = validationText
-        .split("|")
-        .map((token) => String(token).trim())
-        .filter(Boolean);
-
-    for (let i = 0; i < tokens.length; i += 1) {
-        const token = tokens[i];
-        if (!token.toLowerCase().startsWith("max:")) continue;
-        const maxText = token.slice(4).trim();
-        const maxValue = parseInt(maxText, 10);
-        if (Number.isFinite(maxValue) && maxValue > 0) return maxValue;
-    }
-    return null;
+    const maxRule = RuleParser.parse(validationText).find(
+        (rule) => String(rule.type).toLowerCase() === "max"
+    );
+    const maxValue = maxRule ? parseInt(maxRule.args[0], 10) : NaN;
+    return Number.isFinite(maxValue) && maxValue > 0 ? maxValue : null;
 }
 
 function getFieldMaxChars(field) {
@@ -347,6 +347,10 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
     _bindFormEvents() {
         if (!this._form || this._form.__juiceFormsBound) return;
 
+        this._form.addEventListener("invalid", () => {
+            this._queueInvalidFieldFocus();
+        }, true);
+
         this._form.addEventListener("submit", (event) => {
             const submitEvent = new Event("submit", {
                 bubbles: true,
@@ -360,6 +364,35 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         });
 
         this._form.__juiceFormsBound = true;
+    }
+
+    _queueInvalidFieldFocus() {
+        if (this._invalidFocusFrame) return;
+        this._invalidFocusFrame = requestAnimationFrame(() => {
+            this._invalidFocusFrame = 0;
+            this._focusFirstInvalidField();
+        });
+    }
+
+    _focusFirstInvalidField() {
+        if (!this._form) return;
+        const fields = Array.from(this._form.querySelectorAll(
+            "input-text, input-textarea, input-select, input-checkbox, input-radio, input-number, input-range, input-file, input, textarea, select"
+        ));
+        const invalid = fields.find((field) => {
+            if (field.disabled || field.hasAttribute("disabled")) return false;
+            if (field.hasAttribute("invalid") || field.getAttribute("validation-state") === "invalid") return true;
+            return Boolean(field.validity && field.validity.valid === false);
+        });
+        if (!invalid) return;
+
+        invalid.classList.add("touched");
+        invalid.scrollIntoView({ behavior: "smooth", block: "center" });
+        requestAnimationFrame(() => {
+            const native = invalid._dom && invalid._dom.native;
+            if (native && typeof native.focus === "function") native.focus();
+            else if (typeof invalid.focus === "function") invalid.focus();
+        });
     }
 
     /**

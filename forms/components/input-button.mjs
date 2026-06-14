@@ -26,6 +26,7 @@
  *
  * CSS Variables:
  * - `--input-border-radius`: Button corner radius.
+ * - `--input-height`, `--input-padding`: Shared form control sizing.
  * - `--input-button-bgcolor`, `--input-button-color`: Button theme colors.
  *
  * Part Names:
@@ -63,6 +64,11 @@ class InputButtonComponent extends HTMLElement {
         this._shadow.innerHTML = `
             <style>
                 :host {
+                    --input-control-size: calc(
+                        var(--input-height, 30px) +
+                        var(--input-padding, 0px) +
+                        var(--input-padding, 0px)
+                    );
                     position:relative;
                     display: inline-block;
                     box-sizing: border-box;
@@ -81,7 +87,7 @@ class InputButtonComponent extends HTMLElement {
                 button {
                     width:100%;
                     cursor: pointer;
-                    height: var(--input-height, auto);
+                    height: var(--input-control-size);
                     box-sizing: border-box;
                     display: inline-flex;
                     align-items: center;
@@ -289,6 +295,17 @@ class InputButtonComponent extends HTMLElement {
             if (typeof fn === "function") {
                 fn.call(this, event);
             }
+        }
+
+        const form = this.getAttribute("form")
+            ? document.getElementById(this.getAttribute("form"))
+            : this.closest("form");
+        const type = this.getAttribute("type") || "button";
+
+        if (form instanceof HTMLFormElement && type === "submit") {
+            form.requestSubmit();
+        } else if (form instanceof HTMLFormElement && type === "reset") {
+            form.reset();
         }
     }
 

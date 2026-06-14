@@ -14,7 +14,7 @@
  * `class InputText extends InputComponent { _createNativeControl(){...} }`
  *
  * Attribute Reference:
- * - Provides shared attributes such as `label`, `name`, `value`, `disabled`, `validation`, `format`, and constraint attrs.
+ * - Provides shared attributes such as `label`, `description`, `example`, `name`, `value`, `disabled`, `validation`, `format`, and constraint attrs.
  * - Subclasses can extend `observedAttributes` with component-specific attributes.
  *
  * Property Reference:
@@ -49,6 +49,12 @@ import { render } from "./layout.mjs";
 import FieldValidationController from "./validation/validation-controller.mjs";
 import { getJuiceConfig } from "../../config/juice-config.mjs";
 import { applyFormatPipeline } from "../../data/format/FormatPipeline.mjs";
+import { getFormatterMetadata, getFormatters } from "../../data/format/Presets.mjs";
+import {
+    describeValidationRule,
+    getPresetMetadata as getValidationPresetMetadata
+} from "../../data/validate/Presets.mjs";
+import RuleParser from "../../data/validate/Rules/Parser.mjs";
 import { isPlainObject, looksLikeStyleMap, mergeStyleMaps, toKebabCase, makeCSSString } from "./component-util.mjs";
 /*
  * InputComponent (abstract base class)
@@ -119,6 +125,8 @@ function uniqueId(prefix) {
 
 const BASE_OBSERVED_ATTRS = [
     "label",
+    "description",
+    "example",
     "name",
     "value",
     "checked",
@@ -131,6 +139,13 @@ const BASE_OBSERVED_ATTRS = [
     "max",
     "pattern",
     "type",
+    "autocomplete",
+    "inputmode",
+    "autofocus",
+    "readonly",
+    "multiple",
+    "step",
+    "rows",
     "icon",
     "inline",
     "label-inline",
@@ -149,22 +164,46 @@ const BASE_OBSERVED_ATTRS = [
     "validation-color-none"
 ];
 
+const INCOMPLETE_ERROR_TYPES = new Set(["required", "min", "length"]);
+
+const STATUS_ICON_STATES = {
+    none: "idle",
+    valid: "success",
+    incomplete: "warning",
+    invalid: "error"
+};
+
+const DEFAULT_VALIDATION_COLORS = {
+    none: "transparent",
+    valid: "#73C322",
+    incomplete: "#FFAB1A",
+    invalid: "#D41111"
+};
+
 const BASE_STYLES = {
     ":host": {
         display: "block",
         fontFamily: "var(--form-font-family, system-ui,Segoe UI,Roboto,Arial,sans-serif)",
         boxSizing: "border-box",
         marginBottom: "1rem",
-        maxWidth: "100%"
+        width: "100%",
+        maxWidth: "100%",
+        minWidth: 0
+    },
+    "*, *::before, *::after": {
+        boxSizing: "border-box"
     },
     ":host([inline])": {
-        display: "inline-block"
+        display: "inline-block",
+        width: "auto"
     },
     ":host([stacked])": {
         display: "block"
     },
     ".input-root": {
         position: "relative",
+        width: "100%",
+        minWidth: 0,
         fontSize: "inherit"
     },
     ".input-root > label": {
@@ -185,15 +224,25 @@ const BASE_STYLES = {
     ".label-text": {
         display: "inline"
     },
+    ".label-requirement": {
+        marginLeft: "0.35rem",
+        color: "var(--form-guidance-color, #64748b)",
+        fontSize: "0.85em",
+        fontWeight: "normal",
+        textTransform: "none"
+    },
     ".input-wrapper": {
+        "--input-control-size":
+            "calc(var(--input-height, 30px) + var(--input-padding, 0px) + var(--input-padding, 0px))",
         border: "var(--input-border, 1px solid #c8c8c8)",
         borderRadius: "var(--input-border-radius, 5px)",
         background: "var(--input-bgcolor, #ffffff)",
         position: "relative",
         display: "flex",
         flexDirection: "row",
-        overflow: "hidden",
-        boxSizing: "border-box"
+        width: "100%",
+        minWidth: 0,
+        overflow: "hidden"
     },
     ".input-wrapper > label": {
         lineHeight: "var(--input-height, 30px)",
@@ -209,18 +258,19 @@ const BASE_STYLES = {
     ".native-wrapper": {
         display: "block",
         width: "100%",
+        minWidth: 0,
         flex: "1 1 auto",
-        marginLeft: "0.5rem"
+        padding: "var(--input-padding, 0)"
     },
     ".native-wrapper input": {
         position: "relative",
         width: "100%",
-        height: "var(--input-height, 30px)"
+        height: "var(--input-height, 30px)",
+        textIndent: "var(--input-text-indent, 0px)"
     },
     "input.native": {
         display: "block",
         width: "100%",
-        boxSizing: "border-box",
         fontFamily: "var(--form-input-font-family, inherit)",
         border: 0,
         outline: 0,
@@ -228,14 +278,12 @@ const BASE_STYLES = {
         margin: 0,
         fontSize: "inherit"
     },
-    "input.native[type=text], input.native[type=number]": {
-        margin: "var(--input-margin, 0)"
-    },
+
     ".input-wrapper .status-wrapper": {
         position: "relative",
         flex: "0 0 auto",
-        width: "var(--input-height)",
-        height: "var(--input-height)",
+        width: "var(--input-control-size)",
+        height: "var(--input-control-size)",
         top: "0",
         right: "0",
         marginLeft: 0,
@@ -246,7 +294,9 @@ const BASE_STYLES = {
     "input-status": {
         position: "absolute",
         top: 0,
-        right: 0
+        right: 0,
+        width: "50%",
+        height: "50%"
     },
     ".status-wrapper .cover": {
         width: "1px",
@@ -292,14 +342,70 @@ const BASE_STYLES = {
     },
     ".validation-wrapper": {
         position: "absolute",
-        fontSize: "0.7em",
-        lineHeight: "1.25",
-        minHeight: "1.1em",
-        marginTop: "0.25rem",
+        zIndex: 20,
+        width: "100%",
+        padding: "0.5rem 0.65rem",
+        border: "1px solid var(--input-border-color, #c8c8c8)",
+        borderRadius: "var(--input-border-radius, 5px)",
+        background: "var(--input-bgcolor, #ffffff)",
+        boxShadow: "0 8px 24px rgb(0 0 0 / 14%)",
+        fontSize: "0.75em",
+        lineHeight: "1.35"
+    },
+    ".validation-wrapper[hidden]": {
         display: "none"
     },
+    ".field-feedback-heading": {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "1rem",
+        margin: "-0.5rem -0.65rem 0.5rem",
+        padding: "0.45rem 0.65rem",
+        borderBottom: "1px solid var(--input-border-color, #c8c8c8)",
+        color: "var(--form-label-color, #48484A)",
+        fontSize: "var(--form-label-font-size, 0.7rem)",
+        fontWeight: "var(--form-label-weight, bold)",
+        textTransform: "var(--form-label-text-transform, uppercase)"
+    },
+    ".field-feedback-heading[hidden]": {
+        display: "none"
+    },
+    ".field-example": {
+        marginLeft: "auto",
+        fontWeight: "normal",
+        textAlign: "right",
+        textTransform: "none"
+    },
+    ".field-description": {
+        color: "var(--form-description-color, #48484A)"
+    },
+    ".field-description:empty, .field-example:empty, .field-format:empty": {
+        display: "none"
+    },
+    ".field-example, .field-format": {
+        color: "var(--form-guidance-color, #48484A)"
+    },
+    ".field-guidance": {
+        display: "grid",
+        gap: "0.2rem",
+        marginTop: "0.45rem",
+        paddingTop: "0.4rem",
+        borderTop: "1px solid var(--input-border-color, #c8c8c8)"
+    },
+    ".field-guidance[hidden]": {
+        display: "none"
+    },
+    ".field-feedback-label": {
+        fontWeight: "var(--form-label-weight, bold)"
+    },
     ".validation-message": {
+        display: "grid",
+        gap: "0.2rem",
         color: "var(--validation-message-color, var(--juice-validation-color-invalid, #b1302e))"
+    },
+    ".validation-message:not(:empty)": {
+        marginTop: "0.35rem"
     },
     ".validation-message:empty": {
         display: "none"
@@ -307,8 +413,6 @@ const BASE_STYLES = {
 };
 
 class InputComponent extends HTMLElement {
-    static measuredInputHeights = new Map();
-
     // TODO(refactor): Extract layout token parsing/rendering into a dedicated layout engine to reduce base-class surface area.
     /**
      * Form associated is a boolean that indicates whether the custom element has form associated logic.
@@ -367,6 +471,10 @@ class InputComponent extends HTMLElement {
         this._validationRule = "";
         this._validationProperty = "__value";
         this._validationMessages = [];
+        this._validationErrors = [];
+        this._lastValidationStatus = null;
+        this._fieldFeedbackFrame = 0;
+        this._onFieldFeedbackViewportChange = null;
         this._validationController = new FieldValidationController(this);
         this._initialState = {
             value: this.getAttribute("value"),
@@ -412,17 +520,43 @@ class InputComponent extends HTMLElement {
             template: null,
             default: null,
             status: render("input-status.status"),
-            validationMessage: render("div.validation-message")
+            feedbackHeading: render("div.field-feedback-heading"),
+            feedbackHeadingLabel: render("span.field-feedback-heading-label"),
+            description: render("div.field-description"),
+            guidance: render("div.field-guidance"),
+            example: render("span.field-example"),
+            format: render("div.field-format"),
+            validationMessage: render("div.validation-message"),
+            descriptionAssist: render("div.description-assist.visually-hidden"),
+            validationAssist: render("div.validation-assist.visually-hidden")
         };
 
-        this._dom.status.setAttribute("size", "14");
+        this._dom.status.setAttribute("fill", "");
         this._dom.status.setAttribute("icon-only", "");
         this._dom.status.setAttribute("state", "idle");
 
-        this._wireframe.validation.appendChild(this._dom.validationMessage);
+        this._wireframe.validation.id = uniqueId("field-feedback");
+        this._dom.descriptionAssist.id = uniqueId("field-description");
+        this._dom.validationAssist.id = uniqueId("field-error");
+        this._dom.validationAssist.setAttribute("aria-live", "polite");
+        this._wireframe.validation.hidden = true;
+        this._dom.feedbackHeading.append(this._dom.feedbackHeadingLabel, this._dom.example);
+        this._dom.guidance.hidden = true;
+        this._dom.guidance.append(this._dom.format);
+        this._wireframe.validation.append(
+            this._dom.feedbackHeading,
+            this._dom.description,
+            this._dom.validationMessage,
+            this._dom.guidance
+        );
 
         this._wireframe.status.appendChild(this._dom.status);
-        this._shadow.append(this._dom.style, this._wireframe.root);
+        this._shadow.append(
+            this._dom.style,
+            this._wireframe.root,
+            this._dom.descriptionAssist,
+            this._dom.validationAssist
+        );
         // this._renderWireframe();
         // Compile once at construction so the shadow <style> is never empty.
         this._compileStyles();
@@ -530,7 +664,26 @@ class InputComponent extends HTMLElement {
         if (this.hasAttribute("format")) {
             return this.getAttribute("format") || "";
         }
-        return this._getConfiguredFormFormat();
+        return this._getConfiguredFormFormat() || this._getValidationPresetFormat();
+    }
+
+    _getValidationPresetFormat() {
+        const formatters = getFormatters();
+        const rules = RuleParser.parse(this._getValidationRules()).map((rule) => rule.type);
+
+        for (let i = 0; i < rules.length; i += 1) {
+            const formatter = String(getValidationPresetMetadata(rules[i]).formatter || "").trim();
+            if (!formatter) continue;
+            const formatterNames = formatter
+                .split(":")
+                .map((token) => token.match(/^([a-zA-Z0-9_-]+)/)?.[1] || "")
+                .filter(Boolean);
+            if (formatterNames.length && formatterNames.every((name) => typeof formatters[name] === "function")) {
+                return formatter;
+            }
+        }
+
+        return "";
     }
 
     /**
@@ -600,8 +753,8 @@ class InputComponent extends HTMLElement {
             native.style.removeProperty("width");
             return;
         }
-        native.style.width = `calc(${maxChars}ch + 1.5em)`;
-        native.style.maxWidth = `calc(${maxChars}ch + 1.5em)`;
+        native.style.width = `min(100%, calc(${maxChars}ch + 1.5em))`;
+        native.style.maxWidth = "100%";
     }
 
     _isCheckableControl(native = this._dom.native) {
@@ -702,69 +855,26 @@ class InputComponent extends HTMLElement {
         this._updateFormValue();
         this._setupValidation();
         this._queueValidation();
+        this._syncFieldFeedback();
+        if (!this._onFieldFeedbackViewportChange) {
+            this._onFieldFeedbackViewportChange = () => this._queueFieldFeedbackPosition();
+        }
+        window.addEventListener("resize", this._onFieldFeedbackViewportChange);
+        window.addEventListener("scroll", this._onFieldFeedbackViewportChange, true);
         this._afterConnected();
-
-        this._syncInputHeight();
-    }
-
-    _syncInputHeight() {
-        const cacheKey = this.tagName.toLowerCase();
-        const cachedHeight = InputComponent.measuredInputHeights.get(cacheKey);
-        if (cachedHeight) {
-            this._wireframe.root.style.setProperty("--input-height", cachedHeight);
-            return;
-        }
-
-        const height = this._measureNativeInputHeight();
-        if (height) {
-            InputComponent.measuredInputHeights.set(cacheKey, height);
-            this._wireframe.root.style.setProperty("--input-height", height);
-            return;
-        }
-
-        if (this._dom.native?.type === "hidden") {
-            const fallbackHeight = "30px";
-            InputComponent.measuredInputHeights.set(cacheKey, fallbackHeight);
-            this._wireframe.root.style.setProperty("--input-height", fallbackHeight);
-            return;
-        }
-
-        const inputWrapper = this._shadow.querySelector(".input-wrapper");
-        this._whenVisible(inputWrapper, () => {
-            const visibleHeight = this._measureNativeInputHeight();
-            const resolvedHeight = visibleHeight || "30px";
-            InputComponent.measuredInputHeights.set(cacheKey, resolvedHeight);
-            this._wireframe.root.style.setProperty("--input-height", resolvedHeight);
-        });
-    }
-
-    _measureNativeInputHeight() {
-        const native = this._dom.native;
-        if (!native || native.type === "hidden") return null;
-
-        const rect = native.getBoundingClientRect();
-        if (rect.height > 0) return `${rect.height}px`;
-
-        return null;
-    }
-
-    _whenVisible(element, callback) {
-        if (!this._visibilityCallbacks) this._visibilityCallbacks = [];
-        this._visibilityCallbacks.push(callback);
-        if (!this._visibilityObserver) {
-            this._visibilityObserver = new IntersectionObserver((entries) => {
-                if (entries[0].isIntersecting) {
-                    this._visibilityCallbacks.forEach((cb) => cb());
-                    this._visibilityObserver.disconnect();
-                }
-            });
-            this._visibilityObserver.observe(element);
-        }
     }
 
     disconnectedCallback() {
         if (this._onJuiceConfigChange) {
             document.removeEventListener("juice:configchange", this._onJuiceConfigChange);
+        }
+        if (this._onFieldFeedbackViewportChange) {
+            window.removeEventListener("resize", this._onFieldFeedbackViewportChange);
+            window.removeEventListener("scroll", this._onFieldFeedbackViewportChange, true);
+        }
+        if (this._fieldFeedbackFrame) {
+            cancelAnimationFrame(this._fieldFeedbackFrame);
+            this._fieldFeedbackFrame = 0;
         }
     }
 
@@ -782,6 +892,12 @@ class InputComponent extends HTMLElement {
         if (oldValue === newValue || this._isSyncing) return;
         const affectsValidation = this._validationController.affectsAttribute(name);
         const affectsFormatting = name === "value" || name === "format" || name === "validation" || name === "validate";
+        const affectsFeedback =
+            name === "label" ||
+            name === "description" ||
+            name === "example" ||
+            name === "format";
+        const affectsValidationPresentation = name.startsWith("validation-color");
 
         if (name === "template" || name === "view") {
             this._renderTemplateOrDefault();
@@ -794,6 +910,9 @@ class InputComponent extends HTMLElement {
             this._setupValidation();
             this._renderWireframe();
         }
+        if (affectsFeedback) {
+            this._renderWireframe();
+        }
 
         this._syncSingleAttribute(name);
         if (affectsFormatting) {
@@ -802,7 +921,15 @@ class InputComponent extends HTMLElement {
         this._syncConfiguredCharacterWidth();
         this._syncVisualState();
         this._updateFormValue();
-
+        if (affectsValidation) {
+            this._renderLabel();
+        }
+        if (affectsFeedback) {
+            this._syncFieldFeedback();
+        }
+        if (affectsValidationPresentation) {
+            this._refreshValidationPresentation();
+        }
         if (name === "value" || name === "checked" || affectsValidation || affectsFormatting) {
             this._queueValidation();
         }
@@ -933,12 +1060,14 @@ class InputComponent extends HTMLElement {
             if (this._isSyncing) return;
             this.classList.add("focused");
             this.classList.add("touched");
+            this._syncFieldFeedback();
             this._queueValidation();
         });
 
         this._dom.native.addEventListener("blur", () => {
             if (this._isSyncing) return;
             this.classList.remove("focused");
+            this._syncFieldFeedback();
             this._queueValidation();
         });
 
@@ -1006,6 +1135,10 @@ class InputComponent extends HTMLElement {
             case "label":
                 this._renderLabel();
                 break;
+            case "description":
+            case "example":
+                this._syncFieldFeedback();
+                break;
             case "name":
                 native.name = this.getAttribute("name") || "";
                 break;
@@ -1029,6 +1162,44 @@ class InputComponent extends HTMLElement {
                     native.placeholder = this.getAttribute("placeholder") || "";
                 }
                 break;
+            case "type":
+                if ("type" in native && this.hasAttribute("type")) {
+                    native.type = this.getAttribute("type");
+                }
+                break;
+            case "autocomplete":
+                if ("autocomplete" in native) {
+                    native.autocomplete = this.getAttribute("autocomplete") || "";
+                }
+                break;
+            case "inputmode":
+                if ("inputMode" in native) {
+                    native.inputMode = this.getAttribute("inputmode") || "";
+                }
+                break;
+            case "autofocus":
+                native.autofocus = this.hasAttribute("autofocus");
+                break;
+            case "readonly":
+                if ("readOnly" in native) {
+                    native.readOnly = this.hasAttribute("readonly");
+                }
+                break;
+            case "multiple":
+                if ("multiple" in native) {
+                    native.multiple = this.hasAttribute("multiple");
+                }
+                break;
+            case "step":
+                if ("step" in native) {
+                    native.step = this.getAttribute("step") || "";
+                }
+                break;
+            case "rows":
+                if ("rows" in native && this.hasAttribute("rows")) {
+                    native.rows = Number(this.getAttribute("rows"));
+                }
+                break;
             default:
                 break;
         }
@@ -1036,11 +1207,17 @@ class InputComponent extends HTMLElement {
 
     _getEffectiveLayout() {
         const base = this._initialLayout || this._layout || "label:input";
+        const presetMetadata = this._getFieldFeedbackPresetMetadata();
+        const hasFieldFeedback =
+            this.hasValidation ||
+            Boolean((this.getAttribute("description") || "").trim()) ||
+            Boolean((this.getAttribute("example") || "").trim()) ||
+            Boolean(presetMetadata.description || presetMetadata.example);
         const tokens = base
             .split(":")
             .map((token) => String(token).trim())
             .filter(Boolean)
-            .filter((token) => token !== "validation" || this.hasValidation);
+            .filter((token) => token !== "validation" || hasFieldFeedback);
 
         const hasExplicitValidationToken = base
             .split(":")
@@ -1061,7 +1238,9 @@ class InputComponent extends HTMLElement {
                 }
             }
 
-            if (!hasExplicitValidationToken) {
+        }
+
+        if (hasFieldFeedback && !hasExplicitValidationToken) {
                 const statusIndex = tokens.indexOf("status");
                 const inputIndex = tokens.indexOf("input");
                 const validationAnchor = statusIndex >= 0 ? statusIndex : inputIndex;
@@ -1074,7 +1253,6 @@ class InputComponent extends HTMLElement {
                 } else {
                     tokens.push("validation");
                 }
-            }
         }
         //console.log("label placement", this._labelPlacement);
         if (this._labelPlacement !== "default") {
@@ -1236,13 +1414,27 @@ class InputComponent extends HTMLElement {
             this._dom.labelText.textContent = labelText;
             // Always append so the text follows any nested controls (radio/checkbox layouts).
             this._dom.label.appendChild(this._dom.labelText);
+            if (!this._dom.labelRequirement) {
+                this._dom.labelRequirement = document.createElement("span");
+                this._dom.labelRequirement.className = "label-requirement";
+            }
+            this._dom.labelRequirement.textContent = this._isRequiredField() ? "Required" : "Optional";
+            this._dom.label.appendChild(this._dom.labelRequirement);
             this._dom.native.setAttribute("aria-label", labelText);
         } else {
             if (this._dom.labelText && this._dom.labelText.parentNode) {
                 this._dom.labelText.parentNode.removeChild(this._dom.labelText);
             }
+            if (this._dom.labelRequirement && this._dom.labelRequirement.parentNode) {
+                this._dom.labelRequirement.parentNode.removeChild(this._dom.labelRequirement);
+            }
             this._dom.native.removeAttribute("aria-label");
         }
+    }
+
+    _isRequiredField() {
+        return this.hasAttribute("required") ||
+            this._parseValidationRuleTokens().some((rule) => rule.type === "required");
     }
 
     /**
@@ -1289,22 +1481,6 @@ class InputComponent extends HTMLElement {
         return mergeStyleMaps(sharedStyles, typeStyles);
     }
 
-    _normalizeRuleToken(token) {
-        return this._validationController.normalizeRuleToken(token);
-    }
-
-    _ruleTypeFromToken(token) {
-        return this._validationController.ruleTypeFromToken(token);
-    }
-
-    _mergeRuleStrings(primaryRules = "", secondaryRules = "") {
-        return this._validationController.mergeRuleStrings(primaryRules, secondaryRules);
-    }
-
-    _patternToCharsRule(pattern) {
-        return this._validationController.patternToCharsRule(pattern);
-    }
-
     _getNativeValidationRules() {
         return this._validationController.getNativeValidationRules();
     }
@@ -1327,6 +1503,395 @@ class InputComponent extends HTMLElement {
 
     _setValidationState(valid, messages = [], errors = []) {
         this._validationController.setValidationState(valid, messages, errors);
+    }
+
+    _applyValidationResult({
+        valid,
+        messages = [],
+        errors = [],
+        property = this.getAttribute("name") || "__value",
+        value = this.value,
+        rules = this._getValidationRules()
+    }) {
+        this._validationMessages = messages;
+        this._validationErrors = errors;
+        this._syncFieldFeedback();
+
+        const status = this._getValidationStatus(valid, errors);
+        const colors = this._getValidationColors();
+        const color = colors[status] || colors.none || "transparent";
+
+        this._applyValidationStatusClasses(status);
+        this._applyValidationColor(color);
+        this._applyValidationStatusIcon(status, color);
+        this._emitValidationEvents({
+            status,
+            valid,
+            messages,
+            errors,
+            property,
+            value,
+            rules,
+            color,
+            colors
+        });
+    }
+
+    _refreshValidationPresentation() {
+        const valid = this._validationErrors.length === 0;
+        const status = this._getValidationStatus(valid, this._validationErrors);
+        const colors = this._getValidationColors();
+        const color = colors[status] || colors.none || "transparent";
+        this._applyValidationColor(color);
+        this._applyValidationStatusIcon(status, color);
+    }
+
+    _getValidationStatus(valid, errors = []) {
+        if (!this.hasValidation) return "none";
+        if (valid) return "valid";
+
+        const activeTypes = errors.map((error) => error.type);
+        if (
+            activeTypes.length > 0 &&
+            activeTypes.every((type) => INCOMPLETE_ERROR_TYPES.has(type)) &&
+            this._isValidationFieldFocused()
+        ) {
+            return "incomplete";
+        }
+        return "invalid";
+    }
+
+    _isValidationFieldFocused() {
+        if (this.matches(":focus") || this.matches(":focus-within")) return true;
+        const native = this._dom.native;
+        if (!native) return false;
+        const root = native.getRootNode ? native.getRootNode() : null;
+        return Boolean(root && "activeElement" in root && root.activeElement === native);
+    }
+
+    _applyValidationStatusClasses(status) {
+        this.classList.toggle("has-validation", status !== "none");
+        this.classList.toggle("is-valid", status === "valid");
+        this.classList.toggle("is-invalid", status === "invalid");
+        this.classList.toggle("is-incomplete", status === "incomplete");
+
+        if (status === "none") {
+            this.removeAttribute("validation-state");
+        } else {
+            this.setAttribute("validation-state", status);
+        }
+    }
+
+    _getValidationColors() {
+        const validationConfig = getJuiceConfig("validation");
+        const configured = validationConfig && validationConfig.colors
+            ? validationConfig.colors
+            : {};
+        const colors = { ...DEFAULT_VALIDATION_COLORS, ...(configured || {}) };
+        const genericColor = this.getAttribute("validation-color");
+
+        if (genericColor) {
+            colors.valid = genericColor;
+            colors.incomplete = genericColor;
+            colors.invalid = genericColor;
+        }
+
+        const overrides = {
+            valid: this.getAttribute("validation-color-valid"),
+            incomplete: this.getAttribute("validation-color-incomplete"),
+            invalid: this.getAttribute("validation-color-invalid"),
+            none: this.getAttribute("validation-color-none")
+        };
+        Object.entries(overrides).forEach(([status, color]) => {
+            if (color) colors[status] = color;
+        });
+
+        return colors;
+    }
+
+    _applyValidationColor(color) {
+        if (this._wireframe.root && this._wireframe.root.style) {
+            this._wireframe.root.style.setProperty("--validation-color", color);
+        }
+    }
+
+    _applyValidationStatusIcon(status, color) {
+        const icon = this._dom.status;
+        const wrapper = this._wireframe.status;
+        if (!icon) return;
+
+        icon.setAttribute("state", STATUS_ICON_STATES[status] || "idle");
+        icon.removeAttribute("color");
+
+        const show = status !== "none";
+        icon.toggleAttribute("hidden", !show);
+        if (wrapper) wrapper.hidden = !show;
+
+        if (status === "invalid" || status === "incomplete") {
+            this._dom.validationMessage.style.color = color;
+        } else {
+            this._dom.validationMessage.style.removeProperty("color");
+        }
+    }
+
+    _serializeValidationErrors(errors = []) {
+        return errors.map((error) => ({
+            type: error.type,
+            message: error.message,
+            property: error.property,
+            args: error.args
+        }));
+    }
+
+    _emitValidationEvents({
+        status,
+        valid,
+        messages,
+        errors,
+        property,
+        value,
+        rules,
+        color,
+        colors
+    }) {
+        if (typeof CustomEvent !== "function") return;
+
+        const detail = {
+            status,
+            valid,
+            invalid: status === "invalid",
+            incomplete: status === "incomplete",
+            complete: status !== "incomplete",
+            color,
+            colors,
+            property,
+            value,
+            rules,
+            messages: [...messages],
+            message: messages[0] || "",
+            errors: this._serializeValidationErrors(errors)
+        };
+        const emit = (name) => {
+            this.dispatchEvent(new CustomEvent(name, {
+                detail,
+                bubbles: true,
+                composed: true
+            }));
+        };
+
+        emit("validation:change");
+        if (this._lastValidationStatus !== status) emit("validation:statechange");
+        if (status === "valid") emit("validation:valid");
+        if (status === "invalid") emit("validation:invalid");
+        if (status === "incomplete") emit("validation:incomplete");
+        this._lastValidationStatus = status;
+    }
+
+    _syncFieldFeedback() {
+        const wrapper = this._wireframe.validation;
+        const native = this._dom.native;
+        if (!wrapper || !native) return;
+
+        const presetMetadata = this._getFieldFeedbackPresetMetadata();
+        const fieldLabel = (this.getAttribute("label") || "").trim();
+        this._dom.feedbackHeadingLabel.textContent = fieldLabel;
+        const description = (this.getAttribute("description") || presetMetadata.description || "").trim();
+        this._dom.description.textContent = description;
+        const example = (this.getAttribute("example") || presetMetadata.example || "").trim();
+        this._dom.example.textContent = example ? `(ex. ${example})` : "";
+        this._dom.feedbackHeading.hidden = !(fieldLabel || example);
+
+        const messages = Array.isArray(this._validationMessages)
+            ? this._validationMessages.filter((message) => String(message || "").trim())
+            : [];
+        const format = messages.length
+            ? this._getFormatGuidance(this._validationErrors, presetMetadata)
+            : "";
+        this._setFieldFeedbackLine(this._dom.format, "Format", format);
+        this._dom.guidance.hidden = !format;
+        this._dom.validationMessage.replaceChildren(
+            ...messages.map((message) => {
+                const item = document.createElement("div");
+                item.textContent = String(message);
+                return item;
+            })
+        );
+        this._dom.validationAssist.textContent = messages.join(" ");
+        this._dom.descriptionAssist.textContent = [
+            description,
+            example ? `Example: ${example}.` : "",
+            format ? `Format: ${format}` : ""
+        ].filter(Boolean).join(" ");
+
+        const hasContent = Boolean(fieldLabel || description || example || format || messages.length);
+        const shouldShow = hasContent && this.classList.contains("focused");
+        wrapper.hidden = !shouldShow;
+
+        if (this._dom.descriptionAssist.textContent) {
+            native.setAttribute("aria-describedby", this._dom.descriptionAssist.id);
+        } else {
+            native.removeAttribute("aria-describedby");
+        }
+        if (messages.length) {
+            native.setAttribute("aria-errormessage", this._dom.validationAssist.id);
+        } else {
+            native.removeAttribute("aria-errormessage");
+        }
+
+        if (shouldShow) {
+            this._queueFieldFeedbackPosition();
+        }
+    }
+
+    _setFieldFeedbackLine(element, label, value) {
+        if (!element) return;
+        const text = String(value || "").trim();
+        if (!text) {
+            element.replaceChildren();
+            return;
+        }
+
+        const labelElement = document.createElement("span");
+        labelElement.className = "field-feedback-label";
+        labelElement.textContent = `${label}: `;
+        element.replaceChildren(labelElement, document.createTextNode(text));
+    }
+
+    _getFormatGuidance(_errors = [], presetMetadata = {}) {
+        const formatSpec = this._getActiveFormatSpec();
+        const guidance = [];
+        const seen = new Set();
+        const add = (text) => {
+            const normalized = String(text || "").trim();
+            if (!normalized || seen.has(normalized)) return;
+            seen.add(normalized);
+            guidance.push(normalized);
+        };
+
+        this._parseValidationRuleTokens().forEach((rule) => {
+            if (["required", "empty", "notempty", "null"].includes(rule.type)) return;
+            add(describeValidationRule(rule.type, rule.args));
+        });
+
+        if (typeof formatSpec === "string" && formatSpec.trim()) {
+            const templateMatch = formatSpec.trim().match(/^tpl\((['"]?)(.*?)\1\)$/);
+            if (templateMatch) {
+                add(`Digits arranged as ${templateMatch[2]}.`);
+            } else if (/^[d0-9\s+\-()./]+$/i.test(formatSpec.trim()) && formatSpec.includes("d")) {
+                add(`Digits arranged as ${formatSpec.trim()}.`);
+            } else {
+                formatSpec
+                    .split(":")
+                    .map((token) => token.trim().match(/^([a-zA-Z0-9_-]+)/)?.[1] || "")
+                    .filter(Boolean)
+                    .forEach((formatter) => add(getFormatterMetadata(formatter).format));
+            }
+        }
+
+        if (!guidance.length) add(presetMetadata.format);
+
+        return guidance.join(" ");
+    }
+
+    _parseValidationRuleTokens() {
+        return RuleParser.parse(this._getValidationRules()).map((rule) => ({
+            type: rule.type.toLowerCase(),
+            args: [...rule.args]
+        }));
+    }
+
+    _getFieldFeedbackPresetMetadata() {
+        const metadata = {};
+        const mergeMissing = (source) => {
+            if (!source) return;
+            ["description", "example", "format", "formatter"].forEach((key) => {
+                if (!metadata[key] && source[key]) metadata[key] = source[key];
+            });
+        };
+
+        const structuralRules = new Set(["required", "min", "max", "length", "empty", "notempty"]);
+        const validationRules = this._parseValidationRuleTokens()
+            .map((rule) => rule.type)
+            .sort((left, right) => Number(structuralRules.has(left.toLowerCase())) - Number(structuralRules.has(right.toLowerCase())));
+        validationRules.forEach((rule) => mergeMissing(getValidationPresetMetadata(rule)));
+
+        const formatSpec = this._getActiveFormatSpec();
+        if (typeof formatSpec === "string") {
+            formatSpec
+                .split(":")
+                .map((token) => token.trim().match(/^([a-zA-Z0-9_-]+)/)?.[1] || "")
+                .filter(Boolean)
+                .forEach((formatter) => mergeMissing(getFormatterMetadata(formatter)));
+        }
+
+        return metadata;
+    }
+
+    _queueFieldFeedbackPosition() {
+        if (!this.isConnected || this._wireframe.validation.hidden) return;
+        if (this._fieldFeedbackFrame) cancelAnimationFrame(this._fieldFeedbackFrame);
+        this._fieldFeedbackFrame = requestAnimationFrame(() => {
+            this._fieldFeedbackFrame = 0;
+            this._positionFieldFeedback();
+        });
+    }
+
+    _positionFieldFeedback() {
+        const wrapper = this._wireframe.validation;
+        const input = this._wireframe.input;
+        const root = this._wireframe.root;
+        if (!wrapper || !input || !root || wrapper.hidden) return;
+
+        const gap = 4;
+        const inputRect = input.getBoundingClientRect();
+        const rootRect = root.getBoundingClientRect();
+        const feedbackHeight = wrapper.getBoundingClientRect().height;
+        const spaceBelow = window.innerHeight - inputRect.bottom;
+        const spaceAbove = inputRect.top;
+        const fitsAbove = feedbackHeight + gap <= spaceAbove;
+        const avoidSuggestionPopup = this._mayShowBrowserSuggestions();
+        const preferredPlacement = this._getFieldFeedbackPlacementPreference();
+        const preferredAbove = preferredPlacement === "above";
+        const preferredBelow = preferredPlacement === "below";
+        const placeAbove = preferredAbove
+            ? true
+            : preferredBelow
+              ? false
+              : (avoidSuggestionPopup && fitsAbove) ||
+                (feedbackHeight + gap > spaceBelow && spaceAbove > spaceBelow);
+
+        const viewportGap = 8;
+        const desiredWidth = inputRect.width;
+        const maxWidth = Math.max(0, window.innerWidth - viewportGap * 2);
+        const width = Math.min(desiredWidth, maxWidth);
+        const viewportLeft = Math.min(
+            Math.max(inputRect.left, viewportGap),
+            Math.max(viewportGap, window.innerWidth - viewportGap - width)
+        );
+
+        wrapper.style.left = `${viewportLeft - rootRect.left}px`;
+        wrapper.style.width = `${width}px`;
+        wrapper.style.top = placeAbove
+            ? `${inputRect.top - rootRect.top - feedbackHeight - gap}px`
+            : `${inputRect.bottom - rootRect.top + gap}px`;
+        wrapper.dataset.placement = placeAbove ? "above" : "below";
+    }
+
+    _getFieldFeedbackPlacementPreference() {
+        return null;
+    }
+
+    _mayShowBrowserSuggestions() {
+        const autocomplete = String(this.getAttribute("autocomplete") || "")
+            .trim()
+            .toLowerCase();
+        if (autocomplete === "off") return false;
+        if (autocomplete) return true;
+
+        const type = String(this._dom.native && this._dom.native.type ? this._dom.native.type : "")
+            .trim()
+            .toLowerCase();
+        return ["email", "password", "search", "tel", "url"].includes(type);
     }
 
     async _runValidation() {

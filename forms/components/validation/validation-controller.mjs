@@ -2,33 +2,10 @@ import Validator from "../../../data/validate/Validator.mjs";
 import Presets from "../../../data/validate/Presets.mjs";
 import { getJuiceConfig } from "../../../config/juice-config.mjs";
 
-/**
- * Known intrinsic rule types used by parser normalization.
- * @type {Set<string>}
- */
 const KNOWN_RULE_TYPES = new Set([
-    "required",
-    "min",
-    "max",
-    "length",
-    "email",
-    "phone",
-    "address",
-    "postal",
-    "int",
-    "integer",
-    "string",
-    "number",
-    "array",
-    "boolean",
-    "object",
-    "timestamp",
-    "equals",
-    "in",
-    "chars",
-    "empty",
-    "notEmpty",
-    "null"
+    "required", "min", "max", "length", "email", "phone", "address", "postal",
+    "int", "integer", "string", "number", "array", "boolean", "object",
+    "timestamp", "equals", "in", "chars", "empty", "notEmpty", "null"
 ]);
 
 /**
@@ -53,31 +30,13 @@ const VALIDATION_AFFECTING_ATTRIBUTES = new Set([
     "validation-color-none"
 ]);
 
-/**
- * Error types that represent "incomplete" while focused.
- * @type {Set<string>}
- */
-const INCOMPLETE_ERROR_TYPES = new Set([
-    "required",
-    "min",
-    "length"
-]);
-
-/**
- * Status-to-icon state mapping.
- * @type {{none: string, valid: string, incomplete: string, invalid: string}}
- */
+const INCOMPLETE_ERROR_TYPES = new Set(["required", "min", "length"]);
 const STATUS_ICON_STATES = {
     none: "idle",
     valid: "success",
     incomplete: "warning",
     invalid: "error"
 };
-
-/**
- * Default validation status colors.
- * @type {{none: string, valid: string, incomplete: string, invalid: string}}
- */
 const DEFAULT_STATUS_COLORS = {
     none: "transparent",
     valid: "#73C322",
@@ -86,7 +45,7 @@ const DEFAULT_STATUS_COLORS = {
 };
 
 /**
- * Input-bound orchestration layer for validation, status UI, and event emission.
+ * Input-bound adapter between native form controls and the data validator.
  */
 class FieldValidationController {
     /**
@@ -213,11 +172,6 @@ class FieldValidationController {
         }
     }
 
-    /**
-     * Normalize a raw rule token to canonical form.
-     * @param {*} token
-     * @returns {string}
-     */
     normalizeRuleToken(token) {
         const raw = String(token || "").trim();
         if (!raw) return "";
@@ -229,11 +183,6 @@ class FieldValidationController {
         return raw;
     }
 
-    /**
-     * Extract a rule type name from a token.
-     * @param {*} token
-     * @returns {string}
-     */
     ruleTypeFromToken(token) {
         const normalized = this.normalizeRuleToken(token);
         if (!normalized) return "";
@@ -241,12 +190,6 @@ class FieldValidationController {
         return normalized.trim();
     }
 
-    /**
-     * Merge two rule strings without duplicating rule types.
-     * @param {string} [primaryRules=""]
-     * @param {string} [secondaryRules=""]
-     * @returns {string}
-     */
     mergeRuleStrings(primaryRules = "", secondaryRules = "") {
         const mergedTokens = [];
         const seenTypes = new Set();
@@ -321,6 +264,9 @@ class FieldValidationController {
         ).toLowerCase();
         if (nativeType === "email") {
             tokens.push("email");
+        }
+        if (nativeType === "url") {
+            tokens.push("url");
         }
         if (nativeType === "tel") {
             tokens.push("phone");
@@ -445,6 +391,7 @@ class FieldValidationController {
                     else state.tooShort = true;
                     break;
                 case "email":
+                case "url":
                     state.typeMismatch = true;
                     break;
                 case "postal":
@@ -481,10 +428,8 @@ class FieldValidationController {
     setValidationState(valid, messages = [], errors = []) {
         const native = this.host._dom ? this.host._dom.native : null;
         this.host._validationMessages = messages;
+        this.host._validationErrors = errors;
         const firstMessage = messages[0] || "";
-        if (this.host._dom && this.host._dom.validationMessage) {
-            this.host._dom.validationMessage.textContent = firstMessage;
-        }
 
         if (valid) {
             this.host.removeAttribute("invalid");
@@ -507,6 +452,12 @@ class FieldValidationController {
             }
         }
 
+        if (typeof this.host._syncFieldFeedback === "function") {
+            this.host._syncFieldFeedback();
+        } else if (this.host._dom && this.host._dom.validationMessage) {
+            this.host._dom.validationMessage.textContent = firstMessage;
+        }
+
         const status = this.getStatusFromState(valid, errors);
         const configuredColors = this.getConfiguredValidationColors();
         const colors = this.getValidationColors(configuredColors);
@@ -517,12 +468,6 @@ class FieldValidationController {
         this.emitValidationEvents(status, valid, messages, errors, color, colors);
     }
 
-    /**
-     * Derive high-level status (`none|valid|incomplete|invalid`) from validity/errors.
-     * @param {boolean} valid
-     * @param {Array<{type: string}>} [errors=[]]
-     * @returns {"none"|"valid"|"incomplete"|"invalid"}
-     */
     getStatusFromState(valid, errors = []) {
         if (!this.hasValidation()) return "none";
         if (!valid) {
@@ -539,46 +484,26 @@ class FieldValidationController {
         return valid ? "valid" : "invalid";
     }
 
-    /**
-     * Detect whether host/native control is currently focused.
-     * @returns {boolean}
-     */
     isFieldFocused() {
         const host = this.host;
         if (!host || typeof host.matches !== "function") return false;
         if (host.matches(":focus") || host.matches(":focus-within")) return true;
-
         const native = host._dom ? host._dom.native : null;
         if (!native) return false;
         const root = native.getRootNode ? native.getRootNode() : null;
-        if (root && "activeElement" in root) {
-            return root.activeElement === native;
-        }
-        return false;
+        return Boolean(root && "activeElement" in root && root.activeElement === native);
     }
 
-    /**
-     * Apply host CSS classes/attributes that represent current validation status.
-     * @param {"none"|"valid"|"incomplete"|"invalid"} status
-     */
     applyStatusClasses(status) {
         const host = this.host;
         host.classList.toggle("has-validation", status !== "none");
         host.classList.toggle("is-valid", status === "valid");
         host.classList.toggle("is-invalid", status === "invalid");
         host.classList.toggle("is-incomplete", status === "incomplete");
-
-        if (status === "none") {
-            host.removeAttribute("validation-state");
-        } else {
-            host.setAttribute("validation-state", status);
-        }
+        if (status === "none") host.removeAttribute("validation-state");
+        else host.setAttribute("validation-state", status);
     }
 
-    /**
-     * Get configured global validation colors from Juice config.
-     * @returns {{none: string, valid: string, incomplete: string, invalid: string}}
-     */
     getConfiguredValidationColors() {
         const validationConfig = getJuiceConfig("validation");
         const configuredColors = validationConfig && validationConfig.colors
@@ -587,11 +512,6 @@ class FieldValidationController {
         return { ...DEFAULT_STATUS_COLORS, ...(configuredColors || {}) };
     }
 
-    /**
-     * Resolve final status colors (global defaults + host attribute overrides).
-     * @param {{none: string, valid: string, incomplete: string, invalid: string}} [baseColors=this.getConfiguredValidationColors()]
-     * @returns {{none: string, valid: string, incomplete: string, invalid: string}}
-     */
     getValidationColors(baseColors = this.getConfiguredValidationColors()) {
         const host = this.host;
         const colors = { ...(baseColors || DEFAULT_STATUS_COLORS) };
@@ -601,97 +521,48 @@ class FieldValidationController {
             colors.incomplete = genericColor;
             colors.invalid = genericColor;
         }
-
-        const validColor = host.getAttribute("validation-color-valid");
-        const incompleteColor = host.getAttribute("validation-color-incomplete");
-        const invalidColor = host.getAttribute("validation-color-invalid");
-        const noneColor = host.getAttribute("validation-color-none");
-
-        if (validColor) colors.valid = validColor;
-        if (incompleteColor) colors.incomplete = incompleteColor;
-        if (invalidColor) colors.invalid = invalidColor;
-        if (noneColor) colors.none = noneColor;
-
+        const overrides = {
+            valid: host.getAttribute("validation-color-valid"),
+            incomplete: host.getAttribute("validation-color-incomplete"),
+            invalid: host.getAttribute("validation-color-invalid"),
+            none: host.getAttribute("validation-color-none")
+        };
+        Object.entries(overrides).forEach(([key, value]) => {
+            if (value) colors[key] = value;
+        });
         return colors;
     }
 
-    /**
-     * Get color for a specific status.
-     * @param {"none"|"valid"|"incomplete"|"invalid"} status
-     * @param {{none: string, valid: string, incomplete: string, invalid: string}} [colors=this.getValidationColors()]
-     * @returns {string}
-     */
     getStatusColor(status, colors = this.getValidationColors()) {
         return colors[status] || colors.none || "transparent";
     }
 
-    /**
-     * Write resolved validation color to host CSS variables.
-     * @param {"none"|"valid"|"incomplete"|"invalid"} status
-     * @param {string} color
-     * @param {{none: string, valid: string, incomplete: string, invalid: string}} [colors=this.getValidationColors()]
-     */
     applyValidationColorVariable(status, color, colors = this.getValidationColors()) {
-        const host = this.host;
-        if (!host) return;
-
-        const resolvedColor = color || this.getStatusColor(status, colors);
-
-        const inputRoot = host._wireframe ? host._wireframe.root : null;
+        const inputRoot = this.host._wireframe ? this.host._wireframe.root : null;
         if (inputRoot && inputRoot.style) {
-            inputRoot.style.setProperty("--validation-color", resolvedColor);
+            inputRoot.style.setProperty("--validation-color", color || this.getStatusColor(status, colors));
         }
     }
 
-    /**
-     * Apply visual status state to status icon and message elements.
-     * @param {"none"|"valid"|"incomplete"|"invalid"} status
-     * @param {string} color
-     * @param {{none: string, valid: string, incomplete: string, invalid: string}} [colors=this.getValidationColors()]
-     */
     applyStatusIconState(status, color, colors = this.getValidationColors()) {
-        const host = this.host;
-        const icon = host && host._dom ? host._dom.status : null;
-        const statusWrapper = host && host._wireframe ? host._wireframe.status : null;
+        const icon = this.host._dom ? this.host._dom.status : null;
+        const statusWrapper = this.host._wireframe ? this.host._wireframe.status : null;
         if (!icon) return;
-
-        const iconState = STATUS_ICON_STATES[status] || "idle";
-        if (typeof icon.setAttribute === "function") {
-            icon.setAttribute("state", iconState);
-        } else {
-            icon.state = iconState;
-        }
-
-        const show = status !== "none";
-        const resolvedColor = color || this.getStatusColor(status, colors);
+        icon.setAttribute("state", STATUS_ICON_STATES[status] || "idle");
         icon.removeAttribute("color");
-
-        if (typeof icon.toggleAttribute === "function") {
-            icon.toggleAttribute("hidden", !show);
-        } else {
-            icon.hidden = !show;
-        }
-        if (statusWrapper) {
-            statusWrapper.hidden = !show;
-        }
-
-        const messageEl = host && host._dom ? host._dom.validationMessage : null;
-        if (status === "invalid" || status === "incomplete") {
-            if (messageEl && messageEl.style) {
-                messageEl.style.color = resolvedColor;
-            }
-        } else if (messageEl && messageEl.style) {
+        const show = status !== "none";
+        icon.toggleAttribute("hidden", !show);
+        if (statusWrapper) statusWrapper.hidden = !show;
+        const messageEl = this.host._dom ? this.host._dom.validationMessage : null;
+        if (messageEl && (status === "invalid" || status === "incomplete")) {
+            messageEl.style.color = color || this.getStatusColor(status, colors);
+        } else if (messageEl) {
             messageEl.style.removeProperty("color");
         }
     }
 
-    /**
-     * Convert runtime error objects into serializable payload objects.
-     * @param {Array} [errors=[]]
-     * @returns {Array<{type: string, message: string, property: string, args: Array}>}
-     */
     serializeErrors(errors = []) {
-        return (errors || []).map((error) => ({
+        return errors.map((error) => ({
             type: error.type,
             message: error.message,
             property: error.property,
@@ -699,97 +570,38 @@ class FieldValidationController {
         }));
     }
 
-    /**
-     * Build event payload for validation status events.
-     * @param {"none"|"valid"|"incomplete"|"invalid"} status
-     * @param {boolean} valid
-     * @param {string[]} [messages=[]]
-     * @param {Array} [errors=[]]
-     * @param {string} color
-     * @param {{none: string, valid: string, incomplete: string, invalid: string}} colors
-     * @returns {Object}
-     */
     createEventDetail(status, valid, messages = [], errors = [], color, colors) {
         const resolvedColors = colors || this.getValidationColors();
-        const resolvedColor = color || this.getStatusColor(status, resolvedColors);
         return {
             status,
             valid,
             invalid: status === "invalid",
             incomplete: status === "incomplete",
             complete: status !== "incomplete",
-            color: resolvedColor,
+            color: color || this.getStatusColor(status, resolvedColors),
             colors: resolvedColors,
             property: this.host._validationProperty || this.host.getAttribute("name") || "__value",
             value: this.host.value,
             rules: this.getValidationRules(),
-            messages: [...(messages || [])],
-            message: (messages && messages[0]) || "",
+            messages: [...messages],
+            message: messages[0] || "",
             errors: this.serializeErrors(errors)
         };
     }
 
-    /**
-     * Emit validation lifecycle events for host subscribers.
-     * @param {"none"|"valid"|"incomplete"|"invalid"} status
-     * @param {boolean} valid
-     * @param {string[]} [messages=[]]
-     * @param {Array} [errors=[]]
-     * @param {string} color
-     * @param {{none: string, valid: string, incomplete: string, invalid: string}} colors
-     */
     emitValidationEvents(status, valid, messages = [], errors = [], color, colors) {
         if (typeof this.host.dispatchEvent !== "function" || typeof CustomEvent !== "function") return;
-
         const detail = this.createEventDetail(status, valid, messages, errors, color, colors);
-        this.host.dispatchEvent(
-            new CustomEvent("validation:change", {
-                detail,
-                bubbles: true,
-                composed: true
-            })
-        );
-
-        if (this._lastStatus !== status) {
-            this.host.dispatchEvent(
-                new CustomEvent("validation:statechange", {
-                    detail,
-                    bubbles: true,
-                    composed: true
-                })
-            );
-        }
-
-        if (status === "valid") {
-            this.host.dispatchEvent(
-                new CustomEvent("validation:valid", {
-                    detail,
-                    bubbles: true,
-                    composed: true
-                })
-            );
-        }
-
-        if (status === "invalid") {
-            this.host.dispatchEvent(
-                new CustomEvent("validation:invalid", {
-                    detail,
-                    bubbles: true,
-                    composed: true
-                })
-            );
-        }
-
-        if (status === "incomplete") {
-            this.host.dispatchEvent(
-                new CustomEvent("validation:incomplete", {
-                    detail,
-                    bubbles: true,
-                    composed: true
-                })
-            );
-        }
-
+        const emit = (name) => this.host.dispatchEvent(new CustomEvent(name, {
+            detail,
+            bubbles: true,
+            composed: true
+        }));
+        emit("validation:change");
+        if (this._lastStatus !== status) emit("validation:statechange");
+        if (status === "valid") emit("validation:valid");
+        if (status === "invalid") emit("validation:invalid");
+        if (status === "incomplete") emit("validation:incomplete");
         this._lastStatus = status;
     }
 
