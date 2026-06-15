@@ -58,7 +58,7 @@ class InputColorStops extends InputComponent {
             ".colorstops": {
                 position: "relative",
                 display: "grid",
-                gridTemplateColumns: "1fr auto",
+                gridTemplateColumns: "1fr auto auto",
                 gap: "0.6rem",
                 alignItems: "center",
                 width: "100%",
@@ -91,13 +91,31 @@ class InputColorStops extends InputComponent {
             },
             ".stop:before": {
                 content: '""',
+                position: "absolute",
                 display: "block",
+                left: 0,
+                top: 0,
                 width: 0,
                 height: 0,
                 borderLeft: "8px solid transparent",
                 borderRight: "8px solid transparent",
                 borderBottom: "12px solid var(--color)",
-                filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.35))"
+                // filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.35))",
+                zIndex: 1
+            },
+            ".stop:after": {
+                content: '""',
+                position: "absolute",
+                display: "block",
+                left: "2px",
+                top: "2px",
+                width: 0,
+                height: 0,
+                borderLeft: "8px solid transparent",
+                borderRight: "8px solid transparent",
+                borderBottom: "12px solid #000000",
+                // filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.35))",
+                zIndex: 0
             },
             ".stop[aria-current='true']": {
                 cursor: "grabbing"
@@ -113,10 +131,43 @@ class InputColorStops extends InputComponent {
                 height: "34px",
                 border: "1px solid #c8c8c8",
                 borderRadius: "4px",
-                background: "#ffffff",
+                background: "#9b9999",
+                color: "#111827",
                 fontSize: "24px",
                 lineHeight: "30px",
-                cursor: "pointer"
+                cursor: "pointer",
+                transition: "transform ease 0.4s"
+            },
+            ".add:hover": {
+                background: "#274a9b",
+                color: "#FFFFFF",
+                transform: "translateY(-5px)"
+            },
+            ".reverse": {
+                position: "relative",
+                width: "34px",
+                height: "34px",
+                padding: "4px",
+                border: "1px solid #c8c8c8",
+                borderRadius: "4px",
+                background: "#9b9999",
+                color: "#111827",
+                fontSize: "24px",
+                lineHeight: "30px",
+                cursor: "pointer",
+                transition: "transform ease 0.4s"
+            },
+            ".reverse:hover": {
+                background: "#274a9b",
+                color: "#FFFFFF",
+                transform: "translateY(-5px)"
+            },
+            ".reverse svg": {
+                width: "20px",
+                height: "20px",
+                margin: "auto",
+                padding: "0",
+                display: "block"
             },
             ".color-popover": {
                 position: "absolute",
@@ -203,14 +254,19 @@ class InputColorStops extends InputComponent {
         this._dom.default.className = "colorstops";
         this._dom.default.innerHTML = `
             <div class="track"></div>
-            <button class="add" type="button" aria-label="Add color stop">+</button>
+            <button class="reverse" title="Reverse Stops" type="button" aria-label="Reverse color stops"><svg width="20" height="20" viewBox="0 0 25 25" ><line x1="12.5" y1="0" x2="12.5" y2="25" stroke="currentColor"  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /> <polygon points="0 5, 10 12.5, 0 20" stroke="currentColor" fill="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /><polygon points="25 5, 15 12.5, 25 20" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
+            <button class="add" title="Add Stop" type="button" aria-label="Add color stop">+</button>
             <div class="color-popover">
                 <input-color label="Color"></input-color>
             </div>
         `;
 
+        this._dom.default.querySelector(".reverse").addEventListener("click", () => this.reverse());
+
         this._dom.default.querySelector(".add").addEventListener("click", () => this.addStop());
-        this._dom.default.querySelector(".track").addEventListener("pointerdown", (event) => this.addStopFromTrack(event));
+        this._dom.default
+            .querySelector(".track")
+            .addEventListener("pointerdown", (event) => this.addStopFromTrack(event));
         this._dom.popover = this._dom.default.querySelector(".color-popover");
         this._dom.color = this._dom.default.querySelector("input-color");
         this._dom.color.addEventListener("input", (event) => {
@@ -227,6 +283,17 @@ class InputColorStops extends InputComponent {
     _syncVisualState() {
         this.stops = parseStops(this.value);
         this.renderStops();
+    }
+
+    reverse() {
+        this.stops = parseStops(this.value);
+        this.stops = this.stops
+            .map((stop) => ({
+                ...stop,
+                position: clamp(100 - (Number(stop.position) || 0), 0, 100)
+            }))
+            .sort((a, b) => a.position - b.position);
+        this.commit();
     }
 
     addStop(position = 50, color = "#ffffff") {

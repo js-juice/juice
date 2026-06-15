@@ -88,8 +88,6 @@ class AnimationContainer extends Component.HTMLElement {
     setAnchor(value) {
         const parsed = parseAnchor(value);
         this._anchor = parsed;
-        console.log(parsed);
-
         this.ref("html").style.setProperty("--anchor-x", `${parsed.x * 100}%`);
         this.ref("html").style.setProperty("--anchor-y", `${parsed.y * 100}%`);
     }
@@ -145,7 +143,6 @@ class AnimationContainer extends Component.HTMLElement {
      */
     onCustomChildReady(child) {
         /// if (!child) return;
-        console.log("child connected", child, child.animate);
         if (this._timeline) {
             this._timeline.addAnimator(child);
         }

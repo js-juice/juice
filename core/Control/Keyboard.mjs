@@ -4,7 +4,7 @@
  */
 
 import KeyCodes from "./KeyCodes.mjs";
-import EventEmitter from "../Event/Emitter.mjs";
+import EventEmitter from "../event/emitter.mjs";
 
 /**
  * Keyboard class manages keyboard input and emits events for key presses.

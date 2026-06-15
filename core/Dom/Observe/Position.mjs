@@ -4,7 +4,7 @@
  * @module Dom/Observe/Position
  */
 
-import Emitter from "../../Event/Emitter.mjs";
+import Emitter from "../../event/emitter.mjs";
 import ObserveTools from "./Tools.mjs";
 import Timeline from "../../../animation/timeline.mjs";
 import DomUtil from "../../Util/Dom.mjs";
@@ -64,7 +64,7 @@ class PositionObserverTarget {
                 top: targetRect.top,
                 bottom: rootDims.height - targetRect.bottom,
                 left: targetRect.left,
-                right: rootDims.width - targetRect.right,
+                right: rootDims.width - targetRect.right
             };
         }
 
@@ -134,7 +134,7 @@ class PositionObserverTarget {
         this.observer = new IntersectionObserver(this.oninterception, {
             root: this.options.root || null,
             threshold: thresholds,
-            rootMargin: this.margin ? this.margin : "0px 0px 0px 0px",
+            rootMargin: this.margin ? this.margin : "0px 0px 0px 0px"
         });
 
         this.observer.observe(this.element);
@@ -166,7 +166,7 @@ class PositionObserverTarget {
         this.observer = new IntersectionObserver(this.oninterception, {
             root: this.options.root || null,
             rootMargin: ObserveTools.rootMarginFromRect({ width: window.innerWidth, height: window.innerHeight }, rect),
-            threshold: [0, 1],
+            threshold: [0, 1]
         });
 
         this.observer.observe(this.element);

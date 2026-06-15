@@ -11,6 +11,8 @@ export default class EmitterAdapter {
     constructor(particles, config = {}) {
         this.particles = particles;
         this._accum = 0;
+        this._writeIndex = 0;
+        this._lastDelta = 0;
         this.configure(config);
     }
 
@@ -21,12 +23,89 @@ export default class EmitterAdapter {
         this.spread = Number(config.spread) || Math.PI / 8;
         this.size = Number(config.size) || 1;
         this.life = Number(config.lifespan) || 2;
+        this.speedRandomness = this._resolveRandomness(config.speedRandomness, 0);
+        this.sizeRandomness = this._resolveRandomness(config.sizeRandomness, 0);
+        this.lifespanRandomness = this._resolveRandomness(
+            config.lifespanRandomness ?? config.lifeRandomness,
+            0
+        );
+        this.spawnRadius = Number.isFinite(Number(config.spawnRadius)) ? Math.max(0, Number(config.spawnRadius)) : 0.01;
         this.position = { x: Number(config.x) || 0, y: Number(config.y) || 0, z: Number(config.z) || 0 };
+        this.interpolateSpawnPosition = config.interpolateSpawnPosition !== false;
         // Mask configuration: either a maskIndex (into particles.masks) or an explicit mask object
         this.maskIndex = Number.isFinite(config.maskIndex) ? Math.floor(config.maskIndex) : null;
         this.mask = config.mask || null;
         this.directionVec = config.directionVec || null; // {x,y,z}
+        this.color = this._resolveColor(config.color ?? config.particleColor);
         return this;
+    }
+
+    _resolveColor(input) {
+        if (Array.isArray(input) || input instanceof Float32Array) {
+            const r = Number(input[0]);
+            const g = Number(input[1]);
+            const b = Number(input[2]);
+            const a = Number(input[3]);
+            if ([r, g, b].every(Number.isFinite)) {
+                return [
+                    Math.max(0, Math.min(1, r)),
+                    Math.max(0, Math.min(1, g)),
+                    Math.max(0, Math.min(1, b)),
+                    Number.isFinite(a) ? Math.max(0, Math.min(1, a)) : 1
+                ];
+            }
+            return null;
+        }
+
+        if (typeof input !== "string") return null;
+        const text = input.trim().toLowerCase();
+        const full = text.match(/^#([0-9a-f]{6})$/);
+        const short = text.match(/^#([0-9a-f]{3})$/);
+        const hex = full
+            ? full[1]
+            : short
+              ? `${short[1][0]}${short[1][0]}${short[1][1]}${short[1][1]}${short[1][2]}${short[1][2]}`
+              : null;
+        if (!hex) return null;
+
+        return [
+            parseInt(hex.slice(0, 2), 16) / 255,
+            parseInt(hex.slice(2, 4), 16) / 255,
+            parseInt(hex.slice(4, 6), 16) / 255,
+            1
+        ];
+    }
+
+    _defaultColor() {
+        const color = this.color || this.particles?.stateDefaults?.color;
+        if (Array.isArray(color) || color instanceof Float32Array) {
+            return [
+                Number.isFinite(Number(color[0])) ? Number(color[0]) : 1,
+                Number.isFinite(Number(color[1])) ? Number(color[1]) : 1,
+                Number.isFinite(Number(color[2])) ? Number(color[2]) : 1,
+                Number.isFinite(Number(color[3])) ? Number(color[3]) : 1
+            ];
+        }
+        return [1, 1, 1, 1];
+    }
+
+    _colorChannel(value, fallback = 1) {
+        const number = Number(value);
+        return Number.isFinite(number) ? number : fallback;
+    }
+
+    _resolveRandomness(value, fallback = 0) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return fallback;
+        return Math.max(0, number);
+    }
+
+    _randomizedValue(base, amount) {
+        const numericBase = Number(base) || 0;
+        const randomAmount = Number(amount) || 0;
+        if (randomAmount <= 0) return numericBase;
+        const multiplier = 1 + (Math.random() * 2 - 1) * randomAmount;
+        return Math.max(0, numericBase * multiplier);
     }
 
     _normalize(v) {
@@ -59,8 +138,7 @@ export default class EmitterAdapter {
         };
     }
 
-    _spawnN(toSpawn) {
-        if (!this.particles || toSpawn <= 0) return 0;
+    _spawnBatch(toSpawn, startIndex) {
         // Resolve layout and stride from target buffer.
         const layoutMeta = this.particles._resolveLayout();
         const keys = layoutMeta.map((e) => e.key);
@@ -68,10 +146,13 @@ export default class EmitterAdapter {
 
         const data = new Float32Array(toSpawn * stride);
         let cursor = 0;
+        const defaultColor = this._defaultColor();
 
         for (let i = 0; i < toSpawn; i++) {
-            let px = this.position.x + (Math.random() * 2 - 1) * 0.01;
-            let py = this.position.y + (Math.random() * 2 - 1) * 0.01;
+            const spawnAngle = Math.random() * Math.PI * 2;
+            const spawnDistance = Math.sqrt(Math.random()) * this.spawnRadius;
+            let px = this.position.x + Math.cos(spawnAngle) * spawnDistance;
+            let py = this.position.y + Math.sin(spawnAngle) * spawnDistance;
             let pz = this.position.z || 0;
             let spawnColor = null;
 
@@ -106,18 +187,33 @@ export default class EmitterAdapter {
             let vx = 0,
                 vy = 0,
                 vz = 0;
-            const sp = this.speed;
-            if (this.directionVec && typeof this.directionVec === "object") {
-                const dirSample = this._randomDirectionInCone(this.directionVec, this.spread || 0);
+            const sp = Math.max(0.01, this._randomizedValue(this.speed, this.speedRandomness) || 0.01);
+            const particleSize = Math.max(0.01, this._randomizedValue(this.size, this.sizeRandomness) || 0.01);
+            const particleLife = Math.max(0.01, this._randomizedValue(this.life, this.lifespanRandomness) || 0.01);
+            const hasDirectionVec = this.directionVec && typeof this.directionVec === "object";
+            const normalizedDirectionVec = hasDirectionVec ? this._normalize(this.directionVec) : null;
+            const validDirectionVec =
+                normalizedDirectionVec &&
+                (Math.abs(normalizedDirectionVec.x) > 1e-6 ||
+                    Math.abs(normalizedDirectionVec.y) > 1e-6 ||
+                    Math.abs(normalizedDirectionVec.z) > 1e-6);
+
+            if (validDirectionVec) {
+                const dirSample = this._randomDirectionInCone(normalizedDirectionVec, this.spread || 0);
                 vx = dirSample.x * sp;
                 vy = dirSample.y * sp;
                 vz = dirSample.z * sp;
             } else {
-                const dir = this.direction + (Math.random() * this.spread - this.spread / 2);
+                const dir = (Number(this.direction) || 0) + (Math.random() * this.spread - this.spread / 2);
                 vx = Math.cos(dir) * sp;
                 vy = Math.sin(dir) * sp;
                 vz = 0;
             }
+
+            const frameAge = this.interpolateSpawnPosition ? Math.random() * Math.max(0, Number(this._lastDelta) || 0) : 0;
+            px += vx * frameAge;
+            py += vy * frameAge;
+            pz += vz * frameAge;
 
             for (const entry of layoutMeta) {
                 const k = entry.key;
@@ -139,28 +235,28 @@ export default class EmitterAdapter {
                         break;
                     case "colors":
                         if (spawnColor) {
-                            data[cursor++] = spawnColor[0] || 1;
-                            data[cursor++] = spawnColor[1] || 1;
-                            data[cursor++] = spawnColor[2] || 1;
-                            data[cursor++] = spawnColor[3] || 1;
+                            data[cursor++] = this._colorChannel(spawnColor[0]);
+                            data[cursor++] = this._colorChannel(spawnColor[1]);
+                            data[cursor++] = this._colorChannel(spawnColor[2]);
+                            data[cursor++] = this._colorChannel(spawnColor[3]);
                         } else {
-                            data[cursor++] = 1;
-                            data[cursor++] = 1;
-                            data[cursor++] = 1;
-                            data[cursor++] = 1;
+                            data[cursor++] = defaultColor[0];
+                            data[cursor++] = defaultColor[1];
+                            data[cursor++] = defaultColor[2];
+                            data[cursor++] = defaultColor[3];
                         }
                         break;
                     case "states":
                         data[cursor++] = pz;
-                        data[cursor++] = 0;
+                        data[cursor++] = -(frameAge + 0.000001);
                         data[cursor++] = px;
                         data[cursor++] = py;
                         break;
                     case "sizes":
-                        data[cursor++] = this.size;
+                        data[cursor++] = particleSize;
                         break;
                     case "lifes":
-                        data[cursor++] = this.life;
+                        data[cursor++] = particleLife;
                         break;
                     case "transitions":
                         data[cursor++] = 0;
@@ -175,10 +271,29 @@ export default class EmitterAdapter {
             }
         }
 
-        const startIndex = Math.max(0, Math.floor(Number(this.particles.count) || 0));
         // Write data into the particles buffer; `fromInterleaved` updates count.
         this.particles.fromInterleaved({ data }, { layout: keys, stride, count: toSpawn, startIndex });
         return toSpawn;
+    }
+
+    _spawnN(toSpawn) {
+        if (!this.particles || toSpawn <= 0) return 0;
+        const maxCount = Math.max(1, Math.floor(Number(this.particles.maxCount) || 1));
+        let remaining = Math.max(0, Math.floor(Number(toSpawn) || 0));
+        let spawned = 0;
+        const ranges = [];
+
+        while (remaining > 0) {
+            const startIndex = this._writeIndex % maxCount;
+            const batchCount = Math.min(remaining, maxCount - startIndex);
+            spawned += this._spawnBatch(batchCount, startIndex);
+            ranges.push({ start: startIndex, count: batchCount });
+            this._writeIndex = (this._writeIndex + batchCount) % maxCount;
+            remaining -= batchCount;
+        }
+
+        this.lastSpawnRanges = ranges;
+        return spawned;
     }
 
     /**
@@ -191,7 +306,8 @@ export default class EmitterAdapter {
 
     update(delta) {
         if (!this.particles || this.rate <= 0) return 0;
-        this._accum += Number(delta) || 0;
+        this._lastDelta = Math.max(0, Number(delta) || 0);
+        this._accum += this._lastDelta;
         const interval = 1 / Math.max(1e-6, this.rate);
         let toSpawn = 0;
         while (this._accum >= interval) {

@@ -4,10 +4,7 @@
  * @module Client/Window
  */
 
-import EventEmitter from '../Event/Emitter.mjs'; 
-
-import Ease from '../Animate/Ease.mjs';
-import Coordinates from '../Math/Coordinates.mjs';
+import EventEmitter from "../event/emitter.mjs";
 
 /**
  * Window management class with dimension and scroll utilities.
@@ -18,7 +15,7 @@ import Coordinates from '../Math/Coordinates.mjs';
  * console.log(win.width, win.height);
  * win.scrollTop = 500;
  */
-class Window extends EventEmitter{
+class Window extends EventEmitter {
     /** @type {boolean} Whether window is currently scrolling */
     scrolling = false;
     /** @type {number} Current Y scroll position */
@@ -26,7 +23,7 @@ class Window extends EventEmitter{
     /** @type {number} Current X scroll position */
     scrollX = 0;
 
-    constructor(){
+    constructor() {
         super();
         this.initialize();
     }
@@ -35,43 +32,39 @@ class Window extends EventEmitter{
      * Gets window width.
      * @type {number}
      */
-    get width(){
-        return window.innerWidth
-        || document.documentElement.clientWidth
-        || document.body.clientWidth;
+    get width() {
+        return window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
     }
 
     /**
      * Sets window width (resizes window).
      * @type {number}
      */
-    set width( width ){
-        window.resizeTo( width, this.height );
+    set width(width) {
+        window.resizeTo(width, this.height);
     }
 
     /**
      * Gets window height.
      * @type {number}
      */
-    get height(){
-        return window.innerHeight
-        || document.documentElement.clientHeight
-        || document.body.clientHeight;
+    get height() {
+        return window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
     }
 
     /**
      * Sets window height (resizes window).
      * @type {number}
      */
-    set height( height ){
-        window.resizeTo( this.width, height );
+    set height(height) {
+        window.resizeTo(this.width, height);
     }
 
     /**
      * Gets vertical scroll position.
      * @type {number}
      */
-    get scrollTop(){
+    get scrollTop() {
         return document.body.scrollTop || document.documentElement.scrollTop;
     }
 
@@ -79,15 +72,15 @@ class Window extends EventEmitter{
      * Sets vertical scroll position.
      * @type {number}
      */
-    set scrollTop( px ){
-        return window.scrollTo( this.scrollLeft, px );
+    set scrollTop(px) {
+        return window.scrollTo(this.scrollLeft, px);
     }
 
     /**
      * Gets maximum vertical scroll position.
      * @type {number}
      */
-    get scrollTopMax(){
+    get scrollTopMax() {
         return document.documentElement.scrollHeight - document.documentElement.clientHeight;
     }
 
@@ -95,7 +88,7 @@ class Window extends EventEmitter{
      * Gets horizontal scroll position.
      * @type {number}
      */
-    get scrollLeft(){
+    get scrollLeft() {
         return document.body.scrollLeft || document.documentElement.scrollLeft;
     }
 
@@ -103,34 +96,31 @@ class Window extends EventEmitter{
      * Sets horizontal scroll position.
      * @type {number}
      */
-    set scrollLeft( px ){
-        return window.scrollTo( px, this.scrollTop );
+    set scrollLeft(px) {
+        return window.scrollTo(px, this.scrollTop);
     }
 
     /**
      * Gets maximum horizontal scroll position.
      * @type {number}
      */
-    get scrollLeftMax(){
+    get scrollLeftMax() {
         return document.documentElement.scrollWidth - document.documentElement.clientWidth;
     }
 
-    scrollTo( x=0, y=0, duration ){
-        const top = Math.min( this.scrollTopMax, y );
-        const left = Math.min( this.scrollLeftMax, x );
-        window.scrollTo( left, top );
-      
+    scrollTo(x = 0, y = 0, duration) {
+        const top = Math.min(this.scrollTopMax, y);
+        const left = Math.min(this.scrollLeftMax, x);
+        window.scrollTo(left, top);
     }
 
-    scrollToElement( element ){
-        const header = document.querySelector('body > header');
+    scrollToElement(element) {
+        const header = document.querySelector("body > header");
         const headerRect = header.getBoundingClientRect();
         const elRect = element.getBoundingClientRect();
-
     }
 
-    onScrollStart(){
-
+    onScrollStart() {
         const self = this;
 
         this.scrolling = true;
@@ -138,23 +128,21 @@ class Window extends EventEmitter{
         this.scrollY = this.scrollTop;
         this.scrollX = this.scrollLeft;
 
-        this.emit('scroll', this.scrollLeft, this.scrollTop );
+        this.emit("scroll", this.scrollLeft, this.scrollTop);
 
-        function scrollFire(){
-            
-            if( self.scrollY !== self.scrollTop || self.scrollX !== self.scrollLeft ){
+        function scrollFire() {
+            if (self.scrollY !== self.scrollTop || self.scrollX !== self.scrollLeft) {
                 self.scrollY = self.scrollTop;
                 self.scrollX = self.scrollLeft;
-                self.emit('scroll', self.scrollX, self.scrollY );
+                self.emit("scroll", self.scrollX, self.scrollY);
             }
-            if(self.scrolling) window.requestAnimationFrame( scrollFire );
+            if (self.scrolling) window.requestAnimationFrame(scrollFire);
         }
 
-        window.requestAnimationFrame( scrollFire );
+        window.requestAnimationFrame(scrollFire);
     }
 
-    initialize(){
-
+    initialize() {
         const self = this;
 
         this.scrollY = window.scrollY;
@@ -163,28 +151,26 @@ class Window extends EventEmitter{
         let scrollTO;
 
         document.addEventListener("scroll", () => {
-            if(!this.scrolling){
+            if (!this.scrolling) {
                 this.onScrollStart();
             }
             clearTimeout(scrollTO);
             scrollTO = setTimeout(() => {
                 this.scrolling = false;
-            }, 50 );
+            }, 50);
         });
 
         window.addEventListener("resize", () => {
-            this.emit("resize", this.width, this.heihgt );
+            this.emit("resize", this.width, this.heihgt);
         });
 
-        window.addEventListener( "orientationchange", () => {
+        window.addEventListener("orientationchange", () => {
             var orientation = window.orientation;
-            this.emit( "orientationchange", window.orientation );
+            this.emit("orientationchange", window.orientation);
         });
 
         return false;
     }
-
 }
-
 
 export default new Window();

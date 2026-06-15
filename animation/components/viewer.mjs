@@ -7,8 +7,6 @@
 import Component from "../../ui/component.mjs";
 import Timeline from "../timeline.mjs";
 import AnimationStage from "./stage.mjs";
-import AnimationBody from "./body.mjs";
-import AnimationSprite from "./sprite.mjs";
 import AnimationStats from "./stats.mjs";
 import Camera from "./camera.mjs";
 import "./stats.mjs";
@@ -334,8 +332,6 @@ export class AnimationViewer extends Component.HTMLElement {
 
         // Add stage to timeline so its update/render methods are called
         this.onAssetAdded(stage);
-        console.log("Stage Added");
-
         this.dispatchEvent(new CustomEvent("stageconnect", { detail: { stage } }));
     }
 
@@ -464,11 +460,7 @@ export class AnimationViewer extends Component.HTMLElement {
             this.onStageConnect(child);
         } else if (child?.tagName?.toLowerCase() === "animation-stage") {
             this._tryAttachStageCandidate(child);
-        } else if (child instanceof AnimationBody) {
-            this.onAssetAdded(child);
-        } else if (child instanceof AnimationSprite) {
-            this.onAssetAdded(child);
-        } else if (["animation-stage", "animation-body", "animation-sprite"].includes(child.tagName.toLowerCase())) {
+        } else if (["animation-stage", "animation-component"].includes(child.tagName.toLowerCase())) {
             this.onAssetAdded(child);
         } else if (child.animationComponent) {
             this.onAssetAdded(child);

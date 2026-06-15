@@ -10,30 +10,35 @@ class ParticleEmitterComponent extends AnimationComponent {
         this.behaviors = {};
     }
 
-    static get styles() {
-        return (
-            super.styles +
-            `
-            :host { 
-                position: absolute; 
-                pointer-events: none; 
-                width: 0px;
-                height: 0px;
+    bodyHTML() {
+        return `
+            <div id="particle-emitter"></div>
+        `;
+    }
+
+    static get style() {
+        return [
+            {
+                ":host": {
+                    position: "absolute",
+                    pointerEvents: "none",
+                    width: "0px",
+                    height: "0px"
+                },
+                "#body": {
+                    position: "absolute",
+                    width: "var(--width)",
+                    height: "var(--height)"
+                },
+                ".particle-source": {
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%"
+                }
             }
-            #contents{
-                position: absolute;
-                width: var(--width);
-                height: var(--height);
-            }
-            .particle-source {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-            }
-        `
-        );
+        ];
     }
 
     setBehaviorFrames(property, keyframes, fps = 60) {
@@ -43,10 +48,6 @@ class ParticleEmitterComponent extends AnimationComponent {
             return;
         }
         this.behaviors[property] = keyframes;
-    }
-
-    bodyHTML() {
-        return `<div id="particle-emitter"></div>`;
     }
 
     onCreate() {

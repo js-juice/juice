@@ -5,7 +5,7 @@
 
 import { default as Styles, StyleSheet } from "../core/Style/Styles.mjs";
 import ObjUtil from "../core/Util/Object.mjs";
-import Emitter from "../core/Event/Emitter.mjs";
+import Emitter from "../core/event/emitter.mjs";
 import Util, { type } from "../core/Util/Core.mjs";
 import VDom from "../core/VirtualDom/VDom.mjs";
 import { getJuiceConfig } from "../config/juice-config.mjs";
@@ -180,8 +180,8 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 const observableDefinitions = [];
                 this.observedProperties.forEach((property) => {
                     const config = this.config.properties[property] || {};
-                    if (config.aliasFor) {
-                        observableDefinitions.push({ property, config, aliasFor: config.aliasFor });
+                    if (config.alias) {
+                        observableDefinitions.push({ property, config, alias: config.alias });
                         return;
                     }
                     const routeConfig = config.route;
@@ -528,26 +528,30 @@ function ComponentCompiler(name, BaseHTMLElement) {
             }
 
             #setObservable(definition, value = null) {
-                if (definition.aliasFor) {
-                    const { property, config, aliasFor } = definition;
+                const { property, config, alias } = definition;
+                let isDefault = false;
+
+                //Parse Config Type
+                const configType = config.attrtype || config.type || "string";
+                //Handle Aliases
+                if (alias) {
                     Object.defineProperty(this, property, {
-                        get: () => this[aliasFor],
+                        get: () => this[alias],
                         set: (newValue) => {
-                            this[aliasFor] = newValue;
+                            this[alias] = newValue;
                         }
                     });
 
                     if (config.linked && this.hasAttribute(property)) {
                         const attributeValue = this.getAttribute(property);
-                        this[aliasFor] =
-                            config.type === "exists"
-                                ? true
-                                : this.parseAttributeValue(attributeValue, config.attrtype || config.type || "string");
+                        this[alias] =
+                            config.type === "exists" ? true : this.parseAttributeValue(attributeValue, configType);
                     }
                     return;
                 }
 
-                const { property, config, alias } = definition;
+                //Handle Definition Routes
+
                 const routes = definition.routes.map((route) => ({
                     route: route.route,
                     parent: route.defined
@@ -560,14 +564,13 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 let hasInitialValue = false;
 
                 if (this[property] !== undefined) {
+                    //Value already set
                     value = this[property];
                     hasInitialValue = true;
                 } else if (config.linked && this.hasAttribute(property)) {
+                    //Value set in attribute
                     const attributeValue = this.getAttribute(property);
-                    value =
-                        config.type === "exists"
-                            ? true
-                            : this.parseAttributeValue(attributeValue, config.attrtype || config.type || "string");
+                    value = config.type === "exists" ? true : this.parseAttributeValue(attributeValue, configType);
                     hasInitialValue = true;
                 }
 
@@ -577,6 +580,8 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 }
 
                 value = value ?? config.default ?? null;
+
+                if (value === config.default) isDefault = true;
 
                 routes.forEach((r) => {
                     if (r.parent[r.route] === undefined) {
@@ -606,6 +611,9 @@ function ComponentCompiler(name, BaseHTMLElement) {
                                     this.removeAttribute(property);
                                 }
                             } else if (newValue !== null) {
+                                if (config.type === "json" || config.type === "object") {
+                                    newValue = JSON.stringify(newValue);
+                                }
                                 this.setAttribute(property, newValue);
                             }
                         }
@@ -637,7 +645,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 if (config.linked && !this.hasAttribute(property)) {
                     if (config.type === "exists") {
                         if (value) this.#stash("setAttribute", property, "");
-                    } else if (value !== null) {
+                    } else if (value !== null && !isDefault) {
                         this.#stash("setAttribute", property, value);
                     }
                 }
@@ -1142,6 +1150,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
 
                 switch (types[0]) {
                     case "array":
+                        if (Array.isArray(newValue)) break;
                         if (types[1]) {
                             newValue = newValue.split(",").map((item) => {
                                 item = item.trim();

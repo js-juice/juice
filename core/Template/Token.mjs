@@ -3,7 +3,7 @@
  * @module template/token
  */
 
-import EventEmitter from "../Event/Emitter.mjs";
+import EventEmitter from "../event/emitter.mjs";
 import { safeEval, findTokensInString } from "../Util/Eval.mjs";
 import TokenContent, { resolveTemplateLocation } from "./content.mjs";
 

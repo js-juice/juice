@@ -69,7 +69,6 @@ export function createProgram(gl, vertexShaderSource, fragmentShaderSource) {
     gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error(gl.getProgramInfoLog(program));
         gl.deleteProgram(program);
         return null;
     }
@@ -88,7 +87,6 @@ export function createShader(gl, type, source) {
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        console.error(gl.getShaderInfoLog(shader));
         gl.deleteShader(shader);
         return null;
     }
@@ -169,30 +167,20 @@ export function loadText(url) {
 export function checkGLError(gl, operation) {
     const error = gl.getError();
     if (error !== gl.NO_ERROR) {
-        console.error("WebGL error:", error, operation);
         switch (error) {
             case gl.INVALID_ENUM:
-                console.error("INVALID_ENUM: An unacceptable value has been specified for an enumerated argument.");
                 break;
             case gl.INVALID_VALUE:
-                console.error("INVALID_VALUE: A numeric argument is out of range.");
                 break;
             case gl.INVALID_OPERATION:
-                console.error("INVALID_OPERATION: The specified operation is not allowed in the current state.");
                 break;
             case gl.INVALID_FRAMEBUFFER_OPERATION:
-                console.error("INVALID_FRAMEBUFFER_OPERATION: The framebuffer object is not complete.");
                 break;
             case gl.OUT_OF_MEMORY:
-                console.error("OUT_OF_MEMORY: Not enough memory is left to execute the command.");
                 break;
             case gl.CONTEXT_LOST_WEBGL:
-                console.error("CONTEXT_LOST_WEBGL: The WebGL context has been lost.");
                 break;
             default:
-                console.error("Unknown error code:", error);
         }
-    } else {
-        console.log("no error", operation);
     }
 }

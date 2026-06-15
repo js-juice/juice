@@ -158,6 +158,22 @@ class Styles extends Array {
     }
 }
 
+export function compileStaticStyles(Constructor, defaults = [], properties = ["baseStyle", "style", "_style"]) {
+    const styles = [...(Array.isArray(defaults) ? defaults : [defaults])];
+
+    for (const property of properties) {
+        const value = Constructor[property];
+        if (!value) continue;
+        if (Array.isArray(value)) {
+            styles.push(...value);
+        } else {
+            styles.push(value);
+        }
+    }
+
+    return new Styles(...styles.filter(Boolean)).asText(true);
+}
+
 class StyleSheet {
     index = {};
     tag;

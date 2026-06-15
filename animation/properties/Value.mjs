@@ -149,8 +149,7 @@ export class AnimationValue {
         if (!this.dirty) return;
         if (this.history && this.history.size > 0) {
             this.history.unshift(this._value);
-            this.history.print();
-            console.log("saved");
+            //  this.history.print();
         } else {
             console.log("no history");
         }

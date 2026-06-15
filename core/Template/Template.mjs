@@ -4,7 +4,7 @@
  * @module template/template
  */
 
-import EventEmitter from "../Event/Emitter.mjs";
+import EventEmitter from "../event/emitter.mjs";
 import TokenContent from "./content.mjs";
 
 /**

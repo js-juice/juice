@@ -6,7 +6,7 @@
 
 import "../../../animation/components/viewer.mjs";
 import "../../../animation/components/stage.mjs";
-import "../../../animation/components/body.mjs";
+import "../../../animation/components/animation-component.mjs";
 import "../../../animation/components/particles.mjs";
 import "../../../animation/components/sprite.mjs";
 import "../../../animation/components/stats.mjs";

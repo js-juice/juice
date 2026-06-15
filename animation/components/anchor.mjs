@@ -38,23 +38,28 @@ class Anchor extends HTMLElement {
                 position: absolute;
                 width: var(--width, auto);
                 height: var(--height, auto);
+                
                 transform: translate(calc(var(--anchor-x, 0%) * -1), calc(var(--anchor-y, 0%) * -1));
             }
             #target {
                 position: absolute;
                 width: 100%;
                 height: 100%;
-                transform: scale(var(--scale, 1)) rotate(var(--rotation, 0deg));
+                scale: var(--scale, --scale-x, 1) var(--scale, --scale-y, 1);
+                transform: rotate(var(--rotation, 0deg));
                 transform-origin: var(--anchor-x, 0%) var(--anchor-y, 0%);
             }
             slot{
-                display: block;
-                position:relative;
+ 
+                --scale-x: 1;
+                --scale-y: 1;
+                --scale: 1;
             }
             .anchor {
+                display: none;
                 position: absolute;
-                top: 50%;
-                left: 50%;
+                top: var(--anchor-y, 0%);
+                left: var(--anchor-x, 0%);
                 transform: translate(-50%, -50%);
                 border: 1px solid yellow;
                 border-radius: 50%;
@@ -62,6 +67,10 @@ class Anchor extends HTMLElement {
                 height: 10px;
                 z-index: 1
             }
+            :host([debug]) .anchor {
+                display: block;
+            }
+                
             .vert-line {
                 position: absolute;
                 top: 50%;
@@ -94,20 +103,8 @@ class Anchor extends HTMLElement {
                 background: rgba(0, 0, 0, 0.5);
             }
         
-            #debug-size:after {
-                content: var(--width) "x" var(--height);
-            }
-            #debug-position:after {
-                content: var(--x) "," var(--y);
-            }
-            #debug-rotation-x:after {
-                content: var(--rotation) " " var(--rotation-x, 0) "," var(--rotation-y, 0) "," var(--rotation-z, 0);
-            }
-            #debug-scale:after {
-                content: var(--scale)
-            }
-            .stat[data-value]:after {
-                content: attr(data-value);
+            .stat .value {
+                color: #fff;
             }
         `;
     }
@@ -120,10 +117,11 @@ class Anchor extends HTMLElement {
             <div class="horiz-line"></div>
             <div id="debug-stats" class="debug-stats">
                 <div class="bg"></div>
-                <div id="debug-size" class="stat" data-value="0,0">(w,h): <span id="debug-width"></span>x<span id="debug-height"></span></div>
-                <div id="debug-position" class="stat" data-value="0,0">(x,y): </div>
-                <div id="debug-rotation-x" class="stat" data-value="0,0">(Rotation): </div>
-                <div id="debug-scale" class="stat" data-value="1">(Scale): </div>
+                <div id="debug-size" class="stat">(w,h): <span id="debug-size-value" class="value">0px x 0px</span></div>
+                <div id="debug-position" class="stat">(x,y,z): <span id="debug-position-value" class="value">0px, 0px, 0px</span></div>
+                <div id="debug-rotation" class="stat">(Rotation): <span id="debug-rotation-value" class="value">0deg, 0deg, 0deg</span></div>
+                <div id="debug-scale" class="stat">(Scale): <span id="debug-scale-value" class="value">1</span></div>
+                <div id="debug-anchor" class="stat">(Anchor): <span id="debug-anchor-value" class="value">0%, 0%</span></div>
             </div>
         </div>
         <div id="target">
@@ -134,14 +132,34 @@ class Anchor extends HTMLElement {
     }
 
     setDebugValue(name, value) {
-        name = name.replace("--", "");
-        console.log(`Setting debug value ${name} to ${value}`);
-        if (!this._debug[name]) this._debug[name] = this._shadow.querySelector(`#debug-${name}`);
-        if (this._debug[name]) this._debug[name].setAttribute("data-value", value);
+        if (!this.hasAttribute("debug")) return;
+        const key = name.replace("--", "");
+        this._debug.values ||= {};
+        this._debug.values[key] = value;
+        this.renderDebugValues();
+    }
+
+    renderDebugValues() {
+        const values = this._debug.values || {};
+        this.setDebugText("size", `${values.width || "0px"} x ${values.height || "0px"}`);
+        this.setDebugText("position", `${values.x || "0px"}, ${values.y || "0px"}, ${values.z || "0px"}`);
+        this.setDebugText(
+            "rotation",
+            `${values["rotation-x"] || values.rotation || "0deg"}, ${values["rotation-y"] || "0deg"}, ${
+                values["rotation-z"] || "0deg"
+            }`
+        );
+        this.setDebugText("scale", values.scale ?? "1");
+        this.setDebugText("anchor", `${values["anchor-x"] || "0%"}, ${values["anchor-y"] || "0%"}`);
+    }
+
+    setDebugText(name, value) {
+        const id = `${name}-value`;
+        if (!this._debug[id]) this._debug[id] = this._shadow.querySelector(`#debug-${id}`);
+        if (this._debug[id]) this._debug[id].textContent = value;
     }
 
     attributeChangedCallback(name, oldValue, value) {
-        console.log(`Attribute ${name} changed from ${oldValue} to ${value}`);
         if (name === "position") {
             this.position = value;
             const { x, y } = parsePosition(this.position);

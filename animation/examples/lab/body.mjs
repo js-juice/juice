@@ -1,4 +1,4 @@
-import "../../components/body.mjs";
+import "../../components/animation-component.mjs";
 
 const stage = document.getElementById("stage");
 const body = document.getElementById("body");

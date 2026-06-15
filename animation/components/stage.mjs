@@ -96,6 +96,16 @@ class AnimationStage extends Component.HTMLElement {
                     left: 0,
                     zIndex: -1
                 },
+                'slot[name="paralax-assets"]': {
+                    pointerEvents: "auto",
+                    width: "100%",
+                    height: "100%",
+                    position: "absolute",
+                    display: "block",
+                    top: 0,
+                    left: 0,
+                    zIndex: 2
+                },
                 'slot[name="world-background"]': {
                     pointerEvents: "auto",
                     width: "100%",
@@ -105,6 +115,16 @@ class AnimationStage extends Component.HTMLElement {
                     top: 0,
                     left: 0,
                     zIndex: -1
+                },
+                'slot[name="world-effects"]': {
+                    pointerEvents: "auto",
+                    width: "100%",
+                    height: "100%",
+                    position: "absolute",
+                    display: "block",
+                    top: 0,
+                    left: 0,
+                    zIndex: 900
                 },
                 "slot:not([name])": {
                     position: "absolute",
@@ -131,9 +151,11 @@ class AnimationStage extends Component.HTMLElement {
         <animation-anchor id="anchor">
             <div id="world">
                 <slot name="world-background"></slot>
+                <slot name="world-effects"></slot>
                 <slot></slot>
             </div> 
         </animation-anchor>
+        <slot name="paralax-assets"></slot>
         `;
     }
 
@@ -222,6 +244,9 @@ class AnimationStage extends Component.HTMLElement {
             case "background":
                 this.ref("html").style.background = value;
                 break;
+            case "debug":
+                AnimationComponentUtil.setDebug(this);
+                break;
         }
     }
 
@@ -253,7 +278,6 @@ class AnimationStage extends Component.HTMLElement {
     }
 
     backgrounds = [];
-
     /**
      * Executes addBackground.
      * @param {*} element - Parameter value.
@@ -262,12 +286,21 @@ class AnimationStage extends Component.HTMLElement {
      */
     addBackground(element, options = {}) {
         if (!element) return;
+        const existing = this.backgrounds.find((background) => background.element === element);
+        if (existing) {
+            Object.assign(existing, options);
+            return existing;
+        }
+
+        const placement = options.placement || (element.getAttribute?.("slot") === "paralax-background" ? "paralax" : "world");
         const bg = {
             element: element,
+            placement,
             ...options
         };
-        if (options.paralax || options.placement === "paralax") {
-            bg.paralax;
+
+        if (options.paralax || placement === "paralax" || placement === "parallax") {
+            bg.paralax = true;
             element.setAttribute("slot", "paralax-background");
         } else {
             element.setAttribute("slot", "world-background");
@@ -286,6 +319,206 @@ class AnimationStage extends Component.HTMLElement {
         }
 
         this.backgrounds.push(bg);
+        return bg;
+    }
+
+    addWorldLayer(element, options = {}) {
+        if (!element) return null;
+        const slot = options.slot || "world-effects";
+        element.setAttribute("slot", slot);
+        Object.assign(element.style, {
+            position: element.style.position || "absolute",
+            width: element.style.width || "100%",
+            height: element.style.height || "100%",
+            top: element.style.top || "0",
+            left: element.style.left || "0",
+            pointerEvents: options.pointerEvents ?? element.style.pointerEvents ?? "none"
+        });
+        if (options.zIndex !== undefined) element.style.zIndex = `${options.zIndex}`;
+        if (!element.parentNode) this.appendChild(element);
+        return { element, slot, ...options };
+    }
+
+    addParalaxAsset(element, options = {}) {
+        if (!element) return null;
+        const slot = options.slot || "paralax-assets";
+        element.setAttribute("slot", slot);
+        Object.assign(element.style, {
+            position: element.style.position || "absolute",
+            width: element.style.width || "100%",
+            height: element.style.height || "100%",
+            top: element.style.top || "0",
+            left: element.style.left || "0",
+            pointerEvents: options.pointerEvents ?? element.style.pointerEvents ?? "none"
+        });
+        if (options.zIndex !== undefined) element.style.zIndex = `${options.zIndex}`;
+        if (!element.parentNode) this.appendChild(element);
+        return { element, slot, ...options };
+    }
+
+    _registerBackgroundSlots() {
+        this.shadowRoot
+            ?.querySelectorAll?.('slot[name="world-background"], slot[name="paralax-background"]')
+            ?.forEach((slot) => {
+                this._registerAssignedBackgrounds(slot);
+                if (slot._stageBackgroundSlotRegistered) return;
+                slot._stageBackgroundSlotRegistered = true;
+                slot.addEventListener("slotchange", () => this._registerAssignedBackgrounds(slot));
+            });
+    }
+
+    _registerAssignedBackgrounds(slot) {
+        const placement = slot.name === "paralax-background" ? "paralax" : "world";
+        slot.assignedElements?.({ flatten: true })?.forEach((element) => {
+            this.addBackground(element, { placement });
+        });
+    }
+
+    /**
+     * Notifies stage-owned worlds and parallax backgrounds that the viewer camera moved.
+     * Camera movement happens after normal timeline updates, so background positions need
+     * to sync here instead of waiting for the next stage update.
+     * @param {object} camera - The viewer camera that changed.
+     */
+    onCameraPositionChanged(camera) {
+        const detail = {
+            camera,
+            position: { x: camera.x, y: camera.y, z: camera.z },
+            delta: { ...camera.delta },
+            stagePosition: this.position.toObject?.() || { x: this.position.x, y: this.position.y }
+        };
+
+        this.dispatchEvent(new CustomEvent("camera-position-change", { detail }));
+        this._applyPositionToDOM();
+
+        this._cameraSyncedElements().forEach((entry) => {
+            const element = entry.element;
+            element?.dispatchEvent?.(new CustomEvent("camera-position-change", { detail }));
+            this._syncElementCamera(entry, detail);
+            if (entry.animate && entry.update) {
+                entry.update(detail);
+            }
+        });
+    }
+
+    _cameraSyncedElements() {
+        const entries = [];
+        const seen = new Set();
+        const add = (element, data = {}) => {
+            if (!element || seen.has(element)) return;
+            seen.add(element);
+            entries.push({ element, ...data });
+        };
+
+        this.backgrounds.forEach((background) => add(background.element, background));
+
+        return entries;
+    }
+
+    _syncElementCamera(entry, detail) {
+        const element = entry.element;
+        const scale = Number(element.getAttribute?.("camera-stage-scale") ?? 1) || 1;
+        const isParallax = entry.paralax || entry.placement === "paralax" || entry.placement === "parallax";
+        const ignorePositioning = entry.ignorePositioning || element.hasAttribute?.("ignore-positioning");
+
+        if (ignorePositioning) {
+            element.style.removeProperty("--camera-x");
+            element.style.removeProperty("--camera-y");
+            element.style.transform = "";
+            return;
+        }
+
+        if (!isParallax) {
+            const cameraPosition = detail.position || { x: 0, y: 0 };
+            element.style.setProperty("--camera-x", `${-cameraPosition.x * scale}px`);
+            element.style.setProperty("--camera-y", `${-cameraPosition.y * scale}px`);
+            element.style.transform = `translate3d(var(--camera-x, 0px), var(--camera-y, 0px), 0)`;
+            return;
+        }
+
+        element.style.removeProperty("--camera-x");
+        element.style.removeProperty("--camera-y");
+        element.style.transform = "";
+
+        if (!element.moveCameraPan) return;
+
+        const viewer = element.getViewer?.() || element;
+        if (!viewer?.viewportToWorldPoint) return;
+
+        const rect = element.getBoundingClientRect?.();
+        if (!rect?.width || !rect?.height) return;
+
+        const depth = Number(element.getAttribute?.("camera-stage-depth") ?? -2);
+        const centerX = rect.left + rect.width * 0.5;
+        const centerY = rect.top + rect.height * 0.5;
+        const center = viewer.viewportToWorldPoint(centerX, centerY, depth);
+        const xPixel = viewer.viewportToWorldPoint(centerX + 1, centerY, depth);
+        const yPixel = viewer.viewportToWorldPoint(centerX, centerY + 1, depth);
+        if (!center || !xPixel || !yPixel) return;
+
+        const cameraPosition = detail.position || { x: 0, y: 0 };
+        const worldUnitsPerScreenPixelX = xPixel.x - center.x;
+        const worldUnitsPerScreenPixelY = yPixel.y - center.y;
+        const panX = -cameraPosition.x * worldUnitsPerScreenPixelX * scale;
+        const panY = -cameraPosition.y * worldUnitsPerScreenPixelY * scale;
+        if (element.setCameraPan) {
+            element.setCameraPan(panX, panY);
+        } else {
+            element.moveCameraPan(panX, panY);
+        }
+    }
+
+    /**
+     * Resolves a particle/render world that can convert viewport coordinates to world coordinates.
+     *
+     * @param {{world?:HTMLElement,viewer?:object}} options
+     * @returns {object|null}
+     */
+    _resolveCoordinateWorld(options = {}) {
+        if (options.viewer?.viewportToWorldPoint) return options.viewer;
+        if (options.world?.viewportToWorldPoint) return options.world;
+        if (options.world?.getViewer) return options.world.getViewer();
+        return null;
+    }
+
+    /**
+     * Converts a rendered element anchor plus optional pixel offset into a world point.
+     *
+     * @param {Element} element
+     * @param {{world?:HTMLElement,viewer?:object,depth?:number,anchorX?:number,anchorY?:number,offsetX?:number,offsetY?:number}} options
+     * @returns {{x:number,y:number,z:number,clientX:number,clientY:number,rect:DOMRect,worldUnitsPerPixel:number,worldUnitsPerPixelX:number,worldUnitsPerPixelY:number,viewer:object}|null}
+     */
+    getElementWorldPoint(element, options = {}) {
+        if (!element?.getBoundingClientRect) return null;
+        const coordinateWorld = this._resolveCoordinateWorld(options);
+        if (!coordinateWorld?.viewportToWorldPoint) return null;
+
+        const rect = element.getBoundingClientRect();
+        const anchorX = Number.isFinite(Number(options.anchorX)) ? Number(options.anchorX) : 0.5;
+        const anchorY = Number.isFinite(Number(options.anchorY)) ? Number(options.anchorY) : 0.5;
+        const offsetX = Number(options.offsetX) || 0;
+        const offsetY = Number(options.offsetY) || 0;
+        const depth = Number.isFinite(Number(options.depth)) ? Number(options.depth) : -2;
+        const clientX = rect.left + rect.width * anchorX + offsetX;
+        const clientY = rect.top + rect.height * anchorY + offsetY;
+        const point = coordinateWorld.viewportToWorldPoint(clientX, clientY, depth);
+        if (!point) return null;
+
+        const xPixel = coordinateWorld.viewportToWorldPoint(clientX + 1, clientY, depth);
+        const yPixel = coordinateWorld.viewportToWorldPoint(clientX, clientY + 1, depth);
+        const worldUnitsPerPixelX = xPixel ? Math.hypot(xPixel.x - point.x, xPixel.y - point.y) : 0;
+        const worldUnitsPerPixelY = yPixel ? Math.hypot(yPixel.x - point.x, yPixel.y - point.y) : 0;
+
+        return {
+            ...point,
+            clientX,
+            clientY,
+            rect,
+            worldUnitsPerPixel: worldUnitsPerPixelY || worldUnitsPerPixelX || 0.01,
+            worldUnitsPerPixelX,
+            worldUnitsPerPixelY,
+            viewer: coordinateWorld
+        };
     }
 
     /**
@@ -333,7 +566,6 @@ class AnimationStage extends Component.HTMLElement {
      */
     onCustomChildReady(child) {
         if (!child || !child.animate) return;
-        console.log("Child ready for animation stage", { child });
         this.animatorChildren.add(child);
 
         if (this.viewer?.onAssetAdded) {
@@ -350,7 +582,6 @@ class AnimationStage extends Component.HTMLElement {
      */
     addAnimator(animator) {
         if (!animator) return;
-        console.log("Adding animator to stage", { animator });
         const canAnimate =
             animator.animate === true || typeof animator.update === "function" || typeof animator.render === "function";
         if (!canAnimate) return;
@@ -370,12 +601,16 @@ class AnimationStage extends Component.HTMLElement {
      */
     onFirstConnect() {
         AnimationComponentUtil.initialize(this);
+        this._setDimensionVar("width", this.width);
+        this._setDimensionVar("height", this.height);
 
         if (this.hasAttribute("parallax")) {
             this.parallax = true;
         }
+        this._registerBackgroundSlots();
         const defer = globalThis.requestAnimationFrame || ((fn) => setTimeout(fn, 0));
         defer(() => {
+            this._registerBackgroundSlots();
             if (this.viewer) return;
             const hostViewer = this._findViewerHost();
             if (!hostViewer || typeof hostViewer.onStageConnect !== "function") return;
@@ -461,8 +696,13 @@ class AnimationStage extends Component.HTMLElement {
             }
         }
 
-        this.ref("html").style.setProperty(`--stage-${axis}`, cssValue || "0px");
-        this.ref("html").style.setProperty(`--${axis}`, cssValue || "0px");
+        this.writeStyleVars(
+            {
+                [`--stage-${axis}`]: cssValue || "0px",
+                [`--${axis}`]: cssValue || "0px"
+            },
+            this.ref("html")
+        );
         this._refreshPlacement();
     }
 
@@ -530,6 +770,7 @@ class AnimationStage extends Component.HTMLElement {
      */
     _syncBounds() {
         const { width: stageWidth, height: stageHeight } = this._stageSize();
+        this._syncAnchorPoint(stageWidth, stageHeight);
         const anchorX = this.anchorPoint?.x || 0;
         const anchorY = this.anchorPoint?.y || 0;
         let minX = -anchorX;
@@ -541,9 +782,9 @@ class AnimationStage extends Component.HTMLElement {
             const { width: viewerWidth, height: viewerHeight } = this._viewerSize();
             const centerX = viewerWidth / 2;
             const centerY = viewerHeight / 2;
-            minX = centerX + anchorX - stageWidth;
+            minX = viewerWidth - centerX + anchorX - stageWidth;
             maxX = anchorX - centerX;
-            minY = centerY + anchorY - stageHeight;
+            minY = viewerHeight - centerY + anchorY - stageHeight;
             maxY = anchorY - centerY;
         }
 
@@ -566,19 +807,34 @@ class AnimationStage extends Component.HTMLElement {
         this._syncCameraBounds();
     }
 
+    _syncAnchorPoint(stageWidth, stageHeight) {
+        const resolve = (value, axisSize) => {
+            if (typeof value === "number") return value * axisSize;
+            const text = String(value ?? "").trim();
+            if (!text.length) return 0;
+            if (text.endsWith("%")) {
+                const percentage = Number.parseFloat(text);
+                return Number.isFinite(percentage) ? (percentage / 100) * axisSize : 0;
+            }
+            if (text.endsWith("px")) {
+                const pixels = Number.parseFloat(text);
+                return Number.isFinite(pixels) ? pixels : 0;
+            }
+            const number = Number(text);
+            return Number.isFinite(number) ? number : 0;
+        };
+
+        this.anchorPoint = {
+            x: resolve(this.anchor?.x, stageWidth),
+            y: resolve(this.anchor?.y, stageHeight)
+        };
+    }
+
     /**
      * Implements internal _stageSize behavior.
      * @returns {*} Result of _stageSize.
      */
     _stageSize() {
-        const html = this.ref?.("html");
-        if (html && typeof html.getBoundingClientRect === "function") {
-            const rect = html.getBoundingClientRect();
-            if (rect.width > 0 || rect.height > 0) {
-                return { width: rect.width, height: rect.height };
-            }
-        }
-
         const resolve = (axis) => {
             const raw = this.getAttribute(axis);
             if (typeof raw === "string") {
@@ -604,10 +860,22 @@ class AnimationStage extends Component.HTMLElement {
             return 0;
         };
 
-        return {
+        const size = {
             width: resolve("width"),
             height: resolve("height")
         };
+
+        if (size.width > 0 || size.height > 0) return size;
+
+        const html = this.ref?.("html");
+        if (html && typeof html.getBoundingClientRect === "function") {
+            const rect = html.getBoundingClientRect();
+            if (rect.width > 0 || rect.height > 0) {
+                return { width: rect.width, height: rect.height };
+            }
+        }
+
+        return size;
     }
 
     /**
@@ -643,14 +911,13 @@ class AnimationStage extends Component.HTMLElement {
      */
     _applyPositionToDOM() {
         if (!this.viewer) return;
-        const { width: viewerWidth, height: viewerHeight } = this.viewer;
-        //this.ref("world").style.left = `${viewerWidth / 2}px`;
-        //this.ref("world").style.top = `${viewerHeight / 2}px`;
-        if (this.parallax) {
-            this.writeStyleVars({ "--stage-x": this.position.x, "--stage-y": this.position.y }, this.ref("html"));
-        } else {
-            //  this.ref("anchor").style.transform = `translate3d(${this.position.x}px, ${this.position.y}px, 0)`;
-        }
+        this.writeStyleVars(
+            {
+                "--stage-x": `${this.position.x}px`,
+                "--stage-y": `${this.position.y}px`
+            },
+            this.ref("html")
+        );
     }
 
     /**
@@ -661,18 +928,17 @@ class AnimationStage extends Component.HTMLElement {
         if (!this.viewer || !this.viewer.camera || !this.bounds) return;
         const camera = this.viewer.camera;
         const { width: viewerWidth, height: viewerHeight } = this._viewerSize();
+        const { width: stageWidth, height: stageHeight } = this._stageSize();
         const centerX = viewerWidth / 2;
         const centerY = viewerHeight / 2;
         const anchorX = this.anchorPoint?.x || 0;
         const anchorY = this.anchorPoint?.y || 0;
-        const cameraOffsetX = anchorX - centerX;
-        const cameraOffsetY = anchorY - centerY;
         camera.width = viewerWidth;
         camera.height = viewerHeight;
-        camera.min.x = cameraOffsetX - this.bounds.max.x;
-        camera.max.x = cameraOffsetX - this.bounds.min.x;
-        camera.min.y = cameraOffsetY - this.bounds.max.y;
-        camera.max.y = cameraOffsetY - this.bounds.min.y;
+        camera.min.x = centerX - anchorX;
+        camera.max.x = stageWidth - anchorX - centerX;
+        camera.min.y = centerY - anchorY;
+        camera.max.y = stageHeight - anchorY - centerY;
     }
 
     namedLayers = {};

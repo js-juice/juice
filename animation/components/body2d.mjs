@@ -246,7 +246,6 @@ class Body2D extends Component.HTMLElement {
      * @returns {*} Result of onPropertyChanged.
      */
     onPropertyChanged(property, prevous, value) {
-        console.log(this.root, property, value);
         switch (property) {
             case "r":
                 this.rotation.x.value = value;

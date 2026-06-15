@@ -372,8 +372,23 @@ $align-map: (
     baseline: baseline
 );
 
-.flex-v,
-.flex-column {
+.flex\:all {
+    flex: 1 1 100%;
+}
+
+.flex\:shrink {
+    flex: 0 1 auto;
+}
+
+.flex\:grow {
+    flex: 1 0 auto;
+}
+
+.flex\:static {
+    flex: 0 0 auto;
+}
+
+.flex\:column {
     @include flex-base(column);
 
     > * {
@@ -405,10 +420,7 @@ $align-map: (
     }
 }
 
-.flex-h,
-.flex-column,
-.flex-v,
-.flex-row {
+.flex\:row {
     @include flex-base(row);
     flex-wrap: nowrap;
 
@@ -450,8 +462,8 @@ $align-map: (
     }
 }
 
-@include flex-utils("flex-column");
-@include flex-utils("flex-row");
+@include flex-utils("flex\\:column");
+@include flex-utils("flex\\:row");
 
 /***
  * 
@@ -500,6 +512,7 @@ a.button {
 }
 
 .row {
+    width: 100%;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
@@ -543,5 +556,17 @@ a.button {
     }
     &.gap\:2 {
         gap: 2rem;
+    }
+}
+
+@for $i from 1 through 9 {
+    .gap\:#{ fn.decimal-class( $i * 0.1 )} {
+        gap: unit.rem($i * 0.1);
+    }
+}
+
+@for $i from 0 through 10 {
+    .gap\:#{ fn.decimal-class( 1 + $i * 0.5 ) } {
+        gap: unit.rem(1 + $i * 0.5);
     }
 }

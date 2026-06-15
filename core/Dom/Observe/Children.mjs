@@ -4,7 +4,7 @@
  * @module Dom/Observe/Children
  */
 
-import Emitter from "../../Event/Emitter.mjs";
+import Emitter from "../../event/emitter.mjs";
 
 /**
  * Observes changes to an element's children.
@@ -23,9 +23,8 @@ class ObserveChildren extends Emitter {
         super();
 
         this.initialize();
-        if (element ) this.observe(element);
-        if(callback) this.callback = callback;
-        
+        if (element) this.observe(element);
+        if (callback) this.callback = callback;
     }
 
     observe(el) {
@@ -44,7 +43,7 @@ class ObserveChildren extends Emitter {
                     debug("A child node has been added or removed.");
                     this.emit("update", mutation.type);
                 } else if (mutation.type === "attributes") {
-                    debug("The " + mutation.attributeName +" attribute was modified.");
+                    debug("The " + mutation.attributeName + " attribute was modified.");
                     this.emit("update", mutation.type, mutation.attributeName);
                 }
             }

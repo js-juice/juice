@@ -8,6 +8,7 @@ class CardComponent extends Component.HTMLElement {
             height: { type: "int", default: "auto", linked: true },
             draggable: { type: "exists", default: false, linked: true },
             container: { type: "string" },
+            bounds: { type: "array[number]", default: [0, 0, 0, 0], linked: true },
             title: { type: "string", default: null, linked: true },
             description: { type: "string", default: null, linked: true },
             color: { type: "string", default: "#000" }
@@ -15,7 +16,7 @@ class CardComponent extends Component.HTMLElement {
     };
 
     static get observed() {
-        return { all: ["width", "height", "draggable", "title", "color"] };
+        return { all: ["width", "height", "draggable", "title", "color", "bounds"] };
     }
 
     static get style() {
@@ -303,7 +304,7 @@ class CardComponent extends Component.HTMLElement {
                 <p>${this.description ? this.description : ""}</p>
                 <slot name="description"></slot>
             </header>
-            <main>
+            <main id="contents">
                 <slot></slot>
             </main>
             <footer>
@@ -326,6 +327,58 @@ class CardComponent extends Component.HTMLElement {
     loadTemplate(tpl, context, options = {}) {
         const template = new Template(options);
         return template.mount(this.ref("html"), tpl, context);
+    }
+
+    getBounds() {
+        const card = this;
+        const bounds = { left: this.bounds[0], top: this.bounds[1], right: this.bounds[2], bottom: this.bounds[3] };
+
+        function resolveContainer() {
+            if (!card.hasAttribute("container")) return null;
+
+            const id = card.getAttribute("container")?.trim();
+            if (!id) return card.parentElement;
+            if (id.toLowerCase() === "window") return window;
+
+            const byId = document.getElementById(id);
+            if (byId) return byId;
+
+            try {
+                return document.querySelector(id);
+            } catch {
+                return null;
+            }
+        }
+
+        function getContainerBounds(container) {
+            if (container === window) {
+                return {
+                    left: 0 + bounds.left,
+                    top: 0 + bounds.top,
+                    right: window.innerWidth - bounds.right,
+                    bottom: window.innerHeight - bounds.bottom
+                };
+            }
+
+            return container.getBoundingClientRect();
+        }
+
+        const container = resolveContainer();
+
+        if (container) {
+            const startBounds = getContainerBounds(container);
+
+            return {
+                left: startBounds.left + bounds.left,
+                top: startBounds.top + bounds.top,
+                right: startBounds.right - bounds.right,
+                bottom: startBounds.bottom - bounds.bottom,
+                width: startBounds.right - startBounds.left,
+                height: startBounds.bottom - startBounds.top
+            };
+        }
+
+        return bounds;
     }
 
     toggleVisibility(e) {
@@ -380,13 +433,15 @@ class CardComponent extends Component.HTMLElement {
             }
         }
 
+        const bounds = { left: this.bounds[0], top: this.bounds[1], right: this.bounds[2], bottom: this.bounds[3] };
+
         function getContainerBounds(container) {
             if (container === window) {
                 return {
-                    left: 0,
-                    top: 0,
-                    right: window.innerWidth,
-                    bottom: window.innerHeight
+                    left: 0 + bounds.left,
+                    top: 0 + bounds.top,
+                    right: window.innerWidth - bounds.right,
+                    bottom: window.innerHeight - bounds.bottom
                 };
             }
 
@@ -480,6 +535,20 @@ class CardComponent extends Component.HTMLElement {
             onDragStart,
             onNativeDragStart
         };
+
+        // const container = resolveContainer();
+
+        const startBounds = this.getBounds();
+        const rect = card.getBoundingClientRect();
+        const maxHeight = startBounds.height - rect.height;
+        const maxWidth = startBounds.width - rect.width;
+        let left = clamp(rect.left, startBounds.left, startBounds.right - rect.width);
+        let top = clamp(rect.top, startBounds.top, startBounds.bottom - rect.height);
+        card.style.left = `${left}px`;
+        card.style.top = `${top}px`;
+
+        this.ref("contents").style.maxHeight = `${maxHeight}px`;
+        this.ref("contents").style.maxWidth = `${maxWidth}px`;
     }
 
     onFirstConnect() {

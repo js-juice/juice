@@ -10,6 +10,27 @@ import EventEmitter from "../core/Event/Emitter.mjs";
 
 import { change } from "../core/Util/Object.mjs";
 
+const root = typeof globalThis !== "undefined" ? globalThis : {};
+const raf =
+    (typeof root.requestAnimationFrame === "function" && root.requestAnimationFrame.bind(root)) ||
+    ((fn) => setTimeout(() => fn(nowMS()), 1000 / 60));
+const caf =
+    (typeof root.cancelAnimationFrame === "function" && root.cancelAnimationFrame.bind(root)) ||
+    ((requestID) => clearTimeout(requestID));
+
+function nowMS() {
+    if (root.performance && typeof root.performance.now === "function") {
+        return root.performance.now();
+    }
+    return Date.now();
+}
+
+export function resolveEasing(easing = Easing.linear) {
+    if (typeof easing === "function") return easing;
+    if (typeof easing === "string" && Easing[easing]) return Easing[easing];
+    return Easing.linear;
+}
+
 /**
  * Animates a single value from start to end over duration with easing.
  * @class Tween
@@ -29,26 +50,56 @@ import { change } from "../core/Util/Object.mjs";
 export default class Tween extends EventEmitter {
     /** @type {Object} Callback functions */
     callbacks = {};
-    
+
     constructor(startValue, endValue, duration, easingFunction = Easing.linear, easeDuration) {
         super();
         this.startValue = startValue;
         this.endValue = endValue;
-        this.duration = duration;
+        this.duration = Math.max(0, Number(duration) || 0);
         this.easeDuration = easeDuration || duration;
-        this.easingFunction = easingFunction;
+        this.easingFunction = resolveEasing(easingFunction);
         this.startTime = null;
         this.animationFrameId = null;
-        this.onUpdate = null; // Callback function to apply the updated value
-        this.onComplete = null; // Callback function when tweening is complete
+        this.running = false;
+        this.value = {
+            start: startValue,
+            end: endValue,
+            diff: endValue - startValue
+        };
+        this.time = {
+            start: null,
+            end: 0,
+            current: 0,
+            last: 0,
+            delta: 0
+        };
+        this.callbacks = {
+            update: null,
+            complete: null
+        };
+        this._update = this._update.bind(this);
     }
 
     /**
      * Starts the tween animation.
      */
     start() {
-        this.startTime = performance.now();
-        this.animationFrameId = requestAnimationFrame(this._update.bind(this));
+        this.stop();
+        this.running = true;
+        this.time.start = nowMS();
+        this.time.current = 0;
+        this.time.last = 0;
+        this.time.delta = 0;
+
+        if (this.duration === 0) {
+            if (this.callbacks.update) this.callbacks.update(this.value.end, 1);
+            if (this.callbacks.complete) this.callbacks.complete();
+            this.running = false;
+            return this;
+        }
+
+        this.animationFrameId = raf(this._update);
+        return this;
     }
 
     /**
@@ -57,7 +108,7 @@ export default class Tween extends EventEmitter {
      * @returns {Tween} This instance for chaining
      */
     update(fn) {
-        this.callbacks.update = fn;
+        this.callbacks.update = fn.bind(this);
         return this;
     }
 
@@ -67,7 +118,7 @@ export default class Tween extends EventEmitter {
      * @returns {Tween} This instance for chaining
      */
     complete(fn) {
-        this.callbacks.complete = fn;
+        this.callbacks.complete = fn.bind(this);
         return this;
     }
 
@@ -77,15 +128,20 @@ export default class Tween extends EventEmitter {
      * @private
      */
     _update(currentTime) {
-        const elapsedTime = currentTime - this.startTime;
-        const progress = Math.min(elapsedTime / this.duration, 1);
+        if (!this.running) return;
+
+        this.time.last = this.time.current;
+        this.time.current = Math.max(0, currentTime - this.time.start);
+        this.time.delta = this.time.current - this.time.last;
+
+        const progress = Math.min(this.time.current / this.duration, 1);
         const easedProgress = this.easingFunction(progress);
-        const currentValue = this.startValue + (this.endValue - this.startValue) * easedProgress;
+        const currentValue = this.value.start + this.value.diff * easedProgress;
 
         if (this.callbacks.update) this.callbacks.update(currentValue, progress);
 
         if (progress < 1) {
-            this.animationFrameId = requestAnimationFrame(this._update.bind(this));
+            this.animationFrameId = raf(this._update);
         } else {
             if (this.callbacks.complete) this.callbacks.complete();
             this.stop();
@@ -97,9 +153,11 @@ export default class Tween extends EventEmitter {
      */
     stop() {
         if (this.animationFrameId) {
-            cancelAnimationFrame(this.animationFrameId);
+            caf(this.animationFrameId);
             this.animationFrameId = null;
         }
+        this.running = false;
+        return this;
     }
 }
 

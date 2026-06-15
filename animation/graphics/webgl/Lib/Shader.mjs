@@ -123,16 +123,11 @@ export class Shader {
      * @returns {*} Result of onProgramLoaded.
      */
     onProgramLoaded(program) {
-        console.log(`Shader.onProgramLoaded called with program ${program}`);
         this.program = program;
         for (const name in this.variables) {
             const variable = this.variables[name];
-            console.log(`Shader.onProgramLoaded trying to bind ${name}`);
             if (variable.bind) {
-                console.log(`Shader.onProgramLoaded binding ${name}`);
                 variable.bind(this.gl, this.program);
-            } else {
-                console.log(`Shader.onProgramLoaded could not bind or call onProgram on ${name}`);
             }
         }
     }

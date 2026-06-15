@@ -291,7 +291,6 @@ class ScrollingBackground {
         this.locations.texture2 = program.uniformLocation("u_texture2");
         this.locations.blendFactor = program.uniformLocation("u_blendFactor");
 
-        gl.uniform1f(this.locations.brightness, 3.5);
         // Pass the canvas size as a uniform to the shader
         gl.uniform2f(this.locations.canvasSize, this.textureCanvas.width, this.textureCanvas.height);
 

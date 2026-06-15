@@ -52,13 +52,14 @@ export class Attribute extends VariableBase {
      */
     upload() {
         const { gl, settings } = this;
-        if (this._value === undefined || !this._location) return;
+        const location = this.location;
+        if (this._value === undefined || location === null || location === undefined || location === -1) return;
         // console.log("upload buffer", this._buffer, this._value);
         if (!this.buffer) this.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this._value), gl.DYNAMIC_DRAW);
-        gl.vertexAttribPointer(this._location, settings.args, gl[settings.argType], false, 0, 0);
-        gl.enableVertexAttribArray(this._location);
+        gl.vertexAttribPointer(location, settings.args, gl[settings.argType], false, 0, 0);
+        gl.enableVertexAttribArray(location);
         checkGLError(this.gl);
     }
 

@@ -9,7 +9,6 @@ export { default as AnimationBodyTarget } from "./body-target.mjs";
 export * as Components from "./components/index.mjs";
 export * as Graphics from "./graphics/index.mjs";
 export * as Properties from "./properties/index.mjs";
-export { default as AnimationBody } from "./components/body.mjs";
 export {
     AnimationBackground,
     AnimationComponent,

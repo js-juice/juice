@@ -74,7 +74,6 @@ class GL {
         gl.attachShader(program, fragmentShader);
         gl.linkProgram(program);
         if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-            console.error(gl.getProgramInfoLog(program));
             gl.deleteProgram(program);
             return null;
         }

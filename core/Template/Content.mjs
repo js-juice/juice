@@ -3,7 +3,7 @@
  * @module template/content
  */
 
-import EventEmitter from "../Event/Emitter.mjs";
+import EventEmitter from "../event/emitter.mjs";
 import Token from "./token.mjs";
 import Context from "./context.mjs";
 

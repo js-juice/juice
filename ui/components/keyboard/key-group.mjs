@@ -47,8 +47,8 @@ const KEY_GROUPS = {
     arrows: [
         [{ key: "↑", code: "ArrowUp" }],
         [
-            { key: "↓", code: "ArrowDown" },
             { key: "←", code: "ArrowLeft" },
+            { key: "↓", code: "ArrowDown" },
             { key: "→", code: "ArrowRight" }
         ]
     ]
@@ -58,7 +58,7 @@ export default class KeyGroup extends Component.HTMLElement {
     static tag = "ui-key-group";
     static config = {
         properties: {
-            layout: { type: "string", default: "qwerty", allowed: ["qwerty", "wasd", "arrows"] }
+            layout: { type: "string", default: "qwerty", allowed: ["qwerty", "wasd", "arrows"], linked: true }
         }
     };
 
@@ -95,7 +95,6 @@ export default class KeyGroup extends Component.HTMLElement {
                 ".row": {
                     display: "flex",
                     justifyContent: "center",
-                    marginBottom: "0.5rem",
                     alignItems: "center"
                 }
             }
@@ -112,14 +111,16 @@ export default class KeyGroup extends Component.HTMLElement {
                 const keyElement = document.createElement("ui-key");
                 keyElement.setAttribute("key", keyData.key);
                 keyElement.setAttribute("code", keyData.code);
-                this.keys[keyData.key] = keyElement;
+                keyElement.setAttribute("grouped", "");
+                this.keys[keyData.code.toUpperCase()] = keyElement;
                 domRow.appendChild(keyElement);
             });
         });
 
         window.addEventListener("keydown", (e) => {
-            console.log("Key down:", e.key, e.code);
-            const keyElement = this.keys[e.key.toUpperCase()];
+            console.log("Key down:", e.key, e.code, e.key.toUpperCase());
+            console.log(this.keys);
+            const keyElement = this.keys[e.code.toUpperCase()];
             console.log("Mapped key element:", keyElement);
             if (keyElement) {
                 keyElement.press();
@@ -134,3 +135,5 @@ export default class KeyGroup extends Component.HTMLElement {
         });
     }
 }
+
+customElements.define(KeyGroup.tag, KeyGroup);

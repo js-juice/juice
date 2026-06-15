@@ -4,6 +4,8 @@ import AnimationTimeline from "./timeline.mjs";
 class Animation {
     controls;
 
+    _methods = {};
+    _methodListeners = new Set();
     viewer;
     stage;
     state = {};
@@ -49,6 +51,36 @@ class Animation {
 
     findAssetByElement(element) {
         return this.tree.lookupAssetByElement(element);
+    }
+
+    defineMethod(name, method) {
+        const methodName = String(name || "").trim();
+        if (!methodName || typeof method !== "function") return null;
+
+        this._methods[methodName] = method;
+        this._notifyMethodDefined(methodName, method);
+        return method;
+    }
+
+    getMethod(name) {
+        return this._methods?.[name] || null;
+    }
+
+    onMethodDefined(listener) {
+        if (typeof listener !== "function") return () => {};
+        this._methodListeners.add(listener);
+        return () => this._methodListeners.delete(listener);
+    }
+
+    _notifyMethodDefined(name, method) {
+        const detail = { name, method, animation: this };
+        this._methodListeners.forEach((listener) => {
+            try {
+                listener(detail);
+            } catch (_error) {
+                // Method listeners should not break animation setup.
+            }
+        });
     }
 }
 

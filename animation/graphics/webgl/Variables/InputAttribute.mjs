@@ -43,10 +43,7 @@ class InputAttribute extends VariableBase {
     upload() {
         const { settings, gl } = this;
         if (!this.buffer) this.createBuffer();
-        if (!this.buffer) {
-            console.warn("Cant upload buffer before its created", this);
-        }
-        console.log("UPLOAD INPUT BUFFER", this.name, this._value.length);
+        if (!this.buffer) return;
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this._value), gl.DYNAMIC_DRAW);
 
@@ -73,12 +70,10 @@ class InputAttribute extends VariableBase {
     bindBuffer() {
         const { settings, gl } = this;
         if (!this.buffer) this.createBuffer();
-        console.log("Binding Input Buffer", this.name);
         //Bind Input for Reading
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
         gl.enableVertexAttribArray(this.location);
         gl.vertexAttribPointer(this.location, 3, gl.FLOAT, false, 0, 0);
-        console.log("Input Buffer Bound", this.name);
     }
 
     /**
@@ -87,18 +82,14 @@ class InputAttribute extends VariableBase {
      */
     createBuffer() {
         const { settings, gl } = this;
-        console.log("CREATE BUFFERS", this.name);
         this.buffer = gl.createBuffer();
 
-        console.log("INIT READ BUFFER", this.name);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
         if (this._value) {
-            console.log("READ BUFFER DATA", this.name, this._value.length);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this._value.length), gl.DYNAMIC_DRAW);
         }
 
         //Clean up
-        console.log("CLEAN UP", this.name);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
     }
 

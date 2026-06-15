@@ -70,22 +70,24 @@
  * @attribute {number} transition-spread - Mask transition stagger from 0 to 1.
  * @attribute {string|object} spawn-volume - JSON object with `{type, params}` for random non-mask seeding.
  * @attribute {number} max-speed - Initial random velocity range used by the particle buffer.
- * @attribute {number|string} camera-pan - Fake camera pan as JSON, comma list, or space list: `x,y`.
+ * @attribute {number|string} camera-pan - Fake camera pan as JSON, comma list, or space list: `x,y,z`.
  * @attribute {number|string} camera-angle - Fake camera yaw/pitch as JSON, comma list, or space list: `yaw,pitch`.
  * @attribute {number} camera-pan-x - Fake camera pan X value.
  * @attribute {number} camera-pan-y - Fake camera pan Y value.
+ * @attribute {number} camera-pan-z - Fake camera pan Z value.
  * @attribute {number} camera-yaw - Fake camera yaw value.
  * @attribute {number} camera-pitch - Fake camera pitch value.
  * @attribute {number} camera-pan-scale - Pan movement multiplier.
  * @attribute {number} camera-angle-scale - Yaw/pitch movement multiplier.
  * @attribute {number} camera-depth-effect - Depth parallax strength.
  * @attribute {number} camera-max-step - Maximum fake camera movement applied per frame.
+ * @attribute {boolean} ignore-positioning - When slotted as a stage background, prevents stage camera positioning from moving this world.
  * @attribute {boolean} emitter - Enables the WebGL emitter adapter.
  * @attribute {string|object} emitter-config - JSON object passed to `addEmitter()`.
  *
  * DOM methods for imperative controls:
  * - `setMask(source, options)` loads and applies a mask image.
- * - `setMaskSettings(options)` updates active mask placement settings like `maskMode`, `scatter`, `anchor`, and `rotation`.
+ * - `setMaskSettings(options)` updates active mask settings like `particleGap`, `scatter`, and transition values.
  * - `loadMask(source, options)` loads a mask and optionally applies it.
  * - `applyMask(maskIndex, buildOptions)` applies a previously loaded mask.
  * - `clearMask(buildOptions)` removes mask influence and rebuilds particles.
@@ -95,11 +97,11 @@
  * - `setOrbit(enabled, options)`, `setRepel(enabled, options)`, and `setMode(mode)` change interaction mode.
  * - `createRepelPoint(options)` and `createOrbitPoint(options)` return handles with `moveTo()`, `position()`, `update()`, and `disable()`.
  * - `setMotion(config)` / `applyMotionConfig(config)` update drift/orbit/repel motion.
- * - `setCameraPan(x, y)`, `moveCameraPan(x, y)`, `setCameraAngle(yaw, pitch)`, `moveCameraAngle(yaw, pitch)`,
+ * - `setCameraPan(x, y, z)`, `moveCameraPan(x, y, z)`, `setCameraAngle(yaw, pitch)`, `moveCameraAngle(yaw, pitch)`,
  *   `setCameraMotion(config)`, and `setCameraDepthEffect(value)` control the fake depth/parallax camera.
  * - `setDebugCrosshair(mode)` controls the particle debug overlay.
  * - `setGravity([x, y, z])` and `setFriction(value)` update simulation environment.
- * - `addEmitter(config)`, `removeEmitter()`, and `getEmitter()` control the WebGL emitter adapter.
+ * - `addEmitter(config)`, `removeEmitter()`, `getEmitter()`, `clearParticles()`, and `setParticleBehavior(config)` control emitter particles.
  * - `scatter(options)`, `jitter(amount, options)`, `captureSnapshot(name)`, `restoreSnapshot(name)`, `reset(options)`,
  *   `getBounds()`, `start()`, `stop()`, `particles`, and `setValue(name, value)` are also callable on the element.
  */
@@ -278,6 +280,7 @@ class ParticleWorldComponent extends Component.HTMLElement {
             "max-speed": { type: "number", default: 0.03, linked: true },
             "camera-pan-x": { type: "number", default: 0, linked: true },
             "camera-pan-y": { type: "number", default: 0, linked: true },
+            "camera-pan-z": { type: "number", default: 0, linked: true },
             "camera-yaw": { type: "number", default: 0, linked: true },
             "camera-pitch": { type: "number", default: 0, linked: true },
             "camera-pan-scale": { type: "number", default: 1, linked: true },
@@ -352,13 +355,16 @@ class ParticleWorldComponent extends Component.HTMLElement {
         super();
     }
 
-    openDebugPanel() {
+    openDebugPanel(bounds = [0, 0, 0, 0]) {
         const viewer = this.getViewer();
         if (!viewer?.openDebugPanel) return;
         const root = this.getRootNode?.() || document;
-        const worlds = Array.from(root.querySelectorAll?.("particle-world") || document.querySelectorAll("particle-world"));
+        const worlds = Array.from(
+            root.querySelectorAll?.("particle-world") || document.querySelectorAll("particle-world")
+        );
         viewer.openDebugPanel({
             world: this,
+            bounds,
             worlds,
             instanceCount: worlds.length,
             instanceIndex: worlds.indexOf(this)
@@ -450,7 +456,9 @@ class ParticleWorldComponent extends Component.HTMLElement {
 
         const scatter = this._readNumber("mask-scatter", options.scatter);
         if (scatter !== null) options.scatter = Math.max(0, Math.min(1, scatter));
-        const scatterShape = String(this._readSetting("mask-scatter-shape", options.scatterShape || "box")).toLowerCase();
+        const scatterShape = String(
+            this._readSetting("mask-scatter-shape", options.scatterShape || "box")
+        ).toLowerCase();
         options.scatterShape = scatterShape === "sphere" ? "sphere" : "box";
 
         const anchorVector = parseVector(this._readSetting("mask-anchor", null), []);
@@ -503,7 +511,7 @@ class ParticleWorldComponent extends Component.HTMLElement {
         return options;
     }
 
-    _applyEngineAttributes({ applyMask = false, rebuildFreeParticles = false } = {}) {
+    _applyEngineAttributes({ applyMask = false, reloadMask = false, rebuildFreeParticles = false } = {}) {
         const viewer = this.getViewer();
         if (!viewer) return;
 
@@ -540,13 +548,14 @@ class ParticleWorldComponent extends Component.HTMLElement {
         this.setFriction(this._readNumber("friction", 0));
         const cameraPan = parseVector(this._readSetting("camera-pan", null), [
             this._readNumber("camera-pan-x", 0),
-            this._readNumber("camera-pan-y", 0)
+            this._readNumber("camera-pan-y", 0),
+            this._readNumber("camera-pan-z", 0)
         ]);
         const cameraAngle = parseVector(this._readSetting("camera-angle", null), [
             this._readNumber("camera-yaw", 0),
             this._readNumber("camera-pitch", 0)
         ]);
-        this.setCameraPan(parseNumber(cameraPan[0], 0), parseNumber(cameraPan[1], 0));
+        this.setCameraPan(parseNumber(cameraPan[0], 0), parseNumber(cameraPan[1], 0), parseNumber(cameraPan[2], 0));
         this.setCameraAngle(parseNumber(cameraAngle[0], 0), parseNumber(cameraAngle[1], 0));
         this.setCameraMotion({
             panScale: this._readNumber("camera-pan-scale", 1),
@@ -581,10 +590,10 @@ class ParticleWorldComponent extends Component.HTMLElement {
         }
 
         const mask = this._readSetting("mask", "");
-        if (applyMask && mask) {
-            this.setMask(mask, this._buildMaskOptions()).catch((error) => {
-                console.error("[particle-world] Failed to apply mask attributes:", error);
-            });
+        if (applyMask && mask && (reloadMask || !Number.isFinite(viewer.maskIndex))) {
+            this.setMask(mask, this._buildMaskOptions()).catch(() => {});
+        } else if (applyMask) {
+            this.applyActiveMaskSettings();
         }
     }
 
@@ -647,7 +656,6 @@ class ParticleWorldComponent extends Component.HTMLElement {
      */
     update(time) {
         // if (this.particleViewer) this.particleViewer.update(time.delta);
-        // console.log("Updated", this.count);
     }
 
     /**
@@ -661,12 +669,10 @@ class ParticleWorldComponent extends Component.HTMLElement {
             const x = this.positions[p];
             const y = this.positions[p + 1];
             const z = this.positions[p + 2];
-            if (i == 0) console.log(x, y);
             buffer.pixel(x, y, [255, 255, 255, 255]);
         }
         buffer.put(this.ctx);
 
-        console.log("Rendered", this.count);
         */
     }
 
@@ -675,6 +681,7 @@ class ParticleWorldComponent extends Component.HTMLElement {
      */
     build() {
         const { randomness, maxParticles } = this.particleConfig || PARTICLE_CONFIG;
+        this._ensureLocalParticleBuffers(maxParticles);
         const width = this.renderWidth || this.clientWidth || this.width || 1;
         const height = this.renderHeight || this.clientHeight || this.height || 1;
         const spawnPoint = { x: Math.floor(width / 2), y: Math.floor(height / 2) };
@@ -688,10 +695,19 @@ class ParticleWorldComponent extends Component.HTMLElement {
         }
 
         this.spawnPoint = spawnPoint;
-        console.log("Built", maxParticles);
 
         this.update({ delta: 0 });
         this.render();
+    }
+
+    _ensureLocalParticleBuffers(maxParticles = this.particleConfig?.maxParticles || PARTICLE_CONFIG.maxParticles) {
+        const count = Math.max(8, Math.floor(Number(maxParticles) || PARTICLE_CONFIG.maxParticles));
+        if (!this.positions || this.positions.length < count * 3) this.positions = new Float32Array(count * 3);
+        if (!this.velocities || this.velocities.length < count * 3) this.velocities = new Float32Array(count * 3);
+        if (!this.sizes || this.sizes.length < count) this.sizes = new Float32Array(count);
+        if (!this.colors || this.colors.length < count * 4) this.colors = new Float32Array(count * 4);
+        if (!this.lifetimes || this.lifetimes.length < count) this.lifetimes = new Float32Array(count);
+        if (!this.orbits || this.orbits.length < count * 3) this.orbits = new Float32Array(count * 3);
     }
 
     /**
@@ -731,6 +747,7 @@ class ParticleWorldComponent extends Component.HTMLElement {
                 }
             }
         }
+        if (this.renderer === "webgl") return;
         this.build();
     }
 
@@ -760,8 +777,7 @@ class ParticleWorldComponent extends Component.HTMLElement {
                 this.particleViewer.worldElement = this;
                 this.particleViewer.start();
                 this._applyEngineAttributes({ applyMask: true, rebuildFreeParticles: true });
-            } catch (error) {
-                console.error("[particle-world] WebGL init failed. Falling back to 2d canvas.", error);
+            } catch (_error) {
                 this.renderer = "canvas";
                 this.ctx = canvas.getContext("2d");
             }
@@ -860,19 +876,37 @@ class ParticleWorldComponent extends Component.HTMLElement {
     }
 
     /**
-     * Updates mask placement settings and reapplies the active mask when possible.
+     * Updates active mask settings and reapplies the loaded mask without reloading the source image.
      *
-     * @param {{maskMode?:"replace"|"append",scatter?:number,anchor?:object,rotation?:number|string}} [settings={}]
+     * @param {{maskMode?:"replace"|"append",particleGap?:number,scatter?:number,anchor?:object,rotation?:number|string,transition?:boolean,transitionDuration?:number,transitionSpread?:number}} [settings={}]
      * @returns {object} Active mask settings.
      */
     setMaskSettings(settings = {}) {
         if (!settings || typeof settings !== "object") return this.maskSettings;
         this.maskSettings = { ...this.maskSettings, ...settings };
+        this.applyActiveMaskSettings();
+        return this.maskSettings;
+    }
+
+    /**
+     * Reapplies the active loaded mask with current component and runtime settings.
+     *
+     * @param {object} [settings={}]
+     * @returns {boolean}
+     */
+    applyActiveMaskSettings(settings = {}) {
+        if (settings && typeof settings === "object") {
+            this.maskSettings = { ...this.maskSettings, ...settings };
+        }
         const viewer = this.getViewer();
         if (viewer?.applyMask && Number.isFinite(viewer.maskIndex)) {
-            viewer.applyMask(viewer.maskIndex, { ...this.maskSettings, reuseMaskRange: true });
+            return viewer.applyMask(viewer.maskIndex, {
+                ...this._buildMaskOptions(),
+                ...this.maskSettings,
+                reuseMaskRange: true
+            });
         }
-        return this.maskSettings;
+        return false;
     }
 
     /**
@@ -1073,11 +1107,12 @@ class ParticleWorldComponent extends Component.HTMLElement {
      *
      * @param {number} x
      * @param {number} y
+     * @param {number} z
      */
-    setCameraPan(x = 0, y = 0) {
+    setCameraPan(x = 0, y = 0, z = 0) {
         const viewer = this.getViewer();
         if (!viewer?.setCameraPan) return;
-        viewer.setCameraPan(x, y);
+        viewer.setCameraPan(x, y, z);
     }
 
     /**
@@ -1085,11 +1120,12 @@ class ParticleWorldComponent extends Component.HTMLElement {
      *
      * @param {number} x
      * @param {number} y
+     * @param {number} z
      */
-    moveCameraPan(x = 0, y = 0) {
+    moveCameraPan(x = 0, y = 0, z = 0) {
         const viewer = this.getViewer();
         if (!viewer?.moveCameraPan) return;
-        viewer.moveCameraPan(x, y);
+        viewer.moveCameraPan(x, y, z);
     }
 
     /**
@@ -1174,6 +1210,27 @@ class ParticleWorldComponent extends Component.HTMLElement {
         if (!viewer?.removeEmitter) return;
         viewer.removeEmitter();
         this.activeEmitter = null;
+    }
+
+    /**
+     * Clears active particles without rebuilding the default free-particle field.
+     *
+     * @returns {boolean}
+     */
+    clearParticles() {
+        const viewer = this.getViewer();
+        return !!viewer?.clearParticles?.();
+    }
+
+    /**
+     * Defines how emitter particles change over their normalized lifetime.
+     *
+     * @param {{startScale?:number,endScale?:number,fadeStart?:number,fadeEnd?:number}} config
+     */
+    setParticleBehavior(config = {}) {
+        const viewer = this.getViewer();
+        if (!viewer?.setParticleBehavior) return;
+        viewer.setParticleBehavior(config);
     }
 
     /**
@@ -1305,17 +1362,22 @@ class ParticleWorldComponent extends Component.HTMLElement {
             case "height":
                 break;
             case "particles":
-            case "emit-rate":
-            case "particle-size":
-            case "min-particle-size":
                 this._syncParticleConfigFromAttributes();
                 this.setParticleCount(this.particleConfig.maxParticles, property !== "particles");
+                break;
+            case "emit-rate":
+                this._syncParticleConfigFromAttributes();
+                if (this.particleViewer) this.particleViewer.emitRate = this.particleConfig.emitRate;
+                break;
+            case "particle-size":
+            case "min-particle-size":
+                this.setParticleRenderSize(this._readNumber("particle-size", 3), this._readNumber("min-particle-size", 1.5));
                 break;
             case "particle-shape":
                 this.setParticleShape(value);
                 break;
             case "mask":
-                this._applyEngineAttributes({ applyMask: true });
+                this._applyEngineAttributes({ applyMask: true, reloadMask: true });
                 break;
             default:
                 this._applyEngineAttributes({
@@ -1380,7 +1442,7 @@ class ParticleWorldComponent extends Component.HTMLElement {
             case "transition":
             case "transition-duration":
             case "transition-spread":
-                this._applyEngineAttributes({ applyMask: true });
+                this._applyEngineAttributes({ applyMask: true, reloadMask: property === "mask" });
                 break;
             default:
                 this._applyEngineAttributes({
