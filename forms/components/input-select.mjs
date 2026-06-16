@@ -1,4 +1,4 @@
-/**
+/*
  * AUTODOC:START
  * Component: <input-select>
  * Class: InputSelect
@@ -45,7 +45,7 @@
  * Part Names:
  * - `input-wrapper` (inherited from InputComponent).
  * AUTODOC:END
- */
+*/
 
 import InputComponent from "./input-component.mjs";
 
