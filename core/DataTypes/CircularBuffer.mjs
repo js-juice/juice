@@ -123,7 +123,7 @@ class CircularBuffer {
         for (let i = 0; i < this.length; i++) {
             result.push(this.buffer[(this.tail + i) % this.size]);
         }
-        console.log(result);
+        console.trace(result);
     }
 }
 /*

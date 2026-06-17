@@ -209,6 +209,12 @@ class ScrollBar extends Component.HTMLElement {
                     bottom: 0,
                     left: 0
                 },
+                "#html": {
+                    position: "absolute",
+                    display: "block",
+                    width: "100%",
+                    height: "100%"
+                },
                 "#handle": {
                     position: "absolute",
                     display: "block",
@@ -223,7 +229,8 @@ class ScrollBar extends Component.HTMLElement {
                     display: "block",
                     width: "100%",
                     height: "100%",
-                    overflow: "hidden"
+                    overflow: "hidden",
+                    background: "var(--bgcolor, #FFFFFF)"
                 },
                 ':host([axis="y"]) #handle': {
                     width: "100%"
@@ -246,7 +253,7 @@ class ScrollBar extends Component.HTMLElement {
 
         this.handle = this.ref("handle");
         this.bar = this.ref("bar");
-        this.content.addEventListener("wheel", this.onWheel.bind(this), { passive: true });
+        window.addEventListener("wheel", this.onWheel.bind(this), { passive: true });
         this.handle.addEventListener("pointerdown", this.onHandleDown, false);
         Observe.resize(this, this.onResize.bind(this));
 
@@ -644,11 +651,13 @@ class ScrollView extends Component.HTMLElement {
         this.scrollX.hook(({ value, percent }) => {
             this.xValue.value = value;
             this.dispatchEvent(new CustomEvent("scroll-x", { detail: { value, percent } }));
+            this.ref("html").style.setProperty("--scroll-x-progress", percent);
         });
 
         this.scrollY.hook(({ value, percent }) => {
             this.yValue.value = value;
             this.dispatchEvent(new CustomEvent("scroll-y", { detail: { value, percent } }));
+            this.ref("html").style.setProperty("--scroll-y-progress", percent);
         });
 
         if (this.hasAttribute("lock")) {

@@ -67,12 +67,12 @@
                 <p><a href="./index.html">Back to Animation Examples</a></p>
                 <article class="card demo-card">
                     <h1>Body Example</h1>
-                    <p>Using <code>animation/components/body.mjs</code> directly.</p>
+                    <p>Using <code>animation/components/animation-component.mjs</code> directly.</p>
 
                     <div class="stage" id="stage">
-                        <animation-body id="demo-body" debug anchor="center center">
+                        <animation-component id="demo-body" debug anchor="center center">
                             <div class="body-box"></div>
-                        </animation-body>
+                        </animation-component>
                     </div>
 
                     <div class="readout">
@@ -87,7 +87,7 @@
         </main>
 
         <script type="module">
-            import "../components/body.mjs";
+            import "../components/animation-component.mjs";
             import "./lib/code-box.mjs";
 
             const stage = document.getElementById("stage");
@@ -98,7 +98,7 @@
             const rEl = document.getElementById("r");
             const codeBox = document.getElementById("example-code");
 
-            codeBox.code = `import "../components/body.mjs";
+            codeBox.code = `import "../components/animation-component.mjs";
 
 const stage = document.getElementById("stage");
 const body = document.getElementById("demo-body");

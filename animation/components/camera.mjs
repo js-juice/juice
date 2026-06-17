@@ -49,11 +49,7 @@ class Camera {
      */
     set x(value) {
         if (!this.viewer.stage) return;
-        const stage = this.viewer.stage;
-        const viewerWidth = Number(this.viewer.width) || this.width || 0;
-        const centerX = viewerWidth / 2;
-        const anchorX = stage.anchorPoint?.x || 0;
-        stage.position.x = anchorX - value - centerX;
+        this.viewer.stage.position.x = -value;
     }
 
     /**
@@ -63,11 +59,7 @@ class Camera {
      */
     set y(value) {
         if (!this.viewer.stage) return;
-        const stage = this.viewer.stage;
-        const viewerHeight = Number(this.viewer.height) || this.height || 0;
-        const centerY = viewerHeight / 2;
-        const anchorY = stage.anchorPoint?.y || 0;
-        stage.position.y = anchorY - value - centerY;
+        this.viewer.stage.position.y = -value;
     }
 
     /**
@@ -88,10 +80,7 @@ class Camera {
     get x() {
         const stage = this.viewer.stage;
         if (!stage) return 0;
-        const viewerWidth = Number(this.viewer.width) || this.width || 0;
-        const centerX = viewerWidth / 2;
-        const anchorX = stage.anchorPoint?.x || 0;
-        return anchorX - centerX - (stage.position?.x || 0);
+        return -(stage.position?.x || 0);
     }
 
     /**
@@ -101,10 +90,7 @@ class Camera {
     get y() {
         const stage = this.viewer.stage;
         if (!stage) return 0;
-        const viewerHeight = Number(this.viewer.height) || this.height || 0;
-        const centerY = viewerHeight / 2;
-        const anchorY = stage.anchorPoint?.y || 0;
-        return anchorY - centerY - (stage.position?.y || 0);
+        return -(stage.position?.y || 0);
     }
 
     /**
@@ -161,19 +147,19 @@ class Camera {
 
         this.last = { x: this.x, y: this.y, z: this.z };
 
+        const followingFrozenTarget = !!this.target?.frozen;
+
         if (this.target) {
             // Handle frozen target - track world position separately
-            if (this.target.frozen) {
-                // Accumulate velocity into world position tracker
-                if (this.target.velocity) {
-                    this.worldPosition.x += this.target.velocity.x || 0;
-                    this.worldPosition.y += this.target.velocity.y || 0;
-                    this.worldPosition.z += this.target.velocity.z || 0;
-                }
+            if (followingFrozenTarget) {
+                const targetPosition = this.target.worldPosition || this.worldPosition;
+                this.worldPosition.x = targetPosition.x || 0;
+                this.worldPosition.y = targetPosition.y || 0;
+                this.worldPosition.z = targetPosition.z || 0;
 
-                // Center camera on world position
-                this.x = this.worldPosition.x - this.width / 2;
-                this.y = this.worldPosition.y - this.height / 2;
+                // Center camera on world position.
+                this.x = this.worldPosition.x;
+                this.y = this.worldPosition.y;
                 this.z = this.worldPosition.z;
 
                 // Expose world position on target for external access
@@ -191,20 +177,24 @@ class Camera {
                 this.worldPosition.y = this.target.position.y;
                 this.worldPosition.z = this.target.position.z || 0;
 
-                // Center camera on target
-                this.x = this.target.position.x - this.width / 2;
-                this.y = this.target.position.y - this.height / 2;
+                // Center camera on target.
+                this.x = this.target.position.x;
+                this.y = this.target.position.y;
                 this.z = this.target.position.z || 0;
             }
         }
 
-        // Clamp to bounds
-        if (this.x < this.min.x) this.x = this.min.x;
-        if (this.y < this.min.y) this.y = this.min.y;
-        if (this.z < this.min.z) this.z = this.min.z;
-        if (this.x > this.max.x) this.x = this.max.x;
-        if (this.y > this.max.y) this.y = this.max.y;
-        if (this.z > this.max.z) this.z = this.max.z;
+        // A frozen target is screen-locked while its worldPosition keeps moving.
+        // Clamping here would zero the camera delta and stop parallax/background motion.
+        const clampToBounds = !this.viewer.stage?.hasAttribute?.("camera-clamp-disabled");
+        if (!followingFrozenTarget && clampToBounds) {
+            if (this.x < this.min.x) this.x = this.min.x;
+            if (this.y < this.min.y) this.y = this.min.y;
+            if (this.z < this.min.z) this.z = this.min.z;
+            if (this.x > this.max.x) this.x = this.max.x;
+            if (this.y > this.max.y) this.y = this.max.y;
+            if (this.z > this.max.z) this.z = this.max.z;
+        }
 
         // Calculate delta for filters/effects
         this.delta = {
@@ -212,6 +202,10 @@ class Camera {
             y: this.y - this.last.y,
             z: this.z - this.last.z
         };
+
+        if (this.delta.x || this.delta.y || this.delta.z) {
+            this.viewer.stage.onCameraPositionChanged?.(this);
+        }
     }
 
     /**

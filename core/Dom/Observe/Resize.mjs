@@ -4,7 +4,7 @@
  * @module Dom/Observe/Resize
  */
 
-import Emitter from "../../Event/Emitter.mjs";
+import Emitter from "../../event/emitter.mjs";
 
 let ResizeObserverInstance;
 

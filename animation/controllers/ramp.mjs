@@ -104,7 +104,6 @@ const acc = new Accumulator(( index, value ) => {
     return index + value;
 });
 acc.next();
-console.log(acc);
 */
 
 /**

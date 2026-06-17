@@ -36,6 +36,7 @@ class InputAngleComponent extends InputComponent {
                 width: "min(100%, 220px)"
             },
             ".angle-dial": {
+                boxSizing: "border-box",
                 position: "relative",
                 width: "var(--form-angle-outer-size, 100%)", // 100%",
                 aspectRatio: "1 / 1",

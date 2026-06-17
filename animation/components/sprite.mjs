@@ -2,13 +2,8 @@
  * Sprite animation component for displaying and animating sprite sheets.
  * @module Components/Animation/Sprite
  */
-import { type } from "../../core/Util/Core.mjs";
-import Component from "../../ui/component.mjs";
-import { Canvas, CanvasImageData } from "../../core/Graphics/Canvas.mjs";
-import GraphicAsset from "../../core/Asset/Graphic.mjs";
-import { AnimationValue } from "../properties/Value.mjs";
 import SpriteSheet from "../graphics/webgl/sprite-sheet.mjs";
-
+import AnimationBlock from "./animation-block.mjs";
 /**
  * Generates a tile map for a sprite sheet.
  * @param {Object} tileSize - Size of each tile
@@ -34,10 +29,10 @@ export function sheetMap(tileSize, sheetSize, startX, startY) {
  * @class AnimationSprite
  * @extends Component.HTMLElement
  */
-export class AnimationSprite extends Component.HTMLElement {
+export class AnimationSprite extends AnimationBlock {
     static tag = "animation-sprite";
 
-    animationComponent = true;
+    animationComponent = false;
 
     static config = {
         name: "animation-sprite",
@@ -55,7 +50,9 @@ export class AnimationSprite extends Component.HTMLElement {
             noanimation: { type: "exists", default: false, linked: true },
             in: { type: "int", default: 0, linked: true },
             out: { type: "int", default: 0, linked: true },
-        },
+            "filter-color": { type: "string", default: "#000000", linked: true },
+            "filter-amount": { type: "float", default: 0, linked: true }
+        }
     };
 
     /**
@@ -64,9 +61,23 @@ export class AnimationSprite extends Component.HTMLElement {
      */
     static get observed() {
         return {
-            all: ["width", "height", "scale", "src", "frame", "frames", "tempo", "loop", "in", "out", "auto"],
+            all: [
+                "width",
+                "height",
+                "scale",
+                "src",
+                "frame",
+                "frames",
+                "tempo",
+                "loop",
+                "in",
+                "out",
+                "auto",
+                "filter-color",
+                "filter-amount"
+            ],
             attributes: [],
-            properties: [],
+            properties: []
         };
     }
 
@@ -74,12 +85,9 @@ export class AnimationSprite extends Component.HTMLElement {
      * Executes html.
      * @returns {*} Result of html.
      */
-    static html() {
+    bodyHTML() {
         return `
             <div id="spritesheet"></div>
-            <div id="view">
-                <slot></slot>
-            </div>
         `;
     }
 
@@ -90,12 +98,12 @@ export class AnimationSprite extends Component.HTMLElement {
     static get style() {
         return [
             {
-                "#view": {
+                "#body": {
                     position: "relative",
                     display: "block",
-                    width: "100%",
-                    height: "100%",
-                    overflow: "hidden",
+                    width: "var(--width, 100%)", // "100%",
+                    height: "var(--height, 100%)", // "100%",
+                    overflow: "hidden"
                 },
                 "::slotted(img)": {
                     position: "absolute",
@@ -104,23 +112,23 @@ export class AnimationSprite extends Component.HTMLElement {
                     left: "0",
                     width: "auto",
                     height: "100% !important",
-                    maxWidth: "none !important",
+                    maxWidth: "none !important"
                 },
                 "#spritesheet": {
                     position: "absolute",
                     top: "0",
                     left: "0",
                     width: "100%",
-                    height: "100%",
+                    height: "100%"
                 },
                 "#spritesheet > *": {
                     position: "absolute",
                     top: "0",
                     left: "0",
                     width: "100%",
-                    height: "100%",
-                },
-            },
+                    height: "100%"
+                }
+            }
         ];
     }
 
@@ -145,7 +153,7 @@ export class AnimationSprite extends Component.HTMLElement {
         const scaledHeight = this.height > 0 ? this.height * scale : 0;
         this.styles.update(":host", {
             width: scaledWidth ? `${scaledWidth}px` : "auto",
-            height: scaledHeight ? `${scaledHeight}px` : "auto",
+            height: scaledHeight ? `${scaledHeight}px` : "auto"
         });
     }
 
@@ -179,7 +187,19 @@ export class AnimationSprite extends Component.HTMLElement {
      * @returns {*} Result of onFirstConnect.
      */
     onFirstConnect() {
+        if (!this.width) this.width = this.ref("body")?.getBoundingClientRect?.().width || 0;
+        if (!this.height) this.height = this.ref("body")?.getBoundingClientRect?.().height || 0;
+        this.writeStyleVars(
+            {
+                "--width": typeof this.width === "number" ? `${this.width}px` : this.width,
+                "--height": typeof this.height === "number" ? `${this.height}px` : this.height,
+                "--scale": this.scale
+            },
+            this.ref("html")
+        );
+
         this.sheet = new SpriteSheet(this.width, this.height, this.ref("spritesheet"));
+        this.applyColorFilter();
 
         this.frame = this.in || 0;
         if (this.noanimation) {
@@ -233,6 +253,27 @@ export class AnimationSprite extends Component.HTMLElement {
         this.sheet.render();
 
         this.dirty = false;
+    }
+
+    applyColorFilter() {
+        if (!this.sheet?.setColorFilter) return;
+        this.sheet.setColorFilter(this["filter-color"], this["filter-amount"]);
+    }
+
+    setColorFilter(color = "#000000", amount = 1) {
+        this["filter-color"] = color;
+        this["filter-amount"] = amount;
+        this.applyColorFilter();
+    }
+
+    setFilterOpacity(amount = 1) {
+        this["filter-amount"] = amount;
+        this.applyColorFilter();
+    }
+
+    clearColorFilter() {
+        this["filter-amount"] = 0;
+        this.applyColorFilter();
     }
 
     /**
@@ -311,6 +352,10 @@ export class AnimationSprite extends Component.HTMLElement {
                 break;
             case "scale":
                 this.updateDisplaySize();
+                break;
+            case "filter-color":
+            case "filter-amount":
+                this.applyColorFilter();
                 break;
         }
     }

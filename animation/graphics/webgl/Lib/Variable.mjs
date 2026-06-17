@@ -158,7 +158,6 @@ export class Variable {
             this.isFeedback = true;
         }
 
-        console.log("CREATING VARIABLE", qualifier, type, name);
     }
 
     /**
@@ -170,7 +169,6 @@ export class Variable {
     bind(gl, program) {
         this.gl = gl;
         this.program = program;
-        console.log("On Program", this.name, this._value);
         if (this._value !== undefined) {
             const v = this._value;
             this._value = null;
@@ -219,7 +217,6 @@ export class Variable {
             default:
                 this._location = gl.getAttribLocation(this.program, this.name);
         }
-        /// console.log(this.name, this._location);
         return this._location;
     }
 
@@ -268,7 +265,6 @@ export class Variable {
                 if (this.settings.generate) {
                     v = this.settings.generate(this._value);
                 }
-                // console.log(this.name, this.settings.setFn, this._value);
                 this.gl[this.settings.setFn](this.location, ...(Array.isArray(v) ? v : [v]));
             }
         } else if (this.qualifier === Variable.IN) {
@@ -305,7 +301,6 @@ export class Variable {
     uploadBuffer() {
         const { gl } = this;
         if (this._value === undefined || !this.location) return;
-        // console.log("upload buffer", this._buffer, this._value);
         gl.bindBuffer(gl.ARRAY_BUFFER, this._buffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this._value), gl.DYNAMIC_DRAW);
         gl.vertexAttribPointer(this.location, this.bufferSize, gl[this.settings.argType], false, 0, 0);
@@ -332,7 +327,6 @@ export class Variable {
      * @returns {*} Result of createBuffer.
      */
     createBuffer(value, size) {
-        console.log(this.name, value, size);
         if (value) this._value = value;
         if (this._buffer) return this._buffer;
         const { gl } = this;
@@ -340,7 +334,6 @@ export class Variable {
         this.bufferSize = size || this.settings.args;
 
         const assignments = ["UNSIGNED_BYTE", "SHORT", "UNSIGNED_SHORT", "INT", "UNSIGNED_INT", "FLOAT"];
-        console.log(this.name, "Buffer Size", this.bufferSize, this.location);
         const buffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
         if (this._value) gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this._value), gl.DYNAMIC_DRAW);

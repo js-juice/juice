@@ -3,7 +3,7 @@
  * @module Graphics/WebGL/Lib/Texture
  */
 
-import Emitter from "../../../../core/Event/Emitter.mjs";
+import Emitter from "../../../../core/event/emitter.mjs";
 
 /**
  * Texture class manages WebGL textures with image loading support.

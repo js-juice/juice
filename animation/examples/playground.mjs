@@ -81,7 +81,7 @@ const SETS = {
     body: {
         label: "Body",
         dir: "./playground-examples/body",
-        docs: "./docs/module-docs.html?file=components/body.mjs",
+        docs: "./docs/module-docs.html?file=components/animation-component.mjs",
         files: {
             html: "html.html",
             css: "css.css",

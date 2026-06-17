@@ -8,7 +8,6 @@ import Component from "../../ui/component.mjs";
 import Timeline from "../timeline.mjs";
 import { Vector3D, Vector2D } from "../properties/Vector.mjs";
 import AnimationStage from "./stage.mjs";
-import AnimationBody from "./body.mjs";
 import AnimationSprite from "./sprite.mjs";
 import Camera from "./camera.mjs";
 import "./canvas/animation-canvas.mjs";
@@ -98,7 +97,6 @@ export class AnimationLayer extends Component.HTMLElement {
      * @returns {*} Result of onChildren.
      */
     onChildren(children) {
-        console.log("LAYER CHILDREN", children);
         children.forEach((child) => {
             if (child.animate) {
                 this.viewer.addAnimation(child);

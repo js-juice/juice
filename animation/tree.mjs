@@ -14,10 +14,8 @@ class AnimationTree {
             return "viewer";
         } else if (tag === "animation-stage") {
             return "stage";
-        } else if (asset?.animationBody || tag === "animation-body") {
+        } else if (asset?.animationBody || tag === "animation-component") {
             return "body";
-        } else if (tag === "animation-sprite") {
-            return "sprite";
         } else if (asset?.animationComponent && tag?.startsWith("animation-")) {
             return tag.slice("animation-".length);
         }

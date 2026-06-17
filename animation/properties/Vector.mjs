@@ -741,6 +741,22 @@ export class Vector2D extends Float32Array {
  * @param {number} [options.history=0] - History buffer size (0 = disabled)
  */
 export class Vector3D extends Float32Array {
+    static clockSpeed(vector) {
+        const test = {
+            v1: new Vector3D(vector[0], vector[1], vector[2]),
+            v1Time: performance.now(),
+            v2: null,
+            v2Time: null,
+            finish: (vector2) => {
+                this.v2 = new Vector3D(vector2[0], vector2[1], vector2[2]);
+                this.v2Time = performance.now();
+                const diff = this.v2.diff(this.v1);
+                this.sampleLength = this.v2Time - this.v1Time;
+                return diff.multiply(1000 / this.sampleLength);
+            }
+        };
+        return test;
+    }
     static add(...vectors) {
         let sum = new Vector3D(x, y, z);
         for (let v of vectors) {

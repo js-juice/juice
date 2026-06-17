@@ -500,6 +500,69 @@ class ParticleStateBuffer {
         return Math.min(maskCount - 1, Math.floor((offset * maskCount) / count));
     }
 
+    _maskGapStride(options = {}) {
+        const requestedGap = Number(options.particleGap ?? options.gap);
+        const gap = Number.isFinite(requestedGap) ? Math.max(0, Math.floor(requestedGap)) : 0;
+        return Math.max(1, Math.pow(gap + 1, 2));
+    }
+
+    _writeMaskParticle(index, pointIndex, context) {
+        const {
+            maskPoints,
+            maskColors,
+            maskDepth,
+            preserveMaskColor,
+            keepMaskVelocity,
+            stateDefaults
+        } = context;
+        const i3 = index * 3;
+        const i4 = index * 4;
+        const mx = maskPoints[pointIndex * 2];
+        const my = maskPoints[pointIndex * 2 + 1];
+        const mapped = this._maskPointToWorld(mx, my, maskDepth);
+        let maskColor = null;
+
+        this.positions[i3] = mapped.x;
+        this.positions[i3 + 1] = mapped.y;
+        this.positions[i3 + 2] = mapped.z;
+
+        if (preserveMaskColor && maskColors) {
+            const m4 = pointIndex * 4;
+            maskColor = [maskColors[m4], maskColors[m4 + 1], maskColors[m4 + 2], maskColors[m4 + 3]];
+        }
+
+        this.states[i4] = this.positions[i3 + 2];
+        this.states[i4 + 1] = Number(stateDefaults.age) || 0;
+        this.states[i4 + 2] = this.positions[i3];
+        this.states[i4 + 3] = this.positions[i3 + 1];
+
+        if (!keepMaskVelocity) {
+            this.velocities[i3] = 0;
+            this.velocities[i3 + 1] = 0;
+            this.velocities[i3 + 2] = 0;
+        } else {
+            this.velocities[i3] = randomBetween(-this.config.maxSpeed, this.config.maxSpeed);
+            this.velocities[i3 + 1] = randomBetween(-this.config.maxSpeed, this.config.maxSpeed);
+            this.velocities[i3 + 2] = 0;
+        }
+
+        this.destinations[i3] = this.positions[i3];
+        this.destinations[i3 + 1] = this.positions[i3 + 1];
+        this.destinations[i3 + 2] = this.positions[i3 + 2];
+        this.lifes[index] = Number(stateDefaults.life) || 0;
+        this.colors[i4] = Number(stateDefaults.color?.[0] ?? 1);
+        this.colors[i4 + 1] = Number(stateDefaults.color?.[1] ?? 1);
+        this.colors[i4 + 2] = Number(stateDefaults.color?.[2] ?? 1);
+        this.colors[i4 + 3] = Number(stateDefaults.color?.[3] ?? 1);
+        if (maskColor) {
+            this.colors[i4] = maskColor[0];
+            this.colors[i4 + 1] = maskColor[1];
+            this.colors[i4 + 2] = maskColor[2];
+            this.colors[i4 + 3] = maskColor[3];
+        }
+        this.sizes[index] = Number(stateDefaults.size) || 1;
+    }
+
     /**
      * Configures projection used for spawn bounds and render matrix.
      *
@@ -851,12 +914,9 @@ class ParticleStateBuffer {
                 const mapped = [];
                 const preserveColor = options.preserveColor === true;
                 const alphaThreshold = Math.max(0, Math.min(255, Number(options.alphaThreshold) || 1));
-                const requestedGap = Number(options.particleGap ?? options.gap);
-                const particleGap = Number.isFinite(requestedGap) ? Math.max(0, Math.floor(requestedGap)) : 0;
-                const sampleStep = particleGap + 1;
                 // Iterate over every pixel
-                for (let y = 0; y < canvas.height; y += sampleStep) {
-                    for (let x = 0; x < canvas.width; x += sampleStep) {
+                for (let y = 0; y < canvas.height; y++) {
+                    for (let x = 0; x < canvas.width; x++) {
                         const index = (y * canvas.width + x) * 4; // Each pixel has 4 values (R, G, B, A)
                         // Check if the pixel is non-transparent (A > 0)
                         const alpha = pixels[index + 3];
@@ -917,7 +977,7 @@ class ParticleStateBuffer {
                             y: offsetY,
                             z: Number(position.z)
                         },
-                        particleGap,
+                        particleGap: Math.max(0, Math.floor(Number(options.particleGap ?? options.gap) || 0)),
                         scatter: this._clampUnit(options.scatter, 0),
                         scatterShape: options.scatterShape ?? options.maskScatterShape ?? "box",
                         anchor: options.anchor || options.maskAnchor || null,
@@ -1022,10 +1082,8 @@ class ParticleStateBuffer {
         const capacity = Math.max(0, this.maxCount - startIndex);
         const maskCount = maskPoints ? Math.floor(maskPoints.length / 2) : 0;
         const requestedCount = Number(transformOptions.count);
-        const requestedApplyGap = Number(options.particleGap ?? options.gap);
-        const applyGap = Number.isFinite(requestedApplyGap) ? Math.max(0, Math.floor(requestedApplyGap)) : 0;
-        const gapStride = Math.max(1, Math.pow(applyGap + 1, 2));
-        const availableCount = maskPoints ? maskCount : this.maxCount;
+        const gapStride = this._maskGapStride(options);
+        const availableCount = maskPoints ? Math.ceil(maskCount / gapStride) : this.maxCount;
         const count = Math.min(
             capacity,
             Number.isFinite(requestedCount) ? Math.max(0, Math.floor(requestedCount)) : availableCount
@@ -1040,23 +1098,26 @@ class ParticleStateBuffer {
         const preserveMaskColor =
             options.preserveMaskColor === true ||
             (options.preserveMaskColor !== false && maskEntry.options?.preserveColor === true);
+        const pointIndices = maskPoints ? [] : null;
+        const maskContext = maskPoints
+            ? {
+                  maskPoints,
+                  maskColors,
+                  maskDepth,
+                  preserveMaskColor,
+                  keepMaskVelocity,
+                  stateDefaults
+              }
+            : null;
         for (let offset = 0; offset < count; offset++) {
             const i = startIndex + offset;
             const i3 = i * 3;
             const i4 = i * 4;
-            let maskColor = null;
             if (maskPoints) {
-                const pi = this._maskPointIndex(offset, count, maskCount);
-                const mx = maskPoints[pi * 2];
-                const my = maskPoints[pi * 2 + 1];
-                const mapped = this._maskPointToWorld(mx, my, maskDepth);
-                this.positions[i3] = mapped.x;
-                this.positions[i3 + 1] = mapped.y;
-                this.positions[i3 + 2] = mapped.z;
-                if (preserveMaskColor && maskColors) {
-                    const m4 = pi * 4;
-                    maskColor = [maskColors[m4], maskColors[m4 + 1], maskColors[m4 + 2], maskColors[m4 + 3]];
-                }
+                const pi = (offset * gapStride) % maskCount;
+                pointIndices.push(pi);
+                this._writeMaskParticle(i, pi, maskContext);
+                continue;
             } else {
                 if (spawnVolume && spawnVolume.type) {
                     const params = spawnVolume.params || {};
@@ -1128,15 +1189,6 @@ class ParticleStateBuffer {
             this.colors[i4 + 1] = Number(stateDefaults.color?.[1] ?? 1);
             this.colors[i4 + 2] = Number(stateDefaults.color?.[2] ?? 1);
             this.colors[i4 + 3] = Number(stateDefaults.color?.[3] ?? 1);
-            if (maskColor) {
-                this.colors[i4] = maskColor[0];
-                this.colors[i4 + 1] = maskColor[1];
-                this.colors[i4 + 2] = maskColor[2];
-                this.colors[i4 + 3] = maskColor[3];
-            }
-            if (maskPoints && applyGap > 0 && offset % gapStride !== 0) {
-                this.colors[i4 + 3] = 0;
-            }
             this.sizes[i] = Number(stateDefaults.size) || 1;
         }
 
@@ -1149,8 +1201,12 @@ class ParticleStateBuffer {
                 maskIndex: Number.isFinite(maskIndex) ? Math.floor(maskIndex) : null,
                 start: startIndex,
                 count,
-                mode: appendMask ? "append" : "replace"
+                mode: appendMask ? "append" : "replace",
+                pointIndices,
+                gapStride
             };
+        } else if (!appendMask) {
+            this.activeMaskRange = null;
         }
 
         const nextCount = appendMask || transformOptions.preserveParticleCount === true

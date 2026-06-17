@@ -1,4 +1,4 @@
-import { parsePosition, toAnchorCSSPosition } from "../anchor.mjs";
+import { parsePosition, parsePositionFromLocation, toAnchorCSSPosition } from "../anchor.mjs";
 
 class AnimationComponentUtil {
     static domReady() {
@@ -25,6 +25,106 @@ class AnimationComponentUtil {
         });
     }
 
+    static getElementSize(el) {
+        const { width, height } = el.getBoundingClientRect();
+        return { width, height };
+    }
+
+    static hasUnits(value) {
+        const match = value.match(/(\d+)(px|%|deg|em|vw|vh)/);
+        return match && match[2];
+    }
+
+    static fitContent(container, element, options = {}) {
+        const fit = { x: 0, y: 0, height: null, width: null };
+
+        const { width: containerWidth, height: containerHeight } =
+            container instanceof HTMLElement ? this.getElementSize(container) : container;
+        const { width: elementWidth, height: elementHeight } =
+            element instanceof HTMLElement ? this.getElementSize(element) : element;
+
+        const containerAspect = containerWidth / containerHeight;
+        const elementAspect = elementWidth / elementHeight;
+
+        let maxWidth = containerWidth;
+        let maxHeight = containerHeight;
+
+        if (options.maxWidth) {
+            maxWidth = this.hasUnits(options.maxWidth)
+                ? this.toPixels(options.maxWidth, { axisSize: containerWidth })
+                : options.maxWidth;
+        }
+
+        if (options.maxHeight) {
+            maxHeight = this.hasUnits(options.maxHeight)
+                ? this.toPixels(options.maxHeight, { axisSize: containerHeight })
+                : options.maxHeight;
+        }
+
+        if (elementAspect > containerAspect) {
+            fit.width = maxWidth;
+            fit.height = fit.width / elementAspect;
+        } else {
+            fit.height = maxHeight;
+            fit.width = fit.height * elementAspect;
+        }
+
+        if (options.align) {
+            fit.x = options.align === "center" ? (containerWidth - fit.width) / 2 : 0;
+            fit.y = options.align === "center" ? (containerHeight - fit.height) / 2 : 0;
+        }
+
+        return fit;
+    }
+
+    static toPixels(value, options = {}) {
+        if (value === null || value === undefined || value === "") return null;
+        if (typeof value === "number") return Number.isFinite(value) ? value : null;
+        if (typeof value === "string" && value.includes(" ")) value = value.split(/[,\s]/);
+        if (Array.isArray(value)) return value.map((item) => this.toPixels(item, options));
+
+        const text = String(value).trim();
+        if (!text.length) return null;
+
+        const numeric = Number(text);
+        if (Number.isFinite(numeric)) return numeric;
+
+        if (text.endsWith("%")) {
+            const fraction = parsePositionFromLocation(text);
+            const axisSize = Number(options.axisSize);
+            return Number.isFinite(fraction) && axisSize > 0 ? fraction * axisSize : null;
+        }
+
+        if (text.endsWith("px")) {
+            const pixels = parseFloat(text);
+            return Number.isFinite(pixels) ? pixels : null;
+        }
+
+        if (text.endsWith("vw")) {
+            const value = parseFloat(text);
+            return Number.isFinite(value) && typeof window !== "undefined" ? (window.innerWidth * value) / 100 : null;
+        }
+
+        if (text.endsWith("vh")) {
+            const value = parseFloat(text);
+            return Number.isFinite(value) && typeof window !== "undefined" ? (window.innerHeight * value) / 100 : null;
+        }
+
+        if (!options.context?.appendChild || typeof document === "undefined") return null;
+
+        const probe = document.createElement("div");
+        probe.style.position = "absolute";
+        probe.style.visibility = "hidden";
+        probe.style.pointerEvents = "none";
+        probe.style[options.axis === "y" ? "height" : "width"] = text;
+        options.context.appendChild(probe);
+        const rect = probe.getBoundingClientRect();
+        probe.remove();
+
+        const pixels = options.axis === "y" ? rect.height : rect.width;
+        return Number.isFinite(pixels) && pixels > 0 ? pixels : null;
+    }
+
     static setDimentions(component) {
         const width = component.width || component.ref("body").getBoundingClientRect().width;
         const height = component.height || component.ref("body").getBoundingClientRect().height;
@@ -32,15 +132,17 @@ class AnimationComponentUtil {
         const heightValue = typeof height === "number" ? `${height}px` : height;
         component.width = width;
         component.height = height;
-        component.setStyleVars({
-            "--width": widthValue,
-            "--height": heightValue
-        });
-        component.style.setProperty("--width", widthValue);
-        component.style.setProperty("--height", heightValue);
+        component.setStyleVars(
+            {
+                "--width": widthValue,
+                "--height": heightValue
+            },
+            component.ref("html")
+        );
     }
 
     static setAnchor(component) {
+        if (!component.anchor) component.anchor = { x: 0.5, y: 0.5 };
         if (component.hasAttribute("anchor")) {
             const { x: anchorX, y: anchorY } = parsePosition(component.getAttribute("anchor"));
             component.anchor = { x: anchorX, y: anchorY };
@@ -53,11 +155,26 @@ class AnimationComponentUtil {
             "--anchor-x": toAnchorCSSPosition(component.anchor.x),
             "--anchor-y": toAnchorCSSPosition(component.anchor.y)
         };
-        component.writeStyleVars(anchorVars);
-        component.style.setProperty("--anchor-x", anchorVars["--anchor-x"]);
-        component.style.setProperty("--anchor-y", anchorVars["--anchor-y"]);
+        component.writeStyleVars(anchorVars, component.ref("anchor"));
+        if ((component.debug || component.hasAttribute?.("debug")) && component.ref("anchor")?.setDebugValue) {
+            component.ref("anchor").setDebugValue("--anchor-x", anchorVars["--anchor-x"]);
+            component.ref("anchor").setDebugValue("--anchor-y", anchorVars["--anchor-y"]);
+        }
+        //component.style.setProperty("--anchor-x", anchorVars["--anchor-x"]);
+        //component.style.setProperty("--anchor-y", anchorVars["--anchor-y"]);
         if (typeof component._refreshPlacement === "function") {
             component._refreshPlacement();
+        }
+        this.setDebug(component);
+    }
+
+    static setDebug(component) {
+        const anchor = component.ref?.("anchor");
+        if (!anchor) return;
+        if (component.debug || component.hasAttribute?.("debug")) {
+            anchor.setAttribute("debug", "");
+        } else {
+            anchor.removeAttribute("debug");
         }
     }
 
@@ -76,9 +193,9 @@ class AnimationComponentUtil {
             "--origin-x": toAnchorCSSPosition(component.origin.x),
             "--origin-y": toAnchorCSSPosition(component.origin.y)
         };
-        component.writeStyleVars(originVars);
-        component.style.setProperty("--origin-x", originVars["--origin-x"]);
-        component.style.setProperty("--origin-y", originVars["--origin-y"]);
+        component.writeStyleVars(originVars, component.ref("anchor"));
+        // component.style.setProperty("--origin-x", originVars["--origin-x"]);
+        // component.style.setProperty("--origin-y", originVars["--origin-y"]);
         if (typeof component._refreshPlacement === "function") {
             component._refreshPlacement();
         }
@@ -87,6 +204,11 @@ class AnimationComponentUtil {
     static initialize(component) {
         this.setAnchor(component);
         this.setOrigin(component);
+        this.setDebug(component);
+
+        if (component.hasAttribute("noanimate")) {
+            component.animate = false;
+        }
     }
 }
 

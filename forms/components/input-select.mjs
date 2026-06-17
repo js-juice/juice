@@ -1,4 +1,4 @@
-/**
+/*
  * AUTODOC:START
  * Component: <input-select>
  * Class: InputSelect
@@ -17,6 +17,10 @@
  * - `options`: JSON, object path, or CSV/colon syntax describing available options.
  * - `force-native`: Forces native `<select>` rendering instead of custom dropdown UI.
  * - `view-type="select-bar"`: Renders options as an always-visible single-line segmented select bar.
+ * - `select-bar-direction="row|column"`: Controls select-bar option flow direction.
+ * - `compact`: Shows icons and option info only, hiding option labels.
+ * - `hide-icons`, `hide-labels`, `hide-info`: Hide specific rendered option parts.
+ * - `option-parts="icon label info"`: Explicit list of option parts to render.
  * - `wrap`: Allows select-bar options to wrap onto multiple lines.
  * - `value`: Selected option value.
  * - `default`: Placeholder text used by custom dropdown mode.
@@ -26,8 +30,15 @@
  *
  * CSS Variables:
  * - `--form-accent-color`: Shared accent color fallback for selected and arrow states.
- * - `--select-arrow-color`: Arrow color for custom dropdown tab.
- * - `--selected-option-bg`, `--selected-option-color`: Selected option colors in custom list mode.
+ * - `--form-select-wrapper-bg`, `--form-select-wrapper-radius`: Select wrapper surface.
+ * - `--form-select-tab-bg`, `--form-select-tab-border`, `--form-select-tab-arrow`: Dropdown tab styling.
+ * - `--form-select-edit-tab-bg`, `--form-select-edit-tab-active-bg`: Editable-value tab styling.
+ * - `--form-select-options-bg`, `--form-select-options-border`, `--form-select-options-radius`: Options list shell.
+ * - `--form-select-option-item-*`: Option item host color, spacing, borders, hover, and selected states.
+ * - `--form-select-option-display`, `--form-select-option-gap`, `--form-select-option-label-display`: Option child layout hooks.
+ * - `--form-select-option-icon-*`: Option icon size, spacing, image fit, and color hooks.
+ * - `--form-select-bar-direction`: Select-bar flex direction (`row` or `column`).
+ * - `--form-select-description-*`: Selected-option description text.
  * - `--input-border-radius`, `--input-height`: Control radius and dropdown vertical alignment.
  * - Inherits shared InputComponent variables.
  *
@@ -60,7 +71,8 @@ function parseOptionItem(option) {
         return {
             value: String(option.value),
             label: String(option.label ?? option.value),
-            description: String(option.description ?? "")
+            description: String(option.description ?? ""),
+            icon: option.icon ?? option.iconSrc ?? option.iconUrl ?? ""
         };
     }
     return null;
@@ -102,10 +114,73 @@ function parseSelectOptions(options) {
     return [];
 }
 
+function isOptionIconUrl(icon) {
+    const value = String(icon || "").trim();
+    if (!value) return false;
+    if (/^(https?:|data:|blob:|file:)/i.test(value)) return true;
+    if (/^(\/|\.\/|\.\.\/)/.test(value)) return true;
+    return /\.(svg|png|jpe?g|gif|webp|avif)([?#].*)?$/i.test(value);
+}
+
+function resolveOptionIcon(icon, options = {}) {
+    const value = String(icon || "").trim();
+    if (!value) return null;
+    const type = value.startsWith("#") ? "element" : options.forceUrl || isOptionIconUrl(value) ? "url" : "class";
+    return { type, value };
+}
+
+function createOptionIconElement(icon, label = "", options = {}) {
+    const resolved = resolveOptionIcon(icon, options);
+    if (!resolved) return null;
+
+    if (resolved.type === "url") {
+        const image = new Image();
+        image.src = resolved.value;
+        image.alt = "";
+        image.title = label;
+        image.className = "option-icon option-icon-image";
+        image.setAttribute("part", "option-icon-content option-icon-image");
+        image.setAttribute("aria-hidden", "true");
+        image.setAttribute("slot", "icon");
+        return image;
+    }
+
+    if (resolved.type === "element") {
+        const source = document.getElementById(resolved.value.slice(1));
+        const element = source ? source.cloneNode(true) : document.createElement("div");
+        if (source) {
+            element.removeAttribute("id");
+        } else {
+            element.id = resolved.value.slice(1);
+        }
+        element.classList.add("option-icon", "option-icon-element");
+        element.setAttribute("part", "option-icon-content option-icon-element");
+        element.setAttribute("aria-hidden", "true");
+        element.setAttribute("slot", "icon");
+        return element;
+    }
+
+    const element = document.createElement("div");
+    element.setAttribute("aria-hidden", "true");
+    element.setAttribute("slot", "icon");
+    element.classList.add("option-icon", "option-icon-class", ...resolved.value.split(/\s+/).filter(Boolean));
+    element.setAttribute("part", "option-icon-content option-icon-class");
+    return element;
+}
+
 class SelectOption extends HTMLElement {
     static tag = "select-option";
     static get observedAttributes() {
         return ["value", "label", "description", "icon", "icon-src", "selected"];
+    }
+
+    static get styles() {
+        return {
+            ":host": {
+                display: "block",
+                boxSizing: "border-box"
+            }
+        };
     }
 
     constructor() {
@@ -127,21 +202,86 @@ class SelectOption extends HTMLElement {
             }
 
             .option {
-                display: flex;
-                align-items: center;
-                width: 100%;
+                display: var(--form-select-option-display, inline-flex);
+                align-items: var(--form-select-option-align, center);
+                justify-content: var(--form-select-option-justify, flex-start);
+                gap: var(--form-select-option-gap, 0.35rem);
+                width: var(--form-select-option-width, 100%);
+                min-width: 0;
                 box-sizing: border-box;
             }
+
+            slot[name="icon"] {
+                display: none;
+                align-items: var(--form-select-option-icon-align, center);
+                justify-content: var(--form-select-option-icon-justify, center);
+                width: var(--form-select-option-icon-slot-width, var(--form-select-option-icon-width, 1.25em));
+                height: var(--form-select-option-icon-slot-height, var(--form-select-option-icon-height, 1.25em));
+                min-width: var(--form-select-option-icon-slot-width, var(--form-select-option-icon-width, 1.25em));
+                line-height: 0;
+            }
+
+            :host([has-icon]) slot[name="icon"] {
+                display: var(--form-select-option-icon-display, inline-flex);
+            }
+
+            slot:not([name]) {
+                display: var(--form-select-option-label-display, inline);
+                min-width: 0;
+            }
+
+            .option-icon,
+            ::slotted(.option-icon) {
+                display: var(--form-select-option-icon-content-display, block);
+                width: var(--form-select-option-icon-width, 1.25em);
+                height: var(--form-select-option-icon-height, 1.25em);
+                min-width: var(--form-select-option-icon-width, 1.25em);
+                box-sizing: border-box;
+                color: var(--form-select-option-icon-color, var(--form-select-option-icon-bg, currentColor));
+            }
+
+            :host(.selected) .option-icon,
+            :host(.selected) ::slotted(.option-icon) {
+                color: var(--form-select-option-icon-selected-color, var(--form-select-option-icon-selected-bg, var(--form-select-option-icon-color, var(--form-select-option-icon-bg, currentColor))));
+            }
+
+            .option-icon-image,
+            ::slotted(.option-icon-image) {
+                object-fit: var(--form-select-option-icon-fit, contain);
+            }
+
+            .option-icon-class {
+                background: var(--form-select-option-icon-bg, currentColor);
+            }
+
+            :host(.selected) .option-icon-class {
+                background: var(--form-select-option-icon-selected-bg, var(--form-select-option-icon-bg, currentColor));
+            }
+
+            ::slotted(.option-icon-class) {
+                display: var(--form-select-option-icon-content-display, block);
+                width: var(--form-select-option-icon-width, 1.25em);
+                height: var(--form-select-option-icon-height, 1.25em);
+                min-width: var(--form-select-option-icon-width, 1.25em);
+                background: var(--form-select-option-icon-bg, currentColor);
+            }
+
+            :host(.selected) ::slotted(.option-icon-class) {
+                background: var(--form-select-option-icon-selected-bg, var(--form-select-option-icon-bg, currentColor));
+            }
+
         </style>
-        <div class="option">
-            <slot name="icon"></slot>
-            <slot></slot>
+        <div class="option" part="option">
+            <slot name="icon" part="option-icon"></slot>
+            <slot part="option-label"></slot>
         </div>`;
 
         this._dom = {
             icon: this._shadowRoot.querySelector(".option > :first-child"),
             label: this._shadowRoot.querySelector(".option > :last-child")
         };
+
+        this._dom.icon.addEventListener("slotchange", () => this._syncHasIcon());
     }
 
     get value() {
@@ -203,24 +343,40 @@ class SelectOption extends HTMLElement {
                 break;
             case "icon":
                 this._icon = newValue;
+                this._renderIcon();
+                this._syncHasIcon();
                 break;
             case "icon-src":
-                if (newValue) {
-                    this._icon = new Image();
-                    this._icon.src = newValue;
-                    this._icon.alt = this._label;
-                    this._icon.title = this._label;
-                    this._icon.className = "option-icon";
-                    this._dom.icon.replaceChildren(this._icon);
-                } else {
-                    this._icon = "";
-                    this._dom.icon.replaceChildren();
-                }
+                this._icon = newValue || "";
+                this._renderIcon();
+                this._syncHasIcon();
                 break;
             case "selected":
                 this._selected = newValue !== null;
                 break;
         }
+    }
+
+    connectedCallback() {
+        this._renderIcon();
+        this._syncHasIcon();
+    }
+
+    _renderIcon() {
+        const iconSrc = this.getAttribute("icon-src") || "";
+        const icon = iconSrc || this.getAttribute("icon") || "";
+        const iconElement = createOptionIconElement(icon, this.label, { forceUrl: !!iconSrc });
+        this._dom.icon.replaceChildren();
+        if (iconElement) {
+            iconElement.removeAttribute("slot");
+            this._dom.icon.appendChild(iconElement);
+        }
+        this._syncHasIcon();
+    }
+
+    _syncHasIcon() {
+        const hasIcon = this._dom.icon.assignedElements().length > 0 || this._dom.icon.children.length > 0;
+        this.toggleAttribute("has-icon", hasIcon);
     }
 }
 
@@ -233,7 +389,20 @@ class InputSelect extends InputComponent {
      * @returns {*} List of observed attribute names.
      */
     static get observedAttributes() {
-        return [...super.observedAttributes, "options", "force-native", "editable", "view", "view-type"];
+        return [
+            ...super.observedAttributes,
+            "options",
+            "force-native",
+            "editable",
+            "view",
+            "view-type",
+            "select-bar-direction",
+            "compact",
+            "hide-icons",
+            "hide-labels",
+            "hide-info",
+            "option-parts"
+        ];
     }
 
     /**
@@ -275,8 +444,8 @@ class InputSelect extends InputComponent {
             },
             ".input-wrapper": {
                 padding: 0,
-                background: "#FFFFFF",
-                borderRadius: "var(--input-border-radius, 5px)",
+                background: "var(--form-select-wrapper-bg, #ffffff)",
+                borderRadius: "var(--form-select-wrapper-radius, var(--input-border-radius, 5px))",
                 userSelect: "none",
                 cursor: "pointer"
             },
@@ -291,10 +460,11 @@ class InputSelect extends InputComponent {
             ".tab": {
                 position: "relative",
                 flex: "0 0 auto",
-                width: "var(--input-control-size)",
-                height: "var(--input-control-size)",
-                borderLeft: "1px solid #c8c8c8",
-                background: "linear-gradient(0deg, rgba(204, 204, 204, 1) 0%, rgba(224, 224, 224, 1) 100%)"
+                width: "var(--input-height)",
+                height: "var(--input-height)",
+                borderLeft: "var(--form-select-tab-border, 1px solid #c8c8c8)",
+                background:
+                    "var(--form-select-tab-bg, linear-gradient(0deg, rgba(204, 204, 204, 1) 0%, rgba(224, 224, 224, 1) 100%))"
             },
             ".tab::after": {
                 content: "''",
@@ -305,7 +475,8 @@ class InputSelect extends InputComponent {
                 maxWidth: "var(--select-arrow-max-width, 50%)",
                 aspectRatio: "5/3",
                 clipPath: "polygon(0 0,0 var(--s),50% 100%,100% var(--s),100% 0,50% calc(100% - var(--s)))",
-                background: "var(--select-arrow-color, var(--form-accent-color, #0059ff))",
+                background:
+                    "var(--form-select-tab-arrow, var(--select-arrow-color, var(--form-accent-color, #0059ff)))",
                 left: "50%",
                 top: "50%",
                 transform: "translate(-50%, -50%)"
@@ -314,16 +485,17 @@ class InputSelect extends InputComponent {
                 display: "none",
                 position: "relative",
                 flex: "0 0 auto",
-                width: "var(--input-control-size)",
-                height: "var(--input-control-size)",
-                borderLeft: "1px solid #c8c8c8",
-                background: "linear-gradient(0deg, rgba(204, 204, 204, 1) 0%, rgba(224, 224, 224, 1) 100%)"
+                width: "var(--input-height)",
+                height: "var(--input-height)",
+                borderLeft: "var(--form-select-edit-tab-border, var(--form-select-tab-border, 1px solid #c8c8c8))",
+                background:
+                    "var(--form-select-edit-tab-bg, linear-gradient(0deg, rgba(204, 204, 204, 1) 0%, rgba(224, 224, 224, 1) 100%))"
             },
             ":host([editable]) .edit-tab": {
                 display: "block"
             },
             ":host(.editing-custom-value) .edit-tab": {
-                background: "var(--form-accent-color, #0059ff)"
+                background: "var(--form-select-edit-tab-active-bg, var(--form-accent-color, #0059ff))"
             },
             ".select-edit": {
                 display: "grid",
@@ -333,7 +505,7 @@ class InputSelect extends InputComponent {
                 padding: 0,
                 border: 0,
                 background: "transparent",
-                color: "var(--form-accent-color, #0059ff)",
+                color: "var(--form-select-edit-color, var(--form-accent-color, #0059ff))",
                 cursor: "text"
             },
             ":host(.editing-custom-value) .select-edit": {
@@ -356,13 +528,13 @@ class InputSelect extends InputComponent {
                 listStyle: "none",
                 margin: "0",
                 padding: "0",
-                border: "1px solid #c8c8c8",
-                borderRadius: "var(--input-border-radius, 5px)",
-                backgroundColor: "#ffffff",
+                border: "var(--form-select-options-border, 1px solid #c8c8c8)",
+                borderRadius: "var(--form-select-options-radius, var(--input-border-radius, 5px))",
+                backgroundColor: "var(--form-select-options-bg, #ffffff)",
                 position: "absolute",
-                width: "auto",
-                zIndex: "10000",
-                maxHeight: "300px",
+                width: "var(--form-select-options-width, auto)",
+                zIndex: "var(--form-select-options-z-index, 10000)",
+                maxHeight: "var(--form-select-options-max-height, 300px)",
                 overflowY: "auto",
                 boxSizing: "border-box",
                 display: "none"
@@ -376,23 +548,86 @@ class InputSelect extends InputComponent {
             ".select-options.open": {
                 display: "block"
             },
-            ".select-options select-option": {
-                color: "#333333",
-                padding: "0.3rem 0.45rem",
+            ".select-options .select-option": {
+                position: "relative",
+                color: "var(--form-select-option-item-color, var(--form-select-option-color, #333333))",
+                padding: "var(--form-select-option-item-padding, var(--form-select-option-padding, 0.3rem 0.45rem))",
                 cursor: "pointer",
-                fontSize: "0.9rem",
-                borderBottom: "1px solid #c8c8c8"
+                fontSize: "var(--form-select-option-item-font-size, var(--form-select-option-font-size, 0.9rem))",
+                borderBottom:
+                    "var(--form-select-option-item-border-bottom, var(--form-select-option-border-bottom, 1px solid #c8c8c8))"
             },
-            ".select-options select-option:hover": {
-                backgroundColor: "#efefef"
+            ".select-options .select-option .option": {
+                display: "var(--form-select-option-display, inline-flex)",
+                alignItems: "var(--form-select-option-align, center)",
+                justifyContent: "var(--form-select-option-justify, flex-start)",
+                gap: "var(--form-select-option-gap, 0.35rem)",
+                width: "var(--form-select-option-width, 100%)"
             },
-            ".select-options select-option.active": {
+            ".select-options .select-option.active": {
                 outline: "2px solid var(--form-accent-color, #0059ff)",
                 outlineOffset: "-2px"
             },
-            ".select-options select-option.selected": {
-                backgroundColor: "var(--selected-option-bg, var(--form-accent-color, #0059ff))",
-                color: "var(--selected-option-color, #ffffff)"
+            ".select-options .select-option .option-icon-wrap": {
+                display: "var(--form-select-option-icon-display, inline-flex)",
+                alignItems: "var(--form-select-option-icon-align, center)",
+                justifyContent: "var(--form-select-option-icon-justify, center)",
+                marginRight: "var(--form-select-option-icon-margin-right, 0)"
+            },
+            ".select-options .select-option .option-icon": {
+                display: "var(--form-select-option-icon-content-display, block)",
+                width: "var(--form-select-option-icon-width, 1.25em)",
+                height: "var(--form-select-option-icon-height, 1.25em)",
+                minWidth: "var(--form-select-option-icon-width, 1.25em)",
+                boxSizing: "border-box",
+                color: "var(--form-select-option-icon-color, var(--form-select-option-icon-bg, currentColor))"
+            },
+            ".select-options .select-option.selected .option-icon": {
+                color: "var(--form-select-option-icon-selected-color, var(--form-select-option-icon-selected-bg, var(--form-select-option-icon-color, var(--form-select-option-icon-bg, currentColor))))"
+            },
+            ".select-options .select-option .option-icon-image": {
+                objectFit: "var(--form-select-option-icon-fit, contain)"
+            },
+            ".select-options .select-option .option-icon-class": {
+                background: "var(--form-select-option-icon-bg, currentColor)"
+            },
+            ".select-options .select-option.selected .option-icon-class": {
+                background:
+                    "var(--form-select-option-icon-selected-bg, var(--form-select-option-icon-bg, currentColor))"
+            },
+            ".select-options .select-option .option-label": {
+                display: "var(--form-select-option-label-display, inline)"
+            },
+            ".select-options .select-option .option-info": {
+                position: "absolute",
+                right: "var(--form-select-option-info-right, 0.25rem)",
+                bottom: "var(--form-select-option-info-bottom, 0.2rem)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "var(--form-select-option-info-size, 1rem)",
+                height: "var(--form-select-option-info-size, 1rem)",
+                padding: 0,
+                border: "var(--form-select-option-info-border, 1px solid currentColor)",
+                borderRadius: "var(--form-select-option-info-radius, 50%)",
+                background: "var(--form-select-option-info-bg, transparent)",
+                color: "var(--form-select-option-info-color, var(--form-select-option-item-color, var(--form-select-option-color, currentColor)))",
+                fontSize: "var(--form-select-option-info-font-size, 0.68rem)",
+                lineHeight: 1,
+                opacity: "var(--form-select-option-info-opacity, 0.78)",
+                cursor: "help"
+            },
+            ".select-options .select-option.selected .option-info": {
+                color: "var(--form-select-option-info-selected-color, var(--form-select-option-item-selected-color, var(--form-select-option-selected-color, currentColor)))"
+            },
+            ".select-options .select-option:hover": {
+                backgroundColor: "var(--form-select-option-item-hover-bg, var(--form-select-option-hover-bg, #efefef))",
+                color: "var(--form-select-option-item-hover-color, var(--form-select-option-hover-color, var(--form-select-option-item-color, var(--form-select-option-color, #333333))))"
+            },
+            ".select-options .select-option.selected": {
+                backgroundColor:
+                    "var(--form-select-option-item-selected-bg, var(--form-select-option-selected-bg, var(--selected-option-bg, var(--form-accent-color, #0059ff))))",
+                color: "var(--form-select-option-item-selected-color, var(--form-select-option-selected-color, var(--selected-option-color, #ffffff)))"
             },
             ":host([view='select-bar']) .input-wrapper, :host([view-type='select-bar']) .input-wrapper": {
                 position: "absolute",
@@ -409,38 +644,83 @@ class InputSelect extends InputComponent {
             ".select-options.select-bar-options": {
                 position: "static",
                 display: "flex",
+                flexDirection: "var(--form-select-bar-direction, row)",
                 flexWrap: "nowrap",
                 width: "100%",
                 maxHeight: "none",
                 overflowX: "auto",
                 overflowY: "hidden",
-                borderRadius: "var(--input-border-radius, 5px)",
+                borderRadius: "var(--form-select-options-radius, var(--input-border-radius, 5px))",
                 boxSizing: "border-box"
             },
             ":host([wrap]) .select-options.select-bar-options": {
                 flexWrap: "wrap",
                 overflowX: "hidden"
             },
-            ".select-options.select-bar-options select-option": {
+            ":host([select-bar-direction='column']) .select-options.select-bar-options, :host([select-bar-direction='vertical']) .select-options.select-bar-options":
+                {
+                    flexDirection: "column",
+                    overflowX: "hidden",
+                    overflowY: "auto"
+                },
+            ":host([select-bar-direction='row']) .select-options.select-bar-options, :host([select-bar-direction='horizontal']) .select-options.select-bar-options":
+                {
+                    flexDirection: "row"
+                },
+            ".select-options.select-bar-options .select-option": {
                 flex: "1 0 auto",
                 display: "grid",
                 placeItems: "center",
                 minHeight: "var(--input-height)",
-                padding: "0.35rem 0.7rem",
+                padding:
+                    "var(--form-select-bar-option-item-padding, var(--form-select-bar-option-padding, var(--form-select-option-item-padding, var(--form-select-option-padding, 0.35rem 0.7rem))))",
                 borderBottom: "0",
-                borderRight: "1px solid #c8c8c8",
+                borderRight: "var(--form-select-bar-option-border-right, 1px solid #c8c8c8)",
                 textAlign: "center",
                 whiteSpace: "nowrap"
             },
-            ".select-options.select-bar-options select-option:last-child": {
+            ":host([compact]) .select-options.select-bar-options .select-option": {
+                flex: "0 0 auto",
+                width: "var(--form-select-bar-compact-option-size, var(--input-height))"
+            },
+            ".select-options.select-bar-options .select-option .option": {
+                display: "var(--form-select-bar-option-display, inline-flex)",
+                alignItems: "var(--form-select-bar-option-align, center)",
+                justifyContent: "var(--form-select-bar-option-justify, center)",
+                width: "100%",
+                height: "100%"
+            },
+            ".select-options.select-bar-options .select-option .option-icon-wrap": {
+                marginRight:
+                    "var(--form-select-bar-option-icon-margin-right, var(--form-select-option-icon-margin-right, 1rem))"
+            },
+            ":host([select-bar-direction='column']) .select-options.select-bar-options .select-option[has-icon] .option, :host([select-bar-direction='vertical']) .select-options.select-bar-options .select-option[has-icon] .option":
+                {
+                    justifyContent: "var(--form-select-bar-option-icon-justify, flex-start)",
+                    textAlign: "var(--form-select-bar-option-icon-text-align, left)"
+                },
+            ":host([compact]) .select-options.select-bar-options .select-option[has-icon] .option": {
+                justifyContent: "var(--form-select-bar-compact-option-justify, center)"
+            },
+            ".select-options.select-bar-options .select-option:last-child": {
                 borderRight: "0"
             },
+            ":host([select-bar-direction='column']) .select-options.select-bar-options .select-option, :host([select-bar-direction='vertical']) .select-options.select-bar-options .select-option":
+                {
+                    width: "100%",
+                    borderRight: "0",
+                    borderBottom: "var(--form-select-bar-option-border-bottom, 1px solid #c8c8c8)"
+                },
+            ":host([select-bar-direction='column']) .select-options.select-bar-options .select-option:last-child, :host([select-bar-direction='vertical']) .select-options.select-bar-options .select-option:last-child":
+                {
+                    borderBottom: "0"
+                },
             ".select-description": {
-                marginTop: "0.35rem",
-                fontSize: "0.82rem",
-                lineHeight: "1.35",
-                color: "var(--input-help-color, #64748b)",
-                minHeight: "1.1em"
+                marginTop: "var(--form-select-description-margin-top, 0.35rem)",
+                fontSize: "var(--form-select-description-font-size, 0.82rem)",
+                lineHeight: "var(--form-select-description-line-height, 1.35)",
+                color: "var(--form-select-description-color, var(--input-help-color, #64748b))",
+                minHeight: "var(--form-select-description-min-height, 1.1em)"
             },
             ".select-description:empty": {
                 display: "none"
@@ -470,6 +750,21 @@ class InputSelect extends InputComponent {
 
     _useSelectBarMode() {
         return !this._useNativeMode() && this._getViewType() === "select-bar";
+    }
+
+    _getVisibleOptionParts() {
+        const attr = String(this.getAttribute("option-parts") || "")
+            .toLowerCase()
+            .split(/[,\s]+/)
+            .filter(Boolean);
+        const parts = new Set(attr.length ? attr : ["icon", "label", "info"]);
+
+        if (this.hasAttribute("compact")) parts.delete("label");
+        if (this.hasAttribute("hide-icons")) parts.delete("icon");
+        if (this.hasAttribute("hide-labels")) parts.delete("label");
+        if (this.hasAttribute("hide-info")) parts.delete("info");
+
+        return parts;
     }
 
     /**
@@ -710,7 +1005,17 @@ class InputSelect extends InputComponent {
 
         super.attributeChangedCallback(name, oldValue, newValue);
 
-        if ((name === "view" || name === "view-type") && oldValue !== newValue) {
+        if (
+            (name === "view" ||
+                name === "view-type" ||
+                name === "select-bar-direction" ||
+                name === "compact" ||
+                name === "hide-icons" ||
+                name === "hide-labels" ||
+                name === "hide-info" ||
+                name === "option-parts") &&
+            oldValue !== newValue
+        ) {
             this._renderTemplateOrDefault();
             this._afterConnected();
             return;
@@ -826,10 +1131,13 @@ class InputSelect extends InputComponent {
             (option) => {
                 const label = option.label || option.getAttribute("label") || option.textContent.trim();
                 const value = option.hasAttribute("value") ? option.getAttribute("value") : label;
+                const iconSrc = option.getAttribute("icon-src") || "";
+                const icon = iconSrc || option.icon || option.getAttribute("icon") || option.dataset.icon || "";
                 return {
                     value,
                     label,
-                    icon: option.icon || option.getAttribute("icon-src") || option.dataset.icon || "",
+                    icon,
+                    iconIsUrl: !!iconSrc,
                     description:
                         option.description || option.getAttribute("description") || option.dataset.description || "",
                     selected: option.selected || option.hasAttribute("selected")
@@ -871,6 +1179,7 @@ class InputSelect extends InputComponent {
             }
         } else if (this._optionList) {
             this._optionList.replaceChildren();
+            const visibleParts = this._getVisibleOptionParts();
             if (!this._useSelectBarMode()) {
                 this._options.unshift({
                     label: defaultValue || "Select an option",
@@ -881,25 +1190,59 @@ class InputSelect extends InputComponent {
             }
             for (let i = 0; i < this._options.length; i += 1) {
                 const optionData = this._options[i];
-                const li = document.createElement("select-option");
+                const li = document.createElement("div");
+                const option = document.createElement("div");
+                const label = document.createElement("span");
 
-                li.value = optionData.value;
-                li.textContent = optionData.label;
                 li.id = `${this._optionList.id}-option-${i}`;
+                li.className = "select-option";
+                li.dataset.value = optionData.value;
+                li.setAttribute("part", "option-item");
                 li.setAttribute("role", "option");
                 li.setAttribute("aria-selected", "false");
 
-                if (optionData.icon) {
-                    const icon = document.createElement("div");
-                    icon.setAttribute("aria-hidden", "true");
-                    icon.setAttribute("slot", "icon");
-                    icon.classList.add("icon", ...optionData.icon.split(" "));
-                    li.appendChild(icon);
+                option.className = "option";
+                option.setAttribute("part", "option");
+
+                if (visibleParts.has("icon") && optionData.icon) {
+                    const icon = createOptionIconElement(optionData.icon, optionData.label, {
+                        forceUrl: optionData.iconIsUrl
+                    });
+                    if (icon) {
+                        const iconWrap = document.createElement("span");
+                        iconWrap.className = "option-icon-wrap";
+                        iconWrap.setAttribute("part", "option-icon");
+                        icon.removeAttribute("slot");
+                        iconWrap.appendChild(icon);
+                        option.appendChild(iconWrap);
+                        li.setAttribute("has-icon", "");
+                    }
                 }
-                if (attrValue === null && optionData.selected) {
+
+                if (visibleParts.has("label")) {
+                    label.className = "option-label";
+                    label.setAttribute("part", "option-label");
+                    label.textContent = optionData.label;
+                    option.appendChild(label);
+                } else {
+                    li.setAttribute("aria-label", optionData.label);
+                }
+
+                if (visibleParts.has("info") && optionData.description) {
+                    const info = document.createElement("span");
+                    info.className = "option-info";
+                    info.setAttribute("part", "option-info");
+                    info.setAttribute("title", optionData.description);
+                    info.setAttribute("aria-label", optionData.description);
+                    info.textContent = "i";
+                    option.appendChild(info);
+                }
+
+                li.appendChild(option);
+
+                if (optionData.selected) {
                     this.value = optionData.value;
                     li.classList.add("selected");
-                    li.selected = true;
                     li.setAttribute("aria-selected", "true");
                     this._dom.labelValue.value = optionData.label;
                     this.selected = {
@@ -953,18 +1296,16 @@ class InputSelect extends InputComponent {
             const nativeOption = Array.from(this._dom.native.options).find((o) => o.value === option.value);
             if (nativeOption) nativeOption.selected = true;
         } else if (this._optionList) {
-            const li = Array.from(this._optionList.querySelectorAll("select-option")).find(
-                (item) => item.value === option.value
+            const li = Array.from(this._optionList.querySelectorAll(".select-option")).find(
+                (item) => item.dataset.value === option.value
             );
             if (li) {
-                const currentlySelected = this._optionList.querySelector("select-option.selected");
+                const currentlySelected = this._optionList.querySelector(".select-option.selected");
                 if (currentlySelected) {
                     currentlySelected.classList.remove("selected");
-                    currentlySelected.selected = false;
                     currentlySelected.setAttribute("aria-selected", "false");
                 }
                 li.classList.add("selected");
-                li.selected = true;
                 li.setAttribute("aria-selected", "true");
             }
         }
@@ -1011,9 +1352,7 @@ class InputSelect extends InputComponent {
     }
 
     _getOptionElements() {
-        return this._optionList
-            ? Array.from(this._optionList.querySelectorAll("select-option"))
-            : [];
+        return this._optionList ? Array.from(this._optionList.querySelectorAll(".select-option")) : [];
     }
 
     _setActiveOption(index) {
@@ -1050,7 +1389,7 @@ class InputSelect extends InputComponent {
     _commitActiveOption() {
         const option = this._getOptionElements()[this._activeOptionIndex];
         if (!option) return;
-        const value = option.value;
+        const value = option.dataset.value || "";
         this.value = value;
         this._selectOptionByValue(value);
         this.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
@@ -1163,10 +1502,10 @@ class InputSelect extends InputComponent {
         });
 
         this._optionList.addEventListener("click", (event) => {
-            const target = event.target instanceof HTMLElement ? event.target.closest("select-option") : null;
+            const target = event.target instanceof HTMLElement ? event.target.closest(".select-option") : null;
             if (!target || !this._optionList.contains(target)) return;
             this._dom.native.blur();
-            const value = target.value;
+            const value = target.dataset.value || "";
             this.value = value;
             this._selectOptionByValue(value);
 

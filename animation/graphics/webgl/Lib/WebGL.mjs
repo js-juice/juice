@@ -4,7 +4,7 @@
  * @module Graphics/WebGL/Lib/WebGL
  */
 
-import EventEmitter from "../../../../core/Event/Emitter.mjs";
+import EventEmitter from "../../../../core/event/emitter.mjs";
 import { Shaders } from "./Shaders.mjs";
 import { ShaderTypes } from "./Shader.mjs";
 import Texture from "./Texture.mjs";
@@ -14,7 +14,7 @@ import TransformFeedback from "./TransformFeedback.mjs";
 
 const PIXEL_STORE_METHODS = {
     UNPACK_PREMULTIPLY_ALPHA_WEBGL: true,
-    UNPACK_COLORSPACE_CONVERSION_WEBGL: true,
+    UNPACK_COLORSPACE_CONVERSION_WEBGL: true
 };
 
 /**
@@ -169,7 +169,6 @@ class WebGL extends EventEmitter {
         this.emit("program", this.program, gl);
 
         if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
-            console.log(gl.getProgramInfoLog(this.program));
             gl.deleteProgram(this.program);
         } else {
             gl.useProgram(this.program);
@@ -199,7 +198,7 @@ class WebGL extends EventEmitter {
         }
         const contextType = this.version === 2 ? "webgl2" : "webgl";
         const gl = this.canvas.getContext(contextType, {
-            alpha: true,
+            alpha: true
             /*premultipliedAlpha: true,*/
         });
         if (!gl) {

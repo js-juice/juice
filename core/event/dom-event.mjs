@@ -1,7 +1,7 @@
 /**
  * DomEvent provides utilities for managing DOM event listeners.
  * Simplifies binding and unbinding event listeners to multiple elements.
- * @module Event/DomEvent
+ * @module event/dom-event
  */
 
 /**
@@ -12,6 +12,9 @@
  * domEvent.bind(elements, 'click', handleClick);
  */
 class DomEvent {
+    callback(fn) {
+        this._callback = fn.bind(this);
+    }
 
     /**
      * Binds an event listener to one or more elements.
@@ -20,10 +23,10 @@ class DomEvent {
      * @param {Function} eventFn - Event handler function
      * @param {boolean} [useCapture=false] - Whether to use capture phase
      */
-    bind( elements, event, eventFn, useCapture=false ){
-        if(typeof elements !== 'array') elements = [elements];
-        for(let i=0;i<elements.length;i++){
-            elements[i].addEventListener( event, eventFn, useCapture );
+    bind(elements, event, eventFn, useCapture = false) {
+        if (typeof elements !== "array") elements = [elements];
+        for (let i = 0; i < elements.length; i++) {
+            elements[i].addEventListener(event, eventFn, useCapture);
         }
     }
 
@@ -33,13 +36,12 @@ class DomEvent {
      * @param {string} event - Event name
      * @param {Function} eventFn - Event handler function to remove
      */
-    unbind( elements, event, eventFn ){
-        if(typeof elements !== 'array') elements = [elements];
-        for(let i=0;i<elements.length;i++){
-            elements[i].removeEventListener( event, eventFn );
+    unbind(elements, event, eventFn) {
+        if (typeof elements !== "array") elements = [elements];
+        for (let i = 0; i < elements.length; i++) {
+            elements[i].removeEventListener(event, eventFn);
         }
     }
-
 }
 
 export default DomEvent;

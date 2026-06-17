@@ -1,2 +1,10 @@
-@use 'forms';
-
+@use '../../../../core/Components/Form/sass/form--buttons';
+@use '../../../../core/Components/Form/sass/form--field';
+@use '../../../../core/Components/Form/sass/form--field-wrapper';
+@use '../../../../core/Components/Form/sass/form--field-toggle';
+@use '../../../../core/Components/Form/sass/form--fieldsets';
+@use '../../../../core/Components/Form/sass/form--inputs';
+@use '../../../../core/Components/Form/sass/form--layout';
+@use '../../../../core/Components/Form/sass/component--form-input';
+@use '../../../../core/Components/Form/sass/component--setup';
+@use '../../../../core/Components/Form/sass/setup';

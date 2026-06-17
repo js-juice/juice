@@ -109,7 +109,6 @@ class FeedbackAttribute extends VariableBase {
      * @returns {*} Result of createBuffers.
      */
     createBuffers() {
-        console.log("CREATE BUFFERS", this.name);
         const { settings, gl } = this;
         this.buffer = {
             read: gl.createBuffer(),
@@ -166,7 +165,6 @@ class FeedbackAttribute extends VariableBase {
      * @returns {*} Result of onBound.
      */
     onBound() {
-        console.log("onBound", this.name);
         if (!this.buffer) {
             this.createBuffers();
         }
@@ -180,7 +178,6 @@ class FeedbackAttribute extends VariableBase {
     resizeBuffers(newItemCount) {
         const { settings, gl } = this;
         if (!this.buffer) {
-            console.warn(`${this.name}: resizeBuffers called before createBuffers`);
             return;
         }
 

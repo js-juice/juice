@@ -122,7 +122,9 @@ class WebGLParticleSystem {
         this.gravity = [0, 0, 0];
         this.friction = 0;
         this.cameraPan = { x: 0, y: 0 };
-        this._previousCameraPan = { x: 0, y: 0 };
+        this.cameraPan.z = 0;
+        this._previousCameraPan = { x: 0, y: 0, z: 0 };
+        this._cameraPanBaselineSet = false;
         this.cameraAngle = { yaw: 0, pitch: 0 };
         this._previousCameraAngle = { yaw: 0, pitch: 0 };
         this.cameraPanScale = 1.0;
@@ -132,6 +134,12 @@ class WebGLParticleSystem {
         this._snapshots = new Map();
         this._maskTransition = null;
         this.emitter = null;
+        this.particleBehavior = {
+            startScale: 0.45,
+            endScale: 3,
+            fadeStart: 0.72,
+            fadeEnd: 1
+        };
         this.debugCrosshairMode = "none";
         this.debugCrosshairPreviewMode = "none";
         this._debugCrosshairPreviewTimer = 0;
@@ -165,7 +173,7 @@ class WebGLParticleSystem {
 
         const card = document.createElement("ui-card");
         card.setAttribute("draggable", "true");
-
+        card.setAttribute("bounds", options.bounds || "0,0,0,0");
         card.setAttribute("container", "window");
         card.setAttribute("collapsed", "");
         card.setAttribute("width", 360);
@@ -413,7 +421,7 @@ class WebGLParticleSystem {
                     numericSetting("gravity-z", this.gravity[2])
                 ])});`,
                 `world.setFriction(${numericSetting("friction", this.friction)});`,
-                `world.setCameraPan(${numericSetting("camera-pan-x", this.cameraPan.x)}, ${numericSetting("camera-pan-y", this.cameraPan.y)});`,
+                `world.setCameraPan(${numericSetting("camera-pan-x", this.cameraPan.x)}, ${numericSetting("camera-pan-y", this.cameraPan.y)}, ${numericSetting("camera-pan-z", this.cameraPan.z)});`,
                 `world.setCameraAngle(${numericSetting("camera-yaw", this.cameraAngle.yaw)}, ${numericSetting("camera-pitch", this.cameraAngle.pitch)});`,
                 `world.setCameraMotion(${codeValue({
                     panScale: numericSetting("camera-pan-scale", this.cameraPanScale),
@@ -548,7 +556,7 @@ class WebGLParticleSystem {
         };
         const applyGravity = () => this.setGravity(this.gravity);
         const applyCamera = () => {
-            this.setCameraPan(this.cameraPan.x, this.cameraPan.y);
+            this.setCameraPan(this.cameraPan.x, this.cameraPan.y, this.cameraPan.z);
             this.setCameraAngle(this.cameraAngle.yaw, this.cameraAngle.pitch);
             this.setCameraMotion({
                 panScale: this.cameraPanScale,
@@ -974,7 +982,7 @@ class WebGLParticleSystem {
                     space: "bounds"
                 },
                 rotation: parseRotationVector(maskRotationInput.value),
-                transition: false,
+                transition: maskTransitionInput.checked,
                 transitionDuration: number(maskTransitionDurationInput.value, 1400),
                 transitionSpread: number(maskTransitionSpreadInput.value, 0)
             });
@@ -1101,6 +1109,10 @@ class WebGLParticleSystem {
                 }),
                 range("camera-pan-y", "Pan Y", -10, 10, this.cameraPan.y, 0.01, 2, (value) => {
                     this.cameraPan.y = number(value, 0);
+                    applyCamera();
+                }),
+                range("camera-pan-z", "Pan Z", -20, 20, this.cameraPan.z, 0.01, 2, (value) => {
+                    this.cameraPan.z = number(value, 0);
                     applyCamera();
                 }),
                 range("camera-yaw", "Yaw", -10, 10, this.cameraAngle.yaw, 0.01, 2, (value) => {
@@ -1331,12 +1343,17 @@ class WebGLParticleSystem {
         const durationMs = Math.max(1, Number(transition.durationMs) || 1);
         const spread = Math.max(0, Math.min(1, Number(transition.spread) || 0));
         const totalDurationMs = durationMs * (1 + spread);
+        const activeCount = Number.isFinite(transition.count)
+            ? Math.max(0, Math.min(this.maxParticles, Math.floor(transition.count)))
+            : Math.max(0, Math.min(this.maxParticles, this.particles.count || 0));
         const positionCount = Math.min(
+            activeCount * 3,
             this.particles.positions.length,
             transition.fromPositions.length,
             transition.toPositions.length
         );
         const colorCount = Math.min(
+            activeCount * 4,
             this.particles.colors.length,
             transition.fromColors.length,
             transition.toColors.length
@@ -1355,20 +1372,14 @@ class WebGLParticleSystem {
         for (let i = 0; i < colorCount; i += 1) {
             const from = transition.fromColors[i];
             const to = transition.toColors[i];
-            if (i % 4 === 3) {
-                this.particles.colors[i] = to;
-            } else {
-                const particleIndex = Math.floor(i / 4);
-                const delay = spread ? createSeededRandom((particleIndex + 1) * 2654435761)() * durationMs * spread : 0;
-                const progress = Math.max(0, Math.min(1, (elapsed - delay) / durationMs));
-                const eased = this._easeMaskTransition(progress);
-                this.particles.colors[i] = from + (to - from) * eased;
-            }
+            const particleIndex = Math.floor(i / 4);
+            const delay = spread ? createSeededRandom((particleIndex + 1) * 2654435761)() * durationMs * spread : 0;
+            const progress = Math.max(0, Math.min(1, (elapsed - delay) / durationMs));
+            const eased = this._easeMaskTransition(progress);
+            this.particles.colors[i] = from + (to - from) * eased;
         }
 
-        if (Number.isFinite(transition.count) && transition.count >= 0) {
-            this.particles.count = Math.max(0, Math.min(this.maxParticles, Math.floor(transition.count)));
-        }
+        this.particles.count = activeCount;
 
         this._syncStageFromParticles();
 
@@ -1494,7 +1505,8 @@ class WebGLParticleSystem {
 
             vec3 position = aPosition;
             vec3 velocity = aVelocity;
-            float particleAge = aState[1];
+            bool lifetimeParticle = aState[1] < 0.0;
+            float particleAge = abs(aState[1]);
             vec3 home = vec3(aState[2], aState[3], aState[0]);
             if (home.z > -near || home.z < -far) {
                 home.z = position.z;
@@ -1509,7 +1521,7 @@ class WebGLParticleSystem {
             float boundTop = bounds[2];
             float boundBottom = bounds[3];
 
-            if (uRepel) {
+            if (uRepel && !lifetimeParticle) {
                 vec3 target = vec3(uTargetPoint.x, uTargetPoint.y, uTargetPoint.z);
                 float targetRadius = max(0.0001, uTargetPoint.w);
                 float fieldRadius = max(targetRadius, uRepelFieldRadius);
@@ -1561,7 +1573,7 @@ class WebGLParticleSystem {
                     velocity *= (1.0 - settle);
                 }
 
-            } else if (uOrbit) {
+            } else if (uOrbit && !lifetimeParticle) {
                 vec3 target = vec3(uTargetPoint.x, uTargetPoint.y, uTargetPoint.z);
                 float targetRadius = max(0.02, uTargetPoint.w);
                 float fieldRadius = max(targetRadius, uOrbitFieldRadius);
@@ -1650,7 +1662,7 @@ class WebGLParticleSystem {
                     float settle = clamp(delta * 8.0, 0.0, 1.0);
                     velocity *= (1.0 - settle);
                 }
-            } else if (!gravityActive) {
+            } else if (!gravityActive && !lifetimeParticle) {
                 // Orbit is off: settle particles back toward home.
                 vec3 toHome = home - position;
                 float homeDistance = length(toHome);
@@ -1691,17 +1703,24 @@ class WebGLParticleSystem {
             float panDepth = mix(1.0, depthParallax, clamp(depthEffect, 0.0, 1.0));
             vec2 cameraShift = uCameraDelta.xy * uCameraConfig.x * panDepth;
             cameraShift *= cameraActive;
-            position.xy += cameraShift;
-            home.xy += cameraShift;
-            if (driftAbsolute) {
+            if (!lifetimeParticle) {
+                position.xy += cameraShift;
+                home.xy += cameraShift;
+                float cameraZShift = uCameraDelta.z * uCameraConfig.x;
+                position.z += cameraZShift;
+                home.z += cameraZShift;
+            }
+            if (driftAbsolute && !lifetimeParticle) {
                 absoluteDriftX += cameraShift.x;
                 absoluteDriftY += cameraShift.y;
             }
 
             // Integrate velocity with gravity and friction.
-            velocity += uGravity * delta;
-            float damp = clamp(uFriction * delta, 0.0, 1.0);
-            velocity = velocity * (1.0 - damp);
+            if (!lifetimeParticle) {
+                velocity += uGravity * delta;
+                float damp = clamp(uFriction * delta, 0.0, 1.0);
+                velocity = velocity * (1.0 - damp);
+            }
             if (driftAbsolute) {
                 // Keep absolute drift centered on anchor in XY.
                 velocity.x = 0.0;
@@ -1713,7 +1732,7 @@ class WebGLParticleSystem {
                 position.y = absoluteDriftY;
             }
 
-            bool wrapActive = !gravityActive && !uRepel && !uOrbit;
+            bool wrapActive = !gravityActive && !uRepel && !uOrbit && !lifetimeParticle;
 
             if (wrapActive && position.x < boundLeft) {
                 position.x = boundRight;
@@ -1742,7 +1761,8 @@ class WebGLParticleSystem {
 
             aPositionOut = position;
             aVelocityOut = velocity;
-            aStateOut = vec4(home.z, particleAge + delta, home.x, home.y);
+            float nextParticleAge = particleAge + delta;
+            aStateOut = vec4(home.z, lifetimeParticle ? -nextParticleAge : nextParticleAge, home.x, home.y);
             aColorOut = aColor;
         `);
 
@@ -1765,6 +1785,8 @@ class WebGLParticleSystem {
         this.feedbackVelocity.addChild(this.aVelocity);
         this.aColor = vertex.addInput("aColor", VariableTypes.FLOAT_VEC4, this.particles.colors);
         this.feedbackColor.addChild(this.aColor);
+        this.aSize = vertex.addInput("aSize", VariableTypes.FLOAT, this.particles.sizes);
+        this.aLife = vertex.addInput("aLife", VariableTypes.FLOAT, this.particles.lifes);
 
         vertex.addOutput("particleStateColor", VariableTypes.FLOAT_VEC4);
         this.uProjectionMatrix = vertex.addUniform(
@@ -1779,6 +1801,12 @@ class WebGLParticleSystem {
             this.minParticleSize
         ]);
         this.uParticleShape = fragment.addUniform("uParticleShape", VariableTypes.INT, this._particleShapeMode());
+        this.uLifeBehavior = vertex.addUniform("uLifeBehavior", VariableTypes.FLOAT_VEC4, [
+            this.particleBehavior.startScale,
+            this.particleBehavior.endScale,
+            this.particleBehavior.fadeStart,
+            this.particleBehavior.fadeEnd
+        ]);
 
         vertex.main(`
             vec3 renderPosition = aPosition;
@@ -1803,8 +1831,12 @@ class WebGLParticleSystem {
             }
             gl_Position = uProjectionMatrix * vec4(renderPosition, 1.0);
             float depth = max(0.2, abs(renderPosition.z));
-            gl_PointSize = max(uPointSize.y, uPointSize.x / depth);
-            particleStateColor = aColor;
+            float ageProgress = aLife > 0.001 ? clamp(abs(aState.y) / aLife, 0.0, 1.0) : 0.0;
+            float smokeGrowth = mix(max(0.01, uLifeBehavior.x), max(0.01, uLifeBehavior.y), smoothstep(0.0, 1.0, ageProgress));
+            float particleScale = max(0.01, aSize) * smokeGrowth;
+            gl_PointSize = max(uPointSize.y, (uPointSize.x * particleScale) / depth);
+            float smokeAlpha = aColor.a * (1.0 - smoothstep(clamp(uLifeBehavior.z, 0.0, 1.0), clamp(uLifeBehavior.w, 0.0, 1.0), ageProgress));
+            particleStateColor = vec4(aColor.rgb, smokeAlpha);
         `);
 
         fragment.setPrecision("high", "float");
@@ -1822,7 +1854,8 @@ class WebGLParticleSystem {
                 if (shapeAlpha <= 0.001) discard;
             }
 
-            fragColor = vec4(particleStateColor.rgb, particleStateColor.a * shapeAlpha);
+            float alpha = particleStateColor.a * shapeAlpha;
+            fragColor = vec4(particleStateColor.rgb * alpha, alpha);
         `);
 
         this.program = this.webgl.build();
@@ -1849,6 +1882,56 @@ class WebGLParticleSystem {
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, variable.buffer.write);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, payload, this.gl.DYNAMIC_DRAW);
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+    }
+
+    /**
+     * Uploads a subrange of CPU particle data without resetting simulated particles.
+     *
+     * @private
+     * @param {*} variable Feedback variable containing read/write buffers.
+     * @param {Float32Array|number[]} data Source data.
+     * @param {number} components Components per particle for this buffer.
+     * @param {number} start First particle index.
+     * @param {number} count Number of particles to upload.
+     */
+    _syncFeedbackVariableRange(variable, data, components, start, count) {
+        if (!variable || !variable.buffer || !this.gl || !data || count <= 0) return;
+        const safeStart = Math.max(0, Math.floor(Number(start) || 0));
+        const safeCount = Math.max(0, Math.floor(Number(count) || 0));
+        const componentCount = Math.max(1, Math.floor(Number(components) || 1));
+        const first = safeStart * componentCount;
+        const last = first + safeCount * componentCount;
+        const payload = data.subarray ? data.subarray(first, last) : new Float32Array(data).subarray(first, last);
+        const byteOffset = first * Float32Array.BYTES_PER_ELEMENT;
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, variable.buffer.read);
+        this.gl.bufferSubData(this.gl.ARRAY_BUFFER, byteOffset, payload);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, variable.buffer.write);
+        this.gl.bufferSubData(this.gl.ARRAY_BUFFER, byteOffset, payload);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+    }
+
+    /**
+     * Captures the current transform-feedback state that is actually being rendered.
+     *
+     * @private
+     * @returns {{positions:Float32Array,colors:Float32Array,velocities:Float32Array,states:Float32Array}|null}
+     */
+    _captureLiveFeedbackState() {
+        if (!this.gl || !this.feedbackPosition?.download || !this.feedbackColor?.download) return null;
+
+        try {
+            return {
+                positions: this.feedbackPosition.download(),
+                colors: this.feedbackColor.download(),
+                velocities: this.feedbackVelocity?.download?.() || this.particles.velocities.slice(),
+                states: this.feedbackState?.download?.() || this.particles.states.slice()
+            };
+        } catch (_err) {
+            return null;
+        } finally {
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+        }
     }
 
     /**
@@ -1889,9 +1972,86 @@ class WebGLParticleSystem {
         this._syncFeedbackVariable(this.feedbackVelocity, this.particles.velocities);
         this._syncFeedbackVariable(this.feedbackState, this.particles.states);
         this._syncFeedbackVariable(this.feedbackColor, this.particles.colors);
+        this._syncRenderParticleAttributes();
         if (this.feedback) {
             this.feedback.points = Math.max(0, Math.min(this.maxParticles, this.particles.count || 0));
         }
+    }
+
+    /**
+     * Uploads only newly emitted particle slots.
+     *
+     * @private
+     * @param {{start:number,count:number}[]} ranges
+     */
+    _syncSpawnRangesFromParticles(ranges = []) {
+        if (!Array.isArray(ranges) || !ranges.length) return;
+        for (const range of ranges) {
+            const start = Math.max(0, Math.floor(Number(range?.start) || 0));
+            const count = Math.max(0, Math.floor(Number(range?.count) || 0));
+            this._syncFeedbackVariableRange(this.feedbackPosition, this.particles.positions, 3, start, count);
+            this._syncFeedbackVariableRange(this.feedbackVelocity, this.particles.velocities, 3, start, count);
+            this._syncFeedbackVariableRange(this.feedbackState, this.particles.states, 4, start, count);
+            this._syncFeedbackVariableRange(this.feedbackColor, this.particles.colors, 4, start, count);
+        }
+        this._syncRenderParticleAttributes(ranges);
+        if (this.feedback) {
+            this.feedback.points = Math.max(0, Math.min(this.maxParticles, this.particles.count || 0));
+        }
+    }
+
+    /**
+     * Uploads render-only particle attributes that do not participate in transform feedback.
+     *
+     * @private
+     */
+    _syncRenderParticleAttributes(ranges = null) {
+        this._uploadRenderParticleAttribute(this.aSize, this.particles.sizes, 1, ranges);
+        this._uploadRenderParticleAttribute(this.aLife, this.particles.lifes, 1, ranges);
+    }
+
+    _uploadRenderParticleAttribute(attribute, data, components = 1, ranges = null) {
+        if (!attribute || !this.gl || !data) return;
+        const location = attribute.location;
+        if (location === null || location === undefined || location === -1) return;
+        if (!attribute.buffer) attribute.createBuffer();
+        if (!attribute.buffer) return;
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, attribute.buffer);
+
+        if (Array.isArray(ranges) && ranges.length) {
+            for (const range of ranges) {
+                const start = Math.max(0, Math.floor(Number(range?.start) || 0));
+                const count = Math.max(0, Math.floor(Number(range?.count) || 0));
+                if (!count) continue;
+                const from = start * components;
+                const to = from + count * components;
+                this.gl.bufferSubData(this.gl.ARRAY_BUFFER, from * Float32Array.BYTES_PER_ELEMENT, data.subarray(from, to));
+            }
+        } else {
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, data, this.gl.DYNAMIC_DRAW);
+        }
+    }
+
+    /**
+     * Binds render-only particle attributes that are not transform-feedback outputs.
+     *
+     * @private
+     */
+    _bindRenderParticleAttributes() {
+        const bindAttribute = (attribute, fallbackData) => {
+            if (!attribute || !this.gl) return;
+            const location = attribute.location;
+            if (location === null || location === undefined || location === -1) return;
+            if (!attribute.buffer) attribute.createBuffer();
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, attribute.buffer);
+            this.gl.vertexAttribPointer(location, attribute.settings.args, this.gl[attribute.settings.argType], false, 0, 0);
+            this.gl.enableVertexAttribArray(location);
+        };
+
+        bindAttribute(this.aSize);
+        bindAttribute(this.aLife);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
     }
 
     /**
@@ -2481,6 +2641,92 @@ class WebGLParticleSystem {
         ];
     }
 
+    _cloneMaskRange(range) {
+        if (!range || typeof range !== "object") return null;
+        return {
+            ...range,
+            pointIndices: Array.isArray(range.pointIndices) ? range.pointIndices.slice() : null
+        };
+    }
+
+    _maskRangePointIndices(range, maskCount) {
+        if (!range || !maskCount) return [];
+        const count = Math.max(0, Math.floor(Number(range.count) || 0));
+        if (Array.isArray(range.pointIndices) && range.pointIndices.length >= count) {
+            return range.pointIndices.slice(0, count);
+        }
+
+        const inferredStride = count > 0 ? Math.max(1, Math.round(maskCount / count)) : 1;
+        const stride = Math.max(1, Math.floor(Number(range.gapStride) || inferredStride));
+        return Array.from({ length: count }, (_value, offset) => (offset * stride) % maskCount);
+    }
+
+    _alignMaskTransitionByPoint({
+        maskIndex,
+        previousRange,
+        nextRange,
+        fromPositions,
+        fromColors,
+        toPositions,
+        toColors,
+        fromCount,
+        nextCount
+    }) {
+        if (!previousRange || !nextRange || previousRange.maskIndex !== nextRange.maskIndex) return new Set();
+        if (previousRange.maskIndex !== Math.floor(maskIndex)) return new Set();
+
+        const maskPoints = this.particles?.masks?.[Math.floor(maskIndex)]?.points;
+        const maskCount = maskPoints ? Math.floor(maskPoints.length / 2) : 0;
+        const previousPoints = this._maskRangePointIndices(previousRange, maskCount);
+        const nextPoints = this._maskRangePointIndices(nextRange, maskCount);
+        if (!previousPoints.length || !nextPoints.length) return new Set();
+
+        const sourcePositions = fromPositions.slice();
+        const sourceColors = fromColors.slice();
+        const previousStart = Math.max(0, Math.floor(Number(previousRange.start) || 0));
+        const nextStart = Math.max(0, Math.floor(Number(nextRange.start) || 0));
+        const previousSlotsByPoint = new Map();
+        previousPoints.forEach((pointIndex, offset) => {
+            const slot = previousStart + offset;
+            if (slot >= fromCount || previousSlotsByPoint.has(pointIndex)) return;
+            previousSlotsByPoint.set(pointIndex, slot);
+        });
+
+        const handledSlots = new Set();
+        nextPoints.forEach((pointIndex, offset) => {
+            const targetSlot = nextStart + offset;
+            if (targetSlot >= nextCount) return;
+
+            const target3 = targetSlot * 3;
+            const target4 = targetSlot * 4;
+            const previousSlot = previousSlotsByPoint.get(pointIndex);
+
+            if (Number.isFinite(previousSlot)) {
+                const previous3 = previousSlot * 3;
+                const previous4 = previousSlot * 4;
+                fromPositions[target3] = sourcePositions[previous3];
+                fromPositions[target3 + 1] = sourcePositions[previous3 + 1];
+                fromPositions[target3 + 2] = sourcePositions[previous3 + 2];
+                fromColors[target4] = sourceColors[previous4];
+                fromColors[target4 + 1] = sourceColors[previous4 + 1];
+                fromColors[target4 + 2] = sourceColors[previous4 + 2];
+                fromColors[target4 + 3] = sourceColors[previous4 + 3];
+            } else {
+                fromPositions[target3] = toPositions[target3];
+                fromPositions[target3 + 1] = toPositions[target3 + 1];
+                fromPositions[target3 + 2] = toPositions[target3 + 2];
+                fromColors[target4] = toColors[target4] ?? 1;
+                fromColors[target4 + 1] = toColors[target4 + 1] ?? 1;
+                fromColors[target4 + 2] = toColors[target4 + 2] ?? 1;
+                fromColors[target4 + 3] = 0;
+            }
+
+            handledSlots.add(targetSlot);
+        });
+
+        return handledSlots;
+    }
+
     /**
      * Applies a previously loaded mask index to the active stage.
      *
@@ -2499,17 +2745,61 @@ class WebGLParticleSystem {
         );
 
         if (transitionEnabled && transitionDurationMs > 0) {
-            const fromPositions = this.particles.positions.slice();
-            const fromColors = this.particles.colors.slice();
+            const fromCount = Math.max(0, Math.min(this.maxParticles, Math.floor(this.particles.count || 0)));
+            const liveState = this._captureLiveFeedbackState();
+            const fromPositions = liveState?.positions || this.particles.positions.slice();
+            const fromColors = liveState?.colors || this.particles.colors.slice();
+            const previousMaskRange = this._cloneMaskRange(this.particles.activeMaskRange);
 
             this.particles.fillFromMask(normalizedIndex, buildOptions);
             const toPositions = this.particles.positions.slice();
             const toColors = this.particles.colors.slice();
-            const nextCount = this.particles.count || this.maxParticles;
+            const nextMaskRange = this._cloneMaskRange(this.particles.activeMaskRange);
+            const nextCount = Number.isFinite(Number(this.particles.count))
+                ? Math.max(0, Math.min(this.maxParticles, Math.floor(Number(this.particles.count))))
+                : this.maxParticles;
+            const transitionCount = Math.max(fromCount, nextCount);
+            const handledSlots = this._alignMaskTransitionByPoint({
+                maskIndex: normalizedIndex,
+                previousRange: previousMaskRange,
+                nextRange: nextMaskRange,
+                fromPositions,
+                fromColors,
+                toPositions,
+                toColors,
+                fromCount,
+                nextCount
+            });
+
+            for (let i = fromCount; i < transitionCount; i += 1) {
+                if (handledSlots.has(i)) continue;
+                const i3 = i * 3;
+                const i4 = i * 4;
+                fromPositions[i3] = toPositions[i3];
+                fromPositions[i3 + 1] = toPositions[i3 + 1];
+                fromPositions[i3 + 2] = toPositions[i3 + 2];
+                fromColors[i4] = toColors[i4];
+                fromColors[i4 + 1] = toColors[i4 + 1];
+                fromColors[i4 + 2] = toColors[i4 + 2];
+                fromColors[i4 + 3] = 0;
+            }
+
+            for (let i = nextCount; i < fromCount; i += 1) {
+                if (handledSlots.has(i)) continue;
+                const i3 = i * 3;
+                const i4 = i * 4;
+                toPositions[i3] = fromPositions[i3];
+                toPositions[i3 + 1] = fromPositions[i3 + 1];
+                toPositions[i3 + 2] = fromPositions[i3 + 2];
+                toColors[i4] = fromColors[i4];
+                toColors[i4 + 1] = fromColors[i4 + 1];
+                toColors[i4 + 2] = fromColors[i4 + 2];
+                toColors[i4 + 3] = 0;
+            }
 
             this.particles.positions.set(fromPositions);
             this.particles.colors.set(fromColors);
-            this.particles.count = Math.max(0, Math.min(this.maxParticles, Math.floor(nextCount)));
+            this.particles.count = nextCount;
 
             this._maskTransition = {
                 startTimeMs: NaN,
@@ -2522,6 +2812,7 @@ class WebGLParticleSystem {
                 toPositions,
                 fromColors,
                 toColors,
+                fromCount,
                 count: nextCount
             };
             this._syncStageFromParticles();
@@ -2550,7 +2841,6 @@ class WebGLParticleSystem {
      * @returns {Promise<{maskIndex:number,count:number}>}
      */
     async loadMask(source, options = {}) {
-        console.log("loadMask", source, options);
         const isOptionsResolver = typeof options === "function";
         const { apply = true, buildOptions = {}, ...maskOptions } = isOptionsResolver ? {} : options;
         if (!source || !this.particles?.loadMask) {
@@ -2574,6 +2864,8 @@ class WebGLParticleSystem {
                 "rotation",
                 "rotate",
                 "maskRotation",
+                "particleGap",
+                "gap",
                 "transition",
                 "transitionDuration",
                 "duration",
@@ -2599,11 +2891,84 @@ class WebGLParticleSystem {
      */
     clearMask(buildOptions = {}) {
         if (!this.particles) return;
+        const transitionEnabled = buildOptions?.transition !== false;
+        const transitionDurationMs = Math.max(
+            0,
+            Number(buildOptions?.transitionDuration ?? buildOptions?.duration ?? 1400) || 0
+        );
+        const fromCount = Math.max(0, Math.min(this.maxParticles, Math.floor(this.particles.count || 0)));
+        const liveState = transitionEnabled && transitionDurationMs > 0 ? this._captureLiveFeedbackState() : null;
+        const fromPositions = liveState?.positions || this.particles.positions.slice();
+        const fromColors = liveState?.colors || this.particles.colors.slice();
+
         this._maskTransition = null;
         this.particles.mask = null;
+        this.particles.activeMaskRange = null;
         this.maskIndex = null;
         this.particles.build(undefined, buildOptions);
+
+        if (transitionEnabled && transitionDurationMs > 0) {
+            const toPositions = this.particles.positions.slice();
+            const toColors = this.particles.colors.slice();
+            const nextCount = Math.max(0, Math.min(this.maxParticles, Math.floor(this.particles.count || 0)));
+            const transitionCount = Math.max(fromCount, nextCount);
+
+            for (let i = fromCount; i < transitionCount; i += 1) {
+                const i3 = i * 3;
+                const i4 = i * 4;
+                fromPositions[i3] = toPositions[i3];
+                fromPositions[i3 + 1] = toPositions[i3 + 1];
+                fromPositions[i3 + 2] = toPositions[i3 + 2];
+                fromColors[i4] = toColors[i4];
+                fromColors[i4 + 1] = toColors[i4 + 1];
+                fromColors[i4 + 2] = toColors[i4 + 2];
+                fromColors[i4 + 3] = 0;
+            }
+
+            for (let i = nextCount; i < fromCount; i += 1) {
+                const i3 = i * 3;
+                const i4 = i * 4;
+                toPositions[i3] = fromPositions[i3];
+                toPositions[i3 + 1] = fromPositions[i3 + 1];
+                toPositions[i3 + 2] = fromPositions[i3 + 2];
+                toColors[i4] = fromColors[i4];
+                toColors[i4 + 1] = fromColors[i4 + 1];
+                toColors[i4 + 2] = fromColors[i4 + 2];
+                toColors[i4 + 3] = 0;
+            }
+
+            this.particles.positions.set(fromPositions);
+            this.particles.colors.set(fromColors);
+            this.particles.count = nextCount;
+            this._maskTransition = {
+                startTimeMs: NaN,
+                durationMs: transitionDurationMs,
+                spread: Math.max(
+                    0,
+                    Math.min(1, Number(buildOptions?.transitionSpread ?? buildOptions?.randomizeTransition ?? 0) || 0)
+                ),
+                fromPositions,
+                toPositions,
+                fromColors,
+                toColors,
+                fromCount,
+                count: nextCount
+            };
+        }
         this._syncStageFromParticles();
+    }
+
+    /**
+     * Clears active particle buffers without rebuilding the default free field.
+     *
+     * @returns {boolean}
+     */
+    clearParticles() {
+        if (!this.particles?.clear) return false;
+        this._maskTransition = null;
+        this.particles.clear();
+        this._syncStageFromParticles();
+        return true;
     }
 
     /**
@@ -2772,10 +3137,21 @@ class WebGLParticleSystem {
      *
      * @param {number} x
      * @param {number} y
+     * @param {number} z
      */
-    setCameraPan(x = 0, y = 0) {
-        this.cameraPan.x = Number(x) || 0;
-        this.cameraPan.y = Number(y) || 0;
+    setCameraPan(x = 0, y = 0, z = 0) {
+        const nextX = Number(x) || 0;
+        const nextY = Number(y) || 0;
+        const nextZ = Number(z) || 0;
+        this.cameraPan.x = nextX;
+        this.cameraPan.y = nextY;
+        this.cameraPan.z = nextZ;
+        if (!this._cameraPanBaselineSet && (nextX !== 0 || nextY !== 0 || nextZ !== 0)) {
+            this._previousCameraPan.x = nextX;
+            this._previousCameraPan.y = nextY;
+            this._previousCameraPan.z = nextZ;
+            this._cameraPanBaselineSet = true;
+        }
     }
 
     /**
@@ -2783,10 +3159,13 @@ class WebGLParticleSystem {
      *
      * @param {number} x
      * @param {number} y
+     * @param {number} z
      */
-    moveCameraPan(x = 0, y = 0) {
+    moveCameraPan(x = 0, y = 0, z = 0) {
         this.cameraPan.x += Number(x) || 0;
         this.cameraPan.y += Number(y) || 0;
+        this.cameraPan.z += Number(z) || 0;
+        this._cameraPanBaselineSet = true;
     }
 
     /**
@@ -2992,14 +3371,6 @@ class WebGLParticleSystem {
         const maskTransitionActive = this._applyMaskTransition(time);
 
         if (!maskTransitionActive) {
-            if (this.emitter) {
-                try {
-                    this.emitter.update(this.time.delta);
-                    this._syncStageFromParticles();
-                } catch (err) {
-                    console.error("[WebGLParticleSystem] Emitter update failed:", err);
-                }
-            }
             gl.useProgram(this.feedback.program);
             this.uScene.value = [
                 Number(this.canvas.width),
@@ -3022,16 +3393,18 @@ class WebGLParticleSystem {
             };
             const rawCameraDeltaX = (Number(this.cameraPan.x) || 0) - (Number(this._previousCameraPan.x) || 0);
             const rawCameraDeltaY = (Number(this.cameraPan.y) || 0) - (Number(this._previousCameraPan.y) || 0);
+            const rawCameraDeltaZ = (Number(this.cameraPan.z) || 0) - (Number(this._previousCameraPan.z) || 0);
             const rawCameraDeltaYaw =
                 (Number(this.cameraAngle.yaw) || 0) - (Number(this._previousCameraAngle.yaw) || 0);
             const rawCameraDeltaPitch =
                 (Number(this.cameraAngle.pitch) || 0) - (Number(this._previousCameraAngle.pitch) || 0);
             const cameraDeltaX = limitCameraStep(rawCameraDeltaX);
             const cameraDeltaY = limitCameraStep(rawCameraDeltaY);
+            const cameraDeltaZ = limitCameraStep(rawCameraDeltaZ);
             const cameraDeltaYaw = limitCameraStep(rawCameraDeltaYaw);
             const cameraDeltaPitch = limitCameraStep(rawCameraDeltaPitch);
             if (this.uCameraDelta) {
-                this.uCameraDelta.value = [cameraDeltaX, cameraDeltaY, cameraDeltaYaw, cameraDeltaPitch];
+                this.uCameraDelta.value = [cameraDeltaX, cameraDeltaY, cameraDeltaZ, 0];
             }
             if (this.uCameraConfig) {
                 this.uCameraConfig.value = [
@@ -3043,6 +3416,7 @@ class WebGLParticleSystem {
             }
             this._previousCameraPan.x += cameraDeltaX;
             this._previousCameraPan.y += cameraDeltaY;
+            this._previousCameraPan.z += cameraDeltaZ;
             this._previousCameraAngle.yaw += cameraDeltaYaw;
             this._previousCameraAngle.pitch += cameraDeltaPitch;
             const orbitRadius = Math.max(0.0001, Number(this.orbitPoint[3]) || 0.4);
@@ -3087,6 +3461,15 @@ class WebGLParticleSystem {
             }
 
             this.feedback.update(this.time.delta);
+            if (this.emitter) {
+                try {
+                    const emitted = this.emitter.update(this.time.delta);
+                    if (emitted > 0) {
+                        this._syncSpawnRangesFromParticles(this.emitter.lastSpawnRanges);
+                    }
+                } catch (_err) {
+                }
+            }
             gl.flush();
         }
 
@@ -3117,12 +3500,13 @@ class WebGLParticleSystem {
         this._updateDebugCrosshairOverlay();
         gl.clearColor(0, 0, 0, 0);
         gl.enable(gl.DEPTH_TEST);
-        gl.depthMask(true);
+        gl.depthMask(false);
         gl.clearDepth(1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         // Bind latest TF read buffers as render attributes.
         this.feedback.applyDownStreamData();
+        this._bindRenderParticleAttributes();
         gl.useProgram(this.program);
         gl.drawArrays(gl.POINTS, 0, this.particles.count);
 
@@ -3130,12 +3514,33 @@ class WebGLParticleSystem {
     }
 
     /**
+     * Sets lifetime behavior for emitter particles.
+     *
+     * @param {{startScale?:number,endScale?:number,fadeStart?:number,fadeEnd?:number}} config
+     */
+    setParticleBehavior(config = {}) {
+        this.particleBehavior = {
+            ...this.particleBehavior,
+            ...config
+        };
+        if (this.uLifeBehavior) {
+            this.uLifeBehavior.value = [
+                Number(this.particleBehavior.startScale) || 1,
+                Number(this.particleBehavior.endScale) || 1,
+                Number(this.particleBehavior.fadeStart) || 0,
+                Number(this.particleBehavior.fadeEnd) || 1
+            ];
+        }
+    }
+
+    /**
      * Attach a CPU emitter adapter to this particle system.
-     * @param {object} config Emitter configuration (x,y,z,paticlesPerSecond,direction,speed,spread,size,lifespan)
+     * @param {object} config Emitter configuration (x,y,z,paticlesPerSecond,direction,speed,spread,size,lifespan,behavior)
      * @returns {EmitterAdapter}
      */
     addEmitter(config = {}) {
         if (!this.particles) return null;
+        if (config.behavior) this.setParticleBehavior(config.behavior);
         if (this.emitter) {
             this.emitter.configure(config);
             return this.emitter;

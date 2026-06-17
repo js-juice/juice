@@ -84,7 +84,6 @@ class Program {
         if (success) {
             return this.native;
         }
-        console.log(gl.getProgramInfoLog(this.native));
         gl.deleteProgram(this.native);
     }
 }

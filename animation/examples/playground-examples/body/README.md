@@ -1,9 +1,9 @@
 # Body
 
-`animation-body` example with position + rotation updates driven by stage timeline.
+`animation-component` example with position + rotation updates driven by stage timeline.
 
 ## Uses
-- `animation/components/body.mjs`
+- `animation/components/animation-component.mjs`
 
 ## Element Attributes
 - `anchor`: transform anchor point (`center center` in this demo)

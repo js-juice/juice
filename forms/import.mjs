@@ -21,3 +21,4 @@ import "./components/input-fieldset.mjs";
 import "./components/input-buttonbar.mjs";
 import "./components/input-color.mjs";
 import "./components/input-colorstops.mjs";
+import "./components/input-position.mjs";

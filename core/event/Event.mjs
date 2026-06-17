@@ -3,7 +3,7 @@
  * @module Event
  */
 
-import { default as _Emitter } from "./Emitter.mjs";
+import { default as _Emitter } from "./emitter.mjs";
 
 /**
  * Cancels an event by preventing default behavior and stopping propagation.

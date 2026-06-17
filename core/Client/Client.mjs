@@ -4,11 +4,11 @@
  * @module Client/Client
  */
 
-import Browser from './Browser.mjs';
-import Cookies from './Cookies.mjs';
-import Window from './Window.mjs';
-import OS from './OS.mjs';
-import Clipboard from './Clipboard.mjs';
+import Browser from "./Browser.mjs";
+import Cookies from "./Cookies.mjs";
+import Window from "./Window.mjs";
+import OS from "./OS.mjs";
+import Clipboard from "./Clipboard.mjs";
 
 /**
  * Client utility class aggregating browser environment utilities.
@@ -29,8 +29,8 @@ class Client {
      * @type {Clipboard}
      * @static
      */
-    static get clipboard(){
-        return this.defined.clipboard || ( this.defined.clipboard = Clipboard );
+    static get clipboard() {
+        return this.defined.clipboard || (this.defined.clipboard = Clipboard);
     }
 
     /**
@@ -38,8 +38,8 @@ class Client {
      * @type {ClientBrowser}
      * @static
      */
-    static get browser(){
-        return this.defined.browser || ( this.defined.browser = Browser );
+    static get browser() {
+        return this.defined.browser || (this.defined.browser = Browser);
     }
 
     /**
@@ -47,8 +47,8 @@ class Client {
      * @type {Cookies}
      * @static
      */
-    static get cookies(){
-        return this.defined.cookies || ( this.defined.cookies = new Cookies() );
+    static get cookies() {
+        return this.defined.cookies || (this.defined.cookies = new Cookies());
     }
 
     /**
@@ -56,8 +56,8 @@ class Client {
      * @type {Window}
      * @static
      */
-    static get window(){
-        return this.defined.window || ( this.defined.window = Window );
+    static get window() {
+        return this.defined.window || (this.defined.window = Window);
     }
 
     /**
@@ -65,10 +65,17 @@ class Client {
      * @type {OS}
      * @static
      */
-    static get os(){
-        return this.defined.OS || ( this.defined.OS = OS );
+    static get os() {
+        return this.defined.OS || (this.defined.OS = OS);
     }
 
+    static isTouchScreen() {
+        return "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+    }
+
+    static hasKeyboard() {
+        return !this.isTouchScreen() || navigator.maxTouchPoints < 2;
+    }
 }
 
 export default Client;
