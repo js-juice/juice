@@ -35,6 +35,7 @@
  */
 
 import InputComponent from "./input-component.mjs";
+import CheckableContentView, { checkableContentViewStyles } from "./checkable-content-view.mjs";
 
 class InputRadio extends InputComponent {
     /**
@@ -44,6 +45,7 @@ class InputRadio extends InputComponent {
     constructor() {
         super({ _layout: "label:>:input:<" });
         this.inputType = "radio";
+        this._contentView = new CheckableContentView(this);
     }
 
     /**
@@ -60,6 +62,7 @@ class InputRadio extends InputComponent {
      */
     get _styles() {
         return {
+            ...checkableContentViewStyles,
             ":host": {
                 display: "inline-block"
             },
@@ -169,16 +172,21 @@ class InputRadio extends InputComponent {
         const wrapper = this._wireframe.input;
         if (!wrapper) return;
 
-        const existing = wrapper.querySelectorAll(".radio-center, .svg-radio");
+        const existing = wrapper.querySelectorAll(".radio-center, .svg-radio, .checkable-content-view");
         for (let i = 0; i < existing.length; i += 1) {
             existing[i].remove();
         }
 
-        const center = document.createElement("div");
-        center.className = "radio-center";
-        center.setAttribute("aria-hidden", "true");
+        let view;
+        if (this._contentView.hasChildren()) {
+            view = this._contentView.createSlot();
+        } else {
+            view = document.createElement("div");
+            view.className = "radio-center";
+            view.setAttribute("aria-hidden", "true");
+        }
 
-        this._dom.default = center;
+        this._dom.default = view;
         this._ensureDefaultMountedInInputContainer();
         this._syncVisualState();
     }
@@ -188,6 +196,7 @@ class InputRadio extends InputComponent {
      * @returns {*} void.
      */
     _afterConnected() {
+        this._contentView.connect();
         if (!this._dom.default) {
             this._renderDefault();
             return;
@@ -212,6 +221,12 @@ class InputRadio extends InputComponent {
         this.style.setProperty("--checkcolor", check);
         this.setAttribute("aria-checked", this.checked ? "true" : "false");
         this.setAttribute("role", "radio");
+        this._contentView.sync();
+    }
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        this._contentView.disconnect();
     }
 
     /**

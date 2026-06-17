@@ -59,6 +59,8 @@ test("select options keep value as their single source of truth", async () => {
     assert.doesNotMatch(inputSelect, /data-value/);
     assert.match(inputSelect, /if \(this\.hasAttribute\("value"\)\) return this\.getAttribute\("value"\);/);
     assert.match(inputSelect, /const value = target\.value;/);
+    assert.match(inputSelect, /const attrValue = this\.getAttribute\("value"\);/);
+    assert.match(inputSelect, /if \(attrValue === null && optionData\.selected\)/);
 });
 
 test("select options render as full-width block rows", async () => {
@@ -71,6 +73,47 @@ test("select options render as full-width block rows", async () => {
     assert.match(inputSelect, /\.option\s*\{\s*display:\s*flex;/);
     assert.match(inputSelect, /select-option\.selected"/);
     assert.doesNotMatch(inputSelect, /selected:not\(\.placeholder\)/);
+});
+
+test("radio and checkbox child content acts as the checked visual view", async () => {
+    const contentView = await readFile(
+        new URL("./checkable-content-view.mjs", import.meta.url),
+        "utf8"
+    );
+    const inputRadio = await readFile(
+        new URL("./input-radio.mjs", import.meta.url),
+        "utf8"
+    );
+    const inputCheckbox = await readFile(
+        new URL("./input-checkbox.mjs", import.meta.url),
+        "utf8"
+    );
+
+    assert.match(contentView, /this\.host\.children\.length > 0/);
+    assert.match(contentView, /child\.classList\.toggle\("checked", checked\)/);
+    assert.match(contentView, /slot\.className = "checkable-content-view"/);
+    assert.match(inputRadio, /new CheckableContentView\(this\)/);
+    assert.match(inputCheckbox, /new CheckableContentView\(this\)/);
+    assert.match(inputRadio, /radio\.checked = false/);
+});
+
+test("native checked changes resync aria and custom checked views", async () => {
+    const inputComponent = await readFile(
+        new URL("./input-component.mjs", import.meta.url),
+        "utf8"
+    );
+    const inputRadio = await readFile(
+        new URL("./input-radio.mjs", import.meta.url),
+        "utf8"
+    );
+    const inputCheckbox = await readFile(
+        new URL("./input-checkbox.mjs", import.meta.url),
+        "utf8"
+    );
+
+    assert.match(inputComponent, /this\._isSyncing = false;\s*\}\s*this\._syncVisualState\(\);/);
+    assert.match(inputRadio, /setAttribute\("aria-checked", this\.checked \? "true" : "false"\)/);
+    assert.match(inputCheckbox, /setAttribute\("aria-checked", this\.checked \? "true" : "false"\)/);
 });
 
 test("select option list anchors to the field instead of the labeled root", async () => {

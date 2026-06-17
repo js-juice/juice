@@ -32,6 +32,7 @@
  */
 
 import InputComponent from "./input-component.mjs";
+import CheckableContentView, { checkableContentViewStyles } from "./checkable-content-view.mjs";
 
 class InputCheckbox extends InputComponent {
     /**
@@ -41,6 +42,7 @@ class InputCheckbox extends InputComponent {
     constructor() {
         super({ _layout: "label:>:input:<:validation" });
         this.inputType = "checkbox";
+        this._contentView = new CheckableContentView(this);
     }
 
     /**
@@ -66,6 +68,7 @@ class InputCheckbox extends InputComponent {
      */
     get _styles() {
         return {
+            ...checkableContentViewStyles,
             label: {
                 display: "flex",
                 flexDirection: "row",
@@ -151,22 +154,28 @@ class InputCheckbox extends InputComponent {
         const wrapper = this._wireframe.input;
         if (!wrapper) return;
 
-        const existing = wrapper.querySelectorAll(".svg-checkbox");
+        const existing = wrapper.querySelectorAll(".svg-checkbox, .checkable-content-view");
         for (let i = 0; i < existing.length; i += 1) {
             existing[i].remove();
         }
 
-        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svg.setAttribute("class", "svg-checkbox");
-        svg.setAttribute("viewBox", "0 0 12 12");
-        svg.setAttribute("aria-hidden", "true");
+        let view;
+        if (this._contentView.hasChildren()) {
+            view = this._contentView.createSlot();
+        } else {
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("class", "svg-checkbox");
+            svg.setAttribute("viewBox", "0 0 12 12");
+            svg.setAttribute("aria-hidden", "true");
 
-        const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-        polyline.setAttribute("class", "checkbox-mark");
-        polyline.setAttribute("points", "2.2 6.3 5 9.2 9.6 2.8");
-        svg.appendChild(polyline);
+            const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+            polyline.setAttribute("class", "checkbox-mark");
+            polyline.setAttribute("points", "2.2 6.3 5 9.2 9.6 2.8");
+            svg.appendChild(polyline);
+            view = svg;
+        }
 
-        this._dom.default = svg;
+        this._dom.default = view;
         this._ensureDefaultMountedInInputContainer();
         this._syncVisualState();
     }
@@ -176,6 +185,7 @@ class InputCheckbox extends InputComponent {
      * @returns {*} void.
      */
     _afterConnected() {
+        this._contentView.connect();
         if (!this._dom.default) {
             this._renderDefault();
             return;
@@ -204,6 +214,12 @@ class InputCheckbox extends InputComponent {
         this.setAttribute("aria-checked", this.checked ? "true" : "false");
         this.setAttribute("role", "checkbox");
         this._syncCheckedLabel();
+        this._contentView.sync();
+    }
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        this._contentView.disconnect();
     }
 }
 

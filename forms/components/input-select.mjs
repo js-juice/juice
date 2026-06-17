@@ -852,6 +852,7 @@ class InputSelect extends InputComponent {
         let maxLen = 0;
         this._options = this._readOptions();
         if (!this._dom.native) return;
+        const attrValue = this.getAttribute("value");
         let defaultValue;
         if (this.hasAttribute("default")) {
             defaultValue = this.getAttribute("default");
@@ -895,7 +896,7 @@ class InputSelect extends InputComponent {
                     icon.classList.add("icon", ...optionData.icon.split(" "));
                     li.appendChild(icon);
                 }
-                if (optionData.selected) {
+                if (attrValue === null && optionData.selected) {
                     this.value = optionData.value;
                     li.classList.add("selected");
                     li.selected = true;
@@ -918,7 +919,6 @@ class InputSelect extends InputComponent {
 
         // this._dom.native.style.width = `calc(${maxLen}ch + 1.5rem)`;
 
-        const attrValue = this.getAttribute("value");
         if (attrValue !== null) {
             this.value = attrValue;
         } else {

@@ -1096,6 +1096,7 @@ class InputComponent extends HTMLElement {
         } finally {
             this._isSyncing = false;
         }
+        this._syncVisualState();
     }
 
     /**
