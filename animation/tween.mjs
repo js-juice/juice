@@ -5,9 +5,7 @@
  */
 
 import Easing from "./easing.mjs";
-
-import EventEmitter from "../core/Event/Emitter.mjs";
-
+import EventEmitter from "../core/event/emitter.mjs";
 import { change } from "../core/Util/Object.mjs";
 
 const root = typeof globalThis !== "undefined" ? globalThis : {};
