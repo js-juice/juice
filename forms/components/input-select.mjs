@@ -174,8 +174,6 @@ class SelectOption extends HTMLElement {
         return ["value", "label", "description", "icon", "icon-src", "selected"];
     }
 
-<<<<<<< Updated upstream
-=======
     static get styles() {
         return {
             ":host": {
@@ -185,7 +183,6 @@ class SelectOption extends HTMLElement {
         };
     }
 
->>>>>>> Stashed changes
     constructor() {
         super();
 
@@ -199,26 +196,12 @@ class SelectOption extends HTMLElement {
         this._shadowRoot.innerHTML = `
         <style>
             :host {
-<<<<<<< Updated upstream
                 display: block;
                 width: 100%;
-=======
->>>>>>> Stashed changes
                 box-sizing: border-box;
             }
 
             .option {
-<<<<<<< Updated upstream
-                display: flex;
-                align-items: center;
-                width: 100%;
-                box-sizing: border-box;
-            }
-        </style>
-        <div class="option">
-            <slot name="icon"></slot>
-            <slot></slot>
-=======
                 display: var(--form-select-option-display, inline-flex);
                 align-items: var(--form-select-option-align, center);
                 justify-content: var(--form-select-option-justify, flex-start);
@@ -291,7 +274,6 @@ class SelectOption extends HTMLElement {
         <div class="option" part="option">
             <slot name="icon" part="option-icon"></slot>
             <slot part="option-label"></slot>
->>>>>>> Stashed changes
         </div>`;
 
         this._dom = {
@@ -478,18 +460,11 @@ class InputSelect extends InputComponent {
             ".tab": {
                 position: "relative",
                 flex: "0 0 auto",
-<<<<<<< Updated upstream
-                width: "var(--input-control-size)",
-                height: "var(--input-control-size)",
-                borderLeft: "1px solid #c8c8c8",
-                background: "linear-gradient(0deg, rgba(204, 204, 204, 1) 0%, rgba(224, 224, 224, 1) 100%)"
-=======
                 width: "var(--input-height)",
                 height: "var(--input-height)",
                 borderLeft: "var(--form-select-tab-border, 1px solid #c8c8c8)",
                 background:
                     "var(--form-select-tab-bg, linear-gradient(0deg, rgba(204, 204, 204, 1) 0%, rgba(224, 224, 224, 1) 100%))"
->>>>>>> Stashed changes
             },
             ".tab::after": {
                 content: "''",
@@ -509,18 +484,11 @@ class InputSelect extends InputComponent {
                 display: "none",
                 position: "relative",
                 flex: "0 0 auto",
-<<<<<<< Updated upstream
-                width: "var(--input-control-size)",
-                height: "var(--input-control-size)",
-                borderLeft: "1px solid #c8c8c8",
-                background: "linear-gradient(0deg, rgba(204, 204, 204, 1) 0%, rgba(224, 224, 224, 1) 100%)"
-=======
                 width: "var(--input-height)",
                 height: "var(--input-height)",
                 borderLeft: "var(--form-select-edit-tab-border, var(--form-select-tab-border, 1px solid #c8c8c8))",
                 background:
                     "var(--form-select-edit-tab-bg, linear-gradient(0deg, rgba(204, 204, 204, 1) 0%, rgba(224, 224, 224, 1) 100%))"
->>>>>>> Stashed changes
             },
             ":host([editable]) .edit-tab": {
                 display: "block"
@@ -595,15 +563,10 @@ class InputSelect extends InputComponent {
                 gap: "var(--form-select-option-gap, 0.35rem)",
                 width: "var(--form-select-option-width, 100%)"
             },
-<<<<<<< Updated upstream
-            ".select-options select-option.active": {
+            ".select-options .select-option.active": {
                 outline: "2px solid var(--form-accent-color, #0059ff)",
                 outlineOffset: "-2px"
             },
-            ".select-options select-option.selected": {
-                backgroundColor: "var(--selected-option-bg, var(--form-accent-color, #0059ff))",
-                color: "var(--selected-option-color, #ffffff)"
-=======
             ".select-options .select-option .option-icon-wrap": {
                 display: "var(--form-select-option-icon-display, inline-flex)",
                 alignItems: "var(--form-select-option-icon-align, center)",
@@ -669,7 +632,6 @@ class InputSelect extends InputComponent {
                     "var(--form-select-option-item-selected-bg, var(--form-select-option-selected-bg, var(--selected-option-bg, var(--form-accent-color, #0059ff))))",
                 color:
                     "var(--form-select-option-item-selected-color, var(--form-select-option-selected-color, var(--selected-option-color, #ffffff)))"
->>>>>>> Stashed changes
             },
             ":host([view='select-bar']) .input-wrapper, :host([view-type='select-bar']) .input-wrapper": {
                 position: "absolute",
@@ -1169,12 +1131,9 @@ class InputSelect extends InputComponent {
         const childOptions = Array.from(this.querySelectorAll(":scope > option, :scope > select-option")).map(
             (option) => {
                 const label = option.label || option.getAttribute("label") || option.textContent.trim();
-<<<<<<< Updated upstream
                 const value = option.hasAttribute("value") ? option.getAttribute("value") : label;
-=======
                 const iconSrc = option.getAttribute("icon-src") || "";
                 const icon = iconSrc || option.icon || option.getAttribute("icon") || option.dataset.icon || "";
->>>>>>> Stashed changes
                 return {
                     value,
                     label,
@@ -1235,15 +1194,10 @@ class InputSelect extends InputComponent {
                 const option = document.createElement("div");
                 const label = document.createElement("span");
 
-<<<<<<< Updated upstream
-                li.value = optionData.value;
-                li.textContent = optionData.label;
                 li.id = `${this._optionList.id}-option-${i}`;
-=======
                 li.className = "select-option";
                 li.dataset.value = optionData.value;
                 li.setAttribute("part", "option-item");
->>>>>>> Stashed changes
                 li.setAttribute("role", "option");
                 li.setAttribute("aria-selected", "false");
 
@@ -1400,7 +1354,7 @@ class InputSelect extends InputComponent {
 
     _getOptionElements() {
         return this._optionList
-            ? Array.from(this._optionList.querySelectorAll("select-option"))
+            ? Array.from(this._optionList.querySelectorAll(".select-option"))
             : [];
     }
 
@@ -1438,7 +1392,7 @@ class InputSelect extends InputComponent {
     _commitActiveOption() {
         const option = this._getOptionElements()[this._activeOptionIndex];
         if (!option) return;
-        const value = option.value;
+        const value = option.dataset.value || "";
         this.value = value;
         this._selectOptionByValue(value);
         this.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
@@ -1554,11 +1508,7 @@ class InputSelect extends InputComponent {
             const target = event.target instanceof HTMLElement ? event.target.closest(".select-option") : null;
             if (!target || !this._optionList.contains(target)) return;
             this._dom.native.blur();
-<<<<<<< Updated upstream
-            const value = target.value;
-=======
             const value = target.dataset.value || "";
->>>>>>> Stashed changes
             this.value = value;
             this._selectOptionByValue(value);
 
