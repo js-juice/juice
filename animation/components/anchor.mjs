@@ -1,4 +1,4 @@
-import { Vector3D } from "../../Animation/Properties/Vector.mjs";
+import { Vector3D } from "../properties/Vector.mjs";
 import { parseAnchor, parseAnchorForContent, parsePosition } from "../anchor.mjs";
 
 class Anchor extends HTMLElement {
