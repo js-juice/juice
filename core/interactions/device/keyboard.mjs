@@ -1,10 +1,10 @@
 /**
  * Keyboard input management with event handling.
- * @module Control/Keyboard
+ * @module interactions/device/Keyboard
  */
 
-import KeyCodes from "./KeyCodes.mjs";
-import EventEmitter from "../event/emitter.mjs";
+import KeyCodes from "../key-codes.mjs";
+import EventEmitter from "../../event/emitter.mjs";
 
 /**
  * Keyboard class manages keyboard input and emits events for key presses.
@@ -20,18 +20,19 @@ class Keyboard extends EventEmitter {
      */
     constructor() {
         super();
+        this.pressed = [];
+        this.only = [];
+        this.global = false;
         this.keys = {};
-        this.keyDown = this.keyDown.bind(this);
-        this.keyUp = this.keyUp.bind(this);
-        window.addEventListener("keydown", this.keyDown);
-        window.addEventListener("keyup", this.keyUp);
+        this.initialize();
+
         this.on("listener", (name) => {
             if (this.global) return;
             if (["keyup", "keydown"].includes(name)) {
                 this.global = true;
                 this.only = [];
+                return;
             }
-
             this.only.push(name);
         });
     }
@@ -40,30 +41,29 @@ class Keyboard extends EventEmitter {
         this.only = keys;
     }
 
-    keyDown(event) {
+    onKeyDown(event) {
+        if (this.only.length && !this.only.includes(event.key)) return;
         if (!event.repeat) this.pressed.push(event.key);
-        if (this.only.length && this.only.includes(event.key)) {
-            this.emit(event.key, "down", event.repeat);
-            this.emit("keydown", event.key, event.repeat);
-        } else {
-            this.emit(event.key, "down", event.repeat);
-            this.emit("keydown", event.key, event.repeat);
-        }
+
+        this.emit(event.key, "down", event.repeat);
+        this.emit("keydown", event.key, event.repeat);
     }
 
-    keyUp(event) {
+    onKeyUp(event) {
+        if (this.only && !this.only.includes(event.key)) return;
         this.pressed.splice(this.pressed.indexOf(event.key), 1);
-        if (this.only && this.only.includes(event.key)) {
-            this.emit(event.key, "up");
-            this.emit("up", event.key);
-        } else {
-            this.emit(event.key, "dowuupp");
-            this.emit("up", event.key);
-        }
+
+        this.emit(event.key, "up");
+        this.emit("keyup", event.key);
     }
 
     isKeyDown(key) {
         return this.pressed.indexOf(key) !== -1;
+    }
+
+    initialize() {
+        window.addEventListener("keydown", this.onKeyDown.bind(this));
+        window.addEventListener("keyup", this.onKeyUp.bind(this));
     }
 }
 

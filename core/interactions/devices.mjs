@@ -1,16 +1,16 @@
 /**
  * Control input aggregator providing keyboard and mouse controllers.
  * Central access point for input control systems.
- * @module Control/Controls
+ * @module interactions/devices
  */
 
-import Keyboard from "./Keyboard.mjs";
-import Mouse from "./Mouse.mjs";
+import Keyboard from "./device/keyboard.mjs";
+import Mouse from "./device/mouse.mjs";
 
 const keyboard = new Keyboard();
 const mouse = new Mouse();
 
 export default {
     keyboard,
-    mouse,
+    mouse
 };
