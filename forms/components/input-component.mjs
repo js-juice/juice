@@ -45,7 +45,7 @@
  * AUTODOC:END
  */
 
-import { render } from "./layout.mjs";
+import render from "../../ui/render.mjs";
 import FieldValidationController from "./validation/validation-controller.mjs";
 import { getJuiceConfig } from "../../config/juice-config.mjs";
 import { applyFormatPipeline } from "../../data/format/FormatPipeline.mjs";
@@ -445,6 +445,8 @@ class InputComponent extends HTMLElement {
     static get baseStyle() {
         return BASE_STYLES;
     }
+
+    isInputComponent = true;
 
     /**
      * Creates a new instance of the InputComponent class.
@@ -892,11 +894,7 @@ class InputComponent extends HTMLElement {
         if (oldValue === newValue || this._isSyncing) return;
         const affectsValidation = this._validationController.affectsAttribute(name);
         const affectsFormatting = name === "value" || name === "format" || name === "validation" || name === "validate";
-        const affectsFeedback =
-            name === "label" ||
-            name === "description" ||
-            name === "example" ||
-            name === "format";
+        const affectsFeedback = name === "label" || name === "description" || name === "example" || name === "format";
         const affectsValidationPresentation = name.startsWith("validation-color");
 
         if (name === "template" || name === "view") {
@@ -1238,22 +1236,21 @@ class InputComponent extends HTMLElement {
                     tokens.push("status");
                 }
             }
-
         }
 
         if (hasFieldFeedback && !hasExplicitValidationToken) {
-                const statusIndex = tokens.indexOf("status");
-                const inputIndex = tokens.indexOf("input");
-                const validationAnchor = statusIndex >= 0 ? statusIndex : inputIndex;
-                if (validationAnchor >= 0) {
-                    let validationInsertIndex = validationAnchor + 1;
-                    if (tokens[validationInsertIndex] === ">") {
-                        validationInsertIndex += 1;
-                    }
-                    tokens.splice(validationInsertIndex, 0, "validation");
-                } else {
-                    tokens.push("validation");
+            const statusIndex = tokens.indexOf("status");
+            const inputIndex = tokens.indexOf("input");
+            const validationAnchor = statusIndex >= 0 ? statusIndex : inputIndex;
+            if (validationAnchor >= 0) {
+                let validationInsertIndex = validationAnchor + 1;
+                if (tokens[validationInsertIndex] === ">") {
+                    validationInsertIndex += 1;
                 }
+                tokens.splice(validationInsertIndex, 0, "validation");
+            } else {
+                tokens.push("validation");
+            }
         }
         //console.log("label placement", this._labelPlacement);
         if (this._labelPlacement !== "default") {
@@ -1434,8 +1431,9 @@ class InputComponent extends HTMLElement {
     }
 
     _isRequiredField() {
-        return this.hasAttribute("required") ||
-            this._parseValidationRuleTokens().some((rule) => rule.type === "required");
+        return (
+            this.hasAttribute("required") || this._parseValidationRuleTokens().some((rule) => rule.type === "required")
+        );
     }
 
     /**
@@ -1585,9 +1583,7 @@ class InputComponent extends HTMLElement {
 
     _getValidationColors() {
         const validationConfig = getJuiceConfig("validation");
-        const configured = validationConfig && validationConfig.colors
-            ? validationConfig.colors
-            : {};
+        const configured = validationConfig && validationConfig.colors ? validationConfig.colors : {};
         const colors = { ...DEFAULT_VALIDATION_COLORS, ...(configured || {}) };
         const genericColor = this.getAttribute("validation-color");
 
@@ -1644,17 +1640,7 @@ class InputComponent extends HTMLElement {
         }));
     }
 
-    _emitValidationEvents({
-        status,
-        valid,
-        messages,
-        errors,
-        property,
-        value,
-        rules,
-        color,
-        colors
-    }) {
+    _emitValidationEvents({ status, valid, messages, errors, property, value, rules, color, colors }) {
         if (typeof CustomEvent !== "function") return;
 
         const detail = {
@@ -1673,11 +1659,13 @@ class InputComponent extends HTMLElement {
             errors: this._serializeValidationErrors(errors)
         };
         const emit = (name) => {
-            this.dispatchEvent(new CustomEvent(name, {
-                detail,
-                bubbles: true,
-                composed: true
-            }));
+            this.dispatchEvent(
+                new CustomEvent(name, {
+                    detail,
+                    bubbles: true,
+                    composed: true
+                })
+            );
         };
 
         emit("validation:change");
@@ -1705,9 +1693,7 @@ class InputComponent extends HTMLElement {
         const messages = Array.isArray(this._validationMessages)
             ? this._validationMessages.filter((message) => String(message || "").trim())
             : [];
-        const format = messages.length
-            ? this._getFormatGuidance(this._validationErrors, presetMetadata)
-            : "";
+        const format = messages.length ? this._getFormatGuidance(this._validationErrors, presetMetadata) : "";
         this._setFieldFeedbackLine(this._dom.format, "Format", format);
         this._dom.guidance.hidden = !format;
         this._dom.validationMessage.replaceChildren(
@@ -1722,7 +1708,9 @@ class InputComponent extends HTMLElement {
             description,
             example ? `Example: ${example}.` : "",
             format ? `Format: ${format}` : ""
-        ].filter(Boolean).join(" ");
+        ]
+            .filter(Boolean)
+            .join(" ");
 
         const hasContent = Boolean(fieldLabel || description || example || format || messages.length);
         const shouldShow = hasContent && this.classList.contains("focused");
@@ -1813,7 +1801,10 @@ class InputComponent extends HTMLElement {
         const structuralRules = new Set(["required", "min", "max", "length", "empty", "notempty"]);
         const validationRules = this._parseValidationRuleTokens()
             .map((rule) => rule.type)
-            .sort((left, right) => Number(structuralRules.has(left.toLowerCase())) - Number(structuralRules.has(right.toLowerCase())));
+            .sort(
+                (left, right) =>
+                    Number(structuralRules.has(left.toLowerCase())) - Number(structuralRules.has(right.toLowerCase()))
+            );
         validationRules.forEach((rule) => mergeMissing(getValidationPresetMetadata(rule)));
 
         const formatSpec = this._getActiveFormatSpec();
@@ -1858,8 +1849,7 @@ class InputComponent extends HTMLElement {
             ? true
             : preferredBelow
               ? false
-              : (avoidSuggestionPopup && fitsAbove) ||
-                (feedbackHeight + gap > spaceBelow && spaceAbove > spaceBelow);
+              : (avoidSuggestionPopup && fitsAbove) || (feedbackHeight + gap > spaceBelow && spaceAbove > spaceBelow);
 
         const viewportGap = 8;
         const desiredWidth = inputRect.width;

@@ -1,5 +1,3 @@
-
-
 /**
  * AUTODOC:START
  * Component: <juice-form>
@@ -31,7 +29,7 @@
  * AUTODOC:END
  */
 
-import { render } from "./layout.mjs";
+import render from "../../ui/render.mjs";
 
 class JuiceFormElement extends HTMLElement {
     /**
@@ -43,7 +41,7 @@ class JuiceFormElement extends HTMLElement {
     }
 
     /**
-        * Initializes component state, DOM references, and default behavior.
+     * Initializes component state, DOM references, and default behavior.
      * @returns {*} void.
      */
     constructor() {
@@ -63,9 +61,11 @@ class JuiceFormElement extends HTMLElement {
             form.setAttribute("enctype", this.getAttribute("enctype"));
         }
 
-        const info = render("form-info");
-        info.form = form;
-        form.appendChild(info);
+        if (this.hasAttribute("form-info")) {
+            const info = render("form-info");
+            info.form = form;
+            form.appendChild(info);
+        }
 
         const fields = render("div.fields");
         form.appendChild(fields);
@@ -78,6 +78,20 @@ class JuiceFormElement extends HTMLElement {
         this._shadow.append(this._style, this._form);
     }
 
+    get elements() {
+        return this._form.elements;
+    }
+
+    collectInputs() {
+        const children = this.children;
+        for (let i = 0; i < children.length; i++) {
+            const child = children[i];
+            if (child.isInputComponent || ["INPUT", "TEXTAREA", "SELECT"].includes(child.tagName)) {
+                this._fields[child.name] = child;
+            }
+        }
+    }
+
     /**
      * Runs setup logic when the element is connected to the document.
      * @returns {*} void.
@@ -87,7 +101,7 @@ class JuiceFormElement extends HTMLElement {
     }
 
     /**
-      * Renders render UI content.
+     * Renders render UI content.
      * @returns {*} void.
      */
     _render() {}

@@ -460,8 +460,8 @@ class InputSelect extends InputComponent {
             ".tab": {
                 position: "relative",
                 flex: "0 0 auto",
-                width: "var(--input-height)",
-                height: "var(--input-height)",
+                width: "calc(var(--input-height) + var(--input-padding, 0px) + var(--input-padding, 0px))",
+                height: "calc(var(--input-height) + var(--input-padding, 0px) + var(--input-padding, 0px))", //var(--input-height)",
                 borderLeft: "var(--form-select-tab-border, 1px solid #c8c8c8)",
                 background:
                     "var(--form-select-tab-bg, linear-gradient(0deg, rgba(204, 204, 204, 1) 0%, rgba(224, 224, 224, 1) 100%))"

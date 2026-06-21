@@ -12,3 +12,4 @@ export { Checklist, ChecklistItem } from "./components/controls/checklist.mjs";
 export { UIContent, UITabs } from "./components/controls/tabs.mjs";
 export { UIProgress } from "./components/graphics/progress.mjs";
 export * as Graphics from "./components/graphics/index.mjs";
+export { default as render, renderAttrs, mount, unmount } from "./render.mjs";
