@@ -57,19 +57,53 @@ class JuiceConfiguration extends DotNotation {
     constructor(initialConfig = {}) {
         super(deepClone(initialConfig));
         this.defaults = deepClone(initialConfig);
+        this.listeners = new Map();
     }
 
-    emitChange(source = "config") {
+    on(type, listener) {
+        if (typeof listener !== "function") {
+            throw new TypeError(`Config listener for "${type}" must be a function.`);
+        }
+        const listeners = this.listeners.get(type) || new Set();
+        listeners.add(listener);
+        this.listeners.set(type, listeners);
+        return () => this.off(type, listener);
+    }
+
+    off(type, listener) {
+        const listeners = this.listeners.get(type);
+        if (!listeners) return false;
+        const removed = listeners.delete(listener);
+        if (listeners.size === 0) this.listeners.delete(type);
+        return removed;
+    }
+
+    emit(type, detail) {
+        for (const listener of this.listeners.get(type) || []) {
+            listener(detail);
+        }
+    }
+
+    emitChange(source = "config", mutation = {}) {
         root.JUICE_CONFIG = JUICE_CONFIG;
+        const detail = {
+            source,
+            ...mutation,
+            config: this.snapshot()
+        };
+        this.emit("change", detail);
         if (typeof document === "undefined" || typeof CustomEvent !== "function") return;
         document.dispatchEvent(
             new CustomEvent("juice:configchange", {
-                detail: {
-                    source,
-                    config: this.snapshot()
-                }
+                detail
             })
         );
+    }
+
+    emitMutation(type, path, source, value, previousValue) {
+        const mutation = { type, path, value: deepClone(value), previousValue: deepClone(previousValue) };
+        this.emit(type, mutation);
+        this.emitChange(source, mutation);
     }
 
     merge(nextConfig = {}, source = "config.merge") {
@@ -99,7 +133,10 @@ class JuiceConfiguration extends DotNotation {
     }
 
     reset(source = "config.reset") {
-        this.root = deepClone(this.defaults);
+        for (const key of Reflect.ownKeys(this.root)) {
+            delete this.root[key];
+        }
+        deepMerge(this.root, this.defaults);
         this.emitChange(source);
         return this.snapshot();
     }
@@ -117,32 +154,29 @@ function getAtPath(path = "") {
 }
 
 const PROXY_CACHE = new Map();
-const ARRAY_MUTATORS = new Set([
-    "copyWithin",
-    "fill",
-    "pop",
-    "push",
-    "reverse",
-    "shift",
-    "sort",
-    "splice",
-    "unshift"
-]);
+const ARRAY_MUTATORS = new Set(["copyWithin", "fill", "pop", "push", "reverse", "shift", "sort", "splice", "unshift"]);
 
 function makeConfigProxy(path = "") {
-    if (PROXY_CACHE.has(path)) return PROXY_CACHE.get(path);
+    const target = getAtPath(path);
+    const proxyTarget = target != null && typeof target === "object" ? target : {};
+    const cached = PROXY_CACHE.get(path);
+    if (cached?.target === proxyTarget) return cached.proxy;
 
     const proxy = new Proxy(
-        {},
+        proxyTarget,
         {
-            get(_target, prop) {
+            get(current, prop) {
                 if (prop === "then") return undefined;
                 if (prop === Symbol.toStringTag) return "JuiceConfigProxy";
 
                 if (prop === "$path") return path;
-                if (prop === "$raw") return getAtPath(path);
-                if (prop === "toJSON") return () => config.snapshot(path || undefined);
-                if (prop === "valueOf") return () => getAtPath(path);
+                if (prop === "$raw") return current;
+                if (prop === "toJSON" || prop === "toJson") {
+                    return () => deepClone(current);
+                }
+                if (prop === "valueOf") return () => current;
+                if (prop === "on") return config.on.bind(config);
+                if (prop === "off") return config.off.bind(config);
 
                 if (prop === "get") {
                     return (subPath) => config.get(path ? `${path}.${subPath}` : subPath);
@@ -162,8 +196,9 @@ function makeConfigProxy(path = "") {
                             targetPath = path ? `${path}.${args[0]}` : args[0];
                             value = args[1];
                         }
+                        const previousValue = config.snapshot(targetPath);
                         config.set(targetPath, value);
-                        config.emitChange(`proxy:set:${targetPath}`);
+                        config.emitMutation("set", targetPath, `juice:set:${targetPath}`, value, previousValue);
                         return true;
                     };
                 }
@@ -179,8 +214,9 @@ function makeConfigProxy(path = "") {
                             targetPath = path ? `${path}.${args[0]}` : args[0];
                             value = args[1];
                         }
+                        const previousValue = config.snapshot(targetPath);
                         config.set(targetPath, value);
-                        config.emitChange(`proxy:set:${targetPath}`);
+                        config.emitMutation("set", targetPath, `juice:set:${targetPath}`, value, previousValue);
                         return true;
                     };
                 }
@@ -188,8 +224,9 @@ function makeConfigProxy(path = "") {
                     return (subPath) => {
                         const targetPath = subPath ? (path ? `${path}.${subPath}` : subPath) : path;
                         if (!targetPath) return false;
+                        const previousValue = config.snapshot(targetPath);
                         config.delete(targetPath);
-                        config.emitChange(`proxy:delete:${targetPath}`);
+                        config.emitMutation("delete", targetPath, `juice:delete:${targetPath}`, undefined, previousValue);
                         return true;
                     };
                 }
@@ -227,7 +264,6 @@ function makeConfigProxy(path = "") {
                     };
                 }
 
-                const current = getAtPath(path);
                 if (current == null) return undefined;
 
                 const value = current[prop];
@@ -237,8 +273,9 @@ function makeConfigProxy(path = "") {
                     const methodName = String(prop);
                     if (ARRAY_MUTATORS.has(methodName)) {
                         return (...args) => {
+                            const previousValue = deepClone(current);
                             const result = value.apply(current, args);
-                            config.emitChange(`proxy:array:${path || "root"}`);
+                            config.emitMutation("set", path, `juice:set:${path || "root"}`, current, previousValue);
                             return result;
                         };
                     }
@@ -253,40 +290,35 @@ function makeConfigProxy(path = "") {
 
             set(_target, prop, value) {
                 const targetPath = joinPath(path, prop);
+                const previousValue = config.snapshot(targetPath);
                 config.set(targetPath, value);
-                config.emitChange(`proxy:set:${targetPath}`);
+                config.emitMutation("set", targetPath, `juice:set:${targetPath}`, value, previousValue);
                 return true;
             },
 
             deleteProperty(_target, prop) {
                 const targetPath = joinPath(path, prop);
+                const previousValue = config.snapshot(targetPath);
                 config.delete(targetPath);
-                config.emitChange(`proxy:delete:${targetPath}`);
+                config.emitMutation("delete", targetPath, `juice:delete:${targetPath}`, undefined, previousValue);
                 return true;
             },
 
-            ownKeys() {
-                const current = getAtPath(path);
-                return current ? Reflect.ownKeys(current) : [];
+            ownKeys(current) {
+                return Reflect.ownKeys(current);
             },
 
-            has(_target, prop) {
-                const current = getAtPath(path);
-                return current != null && Reflect.has(current, prop);
+            has(current, prop) {
+                return Reflect.has(current, prop);
             },
 
-            getOwnPropertyDescriptor(_target, prop) {
-                const current = getAtPath(path);
-                if (!current || !Reflect.has(current, prop)) return undefined;
-                return {
-                    enumerable: true,
-                    configurable: true
-                };
+            getOwnPropertyDescriptor(current, prop) {
+                return Reflect.getOwnPropertyDescriptor(current, prop);
             }
         }
     );
 
-    PROXY_CACHE.set(path, proxy);
+    PROXY_CACHE.set(path, { target: proxyTarget, proxy });
     return proxy;
 }
 

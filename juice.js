@@ -5,12 +5,12 @@
  * @module Core
  */
 
-import "./config/juice-config.mjs";
 import "./core/Dev/Log.mjs";
 import { blendClasses } from "./core/Util/Class.mjs";
 import _config from "./config/juice-config.mjs";
 import path from "./core/Util/Path.mjs";
 import { createStyleManager } from "./core/Style/Styles.mjs";
+import { parseImportArgs, selectImportedModules } from "./core/Import/Args.mjs";
 
 export const root = typeof globalThis !== "undefined" ? globalThis : {};
 const nodeProcess = root.process?.versions?.node && typeof root.process.cwd === "function" ? root.process : null;
@@ -45,7 +45,7 @@ function getRuntimeRoot() {
 }
 
 function getDefaultPaths() {
-    const cwd = getRuntimeRoot();
+    const cwd = parseFilePath(import.meta.url).dir;
     const vendor = path.resolve(cwd, "vendor");
     const state = path.resolve(cwd, ".juice");
     const data = path.resolve(cwd, "data");
@@ -54,19 +54,9 @@ function getDefaultPaths() {
         root: cwd,
         app: cwd,
         src: cwd,
-        vendor,
-        juice: path.resolve(vendor, "juice"),
-        electronToolkit: path.resolve(vendor, "electron-toolkit"),
         nodeModules: path.resolve(cwd, "node_modules"),
         data,
-        models: path.resolve(data, "models"),
-        db: path.resolve(data, "db"),
-        config: path.resolve(cwd, "config"),
-        tmp: path.resolve(cwd, "tmp"),
-        logs: path.resolve(cwd, "logs"),
-        state,
-        storage: state,
-        cache: path.resolve(state, "cache")
+        config: path.resolve(cwd, "config")
     };
 }
 
@@ -92,6 +82,7 @@ root.currentFile = currentFile;
 class Juice {
     static isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
     static isNode = Boolean(nodeProcess);
+    static sections = ["animation", "core", "data", "forms", "style", "ui"];
     /**
      * Creates a blended class from multiple mixin classes.
      * The resulting class will have properties and methods from all mixins.
@@ -127,7 +118,7 @@ class Juice {
         this.queues = new JuiceQueues();
         this.storage = new JuiceStorage();
         this.eventRegistry = {};
-        this.config = JUICE_CONFIG;
+        this.config = _config;
         this._cache = {};
         this._styleSheets = new WeakMap();
         this.callStack = [];
@@ -286,49 +277,29 @@ class Juice {
 
     get importSections() {
         return {
+            animation: {
+                index: "index.mjs"
+            },
+            core: {
+                index: "index.mjs"
+            },
+            data: {
+                index: "index.mjs"
+            },
             forms: {
-                import: "import.mjs",
-                load: () => import("./forms/import.mjs")
+                index: "index.mjs"
+            },
+            styles: {
+                index: "index.mjs"
+            },
+            ui: {
+                index: "index.mjs"
             }
         };
     }
 
     parseImportArgs(...args) {
-        let section,
-            path,
-            modulePath,
-            properties = {};
-
-        if (!args[0]) {
-            throw new Error("No Import args specified.");
-        }
-
-        if (typeof args[args.length - 1] == "object") {
-            properties = args.pop();
-        }
-
-        if (args.length == 1) {
-            if (args[0].includes("/")) {
-                const parts = args[0].split("/");
-                section = parts.shift();
-                path = parts.join("/");
-                return { section, path, modulePath: [section, path].join("/"), properties };
-            } else {
-                section = args[0];
-                const importSection = this.importSections[section];
-                if (importSection && !path) {
-                    path = importSection.import;
-                    return { section, path, modulePath: [section, path].join("/"), properties };
-                } else {
-                    throw new Error("Import Section not defined cant auto import");
-                }
-            }
-        } else if (args.length > 1) {
-            section = args.shift();
-            path = args.join("/");
-            modulePath = [section, path].join("/");
-            return { section, path, modulePath, properties };
-        }
+        return parseImportArgs(args, Juice.sections, this.importSections);
     }
 
     /**
@@ -339,64 +310,70 @@ class Juice {
      * await juice.import("forms");
      * juice.forms.refresh();
      *
+     * @example
+     * await juice.import("core", "Dev", "Log.mjs");
+     * await juice.import("core/Dev/Log.mjs", ["Log"]);
+     * await juice.import("core", "Dev/Log.mjs", { modules: ["Log"] });
+     *
+     * @param {...(string|string[]|{modules?: string[]})} args Section/path parts followed by an optional module selector.
      * @returns {Promise<Object|undefined>} Imported library or module namespace.
      */
-    async import() {
-        let section, modulePath, properties;
-        try {
-            ({ section, modulePath, properties } = this.parseImportArgs(...arguments));
-        } catch (e) {
-            console.error(`${e} juice import error in provided arguments`, arguments);
+    async import(...args) {
+        let parsed;
+        let imports = [];
+        let modulePath = null;
+        let section = null;
+        let isSectionImport = false;
+
+        if (Array.isArray(args[args.length - 1])) {
+            //Multiple Modules
+            const modules = args.pop();
+            let base = args.join("/");
+            if (!base.startsWith("/") && !base.startsWith("./")) base = "./" + base;
+            modules
+                .map((m) => base + "/" + (!m.endsWith(".mjs") && !m.endsWith(".js") ? m + ".mjs" : m))
+                .forEach((m) => this.import(m));
+
             return;
         }
 
-        const isSectionImport = modulePath === `${section}/${this.importSections[section]?.import}`;
+        if (args.length === 1 && typeof args[0] === "string") {
+            if (Juice.sections.includes(args[0])) {
+                isSectionImport = true;
+                section = args[0];
+                modulePath = "./" + section + "/" + this.importSections[section]?.index;
+            } else {
+                modulePath = args[0];
+            }
+        } else if (args.length) {
+            modulePath = args.join("/");
+        }
 
         if (this._cache[modulePath]) {
-            const cachedModule = Array.isArray(properties) && properties.length
-                ? properties.reduce((selected, property) => {
-                      selected[property] = this._cache[modulePath][property];
-                      return selected;
-                  }, {})
-                : this._cache[modulePath];
-
-            if (isSectionImport) {
-                this[section] = cachedModule;
-            }
-
-            return cachedModule;
+            return this._cache[modulePath];
         }
 
-        const sectionLoader = isSectionImport ? this.importSections[section]?.load : null;
-        const moduleUrl = new URL(`./${modulePath}`, import.meta.url).href;
-        const module = sectionLoader ? await sectionLoader() : await import(/* @vite-ignore */ moduleUrl);
-        let m;
-        if (Array.isArray(properties) && properties.length > 0) {
-            m = {};
-            for (let i = 0; i < properties.length; i++) {
-                const property = properties[i];
-                if (module[property]) {
-                    m[property] = module[property];
-                }
-            }
-        } else if (isSectionImport && module.default) {
-            m = module.default;
+        const moduleUrl = new URL(`./${modulePath}`, this.config.paths.root + "/").href;
+        const module = await import(/* @vite-ignore */ moduleUrl);
+        let loadedModule = module;
+
+        if (isSectionImport && module.default) {
+            loadedModule = module.default;
             Object.entries(module).forEach(([name, value]) => {
-                if (name !== "default" && !(name in m)) {
-                    m[name] = value;
+                if (name !== "default" && !(name in loadedModule)) {
+                    loadedModule[name] = value;
                 }
             });
-        } else {
-            m = module;
+            this[section] = loadedModule;
         }
 
-        this._cache[modulePath] = m;
+        this._cache[modulePath] = loadedModule;
 
-        if (isSectionImport) {
-            this[section] = m;
-        }
+        return loadedModule;
+    }
 
-        return m;
+    selectImportedModules(module, modules = []) {
+        return selectImportedModules(module, modules);
     }
 
     /**

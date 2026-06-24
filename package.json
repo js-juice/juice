@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "cd .build && node run.js",
     "scss:build": "sass brand/style:brand/templates/css --style=expanded --no-source-map",
     "scss:watch": "sass --watch brand/style:brand/templates/css --style=expanded --no-source-map",
     "test": "node --test ui/tests/*.test.mjs",
