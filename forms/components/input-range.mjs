@@ -108,7 +108,7 @@ class InputRangeComponent extends InputComponent {
             },
             ".value-display input": {
                 width: "100%",
-                height: "var(--input-height, 30px)",
+                height: "var(--input-height)",
                 margin: 0,
                 padding: 0,
                 border: 0,

@@ -4,6 +4,8 @@
 
 $sides: (top, right, bottom, left);
 
+$directions: (x, y);
+
 $display-map: (
     block: block,
     inline: inline,
@@ -85,6 +87,14 @@ $headings: (
     )
 );
 
+$sizes: (
+    sm: 320px,
+    med: 512px,
+    lg: 800px,
+    xl: 1024px,
+    xxl: 1280px
+);
+
 @each $position, $val in $position-map {
     .position\:#{$position} {
         position: $val;
@@ -109,7 +119,17 @@ $headings: (
     text-decoration: none;
 }
 
-@for $i from 1 through 40 {
+@each $size, $value in $sizes {
+    .w\:#{$size} {
+        width: $value;
+    }
+
+    .maxw\:#{$size} {
+        max-width: $value;
+    }
+}
+
+@for $i from 0 through 40 {
     .w\:#{$i * 5} {
         width: unit.percent($i * 5);
     }
@@ -146,29 +166,42 @@ $headings: (
 }
 
 @each $side in $sides {
-    @for $i from 1 through 40 {
+    @for $i from 0 through 40 {
         .padding\:#{$side}\:#{fn.str-replace(#{$i * 0.1}, ".", "o")} {
             padding-#{$side}: unit.rem($i * 0.1);
         }
     }
 }
 
-.margin\:0 {
-    margin: unit.rem(0);
-}
-
-@for $i from 1 through 40 {
+@for $i from 0 through 40 {
     .margin\:#{fn.str-replace(#{$i * 0.1}, ".", "o")} {
         margin: unit.rem($i * 0.1);
     }
 }
 
+.margin\:auto {
+    margin: auto;
+}
+
 @each $side in $sides {
-    @for $i from 1 through 40 {
+    @for $i from 0 through 40 {
         .margin\:#{$side}\:#{fn.str-replace(#{$i * 0.1}, ".", "o")} {
             margin-#{$side}: unit.rem($i * 0.1);
         }
     }
+    .margin\:#{$side}\:auto {
+        margin-#{$side}: auto;
+    }
+}
+
+.margin\:x\:auto {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.margin\:y\:auto {
+    margin-top: auto;
+    margin-bottom: auto;
 }
 
 /***
@@ -188,12 +221,8 @@ $color-map: (
     black: #1b2020,
     grey: #c8cdd0,
     darkgrey: #415058,
-    white: #ffffff,
     lime: #7ed321,
-    teal: #008080
-);
-
-$colors: (
+    teal: #008080,
     // Brand / Primary
     primary: #0d6efd,
     secondary: #6c757d,
@@ -213,16 +242,11 @@ $colors: (
     gray-700: #495057,
     gray-800: #343a40,
     gray-900: #212529,
-    black: #000000,
+    pitch-black: #000000,
 
     // Extended palette
-    red: #e74c3c,
     orange: #fd7e14,
-    yellow: #f1c40f,
-    green: #27ae60,
-    teal: #20c997,
     cyan: #17a2b8,
-    blue: #3498db,
     indigo: #6610f2,
     purple: #6f42c1,
     pink: #d63384,
@@ -331,6 +355,46 @@ $font-styles: (
             #{$prop}: $val;
         }
     }
+}
+
+@for $i from 0 through 40 {
+    .font-size\:#{fn.str-replace(#{$i * 0.1}, ".", "o")} {
+        font-size: unit.rem($i * 0.1);
+    }
+}
+
+$text-trasform: (
+    uppercase: uppercase,
+    lowercase: lowercase,
+    capitalize: capitalize,
+    none: none
+);
+
+@each $name, $val in $text-trasform {
+    .text\:#{$name} {
+        text-transform: $val;
+    }
+}
+
+$text-align: (
+    center: center,
+    right: right,
+    left: left,
+    justify: justify
+);
+
+@each $name, $val in $text-align {
+    .text\:#{$name} {
+        text-align: $val;
+    }
+}
+
+.text\:nowrap {
+    white-space: nowrap;
+}
+
+.text\:break-all {
+    word-break: break-all;
 }
 
 /***
@@ -449,14 +513,14 @@ $align-map: (
 
     // Generate justify-content helpers
     @each $name, $val in $justify-map {
-        .#{$class}.#{$name} {
+        .#{$class}.justify\:#{$name} {
             justify-content: $val;
         }
     }
 
     // Generate align-items helpers
     @each $name, $val in $align-map {
-        .#{$class}.items-align-#{$name} {
+        .#{$class}.align\:#{$name} {
             align-items: $val;
         }
     }

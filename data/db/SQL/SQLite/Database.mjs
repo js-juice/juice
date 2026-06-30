@@ -5,7 +5,7 @@
  */
 
 import { STORAGE_TYPES, TYPE_ALIASES } from "./Constants.mjs";
-import Database from "../Database.mjs";
+import Database from "../../Database.mjs";
 import Migration from "./Migration.mjs";
 import SQLiteWorker from "./WorkerClient.mjs";
 import SQLBuilder from "../SQLBuilder.mjs";

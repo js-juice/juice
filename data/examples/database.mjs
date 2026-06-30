@@ -5,8 +5,8 @@
  * query building, and migrations.
  */
 
-import SQLiteDatabase from "../db/SQLite/Database.js";
-import SQLBuilder from "../db/SQLBuilder.mjs";
+import SQLiteDatabase from "../db/SQL/SQLite/Database.js";
+import SQLBuilder from "../db/SQL/SQLBuilder.mjs";
 import Model from "../models/Model.mjs";
 
 // ============================================================================

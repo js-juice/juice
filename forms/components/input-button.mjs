@@ -65,7 +65,7 @@ class InputButtonComponent extends HTMLElement {
             <style>
                 :host {
                     --input-control-size: calc(
-                        var(--input-height, 30px) +
+                        var(--input-height) +
                         var(--input-padding, 0px) +
                         var(--input-padding, 0px)
                     );

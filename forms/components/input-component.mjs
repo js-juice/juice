@@ -232,8 +232,7 @@ const BASE_STYLES = {
         textTransform: "none"
     },
     ".input-wrapper": {
-        "--input-control-size":
-            "calc(var(--input-height, 30px) + var(--input-padding, 0px) + var(--input-padding, 0px))",
+        "--input-control-size": "calc(var(--input-height) + var(--input-padding, 0px) + var(--input-padding, 0px))",
         border: "var(--input-border, 1px solid #c8c8c8)",
         borderRadius: "var(--input-border-radius, 5px)",
         background: "var(--input-bgcolor, #ffffff)",
@@ -245,7 +244,7 @@ const BASE_STYLES = {
         overflow: "hidden"
     },
     ".input-wrapper > label": {
-        lineHeight: "var(--input-height, 30px)",
+        lineHeight: "var(--input-height)",
         background:
             "var(--label-inside-bgcolor, linear-gradient(90deg,rgba(219, 217, 217, 1) 0%, rgba(176, 176, 176, 1) 100%))",
         padding: "0 0.5rem"
@@ -265,7 +264,7 @@ const BASE_STYLES = {
     ".native-wrapper input": {
         position: "relative",
         width: "100%",
-        height: "var(--input-height, 30px)",
+        height: "var(--input-height)",
         textIndent: "var(--input-text-indent, 0px)"
     },
     "input.native": {
@@ -363,7 +362,7 @@ const BASE_STYLES = {
         margin: "-0.5rem -0.65rem 0.5rem",
         padding: "0.45rem 0.65rem",
         borderBottom: "1px solid var(--input-border-color, #c8c8c8)",
-        color: "var(--form-label-color, #48484A)",
+        color: "var(--form-feedback-color, var(--form-label-color, #48484A) )",
         fontSize: "var(--form-label-font-size, 0.7rem)",
         fontWeight: "var(--form-label-weight, bold)",
         textTransform: "var(--form-label-text-transform, uppercase)"
@@ -807,6 +806,22 @@ class InputComponent extends HTMLElement {
         }
     }
 
+    _ensureNativeHeightCaptured() {
+        if (this.constructor.nativeHeight)
+            return this._wireframe.root.style.setProperty("--input-height", `${this.constructor.nativeHeight}px`);
+        // Set CSS variable for input height so validation status can position relative to it.
+        const inputWrapper = this._shadow.querySelector(".input-wrapper");
+        const rect = inputWrapper.getBoundingClientRect();
+        if (rect.height > 0) {
+            this._wireframe.root.style.setProperty("--input-height", `${rect.height}px`);
+        } else {
+            this._whenVisible(inputWrapper, () => {
+                const rect = inputWrapper.getBoundingClientRect();
+                this._wireframe.root.style.setProperty("--input-height", `${rect.height}px`);
+            });
+        }
+    }
+
     /**
      * Lifecycle hook that is called after the component has been inserted into the DOM.
      * This method is responsible for setting up the component's initial state.
@@ -853,6 +868,7 @@ class InputComponent extends HTMLElement {
             this._renderDefault();
             this._ensureDefaultMountedInInputContainer();
         }
+        this._ensureNativeHeightCaptured();
         this._compileStyles();
         this._updateFormValue();
         this._setupValidation();
@@ -1052,10 +1068,23 @@ class InputComponent extends HTMLElement {
             }
         });
 
+        this.addEventListener("mouseover", (event) => {
+            if (this.focused) {
+                this.showFeedback = true;
+                this._syncFieldFeedback();
+            }
+        });
+
+        this.addEventListener("mouseout", (event) => {
+            this.showFeedback = false;
+            this._syncFieldFeedback();
+        });
+
         // Refresh validation UI status on focus transitions so "incomplete" can
         // be focus-aware and downgrade to "invalid" immediately on blur.
         this._dom.native.addEventListener("focus", () => {
             if (this._isSyncing) return;
+            this.focused = true;
             this.classList.add("focused");
             this.classList.add("touched");
             this._syncFieldFeedback();
@@ -1064,6 +1093,7 @@ class InputComponent extends HTMLElement {
 
         this._dom.native.addEventListener("blur", () => {
             if (this._isSyncing) return;
+            this.focused = false;
             this.classList.remove("focused");
             this._syncFieldFeedback();
             this._queueValidation();
@@ -1713,7 +1743,7 @@ class InputComponent extends HTMLElement {
             .join(" ");
 
         const hasContent = Boolean(fieldLabel || description || example || format || messages.length);
-        const shouldShow = hasContent && this.classList.contains("focused");
+        const shouldShow = hasContent && this.showFeedback;
         wrapper.hidden = !shouldShow;
 
         if (this._dom.descriptionAssist.textContent) {

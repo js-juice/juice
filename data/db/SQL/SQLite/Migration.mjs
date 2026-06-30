@@ -4,9 +4,9 @@
  * @module DB/SQLite/Migration
  */
 
-import Model from "../../models/Model.mjs";
+import Model from "../../../models/Model.mjs";
 import { STORAGE_TYPES, TYPE_ALIASES } from "./Constants.mjs";
-import * as Condition from "../../../core/Util/Condition.mjs";
+import * as Condition from "../../../../core/Util/Condition.mjs";
 import MigrationHistory from "./MigrationHistory.mjs";
 
 /**

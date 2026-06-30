@@ -135,28 +135,45 @@ class Juice {
         this.import("core", "Dev/Log.mjs");
     }
 
+    static dbDrivers = {
+        sqlite: "db/SQL/SQLite/Database.mjs",
+        mysql: "db/SQL/MySQL/Database.mjs"
+    };
+
     async db(type, name, models) {
         const dbConfig = this.config.db || {};
         const dataPath = this.config.get("paths.data");
-        type = type || dbConfig.type;
-        name = name || dbConfig.name;
-        models = models || dbConfig.models;
+        type = type || dbConfig.type || "sqlite";
+        name = name ?? dbConfig.name;
+        models = models ?? dbConfig.models;
 
-        const databaseName = typeof name === "string" ? name.trim() : name;
-        const databasePath =
-            typeof databaseName === "string" && databaseName
-                ? path.isAbsolute(databaseName)
-                    ? databaseName
-                    : typeof dataPath === "string" && dataPath.trim()
-                      ? path.resolve(dataPath, databaseName)
-                      : path.resolve(getRuntimeRoot(), databaseName)
-                : databaseName;
+        const driverPath = Juice.dbDrivers[type];
+        if (!driverPath) {
+            throw new Error(`Unknown database driver "${type}". Known: ${Object.keys(Juice.dbDrivers).join(", ")}`);
+        }
 
-        return this.import("data", "db/SQLite/Database.mjs").then(async (module) => {
-            const SQLiteDatabase = module.default || module.SQLiteDatabase;
-            this.dbInstance = await SQLiteDatabase.create(databasePath, { type, models });
+        return this.import("data", driverPath).then(async (module) => {
+            const Driver = module.default;
 
-            if (typeof models === "string" && models.trim()) {
+            let source = name;
+
+            if (type === "sqlite") {
+                const databaseName = typeof name === "string" ? name.trim() : name;
+                source =
+                    typeof databaseName === "string" && databaseName
+                        ? path.isAbsolute(databaseName)
+                            ? databaseName
+                            : typeof dataPath === "string" && dataPath.trim()
+                              ? path.resolve(dataPath, databaseName)
+                              : path.resolve(getRuntimeRoot(), databaseName)
+                        : databaseName;
+            } else if (type === "mysql") {
+                source = name || dbConfig.baseUrl || "/api/model";
+            }
+
+            this.dbInstance = await Driver.create(source, { type, models });
+
+            if (typeof models === "string" && models.trim() && typeof this.dbInstance.loadModelDirectory === "function") {
                 const modelDirectory = path.isAbsolute(models) ? models : path.resolve(getRuntimeRoot(), models);
                 await this.dbInstance.loadModelDirectory(modelDirectory);
             }

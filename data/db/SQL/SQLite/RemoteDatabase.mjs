@@ -6,7 +6,7 @@
 
 import { STORAGE_TYPES, TYPE_ALIASES } from "./Constants.mjs";
 
-import Database from "../Database.mjs";
+import Database from "../../Database.mjs";
 import SQLBuilder from "../SQLBuilder.mjs";
 
 let BetterSQLite3Module = null;

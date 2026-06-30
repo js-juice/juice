@@ -4,7 +4,7 @@
  * @module Stream/Stream
  */
 
-import Emitter from '../Event/Emitter.mjs';
+import Emitter from "../event/emitter.mjs";
 
 /**
  * Stream class for handling data streams with chunking and piping.
@@ -16,33 +16,32 @@ import Emitter from '../Event/Emitter.mjs';
  * stream.injest([1, 2, 3, 4, 5]);
  */
 class Stream extends Emitter {
-
     /**
      * Internal cache for stream data.
      * @type {Array}
      * @private
      */
     #cache = [];
-    
+
     /**
      * Size of chunks to read at a time.
      * @type {number}
      */
     chunkSize = 1;
-    
+
     /**
      * Current read position in the stream.
      * @type {number}
      * @private
      */
     #head = 0;
-    
+
     /**
      * Whether the stream has completed.
      * @type {boolean}
      */
     complete;
-    
+
     /**
      * Array of piped streams.
      * @type {Array<Stream>}
@@ -54,7 +53,7 @@ class Stream extends Emitter {
      * @param {Array} [data=[]] - Initial data for the stream
      * @param {number} [chunkSize=1] - Size of chunks to read
      */
-    constructor( data=[], chunkSize=1 ){
+    constructor(data = [], chunkSize = 1) {
         super();
         this.#cache = data;
         this.chunkSize = chunkSize;
@@ -64,7 +63,7 @@ class Stream extends Emitter {
      * Gets the current length of cached data.
      * @returns {number} The length of cached data
      */
-    get length(){
+    get length() {
         return this.#cache.length;
     }
 
@@ -72,9 +71,9 @@ class Stream extends Emitter {
      * Ingests new data into the stream.
      * @param {Array} [data=[]] - Data to add to the stream
      */
-    injest( data=[] ){
-        this.#cache = this.#cache.concat( data );
-        if(this.writable){
+    injest(data = []) {
+        this.#cache = this.#cache.concat(data);
+        if (this.writable) {
             this.read();
         }
     }
@@ -85,21 +84,21 @@ class Stream extends Emitter {
      * @fires Stream#data
      * @fires Stream#empty
      */
-    read(){
-        if(this.length == 0){
+    read() {
+        if (this.length == 0) {
             this.writable = true;
-            this.emit('empty'); 
+            this.emit("empty");
             return false;
         }
-        const chunk = this.#cache.slice( this.#cache, Math.min( this.chunkSize, this.length ) );
+        const chunk = this.#cache.slice(this.#cache, Math.min(this.chunkSize, this.length));
         this.head += chunk.length;
-        this.emit('data', chunk || null );
+        this.emit("data", chunk || null);
         //Process Pipes
-        if(this.hooks.length){
-            this.hooks.reduce(( value, stream ) => {
+        if (this.hooks.length) {
+            this.hooks.reduce((value, stream) => {
                 stream.injest(value);
                 return value;
-            }, chunk );
+            }, chunk);
         }
         this.writable = false;
         return chunk.length;
@@ -109,11 +108,11 @@ class Stream extends Emitter {
      * Pipes this stream to another stream.
      * @param {Stream} stream - The target stream
      */
-    pipe( stream ){
+    pipe(stream) {
         this.hooks.push(stream);
     }
 
-    end(){
+    end() {
         this.complete = true;
     }
 }

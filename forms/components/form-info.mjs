@@ -91,7 +91,7 @@ class FormInfo extends HTMLElement {
                 }
 
                 .progress {
-                    color: var(--form-label-color, #293241);
+                    color: var(--input-color, #293241);
                     font-size: 0.9rem;
                 }
 
@@ -528,8 +528,9 @@ class FormInfo extends HTMLElement {
     _refreshFieldStates() {
         if (!this._validationTarget) return;
         const groups = new Map();
-        const fields = Array.from(this._validationTarget.querySelectorAll(FIELD_SELECTOR))
-            .filter((field) => !field.disabled && !field.hasAttribute("disabled"));
+        const fields = Array.from(this._validationTarget.querySelectorAll(FIELD_SELECTOR)).filter(
+            (field) => !field.disabled && !field.hasAttribute("disabled")
+        );
 
         fields.forEach((field, index) => {
             const property = (field.getAttribute("name") || field.id || `field-${index + 1}`).trim();
@@ -667,10 +668,10 @@ class FormInfo extends HTMLElement {
             block.className = `map-field ${field.status}`;
             block.dataset.fieldIndex = String(field.index);
             block.title = `${field.label}: ${STATUS_LABELS[field.status]}`;
-            block.style.left = `${Math.max(0, (left - formRect.left) / formRect.width * 100)}%`;
-            block.style.top = `${Math.max(0, (top - formRect.top) / formRect.height * 100)}%`;
-            block.style.width = `${Math.min(100, (right - left) / formRect.width * 100)}%`;
-            block.style.height = `${Math.min(100, (bottom - top) / formRect.height * 100)}%`;
+            block.style.left = `${Math.max(0, ((left - formRect.left) / formRect.width) * 100)}%`;
+            block.style.top = `${Math.max(0, ((top - formRect.top) / formRect.height) * 100)}%`;
+            block.style.width = `${Math.min(100, ((right - left) / formRect.width) * 100)}%`;
+            block.style.height = `${Math.min(100, ((bottom - top) / formRect.height) * 100)}%`;
             block.addEventListener("pointerenter", () => this._highlightField(field.index));
             block.addEventListener("pointerleave", () => this._clearFieldHighlight());
             block.addEventListener("focus", () => this._highlightField(field.index));

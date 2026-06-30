@@ -7,7 +7,7 @@
 
 import Model from "../models/Model.mjs";
 import Collection from "../models/Collection.mjs";
-import SQLiteDatabase from "../db/SQLite/Database.js";
+import SQLiteDatabase from "../db/SQL/SQLite/Database.js";
 
 // ============================================================================
 // 1. Define Models

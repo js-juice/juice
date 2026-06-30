@@ -4,7 +4,7 @@
  * @module DB/Model/ModelSQLBuilder
  */
 
-import SQLBuilder from "../db/SQLBuilder.mjs";
+import SQLBuilder from "../db/SQL/SQLBuilder.mjs";
 
 /**
  * SQL builder for model-based queries.
