@@ -909,65 +909,6 @@ class InputComponent extends HTMLElement {
         return "value" in native;
     }
 
-<<<<<<< HEAD
-=======
-    _getConfiguredFormFormat() {
-        const formsConfig = getJuiceConfig("forms");
-        if (!isPlainObject(formsConfig)) return "";
-
-        const sharedFormat = normalizeFormatConfigEntry(formsConfig);
-        const typeConfig = this._getFormTypeConfig(formsConfig);
-        const typeFormat = normalizeFormatConfigEntry(typeConfig);
-        return typeFormat || sharedFormat || "";
-    }
-
-    _getConfiguredFormFormatters() {
-        const formsConfig = getJuiceConfig("forms");
-        if (!isPlainObject(formsConfig)) return {};
-
-        const sharedFormatters = normalizeFormatterConfigEntry(formsConfig);
-        const typeConfig = this._getFormTypeConfig(formsConfig);
-        const typeFormatters = normalizeFormatterConfigEntry(typeConfig);
-        return { ...sharedFormatters, ...typeFormatters };
-    }
-
-    /**
-     * Resolves the active format specification string.
-     *
-     * Precedence:
-     * 1. Host `format` attribute.
-     * 2. Form config type override (`forms.inputs.<type>.format`).
-     * 3. Shared form config (`forms.format`).
-     *
-     * @returns {string} Active format specification.
-     */
-    _getActiveFormatSpec() {
-        if (this.hasAttribute("format")) {
-            return this.getAttribute("format") || "";
-        }
-        return this._getConfiguredFormFormat() || this._getValidationPresetFormat();
-    }
-
-    _getValidationPresetFormat() {
-        const formatters = getFormatters();
-        const rules = RuleParser.parse(this._getValidationRules()).map((rule) => rule.type);
-
-        for (let i = 0; i < rules.length; i += 1) {
-            const formatter = String(getValidationPresetMetadata(rules[i]).formatter || "").trim();
-            if (!formatter) continue;
-            const formatterNames = formatter
-                .split(":")
-                .map((token) => token.match(/^([a-zA-Z0-9_-]+)/)?.[1] || "")
-                .filter(Boolean);
-            if (formatterNames.length && formatterNames.every((name) => typeof formatters[name] === "function")) {
-                return formatter;
-            }
-        }
-
-        return "";
-    }
-
->>>>>>> 5956d6a793893048bcf5016ff3c70f1fbb4dafed
     /**
      * Runs the active format pipeline against the native control value.
      *
