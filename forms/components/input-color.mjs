@@ -1,4 +1,5 @@
 import InputComponent from "./input-component.mjs";
+import "./input-text.mjs";
 
 const FORMATS = ["hex", "rgb", "rgba", "hsl", "hsla"];
 
@@ -217,15 +218,24 @@ function formatColor(color, format) {
 }
 
 class InputColorComponent extends InputComponent {
+    ignoreHeight = true;
+
     static tag = "input-color";
 
     static get observedAttributes() {
-        return [...super.observedAttributes.filter((name) => name !== "type"), "format"];
+        return [...super.observedAttributes.filter((name) => name !== "type"), "format", "formats"];
     }
 
     constructor() {
-        super({ _layout: "label:input:>:default:native:status:<:validation" });
+        super({ _layout: "label:input:>:default:native:status:<:validation", ignoreHeight: true });
         this.colorFormat = "hex";
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        super.attributeChangedCallback(name, oldValue, newValue);
+        if (oldValue === newValue || name !== "formats") return;
+        this._renderFormatOptions();
+        this._syncVisualState();
     }
 
     get _styles() {
@@ -233,13 +243,20 @@ class InputColorComponent extends InputComponent {
             ".native-wrapper": {
                 display: "none"
             },
+            ".input-root": {
+                "--input-padding": 0,
+                "--input-height": "30px",
+                "--label-inside-bgcolor": "#333333",
+                "--input-text-indent": "5px"
+            },
             ".color-input": {
+                position: "relative",
                 display: "grid",
                 gridTemplateColumns: "1fr 64px",
-                gridTemplateRows: "132px 32px",
+                gridTemplateRows: "minmax(132px, auto) 32px",
                 gap: "8px",
                 padding: "10px",
-                width: "300px",
+                width: "100%",
                 boxSizing: "border-box"
             },
             ".preview": {
@@ -250,14 +267,22 @@ class InputColorComponent extends InputComponent {
                 border: "1px solid #cbd5e1",
                 borderRadius: "6px",
                 background: "var(--color-value, #000000)",
-                overflow: "hidden"
+                overflow: "visible"
             },
             ".format": {
                 position: "absolute",
                 left: "8px",
                 top: "8px",
-                width: "78px",
-                background: "rgba(255,255,255,0.92)"
+                width: "86px",
+                height: "30px",
+                border: "1px solid rgba(15, 23, 42, 0.22)",
+                borderRadius: "5px",
+                background: "rgba(255,255,255,0.92)",
+                color: "#0f172a",
+                fontSize: "12px",
+                lineHeight: "1",
+                zIndex: 40,
+                cursor: "pointer"
             },
             ".eyedropper": {
                 position: "absolute",
@@ -272,7 +297,7 @@ class InputColorComponent extends InputComponent {
                 borderRadius: "5px",
                 background: "rgba(255,255,255,0.92)",
                 color: "#0f172a",
-                cursor: "crosshair"
+                cursor: "pointer"
             },
             ".eyedropper svg": {
                 width: "16px",
@@ -282,14 +307,11 @@ class InputColorComponent extends InputComponent {
                 opacity: 0.45,
                 cursor: "not-allowed"
             },
-            ".eyedropper[data-unavailable='true']": {
-                opacity: 0.7,
-                cursor: "pointer"
-            },
             ".channels": {
-                display: "grid",
+                display: "flex",
                 gridColumn: "2",
                 gridRow: "1",
+                flexDirection: "column",
                 gap: "6px",
                 alignContent: "start"
             },
@@ -304,15 +326,13 @@ class InputColorComponent extends InputComponent {
                 color: "#475569"
             },
             "select, input-text": {
-                height: "30px",
                 borderRadius: "5px",
                 boxSizing: "border-box",
                 font: "inherit",
                 minWidth: 0
             },
             "input-text": {
-                marginBottom: 0,
-                "--input-height": "30px"
+                marginBottom: 0
             },
             ".channel input": {
                 width: "100%"
@@ -328,37 +348,56 @@ class InputColorComponent extends InputComponent {
                 gap: "8px",
                 alignItems: "center"
             },
-            ".picker": {
+            ".color-input[picker-open] .full-value": {
+                gridTemplateColumns: "1fr 34px 34px"
+            },
+            ".picker, .picker-close": {
                 width: "34px",
-                height: "30px",
+                height: "34px",
                 border: "1px solid #cbd5e1",
                 borderRadius: "5px",
-                background: "var(--color-value, #000000)",
                 boxSizing: "border-box",
                 cursor: "pointer"
             },
+            ".picker": {
+                background: "var(--color-value, #000000)"
+            },
+            ".picker-close": {
+                display: "none",
+                placeItems: "center",
+                padding: 0,
+                color: "#0f172a",
+                background: "#ffffff",
+                font: "inherit",
+                lineHeight: 1
+            },
+            ".color-input[picker-open] .picker-close": {
+                display: "grid"
+            },
             ".picker-panel": {
                 position: "absolute",
-                right: "10px",
-                bottom: "50px",
-                zIndex: 30,
+                left: "-5px",
+                top: "-5px",
+                right: "-78px",
+                bottom: 0,
+                zIndex: 100,
                 display: "none",
-                width: "180px",
-                padding: "8px",
+                padding: 0,
                 border: "1px solid #cbd5e1",
-                borderRadius: "8px",
+                borderRadius: "6px",
                 background: "#ffffff",
                 boxShadow: "0 14px 32px rgba(15, 23, 42, 0.22)",
                 boxSizing: "border-box"
             },
             ".picker-panel[open]": {
                 display: "grid",
+                gridTemplateRows: "1fr 16px",
                 gap: "8px"
             },
             ".picker-sv": {
                 position: "relative",
-                height: "120px",
-                borderRadius: "6px",
+                minHeight: 0,
+                borderRadius: "5px 5px 0 0",
                 background:
                     "linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsla(var(--picker-hue, 0), 100%, 50%, 1))",
                 cursor: "crosshair",
@@ -370,8 +409,7 @@ class InputColorComponent extends InputComponent {
                 appearance: "none",
                 border: 0,
                 borderRadius: "999px",
-                background:
-                    "linear-gradient(to right, red, yellow, lime, cyan, blue, magenta, red)",
+                background: "linear-gradient(to right, red, yellow, lime, cyan, blue, magenta, red)",
                 cursor: "pointer"
             },
             ".picker-handle": {
@@ -403,74 +441,153 @@ class InputColorComponent extends InputComponent {
         this._dom.default.className = "color-input";
         this._dom.default.innerHTML = `
             <div class="preview">
-                <select class="format" aria-label="Color format">
-                    ${FORMATS.map((format) => `<option value="${format}">${format.toUpperCase()}</option>`).join("")}
-                </select>
                 <button class="eyedropper" type="button" aria-label="Sample color">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path fill="currentColor" d="M18.7 3.3a2.4 2.4 0 0 0-3.4 0l-2 2-.9-.9a1 1 0 1 0-1.4 1.4l.9.9-7.6 7.6a1 1 0 0 0-.3.7v3h-1a1 1 0 1 0 0 2h7a1 1 0 1 0 0-2h-1v-1.6l7.6-7.6.9.9a1 1 0 0 0 1.4-1.4l-.9-.9 2-2a2.4 2.4 0 0 0 0-3.4Zm-11 11.1 5.6-5.6 1.9 1.9-5.6 5.6H7.7v-1.9Zm9.6-8.4-.8.8-1.9-1.9.8-.8a.4.4 0 0 1 .6 0l1.3 1.3a.4.4 0 0 1 0 .6Z"/>
                     </svg>
                 </button>
+                <div class="picker-panel">
+                    <div class="picker-sv"><span class="picker-handle"></span></div>
+                    <input class="picker-hue" type="range" min="0" max="360" value="0" aria-label="Hue">
+                </div>
             </div>
             <div class="channels"></div>
             <div class="full-value">
-                <input-text class="text" label-placement="inside"></input-text>
+                <input-text class="text" label-placement="inside" show-requirement="false"></input-text>
                 <button class="picker" type="button" aria-label="Pick color"></button>
-            </div>
-            <div class="picker-panel">
-                <div class="picker-sv"><span class="picker-handle"></span></div>
-                <input class="picker-hue" type="range" min="0" max="360" value="0" aria-label="Hue">
+                <button class="picker-close" type="button" aria-label="Close color picker" disabled>X</button>
             </div>
         `;
 
-        this._dom.format = this._dom.default.querySelector(".format");
+        const preview = this._dom.default.querySelector(".preview");
+        this._dom.formatSelect = this._createFormatSelect();
+        preview.prepend(this._dom.formatSelect);
         this._dom.eyedropper = this._dom.default.querySelector(".eyedropper");
         this._dom.text = this._dom.default.querySelector(".text");
         this._dom.picker = this._dom.default.querySelector(".picker");
+        this._dom.pickerClose = this._dom.default.querySelector(".picker-close");
         this._dom.pickerPanel = this._dom.default.querySelector(".picker-panel");
         this._dom.pickerSv = this._dom.default.querySelector(".picker-sv");
         this._dom.pickerHue = this._dom.default.querySelector(".picker-hue");
         this._dom.channels = this._dom.default.querySelector(".channels");
+        this._renderFormatOptions();
 
-        this._dom.format.addEventListener("change", () => {
-            this.colorFormat = this._dom.format.value;
+        this._dom.formatSelect.addEventListener("change", () => {
+            this.colorFormat = this._dom.formatSelect.value;
             this.commit(formatColor(parseColor(this.value), this.colorFormat));
         });
-        const hasEyeDropper = "EyeDropper" in window;
-        this._dom.eyedropper.dataset.unavailable = hasEyeDropper ? "false" : "true";
-        this._dom.eyedropper.title = hasEyeDropper
-            ? "Sample color"
-            : "Eyedropper needs browser support and a secure page.";
-        this._dom.eyedropper.addEventListener("click", async () => {
-            if (!("EyeDropper" in window)) {
-                return;
-            }
-
-            try {
-                const result = await new EyeDropper().open();
-                if (!result?.sRGBHex) return;
-                this.commit(formatColor(parseColor(result.sRGBHex), this.colorFormat));
-            } catch (_error) {
-                // The browser throws when the user cancels the sampler.
-            }
+        this._dom.eyedropper.title = "Sample color";
+        this._dom.eyedropper.addEventListener("click", () => {
+            this.dispatchEvent(
+                new CustomEvent("eyedropper-request", {
+                    bubbles: true,
+                    composed: true,
+                    detail: {
+                        input: this,
+                        value: this.value
+                    }
+                })
+            );
         });
         this._dom.text.addEventListener("change", () => this.commit(this._dom.text.value));
         this._dom.text.addEventListener("input", () => this.preview(this._dom.text.value));
         this._dom.picker.addEventListener("click", () => {
-            this._dom.pickerPanel.toggleAttribute("open");
+            this.togglePickerPanel();
         });
+        this._dom.pickerClose.addEventListener("click", () => this.closePickerPanel());
         this._dom.pickerHue.addEventListener("input", () => {
             this.pickerState.h = Number(this._dom.pickerHue.value) || 0;
             this.commitPickerColor();
         });
         this._dom.pickerSv.addEventListener("pointerdown", (event) => this.startPickerDrag(event));
         this._dom.pickerSv.addEventListener("pointermove", (event) => this.dragPicker(event));
-        this._dom.pickerSv.addEventListener("pointerup", () => this.endPickerDrag());
+        this._dom.pickerSv.addEventListener("pointerup", (event) => {
+            this.dragPicker(event);
+            this.endPickerDrag();
+            this.closePickerPanel();
+        });
         this._dom.pickerSv.addEventListener("pointercancel", () => this.endPickerDrag());
         this._dom.pickerSv.addEventListener("lostpointercapture", () => this.endPickerDrag());
 
         this._ensureDefaultMountedInInputContainer();
         this._syncVisualState();
+    }
+
+    _createFormatSelect() {
+        const select = document.createElement("select");
+        select.className = "format";
+        select.setAttribute("aria-label", "Color format");
+        return select;
+    }
+
+    get allowedFormats() {
+        const raw = this.getAttribute("formats");
+        if (!raw) return FORMATS;
+
+        const formats = raw
+            .split(/[,\s|]+/)
+            .map((format) => format.trim().toLowerCase())
+            .filter((format) => FORMATS.includes(format));
+
+        const unique = [...new Set(formats)];
+        return unique.length ? unique : FORMATS;
+    }
+
+    _firstAllowedFormat(...formats) {
+        const allowed = this.allowedFormats;
+        for (const format of formats) {
+            const normalized = String(format || "").toLowerCase();
+            if (allowed.includes(normalized)) return normalized;
+        }
+        return allowed[0] || "hex";
+    }
+
+    _createFormatOption(format) {
+        const option = document.createElement("option");
+        option.value = format;
+        option.textContent = format.toUpperCase();
+        return option;
+    }
+
+    _renderFormatOptions() {
+        if (!this._dom.formatSelect) return;
+        this._dom.formatSelect.replaceChildren(
+            ...this.allowedFormats.map((format) => this._createFormatOption(format))
+        );
+    }
+
+    _setTextValue(value) {
+        if (!this._dom.text) return;
+        this._dom.text.setAttribute("value", value);
+        this._dom.text.value = value;
+    }
+
+    _afterConnected() {
+        this._syncVisualState();
+    }
+
+    _syncFormatSelect() {
+        if (!this._dom.formatSelect) return;
+        this._dom.formatSelect.value = this.colorFormat;
+    }
+
+    openPickerPanel() {
+        if (!this._dom.pickerPanel) return;
+        this._dom.pickerPanel.setAttribute("open", "");
+        if (this._dom.default) this._dom.default.setAttribute("picker-open", "");
+        if (this._dom.pickerClose) this._dom.pickerClose.disabled = false;
+    }
+
+    closePickerPanel() {
+        if (!this._dom.pickerPanel) return;
+        this._dom.pickerPanel.removeAttribute("open");
+        if (this._dom.default) this._dom.default.removeAttribute("picker-open");
+        if (this._dom.pickerClose) this._dom.pickerClose.disabled = true;
+    }
+
+    togglePickerPanel() {
+        if (this._dom.pickerPanel?.hasAttribute("open")) this.closePickerPanel();
+        else this.openPickerPanel();
     }
 
     startPickerDrag(event) {
@@ -496,7 +613,7 @@ class InputColorComponent extends InputComponent {
         const current = parseColor(this.value);
         const picked = hsvToRgb({ ...this.pickerState, a: current.a });
         const next = formatColor(picked, this.colorFormat);
-        this._dom.text.value = next;
+        this._setTextValue(next);
         this.renderChannels(picked);
         this.preview(next);
         this.commit(next);
@@ -593,16 +710,19 @@ class InputColorComponent extends InputComponent {
 
             const input = document.createElement("input-text");
             input.setAttribute("label-placement", "inside");
+            input.setAttribute("show-requirement", "false");
             input.setAttribute("label", field.label);
             input.dataset.channel = field.key;
             input.type = field.min === null ? "text" : "number";
             if (field.min !== null) input.min = field.min;
             if (field.max !== null) input.max = field.max;
             if (field.step !== undefined) input.step = field.step;
-            input.setAttribute("value", values[field.key] ?? "");
+            const value = values[field.key] ?? "";
+            input.setAttribute("value", value);
+            input.value = value;
             input.addEventListener("input", () => {
                 const next = this.channelsToColor();
-                this._dom.text.value = next;
+                this._setTextValue(next);
                 this.preview(next);
             });
             input.addEventListener("change", () => this.commit(this.channelsToColor()));
@@ -614,7 +734,7 @@ class InputColorComponent extends InputComponent {
 
     commit(value) {
         const parsed = parseColor(value);
-        const nextFormat = this._dom.format?.value || parsed.format || this.colorFormat;
+        const nextFormat = this._firstAllowedFormat(this.colorFormat, parsed.format);
         this.colorFormat = nextFormat;
         this._dom.native.value = formatColor(parsed, nextFormat);
         this._syncHostFromNative();
@@ -633,10 +753,11 @@ class InputColorComponent extends InputComponent {
     _syncVisualState() {
         if (!this._dom.default || !this._dom.native) return;
         const parsed = parseColor(this.value);
-        this.colorFormat = this.getAttribute("format") || parsed.format || this.colorFormat;
-        this._dom.format.value = this.colorFormat;
+        this._renderFormatOptions();
+        this.colorFormat = this._firstAllowedFormat(this.getAttribute("format"), parsed.format, this.colorFormat);
+        this._syncFormatSelect();
         this._dom.text.setAttribute("label", this.colorFormat.toUpperCase());
-        this._dom.text.value = formatColor(parsed, this.colorFormat);
+        this._setTextValue(formatColor(parsed, this.colorFormat));
         this.pickerState = rgbToHsv(parsed);
         this._dom.pickerHue.value = this.pickerState.h;
         this._dom.default.style.setProperty("--picker-hue", this.pickerState.h);

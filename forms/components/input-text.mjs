@@ -33,6 +33,17 @@
 import InputComponent from "./input-component.mjs";
 
 class InputText extends InputComponent {
+    static config = {
+        value: { type: "string", default: "" },
+        native: {
+            tag: "input",
+            attrs: {
+                type: "text",
+                autocomplete: "off"
+            }
+        }
+    };
+
     /**
         * Initializes component state, DOM references, and default behavior.
      * @returns {*} void.
@@ -54,17 +65,6 @@ class InputText extends InputComponent {
         };
     }
 
-    /**
-      * Creates the hidden native input used for form integration.
-     * @returns {*} Configured native input element.
-     */
-    _createNativeControl() {
-        const input = document.createElement("input");
-        input.type = "text";
-        input.autocomplete = "off";
-        input.classList.add("native");
-        return input;
-    }
 }
 
 customElements.define("input-text", InputText);

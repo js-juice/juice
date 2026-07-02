@@ -62,7 +62,7 @@ class FieldValidationController {
      */
     hasValidation() {
         const rule = this.getValidationRules();
-        return !!(rule && rule.trim());
+        return Array.isArray(rule) ? rule.length > 0 : !!(rule && String(rule).trim());
     }
 
     /**
@@ -211,6 +211,17 @@ class FieldValidationController {
         return mergedTokens.join("|");
     }
 
+    mergeRuleDeclarations(primaryRules = "", secondaryRules = "") {
+        if (!Array.isArray(primaryRules)) {
+            return this.mergeRuleStrings(primaryRules, secondaryRules);
+        }
+
+        const stringRules = primaryRules.filter((rule) => typeof rule === "string").join("|");
+        const structuredRules = primaryRules.filter((rule) => typeof rule !== "string");
+        const mergedStringRules = this.mergeRuleStrings(stringRules, secondaryRules);
+        return [...(mergedStringRules ? [mergedStringRules] : []), ...structuredRules];
+    }
+
     /**
      * Convert basic character-class patterns to `chars:` rules where possible.
      * @param {string} pattern
@@ -298,11 +309,21 @@ class FieldValidationController {
      * @returns {string}
      */
     getValidationRules() {
-        const explicitRules = (
-            this.host.getAttribute("validation") || this.host.getAttribute("validate") || ""
-        ).trim();
+        let explicitRules = "";
+        if (this.host.hasAttribute("validation") || this.host.hasAttribute("validate")) {
+            explicitRules = (
+                this.host.getAttribute("validation") || this.host.getAttribute("validate") || ""
+            ).trim();
+            if (explicitRules === "false") return "";
+        } else if (typeof this.host._getInputValidationSpec === "function") {
+            const configRules = this.host._getInputValidationSpec();
+            if (configRules === false) return "";
+            if (Array.isArray(configRules)) explicitRules = configRules;
+            else if (typeof configRules === "function") explicitRules = [["custom", [], configRules]];
+            else explicitRules = String(configRules || "").trim();
+        }
         const nativeRules = this.getNativeValidationRules();
-        return this.mergeRuleStrings(explicitRules, nativeRules);
+        return this.mergeRuleDeclarations(explicitRules, nativeRules);
     }
 
     /**

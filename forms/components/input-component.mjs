@@ -99,6 +99,48 @@ function normalizeFormatConfigEntry(entry) {
     return "";
 }
 
+function splitPipeSpec(spec) {
+    return String(spec || "")
+        .split("|")
+        .map((token) => token.trim())
+        .filter(Boolean);
+}
+
+function normalizePipelineSpec(spec) {
+    if (spec === false) return false;
+    if (spec == null || spec === "") return null;
+    if (typeof spec === "function") return spec;
+    if (typeof spec === "string") {
+        const tokens = splitPipeSpec(spec);
+        return tokens.length > 1 ? tokens : spec;
+    }
+    if (Array.isArray(spec)) {
+        return spec.flatMap((entry) => {
+            if (typeof entry === "string") return splitPipeSpec(entry);
+            if (Array.isArray(entry)) return normalizePipelineSpec(entry) || [];
+            return entry == null || entry === false ? [] : [entry];
+        });
+    }
+    return null;
+}
+
+function normalizeValidationSpec(spec) {
+    const normalized = normalizePipelineSpec(spec);
+    if (!Array.isArray(normalized)) {
+        if (typeof normalized === "function") return [["custom", [], normalized]];
+        return normalized;
+    }
+
+    let customIndex = 0;
+    return normalized.map((entry) => {
+        if (typeof entry === "function") {
+            customIndex += 1;
+            return [`custom${customIndex}`, [], entry];
+        }
+        return entry;
+    });
+}
+
 function normalizeFormatterConfigEntry(entry) {
     if (!isPlainObject(entry)) return {};
     const source = isPlainObject(entry.formatters)
@@ -119,12 +161,235 @@ function normalizeFormatterConfigEntry(entry) {
     return normalized;
 }
 
+function getComponentConfig(host) {
+    const config = host && host.constructor ? host.constructor.config : null;
+    return isPlainObject(config) ? config : {};
+}
+
+function getConfigValue(host, key) {
+    const config = getComponentConfig(host);
+    if (Object.prototype.hasOwnProperty.call(config, key)) return config[key];
+    if (key === "validation" && Object.prototype.hasOwnProperty.call(config, "validate")) return config.validate;
+    return undefined;
+}
+
+function createNativeElement(config = {}) {
+    const tag = String(config.tag || "input").trim() || "input";
+    const element = document.createElement(tag);
+    const attrs = isPlainObject(config.attrs)
+        ? config.attrs
+        : isPlainObject(config.attributes)
+          ? config.attributes
+          : {};
+
+    Object.entries(attrs).forEach(([name, value]) => {
+        if (value === false || value == null) return;
+        if (value === true) {
+            element.setAttribute(name, "");
+            return;
+        }
+        element.setAttribute(name, String(value));
+    });
+
+    return element;
+}
+
+function createNativeControls(config) {
+    const nativeConfig = Array.isArray(config) ? config : [config || { tag: "input" }];
+    const controls = [];
+    nativeConfig.forEach((entry, index) => {
+        const control =
+            typeof HTMLElement !== "undefined" && entry instanceof HTMLElement ? entry : createNativeElement(entry);
+        controls.push(control);
+        const ref = entry && typeof entry === "object" ? entry.ref : "";
+        if (ref) controls[ref] = control;
+        if (!control.dataset.nativeIndex) control.dataset.nativeIndex = String(index);
+    });
+    return controls;
+}
+
+function resolveNativeToken(host, token = "") {
+    const key = String(token || "").trim();
+    if (!host || !host._native) return null;
+    if (!key || key === "native") return host._dom.native || host._native[0] || null;
+    const normalized = key.replace(/^native[.:]?/, "");
+    if (!normalized) return host._dom.native || host._native[0] || null;
+    return host._native[normalized] || host._native[Number(normalized)] || null;
+}
+
+function replaceHtmlTokens(root, host) {
+    if (!root || !host) return root;
+    if (typeof root.querySelectorAll !== "function") return root;
+    root.querySelectorAll("[data-native]").forEach((placeholder) => {
+        const native = resolveNativeToken(host, placeholder.getAttribute("data-native"));
+        if (native) placeholder.replaceWith(native);
+    });
+    root.querySelectorAll("native, input-native").forEach((placeholder) => {
+        const native = resolveNativeToken(host, placeholder.getAttribute("ref") || placeholder.getAttribute("name"));
+        if (native) placeholder.replaceWith(native);
+    });
+    return root;
+}
+
+function createHtmlView(host, html) {
+    const source = typeof html === "function" ? html.call(host, host) : html;
+    if (!source) return null;
+    if (typeof Node !== "undefined" && source instanceof Node) {
+        return replaceHtmlTokens(source, host);
+    }
+
+    const template = document.createElement("template");
+    template.innerHTML = String(source).trim();
+    const root = document.createElement("div");
+    root.className = "html-view";
+    root.appendChild(template.content.cloneNode(true));
+    return replaceHtmlTokens(root, host);
+}
+
+function getFormatTokenNames(formatSpec) {
+    if (typeof formatSpec !== "string") return [];
+    return formatSpec
+        .split(":")
+        .map((token) => token.trim().match(/^([a-zA-Z0-9_-]+)/)?.[1] || "")
+        .filter(Boolean);
+}
+
+function getValidationRuleTokens(rules) {
+    return RuleParser.parse(rules).map((rule) => ({
+        type: rule.type.toLowerCase(),
+        args: [...rule.args]
+    }));
+}
+
+function getFormatFromValidationPresets(validationTokens) {
+    const formatters = getFormatters();
+
+    for (let i = 0; i < validationTokens.length; i += 1) {
+        const formatter = String(getValidationPresetMetadata(validationTokens[i].type).formatter || "").trim();
+        if (!formatter) continue;
+        const formatterNames = getFormatTokenNames(formatter);
+        if (formatterNames.length && formatterNames.every((name) => typeof formatters[name] === "function")) {
+            return formatter;
+        }
+    }
+
+    return "";
+}
+
+function getInputPresetMetadata(validationTokens, formatSpec) {
+    const metadata = {};
+    const mergeMissing = (source) => {
+        if (!source) return;
+        ["description", "example", "format", "formatter"].forEach((key) => {
+            if (!metadata[key] && source[key]) metadata[key] = source[key];
+        });
+    };
+
+    const structuralRules = new Set(["required", "min", "max", "length", "empty", "notempty"]);
+    validationTokens
+        .map((rule) => rule.type)
+        .sort(
+            (left, right) =>
+                Number(structuralRules.has(left.toLowerCase())) - Number(structuralRules.has(right.toLowerCase()))
+        )
+        .forEach((rule) => mergeMissing(getValidationPresetMetadata(rule)));
+
+    getFormatTokenNames(formatSpec).forEach((formatter) => mergeMissing(getFormatterMetadata(formatter)));
+    return metadata;
+}
+
+function getConfiguredCharacterWidthMax(host, validationTokens) {
+    const maxLengthValue = parseInt(host.getAttribute("maxlength"), 10);
+    if (Number.isFinite(maxLengthValue) && maxLengthValue > 0) {
+        return maxLengthValue;
+    }
+
+    for (let i = 0; i < validationTokens.length; i += 1) {
+        const rule = validationTokens[i];
+        if (rule.type !== "max") continue;
+        const maxValue = parseInt(rule.args[0], 10);
+        if (Number.isFinite(maxValue) && maxValue > 0) {
+            return maxValue;
+        }
+    }
+
+    return null;
+}
+
+function resolveInputSettings(host) {
+    const inputConfigFormat = normalizePipelineSpec(getConfigValue(host, "format"));
+    const inputConfigValidation = normalizeValidationSpec(getConfigValue(host, "validation"));
+    const formsConfig = getJuiceConfig("forms");
+    const hasFormsConfig = isPlainObject(formsConfig);
+    const typeConfig = hasFormsConfig ? host._getFormTypeConfig(formsConfig) : {};
+    const configuredFormat = hasFormsConfig
+        ? normalizeFormatConfigEntry(typeConfig) || normalizeFormatConfigEntry(formsConfig)
+        : "";
+    const configuredFormatters = hasFormsConfig
+        ? {
+              ...normalizeFormatterConfigEntry(formsConfig),
+              ...normalizeFormatterConfigEntry(typeConfig)
+          }
+        : {};
+    const validationRules = host._getValidationRules();
+    const validationTokens = getValidationRuleTokens(validationRules);
+    const formatSpec = host.hasAttribute("format")
+        ? host.getAttribute("format") === "false"
+            ? false
+            : normalizePipelineSpec(host.getAttribute("format"))
+        : inputConfigFormat === false
+          ? false
+          : inputConfigFormat || configuredFormat || getFormatFromValidationPresets(validationTokens);
+
+    return {
+        validationRules,
+        validationTokens,
+        formatSpec,
+        validationSpec: inputConfigValidation,
+        formatters: { ...configuredFormatters, ...host._formatters },
+        metadata: getInputPresetMetadata(validationTokens, formatSpec),
+        maxCharacters: getConfiguredCharacterWidthMax(host, validationTokens)
+    };
+}
+
+function getInputFormatGuidance(settings) {
+    const guidance = [];
+    const seen = new Set();
+    const add = (text) => {
+        const normalized = String(text || "").trim();
+        if (!normalized || seen.has(normalized)) return;
+        seen.add(normalized);
+        guidance.push(normalized);
+    };
+
+    settings.validationTokens.forEach((rule) => {
+        if (["required", "empty", "notempty", "null"].includes(rule.type)) return;
+        add(describeValidationRule(rule.type, rule.args));
+    });
+
+    const formatSpec = settings.formatSpec;
+    if (typeof formatSpec === "string" && formatSpec.trim()) {
+        const templateMatch = formatSpec.trim().match(/^tpl\((['"]?)(.*?)\1\)$/);
+        if (templateMatch) {
+            add(`Digits arranged as ${templateMatch[2]}.`);
+        } else if (/^[d0-9\s+\-()./]+$/i.test(formatSpec.trim()) && formatSpec.includes("d")) {
+            add(`Digits arranged as ${formatSpec.trim()}.`);
+        } else {
+            getFormatTokenNames(formatSpec).forEach((formatter) => add(getFormatterMetadata(formatter).format));
+        }
+    }
+
+    if (!guidance.length) add(settings.metadata.format);
+    return guidance.join(" ");
+}
+
 function uniqueId(prefix) {
     return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 const BASE_OBSERVED_ATTRS = [
     "label",
+    "show-requirement",
     "description",
     "example",
     "name",
@@ -445,6 +710,16 @@ class InputComponent extends HTMLElement {
         return BASE_STYLES;
     }
 
+    static get config() {
+        return {
+            value: { type: "string", default: "" },
+            native: { tag: "input", attrs: { type: "text" } },
+            html: undefined,
+            format: undefined,
+            validation: undefined
+        };
+    }
+
     isInputComponent = true;
 
     /**
@@ -467,6 +742,7 @@ class InputComponent extends HTMLElement {
         this._initialLayout = null;
         this._features = {};
         this._formatters = {};
+        this._native = [];
         this._onJuiceConfigChange = null;
         this._validator = null;
         this._validationRule = "";
@@ -631,62 +907,6 @@ class InputComponent extends HTMLElement {
         return "value" in native;
     }
 
-    _getConfiguredFormFormat() {
-        const formsConfig = getJuiceConfig("forms");
-        if (!isPlainObject(formsConfig)) return "";
-
-        const sharedFormat = normalizeFormatConfigEntry(formsConfig);
-        const typeConfig = this._getFormTypeConfig(formsConfig);
-        const typeFormat = normalizeFormatConfigEntry(typeConfig);
-        return typeFormat || sharedFormat || "";
-    }
-
-    _getConfiguredFormFormatters() {
-        const formsConfig = getJuiceConfig("forms");
-        if (!isPlainObject(formsConfig)) return {};
-
-        const sharedFormatters = normalizeFormatterConfigEntry(formsConfig);
-        const typeConfig = this._getFormTypeConfig(formsConfig);
-        const typeFormatters = normalizeFormatterConfigEntry(typeConfig);
-        return { ...sharedFormatters, ...typeFormatters };
-    }
-
-    /**
-     * Resolves the active format specification string.
-     *
-     * Precedence:
-     * 1. Host `format` attribute.
-     * 2. Form config type override (`forms.<type>.format`).
-     * 3. Shared form config (`forms.format`).
-     *
-     * @returns {string} Active format specification.
-     */
-    _getActiveFormatSpec() {
-        if (this.hasAttribute("format")) {
-            return this.getAttribute("format") || "";
-        }
-        return this._getConfiguredFormFormat() || this._getValidationPresetFormat();
-    }
-
-    _getValidationPresetFormat() {
-        const formatters = getFormatters();
-        const rules = RuleParser.parse(this._getValidationRules()).map((rule) => rule.type);
-
-        for (let i = 0; i < rules.length; i += 1) {
-            const formatter = String(getValidationPresetMetadata(rules[i]).formatter || "").trim();
-            if (!formatter) continue;
-            const formatterNames = formatter
-                .split(":")
-                .map((token) => token.match(/^([a-zA-Z0-9_-]+)/)?.[1] || "")
-                .filter(Boolean);
-            if (formatterNames.length && formatterNames.every((name) => typeof formatters[name] === "function")) {
-                return formatter;
-            }
-        }
-
-        return "";
-    }
-
     /**
      * Runs the active format pipeline against the native control value.
      *
@@ -701,13 +921,11 @@ class InputComponent extends HTMLElement {
         const native = this._dom.native;
         if (!this._supportsFormatting(native)) return false;
 
-        const formatSpec = this._getActiveFormatSpec();
-        if (!formatSpec) return false;
+        const settings = resolveInputSettings(this);
+        if (!settings.formatSpec) return false;
 
-        const configuredFormatters = this._getConfiguredFormFormatters();
-        const scopedFormatters = { ...configuredFormatters, ...this._formatters };
-        const formatted = applyFormatPipeline(native.value, formatSpec, {
-            formatters: scopedFormatters,
+        const formatted = applyFormatPipeline(native.value, settings.formatSpec, {
+            formatters: settings.formatters,
             context: this
         });
 
@@ -717,39 +935,12 @@ class InputComponent extends HTMLElement {
         return true;
     }
 
-    _getConfiguredCharacterWidthMax() {
-        const maxLengthValue = parseInt(this.getAttribute("maxlength"), 10);
-        if (Number.isFinite(maxLengthValue) && maxLengthValue > 0) {
-            return maxLengthValue;
-        }
-
-        const validationText = (this.getAttribute("validation") || this.getAttribute("validate") || "").trim();
-        if (!validationText) return null;
-
-        const tokens = validationText
-            .split("|")
-            .map((token) => String(token).trim())
-            .filter(Boolean);
-
-        for (let i = 0; i < tokens.length; i += 1) {
-            const token = tokens[i];
-            if (!token.toLowerCase().startsWith("maxlength:")) continue;
-            const maxText = token.slice(4).trim();
-            const maxValue = parseInt(maxText, 10);
-            if (Number.isFinite(maxValue) && maxValue > 0) {
-                return maxValue;
-            }
-        }
-
-        return null;
-    }
-
     _syncConfiguredCharacterWidth() {
         if (this.syncCharWidth !== undefined && !this.syncCharWidth) return;
         const native = this._dom.native;
         if (!native || this._isCheckableControl(native)) return;
 
-        const maxChars = this._getConfiguredCharacterWidthMax();
+        const maxChars = resolveInputSettings(this).maxCharacters;
         if (!maxChars) {
             native.style.removeProperty("width");
             return;
@@ -765,25 +956,25 @@ class InputComponent extends HTMLElement {
     }
 
     /**
-     * Creates a native control for the input component.
-     * This method must be implemented by subclasses.
-     * It should return a native HTML element that can be used to receive user input.
-     * The native control should be a single element, and should not have any children.
-     * The native control should also not have any event listeners attached to it.
-     * The input component will attach its own event listeners to the native control.
-     * @throws {Error} if not implemented by a subclass.
+     * Creates native control(s) for the input component.
+     * Subclasses can override this for custom behavior; otherwise `static config.native`
+     * is used.
      */
     _createNativeControl() {
-        throw new Error(`${this.tagName.toLowerCase()} must implement _createNativeControl()`);
+        return createNativeControls(getConfigValue(this, "native"));
+    }
+
+    _getInputHtml() {
+        if (typeof this.html === "function") return this.html.bind(this);
+        return getConfigValue(this, "html");
     }
 
     /**
      * Renders the default view of the input component.
      * This method should be called by subclasses when they want to render a default view.
-     * It will set the `_dom.default` property to null.
      */
     _renderDefault() {
-        this._dom.default = null;
+        this._dom.default = createHtmlView(this, this._getInputHtml());
     }
 
     _ensureDefaultMountedInInputContainer() {
@@ -800,9 +991,14 @@ class InputComponent extends HTMLElement {
      * This keeps native placement stable even when wireframe/layout is re-rendered.
      */
     _ensureNativeMountedInWrapper() {
-        if (!this._dom.native || !this._nativeWrapper) return;
-        if (this._dom.native.parentNode !== this._nativeWrapper) {
-            this._nativeWrapper.appendChild(this._dom.native);
+        if (!this._nativeWrapper) return;
+        const controls =
+            this._native && this._native.length ? this._native : this._dom.native ? [this._dom.native] : [];
+        for (let i = 0; i < controls.length; i += 1) {
+            const native = controls[i];
+            if (native && native.parentNode !== this._nativeWrapper) {
+                this._nativeWrapper.appendChild(native);
+            }
         }
     }
 
@@ -868,7 +1064,7 @@ class InputComponent extends HTMLElement {
             this._renderDefault();
             this._ensureDefaultMountedInInputContainer();
         }
-        this._ensureNativeHeightCaptured();
+        if (!this.ignoreHeight) this._ensureNativeHeightCaptured();
         this._compileStyles();
         this._updateFormValue();
         this._setupValidation();
@@ -910,7 +1106,12 @@ class InputComponent extends HTMLElement {
         if (oldValue === newValue || this._isSyncing) return;
         const affectsValidation = this._validationController.affectsAttribute(name);
         const affectsFormatting = name === "value" || name === "format" || name === "validation" || name === "validate";
-        const affectsFeedback = name === "label" || name === "description" || name === "example" || name === "format";
+        const affectsFeedback =
+            name === "label" ||
+            name === "show-requirement" ||
+            name === "description" ||
+            name === "example" ||
+            name === "format";
         const affectsValidationPresentation = name.startsWith("validation-color");
 
         if (name === "template" || name === "view") {
@@ -999,18 +1200,40 @@ class InputComponent extends HTMLElement {
     _replaceNativeControl(nextNative) {
         if (!nextNative) return;
 
-        if (this._dom.native && this._dom.native.parentNode) {
-            this._dom.native.parentNode.removeChild(this._dom.native);
+        const existingControls =
+            this._native && this._native.length ? this._native : this._dom.native ? [this._dom.native] : [];
+        for (let i = 0; i < existingControls.length; i += 1) {
+            const native = existingControls[i];
+            if (native && native.parentNode) {
+                native.parentNode.removeChild(native);
+            }
         }
 
-        this._dom.native = nextNative;
+        this._native = Array.isArray(nextNative) ? nextNative : [nextNative];
+        this._dom.native = this._native[0] || null;
+        if (!this._dom.native) return;
+
+        for (const key in nextNative) {
+            if (
+                !Number.isInteger(Number(key)) &&
+                typeof HTMLElement !== "undefined" &&
+                nextNative[key] instanceof HTMLElement
+            ) {
+                this._native[key] = nextNative[key];
+            }
+        }
+
         if (!this._dom.native.id) {
             this._dom.native.id = uniqueId("inp");
         }
 
         // Rebinding is centralized here so mode switches (for example custom/native select)
         // do not need to duplicate event + sync setup in subclasses.
-        this._dom.native.classList.add("native");
+        for (let i = 0; i < this._native.length; i += 1) {
+            const native = this._native[i];
+            if (!native.id) native.id = uniqueId("inp");
+            native.classList.add("native");
+        }
         this._ensureNativeMountedInWrapper();
 
         this._eventsBound = false;
@@ -1162,6 +1385,7 @@ class InputComponent extends HTMLElement {
 
         switch (name) {
             case "label":
+            case "show-requirement":
                 this._renderLabel();
                 break;
             case "description":
@@ -1236,12 +1460,12 @@ class InputComponent extends HTMLElement {
 
     _getEffectiveLayout() {
         const base = this._initialLayout || this._layout || "label:input";
-        const presetMetadata = this._getFieldFeedbackPresetMetadata();
+        const settings = resolveInputSettings(this);
         const hasFieldFeedback =
             this.hasValidation ||
             Boolean((this.getAttribute("description") || "").trim()) ||
             Boolean((this.getAttribute("example") || "").trim()) ||
-            Boolean(presetMetadata.description || presetMetadata.example);
+            Boolean(settings.metadata.description || settings.metadata.example);
         const tokens = base
             .split(":")
             .map((token) => String(token).trim())
@@ -1442,12 +1666,16 @@ class InputComponent extends HTMLElement {
             this._dom.labelText.textContent = labelText;
             // Always append so the text follows any nested controls (radio/checkbox layouts).
             this._dom.label.appendChild(this._dom.labelText);
-            if (!this._dom.labelRequirement) {
-                this._dom.labelRequirement = document.createElement("span");
-                this._dom.labelRequirement.className = "label-requirement";
+            if (this._showsRequirementLabel()) {
+                if (!this._dom.labelRequirement) {
+                    this._dom.labelRequirement = document.createElement("span");
+                    this._dom.labelRequirement.className = "label-requirement";
+                }
+                this._dom.labelRequirement.textContent = this._isRequiredField() ? "Required" : "Optional";
+                this._dom.label.appendChild(this._dom.labelRequirement);
+            } else if (this._dom.labelRequirement && this._dom.labelRequirement.parentNode) {
+                this._dom.labelRequirement.parentNode.removeChild(this._dom.labelRequirement);
             }
-            this._dom.labelRequirement.textContent = this._isRequiredField() ? "Required" : "Optional";
-            this._dom.label.appendChild(this._dom.labelRequirement);
             this._dom.native.setAttribute("aria-label", labelText);
         } else {
             if (this._dom.labelText && this._dom.labelText.parentNode) {
@@ -1460,9 +1688,14 @@ class InputComponent extends HTMLElement {
         }
     }
 
+    _showsRequirementLabel() {
+        return this.getAttribute("show-requirement") !== "false";
+    }
+
     _isRequiredField() {
         return (
-            this.hasAttribute("required") || this._parseValidationRuleTokens().some((rule) => rule.type === "required")
+            this.hasAttribute("required") ||
+            resolveInputSettings(this).validationTokens.some((rule) => rule.type === "required")
         );
     }
 
@@ -1516,6 +1749,10 @@ class InputComponent extends HTMLElement {
 
     _getValidationRules() {
         return this._validationController.getValidationRules();
+    }
+
+    _getInputValidationSpec() {
+        return normalizeValidationSpec(getConfigValue(this, "validation"));
     }
 
     _setupValidation() {
@@ -1711,19 +1948,19 @@ class InputComponent extends HTMLElement {
         const native = this._dom.native;
         if (!wrapper || !native) return;
 
-        const presetMetadata = this._getFieldFeedbackPresetMetadata();
+        const settings = resolveInputSettings(this);
         const fieldLabel = (this.getAttribute("label") || "").trim();
         this._dom.feedbackHeadingLabel.textContent = fieldLabel;
-        const description = (this.getAttribute("description") || presetMetadata.description || "").trim();
+        const description = (this.getAttribute("description") || settings.metadata.description || "").trim();
         this._dom.description.textContent = description;
-        const example = (this.getAttribute("example") || presetMetadata.example || "").trim();
+        const example = (this.getAttribute("example") || settings.metadata.example || "").trim();
         this._dom.example.textContent = example ? `(ex. ${example})` : "";
         this._dom.feedbackHeading.hidden = !(fieldLabel || example);
 
         const messages = Array.isArray(this._validationMessages)
             ? this._validationMessages.filter((message) => String(message || "").trim())
             : [];
-        const format = messages.length ? this._getFormatGuidance(this._validationErrors, presetMetadata) : "";
+        const format = messages.length ? getInputFormatGuidance(settings) : "";
         this._setFieldFeedbackLine(this._dom.format, "Format", format);
         this._dom.guidance.hidden = !format;
         this._dom.validationMessage.replaceChildren(
@@ -1774,79 +2011,6 @@ class InputComponent extends HTMLElement {
         labelElement.className = "field-feedback-label";
         labelElement.textContent = `${label}: `;
         element.replaceChildren(labelElement, document.createTextNode(text));
-    }
-
-    _getFormatGuidance(_errors = [], presetMetadata = {}) {
-        const formatSpec = this._getActiveFormatSpec();
-        const guidance = [];
-        const seen = new Set();
-        const add = (text) => {
-            const normalized = String(text || "").trim();
-            if (!normalized || seen.has(normalized)) return;
-            seen.add(normalized);
-            guidance.push(normalized);
-        };
-
-        this._parseValidationRuleTokens().forEach((rule) => {
-            if (["required", "empty", "notempty", "null"].includes(rule.type)) return;
-            add(describeValidationRule(rule.type, rule.args));
-        });
-
-        if (typeof formatSpec === "string" && formatSpec.trim()) {
-            const templateMatch = formatSpec.trim().match(/^tpl\((['"]?)(.*?)\1\)$/);
-            if (templateMatch) {
-                add(`Digits arranged as ${templateMatch[2]}.`);
-            } else if (/^[d0-9\s+\-()./]+$/i.test(formatSpec.trim()) && formatSpec.includes("d")) {
-                add(`Digits arranged as ${formatSpec.trim()}.`);
-            } else {
-                formatSpec
-                    .split(":")
-                    .map((token) => token.trim().match(/^([a-zA-Z0-9_-]+)/)?.[1] || "")
-                    .filter(Boolean)
-                    .forEach((formatter) => add(getFormatterMetadata(formatter).format));
-            }
-        }
-
-        if (!guidance.length) add(presetMetadata.format);
-
-        return guidance.join(" ");
-    }
-
-    _parseValidationRuleTokens() {
-        return RuleParser.parse(this._getValidationRules()).map((rule) => ({
-            type: rule.type.toLowerCase(),
-            args: [...rule.args]
-        }));
-    }
-
-    _getFieldFeedbackPresetMetadata() {
-        const metadata = {};
-        const mergeMissing = (source) => {
-            if (!source) return;
-            ["description", "example", "format", "formatter"].forEach((key) => {
-                if (!metadata[key] && source[key]) metadata[key] = source[key];
-            });
-        };
-
-        const structuralRules = new Set(["required", "min", "max", "length", "empty", "notempty"]);
-        const validationRules = this._parseValidationRuleTokens()
-            .map((rule) => rule.type)
-            .sort(
-                (left, right) =>
-                    Number(structuralRules.has(left.toLowerCase())) - Number(structuralRules.has(right.toLowerCase()))
-            );
-        validationRules.forEach((rule) => mergeMissing(getValidationPresetMetadata(rule)));
-
-        const formatSpec = this._getActiveFormatSpec();
-        if (typeof formatSpec === "string") {
-            formatSpec
-                .split(":")
-                .map((token) => token.trim().match(/^([a-zA-Z0-9_-]+)/)?.[1] || "")
-                .filter(Boolean)
-                .forEach((formatter) => mergeMissing(getFormatterMetadata(formatter)));
-        }
-
-        return metadata;
     }
 
     _queueFieldFeedbackPosition() {

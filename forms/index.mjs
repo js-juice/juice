@@ -5,6 +5,7 @@ import "./components/input-range.mjs";
 import "./components/input-select.mjs";
 import "./components/input-button.mjs";
 import "./components/input-file.mjs";
+import "./components/input-image.mjs";
 import "./components/input-text.mjs";
 import "./components/input-number.mjs";
 import "./components/input-textarea.mjs";

@@ -227,16 +227,13 @@ test("field feedback shows examples and format guidance only for invalid values"
     );
 
     assert.match(inputComponent, /this\._dom\.example\.textContent = example \? `\(ex\. \$\{example\}\)` : ""/);
-    assert.match(
-        inputComponent,
-        /this\._getFormatGuidance\(this\._validationErrors, presetMetadata\)/
-    );
+    assert.match(inputComponent, /getInputFormatGuidance\(settings\)/);
     assert.match(inputComponent, /this\._setFieldFeedbackLine\(this\._dom\.format, "Format", format\)/);
     assert.match(inputComponent, /const templateMatch = formatSpec\.trim\(\)\.match\(/);
     assert.match(inputComponent, /getValidationPresetMetadata\(rule\)/);
     assert.match(inputComponent, /getFormatterMetadata\(formatter\)/);
     assert.match(inputComponent, /describeValidationRule\(rule\.type, rule\.args\)/);
-    assert.match(inputComponent, /if \(!guidance\.length\) add\(presetMetadata\.format\)/);
+    assert.match(inputComponent, /if \(!guidance\.length\) add\(settings\.metadata\.format\)/);
     assert.match(validationController, /this\.host\._validationErrors = errors/);
 });
 
@@ -247,8 +244,8 @@ test("validation preset formats drive registered formatter pipelines", async () 
     );
 
     assert.match(inputComponent, /getFormatterMetadata, getFormatters/);
-    assert.match(inputComponent, /return this\._getConfiguredFormFormat\(\) \|\| this\._getValidationPresetFormat\(\)/);
-    assert.match(inputComponent, /getValidationPresetMetadata\(rules\[i\]\)\.formatter/);
+    assert.match(inputComponent, /configuredFormat \|\| getFormatFromValidationPresets\(validationTokens\)/);
+    assert.match(inputComponent, /getValidationPresetMetadata\(validationTokens\[i\]\.type\)\.formatter/);
     assert.match(inputComponent, /formatterNames\.every\(\(name\) => typeof formatters\[name\] === "function"\)/);
 });
 

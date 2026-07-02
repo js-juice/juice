@@ -7,7 +7,7 @@
 import { type } from "../Util/Core.mjs";
 import { METHOD_CALL, NUMERIC } from "../Util/Regex.mjs";
 import Assert from "../Util/Assert.mjs";
-import Tokenizer from "./Tokenizer.mjs";
+import Tokenizer from "./tokenizer.mjs";
 import path from "path";
 import fs from "fs";
 

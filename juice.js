@@ -80,6 +80,8 @@ root.currentFile = currentFile;
  * @class Juice
  */
 class Juice {
+    static #instance = false;
+
     static isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
     static isNode = Boolean(nodeProcess);
     static sections = ["animation", "core", "data", "forms", "style", "ui"];
@@ -111,7 +113,13 @@ class Juice {
      * Creates a new Juice instance.
      * Initializes storage, queues, and event registry.
      */
-    constructor() {
+    constructor(configuration = {}) {
+        // Singleton pattern: return existing instance if already created
+        if (Juice.#instance) return Juice.#instance;
+        // Set the singleton instance to this
+        Juice.#instance = this;
+
+        this.creator = new Error().stack.split("\n")[1].trim();
         this.root = root;
         this.resolve = import.meta.resolve;
         this.currentFile = currentFile;
@@ -173,7 +181,11 @@ class Juice {
 
             this.dbInstance = await Driver.create(source, { type, models });
 
-            if (typeof models === "string" && models.trim() && typeof this.dbInstance.loadModelDirectory === "function") {
+            if (
+                typeof models === "string" &&
+                models.trim() &&
+                typeof this.dbInstance.loadModelDirectory === "function"
+            ) {
                 const modelDirectory = path.isAbsolute(models) ? models : path.resolve(getRuntimeRoot(), models);
                 await this.dbInstance.loadModelDirectory(modelDirectory);
             }
@@ -456,16 +468,15 @@ class Juice {
     }
 }
 
+export { Juice };
+
 /**
  * Global Juice instance.
  * @type {Juice}
  */
-export const juice = new Juice();
-juice.expose();
+export default new Juice();
 /**
  * Global configuration object.
  * @type {DotNotation}
  */
 export const config = _config;
-
-export default juice;
