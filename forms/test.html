@@ -5,9 +5,11 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <title>Input components demo</title>
-        <script type="module" src="./juice-forms-setup.mjs"></script>
-        <script type="module" src="./juice-forms.mjs"></script>
+        <script type="module" src="./index.mjs"></script>
+        <link rel="stylesheet" href="../../../css/juice-forms-variables.css" />
+        <script>
 
+        </script>
         <style>
             body {
                 font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
@@ -17,7 +19,7 @@
 
             form {
 
-                max-width: 40rem;
+                max-width: 50rem;
                 font-size: 1em
             }
 
@@ -26,7 +28,7 @@
                 flex-direction: row;
                 flex-wrap: wrap;
                 gap: 1rem;
-                max-width: 40rem;
+                max-width: 50rem;
                 font-size: 1em
             }
 
@@ -94,86 +96,87 @@
 
     <body>
         <h1>Custom Input Components Demo</h1>
-        <form id="demoForm">
 
 
-            <form id="demo-form">
-                <form-info id="formInfoDemo" for="demo-form">
-                    Make changes to the form above. Undo/Revert actions appear when history has steps.
-                </form-info>
-                <div class="fields">
-                    <input-text name="username" label="Username" placeholder="Type name" required
+        <form id="demo-form">
+            <form-info id="formInfoDemo" for="demo-form">
+                Make changes to the form above. Undo/Revert actions appear when history has steps.
+            </form-info>
+            <div class="fields">
+                <input-text name="username" label="Username" placeholder="Type name" required
+                    validation="min:3|max:20|a-z0-9"></input-text>
+
+                <input-text name="password" label="Password" placeholder="Type password" required
+                    validation="min:8|max:20|a-z0-9"></input-text>
+            </div>
+        </form>
+        <form id="test-form">
+            <form-info id="formInfoDemo" for="test-form">
+                Make changes to the form above. Undo/Revert actions appear when history has steps.
+            </form-info>
+            <div class="fields">
+
+                <div class="row thirds">
+                    <input-text name="firstname" label="First Name" placeholder="Type first name" required
+                        validation="min:3|max:20|a-z0-9"></input-text>
+                    <input-text name="middlename" label="Middle Name" placeholder="Type middle name" required
+                        validation="min:3|max:20|a-z0-9"></input-text>
+                    <input-text name="lastname" label="Last Name" placeholder="Type last name" required
                         validation="min:3|max:20|a-z0-9"></input-text>
 
-                    <input-text name="password" label="Password" placeholder="Type password" required
-                        validation="min:8|max:20|a-z0-9"></input-text>
                 </div>
-            </form>
 
-
-            <form id="test-form" method="POST" action="/submit">
-                <form-info id="formInfoDemo" for="test-form">
-                    Make changes to the form above. Undo/Revert actions appear when history has steps.
-                </form-info>
-                <div class="fields">
-
-                    <div class="row thirds">
-                        <input-text name="firstname" label="First Name" placeholder="Type first name" required
-                            validation="min:3|max:20|a-z0-9"></input-text>
-                        <input-text name="middlename" label="Middle Name" placeholder="Type middle name" required
-                            validation="min:3|max:20|a-z0-9"></input-text>
-                        <input-text name="lastname" label="Last Name" placeholder="Type last name" required
-                            validation="min:3|max:20|a-z0-9"></input-text>
-
-                    </div>
-
-                    <div class="row">
-                        <input-text class="w:75" name="address_line1" label="Address Line 1" placeholder="Type address"
-                            required validation="min:3|max:20|a-z0-9"></input-text>
-                        <input-text class="" name="address_unit" label="Apt/Unit" placeholder="Apt/Unit #" required
-                            validation="min:3|max:20|a-z0-9"></input-text>
-                    </div>
-                    <div class="row thirds">
-                        <input-text class="w:100" name="city" label="City" placeholder="Type city" required
-                            validation="min:3|max:20|a-z0-9"></input-text>
-                        <input-select name="state" label="State" required
-                            options="ny:New York, ca:California, tx:Texas">
-                            <option value="" selected>Select State</option>
-                            <option value="ak">Alaska</option>
-                            <option value="ny">New York</option>
-                            <option value="ca">California</option>
-                            <option value="tx">Texas</option>
-                        </input-select>
-                        <input-text class="static" name="zip" label="ZIP Code" placeholder="00000-0000" maxlength="10"
-                            required validation="min:5|max:9" format="ddddd-dddd"></input-text>
-                    </div>
-                    <option-group label="Preferences">
-                        <input-checkbox name="pref_email" label="Email Notifications" value="yes"></input-checkbox>
-                        <input-checkbox name="pref_sms" label="SMS Notifications" value="yes"></input-checkbox>
-                        <input-checkbox name="pref_push" label="Push Notifications" value="yes"></input-checkbox>
-                    </option-group>
-
-
-                    <input-textarea name="bio" label="Bio" placeholder="Write something about yourself" required
-                        validation="min:10|max:200"></input-textarea>
-
-                    <div>
-                        <input-checkbox name="subscribe" label="Subscribe" value="yes"></input-checkbox>
-                    </div>
-                    <div>
-                        <input-select name="country" label="Country"
-                            options="usa:USA:selected, canada:Canada, mexico:Mexico"></input-select>
-                    </div>
-                    <div>
-                        <input-radio name="color" label="Red" value="red"></input-radio>
-                        <input-radio name="color" label="Green" value="green"></input-radio>
-                        <input-radio name="color" label="Blue" value="blue"></input-radio>
-                    </div>
-
+                <div class="row">
+                    <input-text class="w:75" name="address_line1" label="Address Line 1" placeholder="Type address"
+                        required validation="min:3|max:20|a-z0-9"></input-text>
+                    <input-text class="" name="address_unit" label="Apt/Unit" placeholder="Apt/Unit #" required
+                        validation="min:3|max:20|a-z0-9"></input-text>
                 </div>
-            </form>
-            <button type="button" id="dump">Dump values</button>
+                <div class="row thirds">
+                    <input-text class="w:100" name="city" label="City" placeholder="Type city" required
+                        validation="min:3|max:20|a-z0-9"></input-text>
+                    <input-select name="state" label="State" required options="ny:New York, ca:California, tx:Texas">
+                        <option value="" selected>Select State</option>
+                        <option value="ak">Alaska</option>
+                        <option value="ny">New York</option>
+                        <option value="ca">California</option>
+                        <option value="tx">Texas</option>
+                    </input-select>
+                    <input-text class="static" name="zip" label="ZIP Code" placeholder="00000-0000" maxlength="10"
+                        required validation="min:5|max:9" format="ddddd-dddd"></input-text>
+                </div>
+                <option-group label="Preferences">
+                    <input-checkbox name="pref_email" label="Email Notifications" value="yes"></input-checkbox>
+                    <input-checkbox name="pref_sms" label="SMS Notifications" value="yes"></input-checkbox>
+                    <input-checkbox name="pref_push" label="Push Notifications" value="yes"></input-checkbox>
+                </option-group>
+
+
+                <input-textarea name="bio" label="Bio" placeholder="Write something about yourself" required
+                    validation="min:10|max:200"></input-textarea>
+
+
+                <div class="row">
+                    <input-wysiwyg name="html_text" label="HTML Text" placeholder="Write some html text" required
+                        validation="min:10|max:200"></input-wysiwyg>
+                </div>
+                <div>
+                    <input-checkbox name="subscribe" label="Subscribe" value="yes"></input-checkbox>
+                </div>
+                <div>
+                    <input-select name="country" label="Country"
+                        options="usa:USA:selected, canada:Canada, mexico:Mexico"></input-select>
+                </div>
+                <div>
+                    <input-radio name="color" label="Red" value="red"></input-radio>
+                    <input-radio name="color" label="Green" value="green"></input-radio>
+                    <input-radio name="color" label="Blue" value="blue"></input-radio>
+                </div>
+
+            </div>
         </form>
+        <button type="button" id="dump">Dump values</button>
+
 
         <pre id="out"></pre>
         <hr />

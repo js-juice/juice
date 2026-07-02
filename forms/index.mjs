@@ -9,6 +9,7 @@ import "./components/input-image.mjs";
 import "./components/input-text.mjs";
 import "./components/input-number.mjs";
 import "./components/input-textarea.mjs";
+import "./components/input-wysiwyg.mjs";
 import "./components/input-status.mjs";
 import "./components/option-group.mjs";
 import "./components/juice-forms.mjs";

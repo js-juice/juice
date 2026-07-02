@@ -531,6 +531,11 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 const { property, config, alias } = definition;
                 let isDefault = false;
 
+                config.linkedAttributeName = config.linked ? (config.linked === true ? property : config.linked) : null;
+                if (config.linkedAttributeName && config.linkedAttributeName !== property) {
+                    this._attributeAliases[config.linkedAttributeName] = property;
+                }
+
                 //Parse Config Type
                 const configType = config.attrtype || config.type || "string";
                 //Handle Aliases
@@ -542,8 +547,8 @@ function ComponentCompiler(name, BaseHTMLElement) {
                         }
                     });
 
-                    if (config.linked && this.hasAttribute(property)) {
-                        const attributeValue = this.getAttribute(property);
+                    if (config.linked && this.hasAttribute(config.linkedAttributeName)) {
+                        const attributeValue = this.getAttribute(config.linkedAttributeName);
                         this[alias] =
                             config.type === "exists" ? true : this.parseAttributeValue(attributeValue, configType);
                     }
@@ -567,9 +572,9 @@ function ComponentCompiler(name, BaseHTMLElement) {
                     //Value already set
                     value = this[property];
                     hasInitialValue = true;
-                } else if (config.linked && this.hasAttribute(property)) {
+                } else if (config.linked && this.hasAttribute(config.linkedAttributeName)) {
                     //Value set in attribute
-                    const attributeValue = this.getAttribute(property);
+                    const attributeValue = this.getAttribute(config.linkedAttributeName);
                     value = config.type === "exists" ? true : this.parseAttributeValue(attributeValue, configType);
                     hasInitialValue = true;
                 }
@@ -606,15 +611,16 @@ function ComponentCompiler(name, BaseHTMLElement) {
                         if (config.linked) {
                             if (config.type === "exists") {
                                 if (newValue) {
-                                    if (!this.hasAttribute(property)) this.setAttribute(property, "");
-                                } else if (this.hasAttribute(property)) {
-                                    this.removeAttribute(property);
+                                    if (!this.hasAttribute(config.linkedAttributeName))
+                                        this.setAttribute(config.linkedAttributeName, "");
+                                } else if (this.hasAttribute(config.linkedAttributeName)) {
+                                    this.removeAttribute(config.linkedAttributeName);
                                 }
                             } else if (newValue !== null) {
                                 if (config.type === "json" || config.type === "object") {
                                     newValue = JSON.stringify(newValue);
                                 }
-                                this.setAttribute(property, newValue);
+                                this.setAttribute(config.linkedAttributeName, newValue);
                             }
                         }
 
@@ -642,11 +648,11 @@ function ComponentCompiler(name, BaseHTMLElement) {
                     });
                 }
 
-                if (config.linked && !this.hasAttribute(property)) {
+                if (config.linked && !this.hasAttribute(config.linkedAttributeName)) {
                     if (config.type === "exists") {
-                        if (value) this.#stash("setAttribute", property, "");
+                        if (value) this.#stash("setAttribute", config.linkedAttributeName, "");
                     } else if (value !== null && !isDefault) {
-                        this.#stash("setAttribute", property, value);
+                        this.#stash("setAttribute", config.linkedAttributeName, value);
                     }
                 }
             }
@@ -1119,6 +1125,8 @@ function ComponentCompiler(name, BaseHTMLElement) {
              */
 
             attributeChangedCallback(property, oldValue, newValue) {
+                if (this._attributeAliases[property] !== undefined) property = this._attributeAliases[property];
+
                 const { attrtype, type, unit, linked } = this.config.properties[property] || {};
                 const types = [attrtype, type].filter(Boolean);
 

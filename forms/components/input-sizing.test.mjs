@@ -14,7 +14,7 @@ test("input side controls use the native height plus vertical padding", async ()
 
     assert.match(
         inputComponent,
-        /--input-control-size":\s*"calc\(var\(--input-height, 30px\) \+ var\(--input-padding, 0px\) \+ var\(--input-padding, 0px\)\)"/
+        /--input-control-size":\s*"calc\(var\(--input-height\) \+ var\(--input-padding\) \+ var\(--input-padding\)\)"/
     );
     assert.match(inputSelect, /width:\s*"var\(--input-control-size\)"/);
     assert.match(inputSelect, /height:\s*"var\(--input-control-size\)"/);
@@ -43,7 +43,7 @@ test("input buttons and submit buttons use the shared control height", async () 
 
     assert.match(
         inputButton,
-        /--input-control-size:\s*calc\(\s*var\(--input-height, 30px\)\s*\+\s*var\(--input-padding, 0px\)\s*\+\s*var\(--input-padding, 0px\)\s*\)/
+        /--input-control-size:\s*calc\(\s*var\(--input-height\)\s*\+\s*var\(--input-padding\)\s*\+\s*var\(--input-padding\)\s*\)/
     );
     assert.match(inputButton, /height:\s*var\(--input-control-size\)/);
     assert.doesNotMatch(inputButton, /height:\s*var\(--input-height,\s*auto\)/);

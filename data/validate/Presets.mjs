@@ -294,6 +294,10 @@ class Presets {
         return values.includes(value);
     }
 
+    static domain(value) {
+        return /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i.test(String(value));
+    }
+
     static url(value) {
         if (Presets.empty(value)) return true;
 

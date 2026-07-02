@@ -3,9 +3,28 @@ import Presets from "../../../data/validate/Presets.mjs";
 import { getJuiceConfig } from "../../../config/juice-config.mjs";
 
 const KNOWN_RULE_TYPES = new Set([
-    "required", "min", "max", "length", "email", "phone", "address", "postal",
-    "int", "integer", "string", "number", "array", "boolean", "object",
-    "timestamp", "equals", "in", "chars", "empty", "notEmpty", "null"
+    "required",
+    "min",
+    "max",
+    "length",
+    "email",
+    "phone",
+    "address",
+    "postal",
+    "int",
+    "integer",
+    "string",
+    "number",
+    "array",
+    "boolean",
+    "object",
+    "timestamp",
+    "equals",
+    "in",
+    "chars",
+    "empty",
+    "notEmpty",
+    "null"
 ]);
 
 /**
@@ -152,10 +171,7 @@ class FieldValidationController {
                 return false;
             case "type":
                 if ("type" in native) {
-                    const descriptor = Object.getOwnPropertyDescriptor(
-                        Object.getPrototypeOf(native),
-                        "type"
-                    );
+                    const descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(native), "type");
                     const canSetType = !!(descriptor && (descriptor.writable || descriptor.set));
                     if (!canSetType) return false;
 
@@ -252,16 +268,18 @@ class FieldValidationController {
 
         const hostMinLength = this.host.getAttribute("minlength");
         const hostMaxLength = this.host.getAttribute("maxlength");
-        const minLength = hostMinLength != null
-            ? parseInt(hostMinLength, 10)
-            : native && typeof native.minLength === "number"
-                ? native.minLength
-                : -1;
-        const maxLength = hostMaxLength != null
-            ? parseInt(hostMaxLength, 10)
-            : native && typeof native.maxLength === "number"
-                ? native.maxLength
-                : -1;
+        const minLength =
+            hostMinLength != null
+                ? parseInt(hostMinLength, 10)
+                : native && typeof native.minLength === "number"
+                  ? native.minLength
+                  : -1;
+        const maxLength =
+            hostMaxLength != null
+                ? parseInt(hostMaxLength, 10)
+                : native && typeof native.maxLength === "number"
+                  ? native.maxLength
+                  : -1;
 
         if (Number.isFinite(minLength) && minLength >= 0) {
             tokens.push(`min:${minLength}`);
@@ -270,9 +288,7 @@ class FieldValidationController {
             tokens.push(`max:${maxLength}`);
         }
 
-        const nativeType = String(
-            this.host.getAttribute("type") || (native && native.type) || ""
-        ).toLowerCase();
+        const nativeType = String(this.host.getAttribute("type") || (native && native.type) || "").toLowerCase();
         if (nativeType === "email") {
             tokens.push("email");
         }
@@ -305,15 +321,28 @@ class FieldValidationController {
     }
 
     /**
-     * Build merged validation rule string (explicit + native-derived).
+     * Per-type validation rules declared under `forms.inputs.<type>.validation`
+     * (string like "required|max:200", or an array of rule tokens).
+     * @returns {string}
+     */
+    getConfiguredValidationRules() {
+        const typeConfig = typeof this.host._getFormTypeConfig === "function" ? this.host._getFormTypeConfig() : null;
+        if (!typeConfig) return "";
+
+        const value = typeConfig.validation ?? typeConfig.validate;
+        if (Array.isArray(value)) return value.filter(Boolean).join("|");
+        return typeof value === "string" ? value.trim() : "";
+    }
+
+    /**
+     * Build merged validation rule string. Precedence (first wins per rule type):
+     * explicit host attribute > per-type config > native-derived.
      * @returns {string}
      */
     getValidationRules() {
         let explicitRules = "";
         if (this.host.hasAttribute("validation") || this.host.hasAttribute("validate")) {
-            explicitRules = (
-                this.host.getAttribute("validation") || this.host.getAttribute("validate") || ""
-            ).trim();
+            explicitRules = (this.host.getAttribute("validation") || this.host.getAttribute("validate") || "").trim();
             if (explicitRules === "false") return "";
         } else if (typeof this.host._getInputValidationSpec === "function") {
             const configRules = this.host._getInputValidationSpec();
@@ -381,6 +410,10 @@ class FieldValidationController {
             if (native.value === "") return "";
             const numericValue = native.valueAsNumber;
             return Number.isNaN(numericValue) ? native.value : numericValue;
+        }
+
+        if (this.host.inputType === "wysiwyg" && typeof this.host.getEditorValidationValue === "function") {
+            return this.host.getEditorValidationValue();
         }
 
         return native.value;
@@ -465,11 +498,7 @@ class FieldValidationController {
                 this.host._internals.setValidity({}, "");
             } else {
                 const validityState = this.buildValidityState(errors);
-                this.host._internals.setValidity(
-                    validityState,
-                    firstMessage || "Invalid value",
-                    native
-                );
+                this.host._internals.setValidity(validityState, firstMessage || "Invalid value", native);
             }
         }
 
@@ -527,9 +556,7 @@ class FieldValidationController {
 
     getConfiguredValidationColors() {
         const validationConfig = getJuiceConfig("validation");
-        const configuredColors = validationConfig && validationConfig.colors
-            ? validationConfig.colors
-            : {};
+        const configuredColors = validationConfig && validationConfig.colors ? validationConfig.colors : {};
         return { ...DEFAULT_STATUS_COLORS, ...(configuredColors || {}) };
     }
 
@@ -613,11 +640,14 @@ class FieldValidationController {
     emitValidationEvents(status, valid, messages = [], errors = [], color, colors) {
         if (typeof this.host.dispatchEvent !== "function" || typeof CustomEvent !== "function") return;
         const detail = this.createEventDetail(status, valid, messages, errors, color, colors);
-        const emit = (name) => this.host.dispatchEvent(new CustomEvent(name, {
-            detail,
-            bubbles: true,
-            composed: true
-        }));
+        const emit = (name) =>
+            this.host.dispatchEvent(
+                new CustomEvent(name, {
+                    detail,
+                    bubbles: true,
+                    composed: true
+                })
+            );
         emit("validation:change");
         if (this._lastStatus !== status) emit("validation:statechange");
         if (status === "valid") emit("validation:valid");

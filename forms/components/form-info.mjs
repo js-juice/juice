@@ -5,6 +5,7 @@
 const FIELD_SELECTOR = [
     "input-text",
     "input-textarea",
+    "input-wysiwyg",
     "input-select",
     "input-checkbox",
     "input-radio",
