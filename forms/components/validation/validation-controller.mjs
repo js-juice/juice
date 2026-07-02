@@ -294,15 +294,36 @@ class FieldValidationController {
     }
 
     /**
-     * Build merged validation rule string (explicit + native-derived).
+     * Per-type validation rules declared under `forms.inputs.<type>.validation`
+     * (string like "required|max:200", or an array of rule tokens).
+     * @returns {string}
+     */
+    getConfiguredValidationRules() {
+        const typeConfig = typeof this.host._getFormTypeConfig === "function"
+            ? this.host._getFormTypeConfig()
+            : null;
+        if (!typeConfig) return "";
+
+        const value = typeConfig.validation ?? typeConfig.validate;
+        if (Array.isArray(value)) return value.filter(Boolean).join("|");
+        return typeof value === "string" ? value.trim() : "";
+    }
+
+    /**
+     * Build merged validation rule string. Precedence (first wins per rule type):
+     * explicit host attribute > per-type config > native-derived.
      * @returns {string}
      */
     getValidationRules() {
         const explicitRules = (
             this.host.getAttribute("validation") || this.host.getAttribute("validate") || ""
         ).trim();
+        const configuredRules = this.getConfiguredValidationRules();
         const nativeRules = this.getNativeValidationRules();
-        return this.mergeRuleStrings(explicitRules, nativeRules);
+        return this.mergeRuleStrings(
+            this.mergeRuleStrings(explicitRules, configuredRules),
+            nativeRules
+        );
     }
 
     /**
@@ -360,6 +381,10 @@ class FieldValidationController {
             if (native.value === "") return "";
             const numericValue = native.valueAsNumber;
             return Number.isNaN(numericValue) ? native.value : numericValue;
+        }
+
+        if (this.host.inputType === "wysiwyg" && typeof this.host.getEditorValidationValue === "function") {
+            return this.host.getEditorValidationValue();
         }
 
         return native.value;

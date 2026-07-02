@@ -28,7 +28,7 @@
  * Formatting Guide:
  * - `format` attribute/property defines the active format pipeline spec.
  * - `formatters` property/register API accepts `{ [name]: function }` map used by the format pipeline.
- * - Format spec resolution precedence: host `format` attribute > forms config (`forms.<type>.format`) > shared forms config (`forms.format`).
+ * - Format spec resolution precedence: host `format` attribute > forms config (`forms.inputs.<type>.format`) > shared forms config (`forms.format`).
  * - Formatter map precedence: instance formatter registrations > per-type form config formatters > shared form config formatters.
  *
  * Example (custom formatter registration):
@@ -259,7 +259,7 @@ const BASE_STYLES = {
         width: "100%",
         minWidth: 0,
         flex: "1 1 auto",
-        padding: "var(--input-padding, 0)"
+        padding: "var(--input-padding)"
     },
     ".native-wrapper input": {
         position: "relative",
@@ -271,6 +271,8 @@ const BASE_STYLES = {
         display: "block",
         width: "100%",
         fontFamily: "var(--form-input-font-family, inherit)",
+        color: "var(--input-color, #293241)",
+        backgroundColor: "transparent",
         border: 0,
         outline: 0,
         padding: 0,
@@ -656,7 +658,7 @@ class InputComponent extends HTMLElement {
      *
      * Precedence:
      * 1. Host `format` attribute.
-     * 2. Form config type override (`forms.<type>.format`).
+     * 2. Form config type override (`forms.inputs.<type>.format`).
      * 3. Shared form config (`forms.format`).
      *
      * @returns {string} Active format specification.
@@ -809,17 +811,7 @@ class InputComponent extends HTMLElement {
     _ensureNativeHeightCaptured() {
         if (this.constructor.nativeHeight)
             return this._wireframe.root.style.setProperty("--input-height", `${this.constructor.nativeHeight}px`);
-        // Set CSS variable for input height so validation status can position relative to it.
-        const inputWrapper = this._shadow.querySelector(".input-wrapper");
-        const rect = inputWrapper.getBoundingClientRect();
-        if (rect.height > 0) {
-            this._wireframe.root.style.setProperty("--input-height", `${rect.height}px`);
-        } else {
-            this._whenVisible(inputWrapper, () => {
-                const rect = inputWrapper.getBoundingClientRect();
-                this._wireframe.root.style.setProperty("--input-height", `${rect.height}px`);
-            });
-        }
+        if (this._wireframe.root.style.getPropertyValue("--input-height")) return;
     }
 
     /**
@@ -849,12 +841,11 @@ class InputComponent extends HTMLElement {
         if (!this._onJuiceConfigChange) {
             this._onJuiceConfigChange = () => {
                 this._compileStyles();
-                const formatted = this._applyFormatting({ syncHost: true });
+                this._applyFormatting({ syncHost: true });
                 this._syncConfiguredCharacterWidth();
-                if (formatted) {
-                    this._updateFormValue();
-                    this._queueValidation();
-                }
+                this._setupValidation();
+                this._updateFormValue();
+                this._queueValidation();
                 this._syncVisualState();
             };
         }
@@ -862,6 +853,7 @@ class InputComponent extends HTMLElement {
         this._ensureNativeControl();
         this._renderWireframe();
         this._ensureNativeMountedInWrapper();
+        this._applyTypeConfigDefaults();
         this._syncFromAttributes();
         this._renderTemplateOrDefault();
         if (!this._dom.template && !this._dom.default) {
@@ -1496,8 +1488,28 @@ class InputComponent extends HTMLElement {
         if (!isPlainObject(formsConfig)) return {};
         const alias = this._getFormTypeAlias();
         if (!alias) return {};
-        const entry = formsConfig[alias];
+        const inputs = formsConfig.inputs;
+        const entry = isPlainObject(inputs) ? inputs[alias] : undefined;
         return isPlainObject(entry) ? entry : {};
+    }
+
+    /**
+     * Apply per-type defaults declared under `forms.inputs.<type>.attributes` to the
+     * host element. Attributes set directly on the element always win, so this only
+     * fills in what the markup hasn't already specified. Boolean `true` becomes a
+     * present (empty) attribute; `false`/`null` are skipped.
+     */
+    _applyTypeConfigDefaults() {
+        const typeConfig = this._getFormTypeConfig();
+        const attributes = isPlainObject(typeConfig.attributes) ? typeConfig.attributes : null;
+        if (!attributes) return;
+
+        for (const name of Object.keys(attributes)) {
+            const value = attributes[name];
+            if (value == null || value === false) continue;
+            if (this.hasAttribute(name)) continue;
+            this.setAttribute(name, value === true ? "" : String(value));
+        }
     }
 
     _getConfiguredFormStyles() {

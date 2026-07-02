@@ -47,6 +47,7 @@ const BLOCKED_HOST_ATTRS = new Set(["id", "class", "style"]);
 const FIELD_TAGS = new Set([
     "input-text",
     "input-textarea",
+    "input-wysiwyg",
     "input-select",
     "input-button",
     "input-checkbox",
@@ -377,7 +378,7 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
     _focusFirstInvalidField() {
         if (!this._form) return;
         const fields = Array.from(this._form.querySelectorAll(
-            "input-text, input-textarea, input-select, input-checkbox, input-radio, input-number, input-range, input-file, input, textarea, select"
+            "input-text, input-textarea, input-wysiwyg, input-select, input-checkbox, input-radio, input-number, input-range, input-file, input, textarea, select"
         ));
         const invalid = fields.find((field) => {
             if (field.disabled || field.hasAttribute("disabled")) return false;
@@ -609,7 +610,7 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         const spanFromChars = this._deriveSpanFromChars(maxChars, layoutConfig);
         if (spanFromChars) return spanFromChars;
 
-        if (tag === "input-textarea" || tag === "textarea") return "full";
+        if (tag === "input-textarea" || tag === "input-wysiwyg" || tag === "textarea") return "full";
         return 1;
     }
 

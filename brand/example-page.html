@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Juice Example</title>
+    </head>
+
+    <body>
+        <h1>Example Page</h1>
+        <script>
+            const pageLocation = window.location.href;
+            const pageDir = pageLocation.substring(0, pageLocation.lastIndexOf('/') + 1);
+            alert(pageDir);
+            function rewriteUrls() {
+
+                const links = document.querySelectorAll('a');
+                for (let link of links) {
+                    link.href = link.href.replace('example-page.html', 'index.html');
+                }
+            }
+        </script>
+    </body>
+
+</html>
