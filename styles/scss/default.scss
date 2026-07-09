@@ -1,6 +1,7 @@
 @use "sass:map";
 @use "unit";
 @use "fn";
+@use "buttons";
 
 $sides: (top, right, bottom, left);
 
@@ -540,35 +541,22 @@ $align-map: (
  * 
 */
 
+button,
+.button,
 a.button {
-    display: inline-block;
-    padding: 0.65rem 1rem;
-    border-radius: 8px;
-    font-family: "Proxima Nova", Georgia, sans-serif;
-    background: map.get($color-map, red);
-    margin: 0 0.5rem;
+    @include buttons.button-vars();
+}
 
-    &\:dark {
-        background: map.get($color-map, black);
-        color: map.get($color-map, white);
-        border: 1px solid map.get($color-map, black);
-        &:hover {
-            background: map.get($color-map, white);
-            color: map.get($color-map, black);
-            border: 1px solid map.get($color-map, black);
-        }
-    }
+button.dark,
+.button\:dark,
+a.button\:dark {
+    @include buttons.button-vars(dark);
+}
 
-    &\:light {
-        background: map.get($color-map, white);
-        color: map.get($color-map, black);
-        border: 1px solid map.get($color-map, darkgrey);
-        &:hover {
-            background: map.get($color-map, black);
-            color: map.get($color-map, white);
-            border: 1px solid map.get($color-map, white);
-        }
-    }
+button.light,
+.button\:lt,
+a.button\:lt {
+    @include buttons.button-vars(light);
 }
 
 .hidden {
@@ -633,4 +621,16 @@ a.button {
     .gap\:#{ fn.decimal-class( 1 + $i * 0.5 ) } {
         gap: unit.rem(1 + $i * 0.5);
     }
+}
+
+.float\:left {
+    float: left;
+}
+
+.float\:right {
+    float: right;
+}
+
+.clear {
+    clear: both;
 }

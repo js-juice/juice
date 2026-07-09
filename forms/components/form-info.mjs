@@ -59,6 +59,7 @@ class FormInfo extends HTMLElement {
                     margin: 0;
                     box-sizing: border-box;
                     font-family: var(--form-font-family, system-ui, sans-serif);
+                    margin-bottom: var(--input-margin-bottom, 1rem);
                 }
 
                 *, *::before, *::after {

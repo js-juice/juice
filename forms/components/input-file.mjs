@@ -38,6 +38,7 @@ import { getJuiceConfig } from "../../config/juice-config.mjs";
 
 class InputFileComponent extends HTMLElement {
     static tag = "input-file";
+    static formAssociated = true;
 
     static get observedAttributes() {
         return ["label", "icon", "bgcolor", "color", "disabled", "multiple", "name", "accept", "aria-label"];
@@ -48,8 +49,12 @@ class InputFileComponent extends HTMLElement {
         this._shadow = this.attachShadow({ mode: "open" });
         this._boundClick = (event) => this._handleButtonClick(event);
         this._boundNativeInput = () => this.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
-        this._boundNativeChange = () => this.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+        this._boundNativeChange = () => {
+            this._syncFormValue();
+            this.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+        };
         this._boundSlotChange = () => this._syncIconVisibility();
+        this._internals = this.attachInternals?.() || null;
 
         this._shadow.innerHTML = `
             <style>
@@ -156,6 +161,7 @@ class InputFileComponent extends HTMLElement {
         this._native.addEventListener("change", this._boundNativeChange);
         this._iconSlot.addEventListener("slotchange", this._boundSlotChange);
         this._syncAll();
+        this._syncFormValue();
     }
 
     disconnectedCallback() {
@@ -195,6 +201,7 @@ class InputFileComponent extends HTMLElement {
         this._native.multiple = this.hasAttribute("multiple");
         this._native.disabled = this.disabled;
         this._button.disabled = this.disabled;
+        this._syncFormValue();
 
         const aria = this.getAttribute("aria-label");
         if (aria != null) {
@@ -204,6 +211,27 @@ class InputFileComponent extends HTMLElement {
         } else {
             this._button.removeAttribute("aria-label");
         }
+    }
+
+    _syncFormValue() {
+        if (!this._internals) return;
+
+        const files = Array.from(this.files || []);
+
+        if (!this.getAttribute("name") || files.length === 0 || this.disabled) {
+            this._internals.setFormValue(null);
+            return;
+        }
+
+        if (!this.multiple) {
+            this._internals.setFormValue(files[0]);
+            return;
+        }
+
+        const formData = new FormData();
+        const name = this.getAttribute("name");
+        files.forEach((file) => formData.append(name, file, file.name));
+        this._internals.setFormValue(formData);
     }
 
     _syncIconVisibility() {
@@ -260,6 +288,7 @@ class InputFileComponent extends HTMLElement {
     set value(value) {
         if ((value === "" || value === null || value === undefined) && this._native) {
             this._native.value = "";
+            this._syncFormValue();
         }
     }
 
@@ -270,6 +299,18 @@ class InputFileComponent extends HTMLElement {
     set disabled(value) {
         if (value) this.setAttribute("disabled", "true");
         else this.removeAttribute("disabled");
+    }
+
+    get multiple() {
+        return this.hasAttribute("multiple");
+    }
+
+    formResetCallback() {
+        if (this._native) {
+            this._native.value = "";
+        }
+
+        this._syncFormValue();
     }
 }
 

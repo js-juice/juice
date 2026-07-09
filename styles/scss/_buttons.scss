@@ -1,0 +1,207 @@
+@use "sass:map";
+@use "sass:meta";
+@use "sass:string";
+@use "sass:list";
+
+$button-properties: (
+    color: #ffffff,
+    background: #111111,
+    background-color: #111111,
+
+    border: 1px solid #111111,
+    border-color: #111111,
+    border-width: 1px,
+    border-style: solid,
+    border-radius: 0.5rem,
+
+    padding: 0.75rem 1rem,
+    margin: 0,
+
+    min-width: auto,
+    min-height: auto,
+    width: auto,
+    height: auto,
+
+    font-family: inherit,
+    font-size: 1rem,
+    font-weight: 600,
+    line-height: 1.25,
+    letter-spacing: normal,
+
+    text-align: center,
+    text-decoration: none,
+    text-transform: none,
+
+    box-shadow: none,
+    outline: none,
+    outline-offset: 0,
+
+    opacity: 1,
+    cursor: pointer,
+
+    display: inline-flex,
+    align-items: center,
+    justify-content: center,
+    gap: 0.5rem,
+
+    transition: (
+        color 150ms ease,
+        background-color 150ms ease,
+        border-color 150ms ease,
+        box-shadow 150ms ease,
+        transform 150ms ease
+    ),
+
+    transform: none
+);
+
+$button-state-properties: (
+    color: (
+        hover: #ffffff,
+        focus: #ffffff,
+        focus-visible: #ffffff,
+        active: #ffffff,
+        visited: #ffffff,
+        disabled: #666666
+    ),
+
+    background: (
+        hover: #000000,
+        focus: #111111,
+        focus-visible: #111111,
+        active: #222222,
+        visited: #111111,
+        disabled: #cccccc
+    ),
+
+    background-color: (
+        hover: #000000,
+        focus: #111111,
+        focus-visible: #111111,
+        active: #222222,
+        visited: #111111,
+        disabled: #cccccc
+    ),
+
+    border-color: (
+        hover: #000000,
+        focus: #111111,
+        focus-visible: #111111,
+        active: #222222,
+        visited: #111111,
+        disabled: #cccccc
+    ),
+
+    text-decoration: (
+        hover: none,
+        focus: none,
+        focus-visible: none,
+        active: none,
+        visited: none,
+        disabled: none
+    ),
+
+    box-shadow: (
+        hover: none,
+        focus: 0 0 0 3px rgba(0, 0, 0, 0.15),
+        focus-visible: none,
+        active: inset 0 2px 4px rgba(0, 0, 0, 0.15),
+        visited: none,
+        disabled: none
+    ),
+
+    outline: (
+        hover: none,
+        focus: none,
+        focus-visible: 2px solid currentColor,
+        active: none,
+        visited: none,
+        disabled: none
+    ),
+
+    outline-offset: (
+        hover: 0,
+        focus: 0,
+        focus-visible: 2px,
+        active: 0,
+        visited: 0,
+        disabled: 0
+    ),
+
+    opacity: (
+        hover: 1,
+        focus: 1,
+        focus-visible: 1,
+        active: 1,
+        visited: 1,
+        disabled: 0.65
+    ),
+
+    cursor: (
+        hover: pointer,
+        focus: pointer,
+        focus-visible: pointer,
+        active: pointer,
+        visited: pointer,
+        disabled: not-allowed
+    ),
+
+    transform: (
+        hover: none,
+        focus: none,
+        focus-visible: none,
+        active: translateY(1px),
+        visited: none,
+        disabled: none
+    ),
+
+    pointer-events: (
+        disabled: none
+    )
+);
+
+$button-states: (hover, focus, focus-visible, active, visited);
+
+@function button-token($property, $variant: null, $state: null) {
+    $token: "--button-#{$property}";
+
+    @if $variant != null {
+        $token: "#{$token}\\:#{$variant}";
+    }
+
+    @if $state != null {
+        $token: "#{$token}\\:#{$state}";
+    }
+
+    @return $token;
+}
+
+@function button-var($property, $variant: null, $state: null, $fallback: null) {
+    @return var(#{button-token($property, $variant, $state)}, #{$fallback});
+}
+
+@mixin button-vars($variant: null) {
+    @each $property, $fallback in $button-properties {
+        #{$property}: button-var($property, $variant, null, $fallback);
+    }
+
+    @each $state in $button-states {
+        &:#{$state} {
+            @each $property, $states in $button-state-properties {
+                @if map.has-key($states, $state) {
+                    #{$property}: button-var($property, $variant, $state, map.get($states, $state));
+                }
+            }
+        }
+    }
+
+    &:disabled,
+    &[disabled],
+    &[aria-disabled="true"] {
+        @each $property, $states in $button-state-properties {
+            @if map.has-key($states, disabled) {
+                #{$property}: button-var($property, $variant, disabled, map.get($states, disabled));
+            }
+        }
+    }
+}

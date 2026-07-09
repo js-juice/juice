@@ -101,6 +101,7 @@ class TrackedView extends Component.HTMLElement {
         const source = this.scrollView || window;
         source.addEventListener("scroll-y", this._scheduleUpdate);
         source.addEventListener("scroll-x", this._scheduleUpdate);
+        source.addEventListener("scroll", this._scheduleUpdate, { passive: true });
         window.addEventListener("resize", this._scheduleUpdate);
         Observe.resize(this).change(this._scheduleUpdate);
 
@@ -111,6 +112,7 @@ class TrackedView extends Component.HTMLElement {
         const source = this.scrollView || window;
         source.removeEventListener("scroll-y", this._scheduleUpdate);
         source.removeEventListener("scroll-x", this._scheduleUpdate);
+        source.removeEventListener("scroll", this._scheduleUpdate);
         window.removeEventListener("resize", this._scheduleUpdate);
         if (this._raf) cancelAnimationFrame(this._raf);
         this._raf = 0;
@@ -154,6 +156,7 @@ class ScrollBar extends Component.HTMLElement {
         this.onHandleMove = this.onHandleMove.bind(this);
         this.onHandleDown = this.onHandleDown.bind(this);
         this.onHandleUp = this.onHandleUp.bind(this);
+        this.onWheel = this.onWheel.bind(this);
     }
 
     static get observed() {
@@ -243,6 +246,7 @@ class ScrollBar extends Component.HTMLElement {
     }
 
     onFirstConnect() {
+        this.scrollView = this.closest("scroll-view");
         this.content = this.resolveContent();
 
         if (!this.content) {
@@ -253,7 +257,7 @@ class ScrollBar extends Component.HTMLElement {
 
         this.handle = this.ref("handle");
         this.bar = this.ref("bar");
-        window.addEventListener("wheel", this.onWheel.bind(this), { passive: true });
+        window.addEventListener("wheel", this.onWheel, { passive: true });
         this.handle.addEventListener("pointerdown", this.onHandleDown, false);
         Observe.resize(this, this.onResize.bind(this));
 
@@ -267,6 +271,13 @@ class ScrollBar extends Component.HTMLElement {
 
         syncSize();
         requestAnimationFrame(syncSize);
+    }
+
+    onDisconnect() {
+        window.removeEventListener("wheel", this.onWheel);
+        window.removeEventListener("pointermove", this.onHandleMove);
+        window.removeEventListener("pointerup", this.onHandleUp);
+        this.handle?.removeEventListener("pointerdown", this.onHandleDown, false);
     }
 
     resolveContent() {
@@ -305,6 +316,8 @@ class ScrollBar extends Component.HTMLElement {
     }
 
     onWheel(event) {
+        if (this.scrollView?.usesNativeScroll?.()) return;
+
         this.refreshMeasurements();
         const maxContentOffset = Math.max(0, this.maxContentOffset || 0);
         if (maxContentOffset <= 0) return;
@@ -322,6 +335,8 @@ class ScrollBar extends Component.HTMLElement {
     }
 
     onHandleDown(e) {
+        if (this.scrollView?.usesNativeScroll?.()) return;
+
         this.refreshMeasurements();
         const clientProp = this.axis === "x" ? "clientX" : "clientY";
         const startOffset =
@@ -518,13 +533,14 @@ class ScrollView extends Component.HTMLElement {
             color: { type: "string", default: "#000000", linked: true },
             bgcolor: { type: "string", default: "#ffffff", linked: true },
             content: { type: "selector", default: "body > *", linked: true },
+            mode: { type: "string", default: "custom", linked: true },
             lock: { type: "string", default: "" }
         }
     };
 
     static get observed() {
         return {
-            all: ["color", "bgcolor", "x", "y", "width", "height"]
+            all: ["color", "bgcolor", "mode", "x", "y", "width", "height"]
         };
     }
 
@@ -548,6 +564,9 @@ class ScrollView extends Component.HTMLElement {
                     height: "100%",
                     overflow: "hidden"
                 },
+                ':host([native]), :host([mode="native"])': {
+                    overflow: "auto"
+                },
                 "#html": {
                     position: "absolute",
                     display: "block",
@@ -557,12 +576,23 @@ class ScrollView extends Component.HTMLElement {
                     height: "100%",
                     zIndex: 1
                 },
+                ':host([native]) #html, :host([mode="native"]) #html': {
+                    position: "relative",
+                    minHeight: "100%"
+                },
                 "#content": {
                     position: "relative",
                     display: "block",
                     width: "calc(100% - 20px)",
                     height: "auto",
                     zIndex: 1
+                },
+                ':host([native]) #content, :host([mode="native"]) #content': {
+                    width: "100%",
+                    transform: "none"
+                },
+                ':host([native]) scroll-bar, :host([mode="native"]) scroll-bar': {
+                    display: "none"
                 },
                 slot: {
                     position: "relative",
@@ -591,6 +621,7 @@ class ScrollView extends Component.HTMLElement {
         super();
         this.xValue = new AnimationValue(0);
         this.yValue = new AnimationValue(0);
+        this.onNativeScroll = this.onNativeScroll.bind(this);
     }
 
     stateData = {
@@ -628,8 +659,12 @@ class ScrollView extends Component.HTMLElement {
 
     activeAxis = [];
 
+    usesNativeScroll() {
+        return this.hasAttribute("native") || this.mode === "native" || this.getAttribute("mode") === "native";
+    }
+
     activateAxis(axis) {
-        console.log("Activating axis:", axis);
+        if (this.usesNativeScroll()) return;
         if (this.activeAxis.includes(axis)) return;
         const bar = this.ref("scroll-" + axis);
         bar.show();
@@ -659,6 +694,8 @@ class ScrollView extends Component.HTMLElement {
             this.dispatchEvent(new CustomEvent("scroll-y", { detail: { value, percent } }));
             this.ref("html").style.setProperty("--scroll-y-progress", percent);
         });
+
+        this.addEventListener("scroll", this.onNativeScroll, { passive: true });
 
         if (this.hasAttribute("lock")) {
             this.lock = this.getAttribute("lock");
@@ -693,7 +730,41 @@ class ScrollView extends Component.HTMLElement {
             this.content.setAttribute("width", w);
             this.content.setAttribute("height", h);
             this.updateActiveScrollbars();
+            this.emitNativeScroll();
         });
+
+        this.emitNativeScroll();
+    }
+
+    onDisconnect() {
+        this.removeEventListener("scroll", this.onNativeScroll);
+    }
+
+    onNativeScroll() {
+        if (!this.usesNativeScroll()) return;
+        this.emitNativeScroll();
+    }
+
+    emitNativeScroll() {
+        if (!this.usesNativeScroll()) return;
+        if (!this.content) return;
+
+        const maxX = Math.max(0, this.scrollWidth - this.clientWidth);
+        const maxY = Math.max(0, this.scrollHeight - this.clientHeight);
+        const x = this.scrollLeft || 0;
+        const y = this.scrollTop || 0;
+        const xPercent = maxX > 0 ? x / maxX : 0;
+        const yPercent = maxY > 0 ? y / maxY : 0;
+
+        this.xValue.value = x;
+        this.yValue.value = y;
+        const html = this.ref("html");
+        if (html) {
+            html.style.setProperty("--scroll-x-progress", xPercent);
+            html.style.setProperty("--scroll-y-progress", yPercent);
+        }
+        this.dispatchEvent(new CustomEvent("scroll-x", { detail: { value: x, percent: xPercent }, bubbles: true }));
+        this.dispatchEvent(new CustomEvent("scroll-y", { detail: { value: y, percent: yPercent }, bubbles: true }));
     }
 
     onPropertyChanged(prop, previous, value) {
@@ -702,6 +773,10 @@ class ScrollView extends Component.HTMLElement {
             case "y":
             case "width":
             case "height":
+                break;
+            case "mode":
+                this.updateActiveScrollbars();
+                this.emitNativeScroll();
                 break;
             case "barwidth":
                 this.ref("html").style.setProperty("--scrollbar-width", value + "px");
@@ -712,6 +787,12 @@ class ScrollView extends Component.HTMLElement {
     updateActiveScrollbars() {
         if (!this.content) return;
         if (!(this.width > 0 && this.height > 0)) return;
+
+        if (this.usesNativeScroll()) {
+            this.deactivateAxis("x");
+            this.deactivateAxis("y");
+            return;
+        }
 
         const { x: xState, y: yState } = this.stateData;
         const contentWidth = Math.max(this.content.scrollWidth || 0, this.contentSize?.width || 0);

@@ -1,7 +1,131 @@
 .card {
-    border-radius: 1rem;
-    border: 1px solid #000;
+    position: relative;
+    border: 1px solid #d2d2d2;
+    background: #fff;
+    border-radius: 0.5rem;
+    padding: 1rem;
     box-shadow:
         0 10px 15px -3px rgb(255 255 255 / 0.1),
         0 4px 6px -4px rgb(255 255 255 / 0.1);
+
+    &.wide {
+        width: 100%;
+    }
+    &.half {
+        width: 50%;
+    }
+    &.third {
+        width: 33.33%;
+    }
+    &.quarter {
+        width: 25%;
+    }
+    &.fifth {
+        width: 20%;
+    }
+    &.sixth {
+        width: 16.66%;
+    }
+    &.eighth {
+        width: 12.5%;
+    }
+}
+
+.dark {
+    .card {
+        border: 1px solid #fff;
+        box-shadow:
+            0 10px 15px -3px rgb(0 0 0 / 0.1),
+            0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+}
+
+.light {
+    .card {
+        border: 1px solid #000;
+        box-shadow:
+            0 10px 15px -3px rgb(255 255 255 / 0.1),
+            0 4px 6px -4px rgb(255 255 255 / 0.1);
+    }
+}
+
+.flex\:columns\:2,
+.flex\:columns\:3,
+.flex\:columns\:4,
+.flex\:columns\:5,
+.flex\:columns\:6,
+.flex\:columns\:7,
+.flex\:columns\:8 {
+    display: flex;
+    flex-direction: row;
+}
+
+.flex\:columns\:2 > * {
+    width: 50%;
+}
+
+.flex\:columns\:3 > * {
+    width: 33.33%;
+}
+
+.flex\:columns\:4 > * {
+    width: 25%;
+}
+
+.flex\:columns\:5 > * {
+    width: 20%;
+}
+
+.flex\:columns\:6 > * {
+    width: 16.66%;
+}
+
+.flex\:columns\:7 > * {
+    width: 14.28%;
+}
+
+.flex\:columns\:8 > * {
+    width: 12.5%;
+}
+
+.columns\:2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.columns\:3 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.columns\:4 {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.columns\:5 {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.columns\:6 {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.columns\:7 {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.columns\:8 {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 1rem;
 }

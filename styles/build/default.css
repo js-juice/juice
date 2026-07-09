@@ -3777,33 +3777,436 @@ p {
  ╚═╝     ╚══════╝╚══════╝╚═╝  ╚═╝╚═════╝  ╚═════╝ ╚═╝  ╚═╝    ╚══════╝╚═╝  ╚═══╝╚═════╝                                        
  * 
 */
+button,
+.button,
 a.button {
-  display: inline-block;
-  padding: 0.65rem 1rem;
-  border-radius: 8px;
-  font-family: "Proxima Nova", Georgia, sans-serif;
-  background: #bb1414;
-  margin: 0 0.5rem;
+  color: var(--button-color, );
+  background: var(--button-background, );
+  background-color: var(--button-background-color, );
+  border: var(--button-border, );
+  border-color: var(--button-border-color, );
+  border-width: var(--button-border-width, );
+  border-style: var(--button-border-style, );
+  border-radius: var(--button-border-radius, );
+  padding: var(--button-padding, );
+  margin: var(--button-margin, );
+  min-width: var(--button-min-width, );
+  min-height: var(--button-min-height, );
+  width: var(--button-width, );
+  height: var(--button-height, );
+  font-family: var(--button-font-family, );
+  font-size: var(--button-font-size, );
+  font-weight: var(--button-font-weight, );
+  line-height: var(--button-line-height, );
+  letter-spacing: var(--button-letter-spacing, );
+  text-align: var(--button-text-align, );
+  text-decoration: var(--button-text-decoration, );
+  text-transform: var(--button-text-transform, );
+  box-shadow: var(--button-box-shadow, );
+  outline: var(--button-outline, );
+  outline-offset: var(--button-outline-offset, );
+  opacity: var(--button-opacity, );
+  cursor: var(--button-cursor, );
+  display: var(--button-display, );
+  align-items: var(--button-align-items, );
+  justify-content: var(--button-justify-content, );
+  gap: var(--button-gap, );
+  transition: var(--button-transition, );
+  transform: var(--button-transform, );
 }
+button:hover,
+.button:hover,
+a.button:hover {
+  color: var(--button-color\:hover, );
+  background: var(--button-background\:hover, );
+  background-color: var(--button-background-color\:hover, );
+  border: var(--button-border\:hover, );
+  border-color: var(--button-border-color\:hover, );
+  text-decoration: var(--button-text-decoration\:hover, );
+  box-shadow: var(--button-box-shadow\:hover, );
+  outline: var(--button-outline\:hover, );
+  outline-offset: var(--button-outline-offset\:hover, );
+  opacity: var(--button-opacity\:hover, );
+  cursor: var(--button-cursor\:hover, );
+  transform: var(--button-transform\:hover, );
+  pointer-events: var(--button-pointer-events\:hover, );
+}
+button:focus,
+.button:focus,
+a.button:focus {
+  color: var(--button-color\:focus, );
+  background: var(--button-background\:focus, );
+  background-color: var(--button-background-color\:focus, );
+  border: var(--button-border\:focus, );
+  border-color: var(--button-border-color\:focus, );
+  text-decoration: var(--button-text-decoration\:focus, );
+  box-shadow: var(--button-box-shadow\:focus, );
+  outline: var(--button-outline\:focus, );
+  outline-offset: var(--button-outline-offset\:focus, );
+  opacity: var(--button-opacity\:focus, );
+  cursor: var(--button-cursor\:focus, );
+  transform: var(--button-transform\:focus, );
+  pointer-events: var(--button-pointer-events\:focus, );
+}
+button:focus-visible,
+.button:focus-visible,
+a.button:focus-visible {
+  color: var(--button-color\:focus-visible, );
+  background: var(--button-background\:focus-visible, );
+  background-color: var(--button-background-color\:focus-visible, );
+  border: var(--button-border\:focus-visible, );
+  border-color: var(--button-border-color\:focus-visible, );
+  text-decoration: var(--button-text-decoration\:focus-visible, );
+  box-shadow: var(--button-box-shadow\:focus-visible, );
+  outline: var(--button-outline\:focus-visible, );
+  outline-offset: var(--button-outline-offset\:focus-visible, );
+  opacity: var(--button-opacity\:focus-visible, );
+  cursor: var(--button-cursor\:focus-visible, );
+  transform: var(--button-transform\:focus-visible, );
+  pointer-events: var(--button-pointer-events\:focus-visible, );
+}
+button:active,
+.button:active,
+a.button:active {
+  color: var(--button-color\:active, );
+  background: var(--button-background\:active, );
+  background-color: var(--button-background-color\:active, );
+  border: var(--button-border\:active, );
+  border-color: var(--button-border-color\:active, );
+  text-decoration: var(--button-text-decoration\:active, );
+  box-shadow: var(--button-box-shadow\:active, );
+  outline: var(--button-outline\:active, );
+  outline-offset: var(--button-outline-offset\:active, );
+  opacity: var(--button-opacity\:active, );
+  cursor: var(--button-cursor\:active, );
+  transform: var(--button-transform\:active, );
+  pointer-events: var(--button-pointer-events\:active, );
+}
+button:visited,
+.button:visited,
+a.button:visited {
+  color: var(--button-color\:visited, );
+  background: var(--button-background\:visited, );
+  background-color: var(--button-background-color\:visited, );
+  border: var(--button-border\:visited, );
+  border-color: var(--button-border-color\:visited, );
+  text-decoration: var(--button-text-decoration\:visited, );
+  box-shadow: var(--button-box-shadow\:visited, );
+  outline: var(--button-outline\:visited, );
+  outline-offset: var(--button-outline-offset\:visited, );
+  opacity: var(--button-opacity\:visited, );
+  cursor: var(--button-cursor\:visited, );
+  transform: var(--button-transform\:visited, );
+  pointer-events: var(--button-pointer-events\:visited, );
+}
+button:disabled, button[disabled], button[aria-disabled=true],
+.button:disabled,
+.button[disabled],
+.button[aria-disabled=true],
+a.button:disabled,
+a.button[disabled],
+a.button[aria-disabled=true] {
+  color: var(--button-color\:disabled, );
+  background: var(--button-background\:disabled, );
+  background-color: var(--button-background-color\:disabled, );
+  border: var(--button-border\:disabled, );
+  border-color: var(--button-border-color\:disabled, );
+  text-decoration: var(--button-text-decoration\:disabled, );
+  box-shadow: var(--button-box-shadow\:disabled, );
+  outline: var(--button-outline\:disabled, );
+  outline-offset: var(--button-outline-offset\:disabled, );
+  opacity: var(--button-opacity\:disabled, );
+  cursor: var(--button-cursor\:disabled, );
+  transform: var(--button-transform\:disabled, );
+  pointer-events: var(--button-pointer-events\:disabled, );
+}
+
+button.dark,
+.button\:dark,
 a.button\:dark {
-  background: #1b2020;
-  color: #ffffff;
-  border: 1px solid #1b2020;
+  color: var(--button-color\:dark, );
+  background: var(--button-background\:dark, );
+  background-color: var(--button-background-color\:dark, );
+  border: var(--button-border\:dark, );
+  border-color: var(--button-border-color\:dark, );
+  border-width: var(--button-border-width\:dark, );
+  border-style: var(--button-border-style\:dark, );
+  border-radius: var(--button-border-radius\:dark, );
+  padding: var(--button-padding\:dark, );
+  margin: var(--button-margin\:dark, );
+  min-width: var(--button-min-width\:dark, );
+  min-height: var(--button-min-height\:dark, );
+  width: var(--button-width\:dark, );
+  height: var(--button-height\:dark, );
+  font-family: var(--button-font-family\:dark, );
+  font-size: var(--button-font-size\:dark, );
+  font-weight: var(--button-font-weight\:dark, );
+  line-height: var(--button-line-height\:dark, );
+  letter-spacing: var(--button-letter-spacing\:dark, );
+  text-align: var(--button-text-align\:dark, );
+  text-decoration: var(--button-text-decoration\:dark, );
+  text-transform: var(--button-text-transform\:dark, );
+  box-shadow: var(--button-box-shadow\:dark, );
+  outline: var(--button-outline\:dark, );
+  outline-offset: var(--button-outline-offset\:dark, );
+  opacity: var(--button-opacity\:dark, );
+  cursor: var(--button-cursor\:dark, );
+  display: var(--button-display\:dark, );
+  align-items: var(--button-align-items\:dark, );
+  justify-content: var(--button-justify-content\:dark, );
+  gap: var(--button-gap\:dark, );
+  transition: var(--button-transition\:dark, );
+  transform: var(--button-transform\:dark, );
 }
+button.dark:hover,
+.button\:dark:hover,
 a.button\:dark:hover {
-  background: #ffffff;
-  color: #1b2020;
-  border: 1px solid #1b2020;
+  color: var(--button-color\:dark\:hover, );
+  background: var(--button-background\:dark\:hover, );
+  background-color: var(--button-background-color\:dark\:hover, );
+  border: var(--button-border\:dark\:hover, );
+  border-color: var(--button-border-color\:dark\:hover, );
+  text-decoration: var(--button-text-decoration\:dark\:hover, );
+  box-shadow: var(--button-box-shadow\:dark\:hover, );
+  outline: var(--button-outline\:dark\:hover, );
+  outline-offset: var(--button-outline-offset\:dark\:hover, );
+  opacity: var(--button-opacity\:dark\:hover, );
+  cursor: var(--button-cursor\:dark\:hover, );
+  transform: var(--button-transform\:dark\:hover, );
+  pointer-events: var(--button-pointer-events\:dark\:hover, );
 }
-a.button\:light {
-  background: #ffffff;
-  color: #1b2020;
-  border: 1px solid #415058;
+button.dark:focus,
+.button\:dark:focus,
+a.button\:dark:focus {
+  color: var(--button-color\:dark\:focus, );
+  background: var(--button-background\:dark\:focus, );
+  background-color: var(--button-background-color\:dark\:focus, );
+  border: var(--button-border\:dark\:focus, );
+  border-color: var(--button-border-color\:dark\:focus, );
+  text-decoration: var(--button-text-decoration\:dark\:focus, );
+  box-shadow: var(--button-box-shadow\:dark\:focus, );
+  outline: var(--button-outline\:dark\:focus, );
+  outline-offset: var(--button-outline-offset\:dark\:focus, );
+  opacity: var(--button-opacity\:dark\:focus, );
+  cursor: var(--button-cursor\:dark\:focus, );
+  transform: var(--button-transform\:dark\:focus, );
+  pointer-events: var(--button-pointer-events\:dark\:focus, );
 }
-a.button\:light:hover {
-  background: #1b2020;
-  color: #ffffff;
-  border: 1px solid #ffffff;
+button.dark:focus-visible,
+.button\:dark:focus-visible,
+a.button\:dark:focus-visible {
+  color: var(--button-color\:dark\:focus-visible, );
+  background: var(--button-background\:dark\:focus-visible, );
+  background-color: var(--button-background-color\:dark\:focus-visible, );
+  border: var(--button-border\:dark\:focus-visible, );
+  border-color: var(--button-border-color\:dark\:focus-visible, );
+  text-decoration: var(--button-text-decoration\:dark\:focus-visible, );
+  box-shadow: var(--button-box-shadow\:dark\:focus-visible, );
+  outline: var(--button-outline\:dark\:focus-visible, );
+  outline-offset: var(--button-outline-offset\:dark\:focus-visible, );
+  opacity: var(--button-opacity\:dark\:focus-visible, );
+  cursor: var(--button-cursor\:dark\:focus-visible, );
+  transform: var(--button-transform\:dark\:focus-visible, );
+  pointer-events: var(--button-pointer-events\:dark\:focus-visible, );
+}
+button.dark:active,
+.button\:dark:active,
+a.button\:dark:active {
+  color: var(--button-color\:dark\:active, );
+  background: var(--button-background\:dark\:active, );
+  background-color: var(--button-background-color\:dark\:active, );
+  border: var(--button-border\:dark\:active, );
+  border-color: var(--button-border-color\:dark\:active, );
+  text-decoration: var(--button-text-decoration\:dark\:active, );
+  box-shadow: var(--button-box-shadow\:dark\:active, );
+  outline: var(--button-outline\:dark\:active, );
+  outline-offset: var(--button-outline-offset\:dark\:active, );
+  opacity: var(--button-opacity\:dark\:active, );
+  cursor: var(--button-cursor\:dark\:active, );
+  transform: var(--button-transform\:dark\:active, );
+  pointer-events: var(--button-pointer-events\:dark\:active, );
+}
+button.dark:visited,
+.button\:dark:visited,
+a.button\:dark:visited {
+  color: var(--button-color\:dark\:visited, );
+  background: var(--button-background\:dark\:visited, );
+  background-color: var(--button-background-color\:dark\:visited, );
+  border: var(--button-border\:dark\:visited, );
+  border-color: var(--button-border-color\:dark\:visited, );
+  text-decoration: var(--button-text-decoration\:dark\:visited, );
+  box-shadow: var(--button-box-shadow\:dark\:visited, );
+  outline: var(--button-outline\:dark\:visited, );
+  outline-offset: var(--button-outline-offset\:dark\:visited, );
+  opacity: var(--button-opacity\:dark\:visited, );
+  cursor: var(--button-cursor\:dark\:visited, );
+  transform: var(--button-transform\:dark\:visited, );
+  pointer-events: var(--button-pointer-events\:dark\:visited, );
+}
+button.dark:disabled, button.dark[disabled], button.dark[aria-disabled=true],
+.button\:dark:disabled,
+.button\:dark[disabled],
+.button\:dark[aria-disabled=true],
+a.button\:dark:disabled,
+a.button\:dark[disabled],
+a.button\:dark[aria-disabled=true] {
+  color: var(--button-color\:dark\:disabled, );
+  background: var(--button-background\:dark\:disabled, );
+  background-color: var(--button-background-color\:dark\:disabled, );
+  border: var(--button-border\:dark\:disabled, );
+  border-color: var(--button-border-color\:dark\:disabled, );
+  text-decoration: var(--button-text-decoration\:dark\:disabled, );
+  box-shadow: var(--button-box-shadow\:dark\:disabled, );
+  outline: var(--button-outline\:dark\:disabled, );
+  outline-offset: var(--button-outline-offset\:dark\:disabled, );
+  opacity: var(--button-opacity\:dark\:disabled, );
+  cursor: var(--button-cursor\:dark\:disabled, );
+  transform: var(--button-transform\:dark\:disabled, );
+  pointer-events: var(--button-pointer-events\:dark\:disabled, );
+}
+
+button.light,
+.button\:lt,
+a.button\:lt {
+  color: var(--button-color\:light, );
+  background: var(--button-background\:light, );
+  background-color: var(--button-background-color\:light, );
+  border: var(--button-border\:light, );
+  border-color: var(--button-border-color\:light, );
+  border-width: var(--button-border-width\:light, );
+  border-style: var(--button-border-style\:light, );
+  border-radius: var(--button-border-radius\:light, );
+  padding: var(--button-padding\:light, );
+  margin: var(--button-margin\:light, );
+  min-width: var(--button-min-width\:light, );
+  min-height: var(--button-min-height\:light, );
+  width: var(--button-width\:light, );
+  height: var(--button-height\:light, );
+  font-family: var(--button-font-family\:light, );
+  font-size: var(--button-font-size\:light, );
+  font-weight: var(--button-font-weight\:light, );
+  line-height: var(--button-line-height\:light, );
+  letter-spacing: var(--button-letter-spacing\:light, );
+  text-align: var(--button-text-align\:light, );
+  text-decoration: var(--button-text-decoration\:light, );
+  text-transform: var(--button-text-transform\:light, );
+  box-shadow: var(--button-box-shadow\:light, );
+  outline: var(--button-outline\:light, );
+  outline-offset: var(--button-outline-offset\:light, );
+  opacity: var(--button-opacity\:light, );
+  cursor: var(--button-cursor\:light, );
+  display: var(--button-display\:light, );
+  align-items: var(--button-align-items\:light, );
+  justify-content: var(--button-justify-content\:light, );
+  gap: var(--button-gap\:light, );
+  transition: var(--button-transition\:light, );
+  transform: var(--button-transform\:light, );
+}
+button.light:hover,
+.button\:lt:hover,
+a.button\:lt:hover {
+  color: var(--button-color\:light\:hover, );
+  background: var(--button-background\:light\:hover, );
+  background-color: var(--button-background-color\:light\:hover, );
+  border: var(--button-border\:light\:hover, );
+  border-color: var(--button-border-color\:light\:hover, );
+  text-decoration: var(--button-text-decoration\:light\:hover, );
+  box-shadow: var(--button-box-shadow\:light\:hover, );
+  outline: var(--button-outline\:light\:hover, );
+  outline-offset: var(--button-outline-offset\:light\:hover, );
+  opacity: var(--button-opacity\:light\:hover, );
+  cursor: var(--button-cursor\:light\:hover, );
+  transform: var(--button-transform\:light\:hover, );
+  pointer-events: var(--button-pointer-events\:light\:hover, );
+}
+button.light:focus,
+.button\:lt:focus,
+a.button\:lt:focus {
+  color: var(--button-color\:light\:focus, );
+  background: var(--button-background\:light\:focus, );
+  background-color: var(--button-background-color\:light\:focus, );
+  border: var(--button-border\:light\:focus, );
+  border-color: var(--button-border-color\:light\:focus, );
+  text-decoration: var(--button-text-decoration\:light\:focus, );
+  box-shadow: var(--button-box-shadow\:light\:focus, );
+  outline: var(--button-outline\:light\:focus, );
+  outline-offset: var(--button-outline-offset\:light\:focus, );
+  opacity: var(--button-opacity\:light\:focus, );
+  cursor: var(--button-cursor\:light\:focus, );
+  transform: var(--button-transform\:light\:focus, );
+  pointer-events: var(--button-pointer-events\:light\:focus, );
+}
+button.light:focus-visible,
+.button\:lt:focus-visible,
+a.button\:lt:focus-visible {
+  color: var(--button-color\:light\:focus-visible, );
+  background: var(--button-background\:light\:focus-visible, );
+  background-color: var(--button-background-color\:light\:focus-visible, );
+  border: var(--button-border\:light\:focus-visible, );
+  border-color: var(--button-border-color\:light\:focus-visible, );
+  text-decoration: var(--button-text-decoration\:light\:focus-visible, );
+  box-shadow: var(--button-box-shadow\:light\:focus-visible, );
+  outline: var(--button-outline\:light\:focus-visible, );
+  outline-offset: var(--button-outline-offset\:light\:focus-visible, );
+  opacity: var(--button-opacity\:light\:focus-visible, );
+  cursor: var(--button-cursor\:light\:focus-visible, );
+  transform: var(--button-transform\:light\:focus-visible, );
+  pointer-events: var(--button-pointer-events\:light\:focus-visible, );
+}
+button.light:active,
+.button\:lt:active,
+a.button\:lt:active {
+  color: var(--button-color\:light\:active, );
+  background: var(--button-background\:light\:active, );
+  background-color: var(--button-background-color\:light\:active, );
+  border: var(--button-border\:light\:active, );
+  border-color: var(--button-border-color\:light\:active, );
+  text-decoration: var(--button-text-decoration\:light\:active, );
+  box-shadow: var(--button-box-shadow\:light\:active, );
+  outline: var(--button-outline\:light\:active, );
+  outline-offset: var(--button-outline-offset\:light\:active, );
+  opacity: var(--button-opacity\:light\:active, );
+  cursor: var(--button-cursor\:light\:active, );
+  transform: var(--button-transform\:light\:active, );
+  pointer-events: var(--button-pointer-events\:light\:active, );
+}
+button.light:visited,
+.button\:lt:visited,
+a.button\:lt:visited {
+  color: var(--button-color\:light\:visited, );
+  background: var(--button-background\:light\:visited, );
+  background-color: var(--button-background-color\:light\:visited, );
+  border: var(--button-border\:light\:visited, );
+  border-color: var(--button-border-color\:light\:visited, );
+  text-decoration: var(--button-text-decoration\:light\:visited, );
+  box-shadow: var(--button-box-shadow\:light\:visited, );
+  outline: var(--button-outline\:light\:visited, );
+  outline-offset: var(--button-outline-offset\:light\:visited, );
+  opacity: var(--button-opacity\:light\:visited, );
+  cursor: var(--button-cursor\:light\:visited, );
+  transform: var(--button-transform\:light\:visited, );
+  pointer-events: var(--button-pointer-events\:light\:visited, );
+}
+button.light:disabled, button.light[disabled], button.light[aria-disabled=true],
+.button\:lt:disabled,
+.button\:lt[disabled],
+.button\:lt[aria-disabled=true],
+a.button\:lt:disabled,
+a.button\:lt[disabled],
+a.button\:lt[aria-disabled=true] {
+  color: var(--button-color\:light\:disabled, );
+  background: var(--button-background\:light\:disabled, );
+  background-color: var(--button-background-color\:light\:disabled, );
+  border: var(--button-border\:light\:disabled, );
+  border-color: var(--button-border-color\:light\:disabled, );
+  text-decoration: var(--button-text-decoration\:light\:disabled, );
+  box-shadow: var(--button-box-shadow\:light\:disabled, );
+  outline: var(--button-outline\:light\:disabled, );
+  outline-offset: var(--button-outline-offset\:light\:disabled, );
+  opacity: var(--button-opacity\:light\:disabled, );
+  cursor: var(--button-cursor\:light\:disabled, );
+  transform: var(--button-transform\:light\:disabled, );
+  pointer-events: var(--button-pointer-events\:light\:disabled, );
 }
 
 .hidden {
@@ -3926,4 +4329,16 @@ a.button\:light:hover {
 
 .gap\:6 {
   gap: 6rem;
+}
+
+.float\:left {
+  float: left;
+}
+
+.float\:right {
+  float: right;
+}
+
+.clear {
+  clear: both;
 }

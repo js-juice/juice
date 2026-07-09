@@ -74,6 +74,9 @@ class InputButtonComponent extends HTMLElement {
                     box-sizing: border-box;
                     ${this.hasAttribute("bgcolor") ? `--input-button-bgcolor: ${this.getAttribute("bgcolor")};` : ""}
                     ${this.hasAttribute("color") ? `--input-button-color: ${this.getAttribute("color")};` : ""}
+                    background: var(--input-button-bgcolor, inherit);
+                    color: var(--input-button-color, inherit);
+                    border-radius: var(--form-input-border-radius, 0.3em);
                 }
                 .input-root{
                     display: flex;
@@ -95,7 +98,6 @@ class InputButtonComponent extends HTMLElement {
                     gap: 0.45rem;
                     border: 1px solid transparent;
                     border-radius: var(--form-input-border-radius, 0.3em);
-                    padding: 0.5rem 1rem;
                     margin: 0;
                     cursor: pointer;
                     user-select: none;
@@ -103,8 +105,9 @@ class InputButtonComponent extends HTMLElement {
                     line-height: 1;
                     vertical-align: middle;
                     color: var(--input-button-color, inherit);
-                    background: var(--input-button-bgcolor, inherit);
+                    background: inherit;
                     transition: filter 0.14s ease, opacity 0.14s ease;
+                    margin:0;
                 }
 
                 button:hover:not(:disabled) {

@@ -1,5 +1,39 @@
 .card {
-  border-radius: 1rem;
+  position: relative;
+  border: 1px solid #d2d2d2;
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.1), 0 4px 6px -4px rgba(255, 255, 255, 0.1);
+}
+.card.wide {
+  width: 100%;
+}
+.card.half {
+  width: 50%;
+}
+.card.third {
+  width: 33.33%;
+}
+.card.quarter {
+  width: 25%;
+}
+.card.fifth {
+  width: 20%;
+}
+.card.sixth {
+  width: 16.66%;
+}
+.card.eighth {
+  width: 12.5%;
+}
+
+.dark .card {
+  border: 1px solid #fff;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+.light .card {
   border: 1px solid #000;
   box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.1), 0 4px 6px -4px rgba(255, 255, 255, 0.1);
 }

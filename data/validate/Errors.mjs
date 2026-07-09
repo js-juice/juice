@@ -104,9 +104,7 @@ export class ValidationErrors extends Emitter {
      */
     resolve(property, errorTypes = []) {
         const current = this.get(property);
-        current
-            .filter((error) => errorTypes.includes(error.type))
-            .forEach((error) => error.resolve());
+        current.filter((error) => errorTypes.includes(error.type)).forEach((error) => error.resolve());
 
         this.properties[property] = current.filter((error) => !errorTypes.includes(error.type));
         this.scope.emit("resolve", property, errorTypes);
@@ -382,6 +380,13 @@ export class UrlValidationError extends ValidationError {
     constructor(rule) {
         super(rule, { message: createRuleMessage(rule, "Value is not a valid URL with a domain.") });
         assignTypedError(this, "UrlValidationError", "URL_INVALID");
+    }
+}
+
+export class DomainValidationError extends ValidationError {
+    constructor(rule) {
+        super(rule, { message: createRuleMessage(rule, "Value is not a valid domain name.") });
+        assignTypedError(this, "DomainValidationError", "DOMAIN_INVALID");
     }
 }
 

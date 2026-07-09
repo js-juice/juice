@@ -7,14 +7,15 @@
  * Features:
  * - Uses InputComponent lifecycle, validation, and status UI.
  * - Native `<textarea>` control wrapped in Juice form styling/layout.
+ * - Starts at one row and grows vertically to fit the entered text.
  * - Supports standard text validation rules through base validation pipeline.
  *
  * Example:
- * `<input-textarea label="Bio" rows="4" placeholder="Tell us about yourself"></input-textarea>`
+ * `<input-textarea label="Bio" placeholder="Tell us about yourself"></input-textarea>`
  *
  * Attribute Reference:
  * - Inherits base input attributes and constraints (`required`, `maxlength`, `validation`, etc).
- * - Uses native textarea-relevant attributes such as `rows` when passed through.
+ * - Uses native textarea-relevant attributes such as `rows` when passed through as the minimum row count.
  *
  * Property Reference:
  * - Inherits base properties (`value`, `disabled`, `nativeInput`, ...).
@@ -37,8 +38,9 @@ class InputTextarea extends InputComponent {
     get _styles() {
         return {
             ".input-wrapper": {
-                padding: 0,
-                minWidth: "12rem"
+                padding: "var(--input-padding)",
+                minWidth: "12rem",
+                minHeight: "var(--input-control-size)"
             },
             ".input-wrapper .status-wrapper": {
                 position: "absolute",
@@ -51,14 +53,17 @@ class InputTextarea extends InputComponent {
                 height: "var(--input-control-size)"
             },
             textarea: {
-                margin: "0.2rem",
+                margin: "0",
                 border: "0",
                 outline: 0,
                 minWidth: "calc(100% - 0.4rem) ",
+                height: "auto",
+                overflow: "hidden",
                 boxSizing: "border-box",
                 fontSize: "1em",
+                lineHeight: "1.5em",
                 fontFamily: "inherit",
-                resize: "vertical"
+                resize: "none"
             }
         };
     }
@@ -69,6 +74,50 @@ class InputTextarea extends InputComponent {
     constructor() {
         super({ _layout: "label:input:>:status:<:validation" });
         this.inputType = "textarea";
+        this._boundAutoGrow = () => this._syncAutoGrowHeight();
+    }
+
+    /**
+     * Wires textarea-specific sizing after the base component mounts.
+     * @returns {void}
+     */
+    _afterConnected() {
+        this._dom.native?.addEventListener("input", this._boundAutoGrow);
+        this._syncAutoGrowHeight();
+    }
+
+    /**
+     * Removes textarea-specific listeners when detached.
+     * @returns {void}
+     */
+    disconnectedCallback() {
+        this._dom.native?.removeEventListener("input", this._boundAutoGrow);
+        super.disconnectedCallback();
+    }
+
+    /**
+     * Runs after base attribute sync so preset values and row changes resize correctly.
+     * @returns {void}
+     */
+    _afterSync() {
+        this._syncAutoGrowHeight();
+    }
+
+    /**
+     * Keeps height aligned when the base component changes value or classes.
+     * @returns {void}
+     */
+    _syncVisualState() {
+        this._syncAutoGrowHeight();
+    }
+
+    /**
+     * Restores one-row sizing after native form reset.
+     * @returns {void}
+     */
+    formResetCallback() {
+        super.formResetCallback();
+        this._syncAutoGrowHeight();
     }
 
     /**
@@ -76,7 +125,22 @@ class InputTextarea extends InputComponent {
      * @returns {*} Configured native input element.
      */
     _createNativeControl() {
-        return document.createElement("textarea");
+        const textarea = document.createElement("textarea");
+        textarea.rows = Number(this.getAttribute("rows") || 1);
+        return textarea;
+    }
+
+    /**
+     * Fits the textarea to its current text content without leaving extra empty rows.
+     * @returns {void}
+     */
+    _syncAutoGrowHeight() {
+        const textarea = this._dom.native;
+        if (!textarea) return;
+
+        textarea.rows = Number(this.getAttribute("rows") || 1);
+        textarea.style.height = "auto";
+        textarea.style.height = `${textarea.scrollHeight}px`;
     }
 }
 

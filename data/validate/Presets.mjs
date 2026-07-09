@@ -16,7 +16,8 @@ import {
     MaxLengthError,
     NotEqualError,
     ValueRequiredError,
-    InSetError
+    InSetError,
+    DomainValidationError
 } from "./Errors.mjs";
 import { type } from "./ValidationUtil.mjs";
 
@@ -41,7 +42,8 @@ export const ERROR_TYPES = {
     equals: NotEqualError,
     required: ValueRequiredError,
     in: InSetError,
-    url: UrlValidationError
+    url: UrlValidationError,
+    domain: DomainValidationError
 };
 
 const PRESET_METADATA = {
@@ -58,6 +60,10 @@ const PRESET_METADATA = {
     url: {
         description: "Enter a complete HTTP or HTTPS URL with a valid domain.",
         example: "https://example.com"
+    },
+    domain: {
+        description: "Enter a complete valid domain.",
+        example: "www.example.com"
     },
     phone: {
         description: "Enter a phone number including its area code.",
@@ -324,6 +330,10 @@ class Presets {
 
         const topLevelDomain = labels[labels.length - 1];
         return /^[a-z]{2,63}$/.test(topLevelDomain) || /^xn--[a-z0-9-]{2,59}$/.test(topLevelDomain);
+    }
+
+    static domain(value) {
+        return /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i.test(String(value));
     }
 }
 

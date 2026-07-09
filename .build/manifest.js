@@ -10,7 +10,7 @@ const root = path.join(__dirname, "..");
 
 const ignore = [".build", "node_modules", ".git", ".gitignore", "config/manifest.json"];
 
-async function walkDir(dir, index = { files: [], folders: {}, configs: [] }) {
+async function walkFlat(dir, index = { files: [], folders: [], configs: [] }) {
     return new Promise((resolve) => {
         fs.readdir(dir, async (err, files) => {
             for (const file of files) {
@@ -26,8 +26,8 @@ async function walkDir(dir, index = { files: [], folders: {}, configs: [] }) {
                 if (ignore.includes(rel)) continue;
                 // will also include directory names
                 if (fs.statSync(dir + "/" + file).isDirectory()) {
-                    index.folders[rel] = await make(abs);
-                    await walkDir(path.join(dir, file), index);
+                    index.folders.push(rel);
+                    await walkFlat(path.join(dir, file), index);
                 } else {
                     index.files.push(rel);
                 }
@@ -69,8 +69,9 @@ export async function make(location, writeToFile = null) {
     if (!location.endsWith("/")) {
         location += "/";
     }
-    const manifest = await walkDir(location);
-    manifest.indexes = indexEntries(manifest.files);
+    const manifest = {};
+    manifest.flat = await walkFlat(location);
+    manifest.flat.indexes = indexEntries(manifest.flat.files);
 
     const hash = crypto.createHash("sha256");
     manifest.hash = hash.update(JSON.stringify(manifest)).digest("hex");
