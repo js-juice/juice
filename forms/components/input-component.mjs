@@ -38,6 +38,7 @@
  * CSS Variables:
  * - `--form-label-weight`, `--form-label-color`: Base label styling.
  * - `--input-border`, `--input-border-radius`, `--input-height`: Input container sizing and border control.
+ * - `--input-prefill-bgcolor`: Shared background for the complete browser-prefilled field.
  * - `--validation-color`, `--validation-message-color`, `--juice-validation-color-invalid`: Validation visual states.
  *
  * Part Names:
@@ -508,6 +509,9 @@ const BASE_STYLES = {
         minWidth: 0,
         overflow: "hidden"
     },
+    ".input-wrapper:has(input:-webkit-autofill), .input-wrapper:has(textarea:-webkit-autofill)": {
+        background: "var(--input-prefill-bgcolor, #e8f0fe)"
+    },
     ".input-wrapper > label": {
         lineHeight: "var(--input-height)",
         background:
@@ -543,6 +547,9 @@ const BASE_STYLES = {
         padding: 0,
         margin: 0,
         fontSize: "inherit"
+    },
+    "input.native:-webkit-autofill, textarea.native:-webkit-autofill": {
+        WebkitBoxShadow: "0 0 0 1000px var(--input-prefill-bgcolor, #e8f0fe) inset"
     },
 
     ".input-wrapper .status-wrapper": {

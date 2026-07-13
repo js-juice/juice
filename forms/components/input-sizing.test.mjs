@@ -35,6 +35,17 @@ test("input height remains CSS-owned instead of being measured per component typ
     assert.match(inputTextarea, /height:\s*"var\(--input-control-size\)"/);
 });
 
+test("browser-prefilled controls color the complete input wrapper", async () => {
+    const inputComponent = await readFile(
+        new URL("./input-component.mjs", import.meta.url),
+        "utf8"
+    );
+
+    assert.match(inputComponent, /\.input-wrapper:has\(input:-webkit-autofill\)/);
+    assert.match(inputComponent, /var\(--input-prefill-bgcolor, #e8f0fe\)/);
+    assert.match(inputComponent, /WebkitBoxShadow:\s*"0 0 0 1000px var\(--input-prefill-bgcolor/);
+});
+
 test("input buttons and submit buttons use the shared control height", async () => {
     const inputButton = await readFile(
         new URL("./input-button.mjs", import.meta.url),
