@@ -10,7 +10,6 @@ import { blendClasses } from "./core/Util/Class.mjs";
 import _config from "./config/juice-config.mjs";
 import path from "./core/Util/Path.mjs";
 import { createStyleManager } from "./core/Style/Styles.mjs";
-import { parseImportArgs, selectImportedModules } from "./core/Import/Args.mjs";
 
 export const root = typeof globalThis !== "undefined" ? globalThis : {};
 const nodeProcess = root.process?.versions?.node && typeof root.process.cwd === "function" ? root.process : null;
@@ -84,7 +83,7 @@ class Juice {
 
     static isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
     static isNode = Boolean(nodeProcess);
-    static sections = ["animation", "core", "data", "forms", "style", "ui"];
+    static rootSections = ["animation", "core", "data", "forms", "style", "ui"];
     /**
      * Creates a blended class from multiple mixin classes.
      * The resulting class will have properties and methods from all mixins.
@@ -97,16 +96,6 @@ class Juice {
      */
     static blend(...mixins) {
         return blendClasses(...mixins);
-    }
-
-    /**
-     * Semantic alias for blend when creating "flavors" of Juice classes.
-     * @param {...Function} mixins - Mixin classes to blend together
-     * @returns {Function} A new blended class
-     * @static
-     */
-    static flavor(...mixins) {
-        return Juice.blend(...mixins);
     }
 
     /**
@@ -201,15 +190,6 @@ class Juice {
      */
     blend(...mixins) {
         return Juice.blend(...mixins);
-    }
-
-    /**
-     * Instance alias for blend to support flavor-based composition semantics.
-     * @param {...Function} mixins - Mixin classes to blend
-     * @returns {Function} A new blended class
-     */
-    flavor(...mixins) {
-        return this.blend(...mixins);
     }
 
     path(scope, relative) {
@@ -327,10 +307,6 @@ class Juice {
         };
     }
 
-    parseImportArgs(...args) {
-        return parseImportArgs(args, Juice.sections, this.importSections);
-    }
-
     /**
      * Imports a registered Juice library or an explicit module path.
      * Registered libraries are cached and exposed on the Juice instance.
@@ -367,7 +343,7 @@ class Juice {
         }
 
         if (args.length === 1 && typeof args[0] === "string") {
-            if (Juice.sections.includes(args[0])) {
+            if (Juice.rootSections.includes(args[0])) {
                 isSectionImport = true;
                 section = args[0];
                 modulePath = "./" + section + "/" + this.importSections[section]?.index;
@@ -399,10 +375,6 @@ class Juice {
         this._cache[modulePath] = loadedModule;
 
         return loadedModule;
-    }
-
-    selectImportedModules(module, modules = []) {
-        return selectImportedModules(module, modules);
     }
 
     /**

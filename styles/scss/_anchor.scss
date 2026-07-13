@@ -1,0 +1,43 @@
+@use "sass:map";
+@use "unit";
+
+$anchor-props: (top, right, bottom, left);
+$anchor-points: (
+    x: (
+        left: l,
+        left-center: c,
+        right: r
+    ),
+    y: (
+        top: t,
+        left-center: c,
+        bottom: b
+    )
+);
+
+@mixin anchor-writer() {
+    @each $positionX, $shortX in map.get($anchor-points, x) {
+        @each $positionY, $shortY in map.get($anchor-points, y) {
+            .anchor\:#{$shortX}#{$shortY} {
+                @if $positionX == "center" {
+                    #{$positionX}: 50%;
+                } @else {
+                    #{$positionX}: 0;
+                }
+                @if $positionY == "center" {
+                    #{$positionY}: 50%;
+                } @else {
+                    #{$positionY}: 0;
+                }
+            }
+        }
+    }
+
+    @each $prop in $anchor-props {
+        @for $i from 0 through 20 {
+            .#{$prop}\:#{$i * 5} {
+                #{$prop}: unit.percent($i * 5);
+            }
+        }
+    }
+}

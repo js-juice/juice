@@ -1,13 +1,11 @@
-
-
 /**
  * AUTODOC:START
  * Component: <input-status>
  * Class: InputStatus
- * Overview: Animated status badge used by form components to show idle/info/warning/error/success states.
+ * Overview: Animated status badge used by form components to show idle/loading/info/warning/error/success states.
  *
  * Features:
- * - SVG icon animations for check, cross, warning, and info glyphs.
+ * - SVG icon animations for loading, check, cross, warning, and info glyphs.
  * - Circular stroke/fill transition choreography between states.
  * - Configurable size and icon-only mode for compact layouts.
  * - Optional custom color override or auto-colored status mode.
@@ -16,7 +14,7 @@
  * `<input-status state="warning" size="20" colored></input-status>`
  *
  * Attribute Reference:
- * - `state`: One of `info`, `warning`, `error`/`x`, `success`, or empty for idle.
+ * - `state`: One of `loading`, `info`, `warning`, `error`/`x`, `success`, or empty for idle.
  * - `size`: Pixel size of the status badge.
  * - `fill`: Fills the dimensions provided by the parent container.
  * - `icon-only`: Hides ring/fill and shows icon only.
@@ -46,7 +44,7 @@ class InputStatus extends HTMLElement {
     }
 
     /**
-        * Initializes component state, DOM references, and default behavior.
+     * Initializes component state, DOM references, and default behavior.
      * @returns {*} void.
      */
     constructor() {
@@ -145,7 +143,8 @@ class InputStatus extends HTMLElement {
                 .graphic svg .x-2,
                 .graphic svg .warning,
                 .graphic svg .info-1,
-                .graphic svg .info-2 {
+                .graphic svg .info-2,
+                .graphic svg .loading {
                     stroke-miterlimit: 10;
                     fill: none;
                     stroke: currentColor;
@@ -167,6 +166,21 @@ class InputStatus extends HTMLElement {
                 }
                 .graphic svg .info-2 {
                     transition: stroke-dashoffset 0.2s cubic-bezier(0.65, 0, 0.45, 1) 0.4s;
+                }
+                .graphic svg .loading {
+                    animation: rotate 1s linear infinite;
+                    opacity: 0;
+                    transform-origin: 50px 50px;
+                    transform: rotate(0deg);
+                    transition: opacity 0.4s ease-out, transform 0.4s ease-in 0.4s; 
+                }
+                @keyframes rotate {
+                    from {
+                        transform: rotate(0deg);
+                    }
+                    to {
+                        transform: rotate(360deg);
+                    }
                 }
 
                 :host([icon-only]) .fill,
@@ -193,6 +207,7 @@ class InputStatus extends HTMLElement {
                                 <path data-ref="warning" class="warning" stroke-linecap="round" stroke="currentColor" fill="none" stroke-width="2" d="M 50,20 L 75,70 L 25,70 Z"/>
                                 <path data-ref="info-1" class="info-1" stroke-linecap="round" stroke="currentColor" fill="none" stroke-width="20" d="M 50,75 L 50,50"/>
                                 <path data-ref="info-2" class="info-2" stroke-linecap="round" stroke="currentColor" fill="none" stroke-width="20" d="M 50,30 L 50,29"/>
+                                <circle data-ref="loading" class="loading" cx="50" cy="50" r="50" stroke="currentColor" stroke-width="8" stroke-dashoffset="0" stroke-dasharray="75 180" fill="#d2d2d2"></circle>
                             </svg>
                         </div>
                         <div class="stroke" data-ref="stroke-wrapper">
@@ -267,7 +282,7 @@ class InputStatus extends HTMLElement {
     }
 
     /**
-       * Clears previously applied status style tokens from the wrapper.
+     * Clears previously applied status style tokens from the wrapper.
      * @param {*} name - Attribute or field name.
      * @returns {*} void.
      */
@@ -276,7 +291,7 @@ class InputStatus extends HTMLElement {
     }
 
     /**
-      * Applies state to rendered output.
+     * Applies state to rendered output.
      * @param {*} state - Input value for state.
      * @returns {*} void.
      */
@@ -323,6 +338,15 @@ class InputStatus extends HTMLElement {
                     }
                 `;
                 break;
+            case "loading":
+                this._color = "#007cc7";
+                graphicStyle = `
+                    .graphic svg .loading{
+                        opacity: 1;
+                        animation: rotate .85s linear infinite;
+                    }
+                `;
+                break;
             default:
                 this._color = "transparent";
                 break;
@@ -331,13 +355,16 @@ class InputStatus extends HTMLElement {
         const colorStyle = `
             .stroke svg circle{
                 stroke: ${this._color};
-                stroke-dashoffset: 0;
+                stroke-dashoffset: ${state === "loading" ? "var(--input-status-ring-dash)" : "0"};
             }
             .fill-tmp{
-                border: ${this.size / 2}px solid ${this._color};
+                border: ${state === "loading" ? "0" : `${this.size / 2}px solid ${this._color}`};
+            }
+            .fill{
+                background-color: ${state === "loading" ? "transparent" : this._color};
             }
             .circle{
-                animation: circle-scale .3s ease-in-out .4s both;
+                animation: ${state === "loading" ? "none" : "circle-scale .3s ease-in-out .4s both"};
             }
         `;
 
@@ -347,7 +374,7 @@ class InputStatus extends HTMLElement {
                 else if (this.hasAttribute("colored")) this.style.color = this._color;
                 else this.style.color = "";
             } else {
-                this.style.color = "#FFFFFF";
+                this.style.color = state === "loading" ? this._color : "#FFFFFF";
             }
         };
 
@@ -369,7 +396,7 @@ class InputStatus extends HTMLElement {
     }
 
     /**
-      * Applies size to rendered output.
+     * Applies size to rendered output.
      * @returns {*} void.
      */
     _applySize() {
@@ -398,11 +425,17 @@ class InputStatus extends HTMLElement {
         const warningDashSize = safeTotalLength(this._refs.warning, 161.8);
         const infoDashSize = safeTotalLength(this._refs["info-1"], 25);
         const info2DashSize = safeTotalLength(this._refs["info-2"], 1);
+        const loading = this._refs.loading;
+        const loadingStrokeWidth = 10;
+        const loadingRadius = 50 - loadingStrokeWidth / 2;
+        loading.setAttribute("r", `${loadingRadius}`);
+        const loadingDashSize = 2 * Math.PI * loadingRadius;
 
         const sizeStyle = `
             :host{
                 width:${dimension};
                 height:${dimension};
+                --input-status-ring-dash: ${dashSize};
             }
             .graphic svg .info-1{
                 stroke-width: 10;
@@ -434,6 +467,12 @@ class InputStatus extends HTMLElement {
                 stroke-dasharray: ${warningDashSize};
                 stroke-dashoffset: ${warningDashSize};
             }
+            .graphic svg .loading{
+                stroke-width: ${loadingStrokeWidth};
+                stroke-linecap: round;
+                stroke-dasharray: ${loadingDashSize * 0.24} ${loadingDashSize * 0.76};
+                stroke-dashoffset: 0;
+            }
             .stroke svg circle{
                 stroke-width: ${strokeWidth};
                 stroke-dasharray: ${dashSize};
@@ -447,6 +486,11 @@ class InputStatus extends HTMLElement {
                     transform: scale3d(1.2, 1.2, 1);
                 }
             }
+            @keyframes input-status-loading-spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
         `;
 
         this._setStyle("size-style", sizeStyle);
@@ -454,7 +498,7 @@ class InputStatus extends HTMLElement {
     }
 
     /**
-        * Returns the configured component size.
+     * Returns the configured component size.
      * @returns {*} Configured size value.
      */
     get size() {
@@ -474,7 +518,7 @@ class InputStatus extends HTMLElement {
     }
 
     /**
-        * Returns the current status state.
+     * Returns the current status state.
      * @returns {*} Current normalized status state.
      */
     get state() {

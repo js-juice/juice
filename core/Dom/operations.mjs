@@ -12,8 +12,7 @@
  * DomUtil.first('.my-class') // returns first matching element
  * DomUtil.hasClass(element, 'active') // checks if element has class
  */
-class DomUtil {
-
+class DomOperations {
     /**
      * Gets the first element matching a selector.
      * @param {string} selector - CSS selector string
@@ -23,8 +22,14 @@ class DomUtil {
      * @example
      * DomUtil.first('.container') // returns first .container element
      */
-    static first( selector, scope ){
-        return ( document || scope ).querySelector(selector);
+    static first(selector, scope) {
+        return (document || scope).querySelector(selector);
+    }
+
+    static last(selector, scope) {
+        return (document || scope).querySelectorAll(selector)[
+            (document || scope).querySelectorAll(selector).length - 1
+        ];
     }
 
     /**
@@ -36,8 +41,8 @@ class DomUtil {
      * @example
      * DomUtil.all('.item') // returns all .item elements
      */
-    static all( selector, scope ){
-        return ( document || scope ).querySelectorAll(selector);
+    static all(selector, scope) {
+        return (document || scope).querySelectorAll(selector);
     }
 
     /**
@@ -49,8 +54,8 @@ class DomUtil {
      * @example
      * DomUtil.exists('.modal') // returns true if .modal element exists
      */
-    static exists( selector, scope ){
-        return ( document || scope ).querySelector(selector) ? true : false;
+    static exists(selector, scope) {
+        return (document || scope).querySelector(selector) ? true : false;
     }
 
     /**
@@ -61,16 +66,16 @@ class DomUtil {
      * @example
      * DomUtil.siblings(myElement) // returns array of sibling elements
      */
-    static siblings( element ){
+    static siblings(element) {
         // for collecting siblings
-        let siblings = []; 
+        let siblings = [];
         // if no parent, return no sibling
-        if(!element.parentNode) {
+        if (!element.parentNode) {
             return siblings;
         }
         // first child of the parent node
-        let sibling  = element.parentNode.firstChild;
-    
+        let sibling = element.parentNode.firstChild;
+
         // collecting siblings
         while (sibling) {
             if (sibling.nodeType === 1 && sibling !== element) {
@@ -92,8 +97,8 @@ class DomUtil {
      *   console.log(el, i);
      * });
      */
-    static each( elements, fn ){
-        for( let i=0;i<elements.length;i++ ){
+    static each(elements, fn) {
+        for (let i = 0; i < elements.length; i++) {
             fn.apply(elements[i], [elements[i], i]);
         }
     }
@@ -107,8 +112,8 @@ class DomUtil {
      * @example
      * DomUtil.hasClass(myElement, 'active') // returns true if element has 'active' class
      */
-    static hasClass( element, className ){
-        return new RegExp('(\\s|^)' + className + '(\\s|$)').test(element.className);
+    static hasClass(element, className) {
+        return new RegExp("(\\s|^)" + className + "(\\s|$)").test(element.className);
     }
 
     /**
@@ -121,8 +126,8 @@ class DomUtil {
      * @example
      * DomUtil.on(myElement, 'click', handleClick);
      */
-    static on( element, event, fn, bubble=false ){
-        element.addEventListener( event, fn, bubble );
+    static on(element, event, fn, bubble = false) {
+        element.addEventListener(event, fn, bubble);
     }
 
     /**
@@ -134,7 +139,7 @@ class DomUtil {
      * const rect = DomUtil.rect(myElement);
      * console.log(rect.top, rect.left, rect.width, rect.height);
      */
-    static rect( element ){
+    static rect(element) {
         return element.getBoundingClientRect();
     }
 
@@ -145,7 +150,7 @@ class DomUtil {
      * @returns {boolean} True if rect is visible in viewport
      * @static
      */
-    static rectIsVisible( rect ){
+    static rectIsVisible(rect) {
         return rect.bottom < window.innerHeight && rect.top > 0;
     }
 
@@ -155,10 +160,10 @@ class DomUtil {
      * @returns {boolean} True if any part of rect is in viewport
      * @static
      */
-    static rectIsFullyVisible( rect ){
+    static rectIsFullyVisible(rect) {
         return rect.top < window.innerHeight && rect.bottom > 0;
     }
-    
+
     /**
      * Checks if the pointer is over a specific element.
      * @param {Element} element - The element to check
@@ -166,8 +171,7 @@ class DomUtil {
      * @returns {boolean} True if pointer is over the element
      * @static
      */
-    static pointerOverElement( element, e ){
-        debug(document.elementsFromPoint(e.clientX, e.clientY));
+    static pointerOverElement(element, e) {
         return document.elementsFromPoint(e.clientX, e.clientY).indexOf(element) !== -1;
     }
 
@@ -182,7 +186,7 @@ class DomUtil {
      * @example
      * DomUtil.pointerOverRect(rect, {clientX: 100, clientY: 200})
      */
-    static pointerOverRect( rect, { clientX: x, clientY: y } ){
+    static pointerOverRect(rect, { clientX: x, clientY: y }) {
         return rect.left <= x && rect.right >= x && rect.top <= y && rect.bottom >= y;
     }
 }

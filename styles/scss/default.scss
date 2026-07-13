@@ -2,6 +2,7 @@
 @use "unit";
 @use "fn";
 @use "buttons";
+@use "anchor";
 
 $sides: (top, right, bottom, left);
 
@@ -153,6 +154,12 @@ $sizes: (
 
     .minh\:#{$i * 5} {
         min-height: unit.percent($i * 5);
+    }
+}
+
+@for $i from 1 through 40 {
+    .aspect\:#{fn.str-replace(#{$i * 0.1}, ".", "o")} {
+        aspect-ratio: unit.float($i * 0.1);
     }
 }
 
@@ -634,3 +641,6 @@ a.button\:lt {
 .clear {
     clear: both;
 }
+
+/* Anchor Start */
+@include anchor.anchor-writer();

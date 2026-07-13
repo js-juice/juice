@@ -102,12 +102,14 @@ class InputButtonComponent extends HTMLElement {
                     cursor: pointer;
                     user-select: none;
                     font-size: inherit;
+                    font-weight: bold;
                     line-height: 1;
                     vertical-align: middle;
                     color: var(--input-button-color, inherit);
                     background: inherit;
                     transition: filter 0.14s ease, opacity 0.14s ease;
                     margin:0;
+                    padding:0 1.5rem;
                 }
 
                 button:hover:not(:disabled) {
