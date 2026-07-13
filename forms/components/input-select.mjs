@@ -1112,7 +1112,12 @@ class InputSelect extends InputComponent {
      */
     _startOptionObserver() {
         if (this._optionObserver) this._optionObserver.disconnect();
-        this._optionObserver = new MutationObserver(() => this._refreshOptions());
+        this._optionObserver = new MutationObserver((mutations) => {
+            const optionsChanged = mutations.some(
+                (mutation) => mutation.type !== "attributes" || mutation.target !== this
+            );
+            if (optionsChanged) this._refreshOptions();
+        });
         this._optionObserver.observe(this, {
             attributes: true,
             attributeFilter: ["value", "label", "description", "icon", "icon-src", "selected"],
