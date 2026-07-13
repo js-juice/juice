@@ -43,7 +43,20 @@ test("browser-prefilled controls color the complete input wrapper", async () => 
 
     assert.match(inputComponent, /\.input-wrapper:has\(input:-webkit-autofill\)/);
     assert.match(inputComponent, /var\(--input-prefill-bgcolor, #e8f0fe\)/);
-    assert.match(inputComponent, /WebkitBoxShadow:\s*"0 0 0 1000px var\(--input-prefill-bgcolor/);
+    assert.match(inputComponent, /WebkitBoxShadow:\s*"0 0 0 1000px var\(--input-state-bgcolor/);
+});
+
+test("all shared field states resolve through the complete input wrapper", async () => {
+    const inputComponent = await readFile(
+        new URL("./input-component.mjs", import.meta.url),
+        "utf8"
+    );
+
+    for (const state of ["focus", "valid", "incomplete", "invalid", "readonly", "disabled"]) {
+        assert.match(inputComponent, new RegExp(`var\\(--input-${state}-bgcolor`));
+    }
+    assert.match(inputComponent, /background:\s*"var\(--input-state-bgcolor\)"/);
+    assert.match(inputComponent, /WebkitBoxShadow:[\s\S]*?var\(--input-state-bgcolor/);
 });
 
 test("input buttons and submit buttons use the shared control height", async () => {

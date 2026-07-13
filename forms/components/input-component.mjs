@@ -38,7 +38,7 @@
  * CSS Variables:
  * - `--form-label-weight`, `--form-label-color`: Base label styling.
  * - `--input-border`, `--input-border-radius`, `--input-height`: Input container sizing and border control.
- * - `--input-prefill-bgcolor`: Shared background for the complete browser-prefilled field.
+ * - `--input-*-bgcolor`: Complete-field backgrounds for focus, prefill, validation, readonly, and disabled states.
  * - `--validation-color`, `--validation-message-color`, `--juice-validation-color-invalid`: Validation visual states.
  *
  * Part Names:
@@ -499,9 +499,10 @@ const BASE_STYLES = {
     },
     ".input-wrapper": {
         "--input-control-size": "calc(var(--input-height) + var(--input-padding, 0px) + var(--input-padding, 0px))",
+        "--input-state-bgcolor": "var(--input-bgcolor, #ffffff)",
         border: "var(--input-border, 1px solid #c8c8c8)",
         borderRadius: "var(--input-border-radius, 5px)",
-        background: "var(--input-bgcolor, #ffffff)",
+        background: "var(--input-state-bgcolor)",
         position: "relative",
         display: "flex",
         flexDirection: "row",
@@ -510,7 +511,25 @@ const BASE_STYLES = {
         overflow: "hidden"
     },
     ".input-wrapper:has(input:-webkit-autofill), .input-wrapper:has(textarea:-webkit-autofill)": {
-        background: "var(--input-prefill-bgcolor, #e8f0fe)"
+        "--input-state-bgcolor": "var(--input-prefill-bgcolor, #e8f0fe)"
+    },
+    ":host(.focused) .input-wrapper": {
+        "--input-state-bgcolor": "var(--input-focus-bgcolor, var(--input-bgcolor, #ffffff))"
+    },
+    ":host(.is-valid.touched) .input-wrapper": {
+        "--input-state-bgcolor": "var(--input-valid-bgcolor, var(--input-bgcolor, #ffffff))"
+    },
+    ":host(.is-incomplete.touched) .input-wrapper": {
+        "--input-state-bgcolor": "var(--input-incomplete-bgcolor, var(--input-bgcolor, #ffffff))"
+    },
+    ":host(.is-invalid.touched) .input-wrapper": {
+        "--input-state-bgcolor": "var(--input-invalid-bgcolor, var(--input-bgcolor, #ffffff))"
+    },
+    ":host([readonly]) .input-wrapper": {
+        "--input-state-bgcolor": "var(--input-readonly-bgcolor, var(--input-bgcolor, #ffffff))"
+    },
+    ":host([disabled]) .input-wrapper": {
+        "--input-state-bgcolor": "var(--input-disabled-bgcolor, var(--input-bgcolor, #ffffff))"
     },
     ".input-wrapper > label": {
         lineHeight: "var(--input-height)",
@@ -549,7 +568,7 @@ const BASE_STYLES = {
         fontSize: "inherit"
     },
     "input.native:-webkit-autofill, textarea.native:-webkit-autofill": {
-        WebkitBoxShadow: "0 0 0 1000px var(--input-prefill-bgcolor, #e8f0fe) inset"
+        WebkitBoxShadow: "0 0 0 1000px var(--input-state-bgcolor, var(--input-prefill-bgcolor, #e8f0fe)) inset"
     },
 
     ".input-wrapper .status-wrapper": {
