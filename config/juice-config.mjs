@@ -10,8 +10,7 @@ import DEFAULT_CONFIG from "./defaults.mjs";
 const root = typeof globalThis !== "undefined" ? globalThis : {};
 const juiceRootDir = import.meta.resolve("../");
 const manifestFilePath = import.meta.resolve("./manifest.json");
-console.log(juiceRootDir);
-console.log(manifestFilePath);
+
 function loadJSON(path) {
     try {
         return JSON.parse(root.fetch(path).then((res) => res.text()));

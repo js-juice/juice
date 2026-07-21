@@ -46,6 +46,7 @@ class InputButtonComponent extends HTMLElement {
             "bgcolor",
             "color",
             "disabled",
+            "data-form-info-disabled",
             "type",
             "name",
             "value",
@@ -204,6 +205,7 @@ class InputButtonComponent extends HTMLElement {
             name === "bgcolor" ||
             name === "color" ||
             name === "disabled" ||
+            name === "data-form-info-disabled" ||
             name === "type" ||
             name === "name" ||
             name === "value" ||
@@ -248,7 +250,7 @@ class InputButtonComponent extends HTMLElement {
             this._button.removeAttribute("aria-label");
         }
 
-        this._button.disabled = this.disabled;
+        this._button.disabled = this.disabled || this.formInfoDisabled;
     }
 
     _syncIconVisibility() {
@@ -262,7 +264,7 @@ class InputButtonComponent extends HTMLElement {
     }
 
     _handleButtonClick(event) {
-        if (this.disabled) {
+        if (this.disabled || this.formInfoDisabled) {
             event.preventDefault();
             event.stopPropagation();
             return;
@@ -325,6 +327,10 @@ class InputButtonComponent extends HTMLElement {
     set disabled(value) {
         if (value) this.setAttribute("disabled", "true");
         else this.removeAttribute("disabled");
+    }
+
+    get formInfoDisabled() {
+        return this.hasAttribute("data-form-info-disabled");
     }
 }
 

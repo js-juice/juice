@@ -2,7 +2,7 @@
 
 Use `input-image.mjs` as the current reference pattern for new value-bearing Juice inputs.
 
-The base `InputComponent` now supports declarative native controls through `static config.native` and declarative views through `html()`. Only override lower-level methods when the config/html path is not enough.
+The base `InputComponent` uses class-owned definitions: `static config` for behavior defaults, `static observed` for additional observed attributes, `static html()` for markup, and `static styles` for scoped styles. Only override lower-level instance methods for runtime behavior.
 
 ## Basic Shape
 
@@ -21,8 +21,8 @@ class InputExampleComponent extends InputComponent {
         }
     };
 
-    static get observedAttributes() {
-        return [...super.observedAttributes, "example-option"];
+    static get observed() {
+        return ["example-option"];
     }
 
     constructor() {
@@ -31,7 +31,7 @@ class InputExampleComponent extends InputComponent {
         this._button = null;
     }
 
-    html() {
+    static html() {
         return `
             <div class="example-input">
                 <button class="example-button" type="button">Choose</button>
@@ -40,7 +40,7 @@ class InputExampleComponent extends InputComponent {
         `;
     }
 
-    get _styles() {
+    static get styles() {
         return {
             ".example-input": {
                 display: "grid",
@@ -98,7 +98,6 @@ For multiple native controls, `native` can be an array. Use `ref` to name a cont
 static config = {
     value: { type: "string", default: "" },
     native: { tag: "input", attrs: { type: "text" } },
-    html: undefined,
     format: undefined,
     validation: undefined
 };
@@ -161,28 +160,6 @@ Created controls are stored in:
 - `this._dom.native`: first native control.
 - `this._native`: array of native controls.
 - `this._native[ref]`: named native control when `ref` is provided.
-
-### `html`
-
-Defines the default visible view when the component does not provide an `html()` method.
-
-```js
-static config = {
-    html: `
-        <div class="example-input">
-            <native></native>
-        </div>
-    `
-};
-```
-
-The base accepts:
-
-- a string of HTML
-- a function
-- a DOM `Node`
-
-If the component class defines `html()`, that method wins over `static config.html`.
 
 ### `format`
 
@@ -295,10 +272,10 @@ Per-type lookup uses `this.inputType` first. If `this.inputType` is empty, it de
 
 ## View Markup
 
-Use `html()` for the visible component UI.
+Use `static html()` for the visible component UI. Markup does not belong in `static config`.
 
 ```js
-html() {
+static html() {
     return `
         <div class="image-input">
             <canvas class="image-canvas" part="canvas"></canvas>
@@ -336,10 +313,10 @@ Use `default` when the component has custom UI. Put `<native></native>` in `html
 
 ## Styles
 
-Use `get _styles()` for component-scoped styles.
+Use class-owned `static styles` for component-scoped styles.
 
 ```js
-get _styles() {
+static get styles() {
     return {
         ".image-input": {
             display: "grid",
@@ -354,10 +331,52 @@ get _styles() {
 
 Prefer existing Juice variables such as `--input-border`, `--input-border-radius`, `--input-button-bgcolor`, and `--form-description-color`.
 
+## Observed Attributes
+
+Declare only attributes owned by the concrete component. The base automatically combines these with all shared input attributes and removes duplicates.
+
+```js
+static get observed() {
+    return ["button-label", "aspect"];
+}
+```
+
+Handle a change inside the component with the native callback. Always let the base process shared state first.
+
+```js
+attributeChangedCallback(name, oldValue, newValue) {
+    super.attributeChangedCallback(name, oldValue, newValue);
+    if (oldValue === newValue) return;
+
+    if (name === "button-label") {
+        this._syncButtonLabel(newValue);
+    }
+}
+```
+
+Listen from outside a component with `MutationObserver`:
+
+```js
+const input = document.querySelector("input-example");
+const observer = new MutationObserver((changes) => {
+    for (const change of changes) {
+        console.log(change.attributeName, change.oldValue, input.getAttribute(change.attributeName));
+    }
+});
+
+observer.observe(input, {
+    attributes: true,
+    attributeOldValue: true,
+    attributeFilter: input.constructor.observedAttributes
+});
+```
+
 ## Runtime Hooks
 
 Use these hooks for component behavior:
 
+- `_onCreate()`: runs once per component instance after its first complete connection. Native controls, static markup/styles, initial attributes, form state, and validation are ready.
+- `_afterConnected()`: runs after every connection, including when an existing component is removed and reattached.
 - `_afterRender()`: query `this._dom.default`, save element refs, and attach visible UI listeners.
 - `_afterSync()`: apply derived native state after attributes have synced.
 - `_syncSingleAttribute(name)`: customize one attribute before or after `super._syncSingleAttribute(name)`.
@@ -368,9 +387,95 @@ Use these hooks for component behavior:
 
 Call `super.attributeChangedCallback(name, oldValue, newValue)` if you override `attributeChangedCallback`.
 
+Use `_onCreate()` for one-time initialization that requires the completed component DOM:
+
+```js
+_onCreate() {
+    this._analyticsId = crypto.randomUUID();
+    this._syncInitialSelection();
+}
+```
+
+Do not use `_onCreate()` for listeners or state that must be restored after reconnection; use `_afterConnected()` for that work.
+
 ## Value Handling
 
-For normal text-like inputs, let the base sync `this._dom.native.value`.
+### Initial values
+
+Set a field's initial value with the host `value` attribute. This is also the value restored by a native form reset.
+
+```html
+<input-example name="title" value="Initial title"></input-example>
+```
+
+`static config.value` is currently component metadata; it does not replace the host `value` attribute during the base lifecycle.
+
+### Reading the current value
+
+Use the component's public property. It returns the live native-control value, not a possibly stale markup snapshot.
+
+```js
+const input = document.querySelector("input-example");
+const currentValue = input.value;
+```
+
+Inside a component, use the same public property unless you specifically need the native element:
+
+```js
+const currentValue = this.value;
+const nativeControl = this.nativeInput; // this._dom.native is the internal equivalent
+```
+
+Do not use `getAttribute("value")` as the primary way to read live state. The attribute is synchronized for reflection and reset behavior, while `.value` is the public live-value API.
+
+For checkable inputs, read `checked` separately:
+
+```js
+const selected = checkbox.checked;
+const submittedValue = selected ? checkbox.value : null;
+```
+
+### Setting a value
+
+Set normal values through the public property:
+
+```js
+input.value = "Updated title";
+```
+
+The setter normalizes the value, updates the native control and reflected host attribute, runs formatting, updates form-associated state, and queues validation.
+
+For checkable inputs, use the public checked property:
+
+```js
+checkbox.checked = true;
+```
+
+Assigning `value` or `checked` programmatically does not dispatch `input` or `change`. This matches native controls and prevents accidental event loops. Consumers that need notification after a programmatic update should dispatch it deliberately:
+
+```js
+input.value = "Updated title";
+input.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+```
+
+### User-driven custom controls
+
+When custom UI changes a normal value, set `this.value` and then emit the appropriate event because the action came from the user:
+
+```js
+_chooseValue(nextValue) {
+    this.value = nextValue;
+    this._syncVisualState();
+    this.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+    this.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+}
+```
+
+Native-control `input` and `change` events are already wired by `InputComponent`; do not dispatch duplicates from `_onNativeInputEvent()` or `_onNativeChangeEvent()`.
+
+### Custom submitted values
+
+For normal text-like inputs, let the base submit `this._dom.native.value`. Override `_getFormValue()` only when the submitted value is a different type, such as a `File`, `FormData`, or a nullable checkable value.
 
 For custom values, override only the pieces you need. `input-image` stores a selected `File`, sets the host `value` to the file name, and submits the `File`:
 
@@ -392,11 +497,70 @@ _getFormValue() {
 }
 ```
 
-If the component changes its own value outside a native event, update form state and validation:
+If a specialized component bypasses the public value setter and mutates its own internal state, it must update form state and validation itself:
 
 ```js
 this._updateFormValue();
 this._queueValidation();
+```
+
+Prefer the public `this.value = nextValue` path whenever the component's submitted value is a string.
+
+### Reset behavior
+
+The base participates in native form reset automatically. `resetInput()` restores the original host `value` or `checked` state captured when the component was created.
+
+Override `resetInput()` only when the component owns additional state. Reset state used by `_getFormValue()` first, then let the base synchronize the native control, form value, and validation:
+
+```js
+resetInput() {
+    this._selectedItem = null;
+    super.resetInput();
+    this._syncVisualState();
+}
+```
+
+### Listening for value changes
+
+Listen to the component exactly like a native form control:
+
+```js
+input.addEventListener("input", (event) => {
+    console.log(event.currentTarget.value);
+});
+
+input.addEventListener("change", (event) => {
+    console.log("Committed value:", event.currentTarget.value);
+});
+```
+
+### Changing validation at runtime
+
+Use the public `validation` property to replace the complete runtime rule set. The observed attribute rebuilds the validator, refreshes requirement guidance, and queues validation automatically.
+
+```js
+const password = document.querySelector("input-text[name='password']");
+
+password.validation = [
+    "required",
+    "min:12",
+    "contains:uppercase",
+    "contains:lowercase",
+    "contains:number",
+    "contains:symbol"
+].join("|");
+```
+
+The equivalent attribute API is useful when rules come from markup-oriented code:
+
+```js
+password.setAttribute("validation", "required|contains:number");
+```
+
+Remove the runtime override and return to configured component/form defaults with:
+
+```js
+password.validation = null;
 ```
 
 ## Do Not
@@ -404,7 +568,7 @@ this._queueValidation();
 - Do not build the shadow root yourself for normal value inputs.
 - Do not duplicate label, validation, status, or form association behavior.
 - Do not override `_createNativeControl()` when `static config.native` can describe the native element.
-- Do not manually append `this._dom.default`; the base mounts the `html()` view.
+- Do not manually append `this._dom.default`; the base mounts the `static html()` view.
 
 ## Check
 

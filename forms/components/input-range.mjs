@@ -12,8 +12,8 @@ class InputRangeComponent extends InputComponent {
         }
     };
 
-    static get observedAttributes() {
-        return [...super.observedAttributes, "min", "max", "step", "span", "multiple", "precision"];
+    static get observed() {
+        return ["min", "max", "step", "span", "multiple", "precision"];
     }
 
     constructor() {
@@ -26,7 +26,7 @@ class InputRangeComponent extends InputComponent {
         this._resizeObserver = null;
     }
 
-    get _styles() {
+    static get styles() {
         return {
             ".bar": {
                 position: "relative",

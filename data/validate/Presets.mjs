@@ -141,6 +141,9 @@ const PRESET_METADATA = {
     chars: {
         description: "Use only the allowed characters."
     },
+    contains: {
+        description: "Include the required character type."
+    },
     null: {
         description: "This value must be empty."
     },
@@ -292,6 +295,24 @@ class Presets {
         return regex.test(input);
     }
 
+    static contains(value, requirement) {
+        if (Presets.empty(value)) return true;
+
+        const input = String(value);
+        switch (String(requirement || "").trim().toLowerCase()) {
+            case "uppercase":
+                return /\p{Lu}/u.test(input);
+            case "lowercase":
+                return /\p{Ll}/u.test(input);
+            case "number":
+                return /\p{N}/u.test(input);
+            case "symbol":
+                return /[^\p{L}\p{N}\s]/u.test(input);
+            default:
+                return false;
+        }
+    }
+
     static null(value) {
         return value === null;
     }
@@ -416,6 +437,7 @@ export function describeValidationRule(typeName, args = []) {
         return `Length between ${first} and ${second} characters.`;
     }
     if (type === "chars" && values.length) return `Allowed characters: ${values.join("")}.`;
+    if (type === "contains" && first != null) return `Must contain at least one ${first} character.`;
     if (type === "in" && values.length) return `Allowed values: ${values.join(", ")}.`;
     if (type === "equals" && first != null) return `Must match ${first}.`;
     return "";

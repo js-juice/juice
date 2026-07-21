@@ -110,6 +110,32 @@ test("validation format guidance is generated from rule types and arguments", ()
     assert.equal(describeValidationRule("min", ["8"]), "Minimum value or length: 8.");
     assert.equal(describeValidationRule("length", ["3", "20"]), "Length between 3 and 20 characters.");
     assert.equal(describeValidationRule("chars", ["a-z0-9"]), "Allowed characters: a-z0-9.");
+    assert.equal(describeValidationRule("contains", ["uppercase"]), "Must contain at least one uppercase character.");
+});
+
+test("contains validates composable character requirements", async () => {
+    assert.equal(Presets.contains("Password1!", "uppercase"), true);
+    assert.equal(Presets.contains("password1!", "uppercase"), false);
+    assert.equal(Presets.contains("Password1!", "lowercase"), true);
+    assert.equal(Presets.contains("PASSWORD1!", "lowercase"), false);
+    assert.equal(Presets.contains("Password1!", "number"), true);
+    assert.equal(Presets.contains("Password!", "number"), false);
+    assert.equal(Presets.contains("Password1!", "symbol"), true);
+    assert.equal(Presets.contains("Password1", "symbol"), false);
+    assert.equal(Presets.contains("", "uppercase"), true);
+    assert.equal(Presets.contains("Password1!", "unknown"), false);
+
+    const validator = Validator.make({
+        password: "required|contains:uppercase|contains:lowercase|contains:number|contains:symbol"
+    });
+
+    assert.equal(await validator.test("password", "Password1!"), true);
+    assert.equal(await validator.test("password", "password"), false);
+    assert.deepEqual(validator.messages("password"), [
+        "password must contain at least one uppercase character",
+        "password must contain at least one number character",
+        "password must contain at least one symbol character"
+    ]);
 });
 
 test("every built-in validation preset has a description", () => {
@@ -137,6 +163,7 @@ test("every built-in validation preset has a description", () => {
         "empty",
         "notEmpty",
         "chars",
+        "contains",
         "null",
         "in",
         "url"

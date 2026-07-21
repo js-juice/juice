@@ -52,8 +52,8 @@ class InputRotationComponent extends InputComponent {
      * Lists attributes that are observed for runtime updates.
      * @returns {*} List of observed attribute names.
      */
-    static get observedAttributes() {
-        return [...super.observedAttributes, "default-x", "default-y", "default-z"];
+    static get observed() {
+        return ["default-x", "default-y", "default-z"];
     }
 
     /**
@@ -88,7 +88,7 @@ class InputRotationComponent extends InputComponent {
        * Returns component-scoped style definitions used to generate CSS.
      * @returns {*} Style definition map used for generated component CSS.
      */
-    get _styles() {
+    static get styles() {
         return {
             label: {
                 display: "block"

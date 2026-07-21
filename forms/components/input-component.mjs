@@ -724,8 +724,53 @@ class InputComponent extends HTMLElement {
      * The component will automatically re-render when any of the attributes in this list change.
      * @returns {string[]} A list of attribute names
      */
+    /**
+     * Additional attributes observed by a concrete input component.
+     * Subclasses declare only their own names; InputComponent composes them
+     * with the shared form attributes through `observedAttributes`.
+     *
+     * @example
+     * static get observed() {
+     *     return ["swatch-size", "palette-prefix"];
+     * }
+     *
+     * @example Listen and respond to a declared attribute
+     * attributeChangedCallback(name, oldValue, newValue) {
+     *     super.attributeChangedCallback(name, oldValue, newValue);
+     *     if (oldValue === newValue) return;
+     *     if (name === "swatch-size") this._resizeSwatches(newValue);
+     * }
+     *
+     * @example Listen from outside the component
+     * const input = document.querySelector("input-palette");
+     * const observer = new MutationObserver((changes) => {
+     *     changes.forEach(({ attributeName, oldValue, target }) => {
+     *         console.log(attributeName, oldValue, target.getAttribute(attributeName));
+     *     });
+     * });
+     * observer.observe(input, {
+     *     attributes: true,
+     *     attributeOldValue: true,
+     *     attributeFilter: input.constructor.observedAttributes
+     * });
+     *
+     * @returns {string[]} Attribute names owned by the subclass.
+     */
+    static get observed() {
+        return [];
+    }
+
     static get observedAttributes() {
-        return BASE_OBSERVED_ATTRS;
+        const attributes = [...BASE_OBSERVED_ATTRS];
+        let component = this;
+
+        while (component && component !== InputComponent) {
+            const descriptor = Object.getOwnPropertyDescriptor(component, "observed");
+            if (descriptor?.get) attributes.push(...(descriptor.get.call(component) || []));
+            component = Object.getPrototypeOf(component);
+        }
+
+        return [...new Set(attributes)];
     }
 
     /**
@@ -742,10 +787,13 @@ class InputComponent extends HTMLElement {
         return {
             value: { type: "string", default: "" },
             native: { tag: "input", attrs: { type: "text" } },
-            html: undefined,
             format: undefined,
             validation: undefined
         };
+    }
+
+    static html() {
+        return null;
     }
 
     isInputComponent = true;
@@ -765,6 +813,7 @@ class InputComponent extends HTMLElement {
         this._isSyncing = false;
         this.eventTypes = ["input", "change"];
         this._eventsBound = false;
+        this._hasCreated = false;
         this._layout = "label:input";
         this._labelPlacement = "default";
         this._initialLayout = null;
@@ -896,6 +945,13 @@ class InputComponent extends HTMLElement {
 
     _afterConnected() {}
 
+    /**
+     * Runs once per component instance after the first complete connection.
+     * Native controls, static HTML/styles, initial attributes, form value, and
+     * validation state are ready when this hook runs.
+     */
+    _onCreate() {}
+
     _onNativeInputEvent() {}
 
     _onNativeChangeEvent() {}
@@ -993,8 +1049,7 @@ class InputComponent extends HTMLElement {
     }
 
     _getInputHtml() {
-        if (typeof this.html === "function") return this.html.bind(this);
-        return getConfigValue(this, "html");
+        return this.constructor.html;
     }
 
     /**
@@ -1057,6 +1112,7 @@ class InputComponent extends HTMLElement {
             "checked",
             "disabled",
             "placeholder",
+            "validation",
             "format",
             "formatters"
         ]);
@@ -1093,6 +1149,10 @@ class InputComponent extends HTMLElement {
         }
         window.addEventListener("resize", this._onFieldFeedbackViewportChange);
         window.addEventListener("scroll", this._onFieldFeedbackViewportChange, true);
+        if (!this._hasCreated) {
+            this._hasCreated = true;
+            this._onCreate();
+        }
         this._afterConnected();
     }
 
@@ -1720,13 +1780,13 @@ class InputComponent extends HTMLElement {
     /**
      * Compiles the CSS styles for the component.
      * This method takes the base CSS style from the component's constructor and the local CSS style
-     * from the component's `_styles` property, and combines them into a single string.
+     * from the component class's `static styles` definition, and combines them into a single string.
      * The resulting string is then set as the text content of the component's `<style>` element.
      * @protected
      */
     _compileStyles() {
         const base = makeCSSString(this.constructor.baseStyle || {});
-        const localStyles = this._styles || {};
+        const localStyles = this.constructor.styles || {};
         const configuredStyles = this._getConfiguredFormStyles();
         const local = makeCSSString(mergeStyleMaps(localStyles, configuredStyles));
         this._dom.style.textContent = `${base}\n${local}`;
@@ -2235,6 +2295,27 @@ class InputComponent extends HTMLElement {
      */
     get validationMessage() {
         return this._internals ? this._internals.validationMessage : "";
+    }
+
+    /**
+     * Returns the host validation rule string.
+     * @returns {string}
+     */
+    get validation() {
+        return this.getAttribute("validation") || "";
+    }
+
+    /**
+     * Replaces the runtime validation rules. Null, undefined, false, or an
+     * empty string removes the host override and restores configured defaults.
+     * @param {string | null | undefined | false} value
+     */
+    set validation(value) {
+        if (value == null || value === false || String(value).trim() === "") {
+            this.removeAttribute("validation");
+            return;
+        }
+        this.setAttribute("validation", String(value));
     }
 
     /**

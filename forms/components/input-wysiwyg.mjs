@@ -123,11 +123,11 @@ function moveCaretInsideEnd(element) {
 }
 
 class InputWysiwyg extends InputComponent {
-    static get observedAttributes() {
-        return [...InputComponent.observedAttributes, "tools", "length-basis"];
+    static get observed() {
+        return ["tools", "length-basis"];
     }
 
-    get _styles() {
+    static get styles() {
         return {
             ".input-wrapper": {
                 position: "relative",

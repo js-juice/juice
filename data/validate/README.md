@@ -105,6 +105,7 @@ Provided by `data/validate/Presets.mjs`:
 
 - Required/value: `required`, `empty`, `notEmpty`, `null`, `in`, `equals`
 - Type: `string`, `text`, `number`, `array`, `boolean`, `object`, `int`, `integer`, `timestamp`
+- Character requirements: `contains:uppercase`, `contains:lowercase`, `contains:number`, `contains:symbol`
 - Range/length: `min`, `max`, `length`
 - Format: `email`, `url`, `phone`, `address`, `postal`, `chars`, `sha256`
 

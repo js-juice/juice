@@ -50,8 +50,8 @@ class InputVectorComponent extends InputComponent {
      * Lists attributes that are observed for runtime updates.
      * @returns {*} List of observed attribute names.
      */
-    static get observedAttributes() {
-        return [...super.observedAttributes, "dimentions", "default-x", "default-y", "default-z", "default-t"];
+    static get observed() {
+        return ["dimentions", "default-x", "default-y", "default-z", "default-t"];
     }
 
     /**
@@ -70,7 +70,7 @@ class InputVectorComponent extends InputComponent {
        * Returns component-scoped style definitions used to generate CSS.
      * @returns {*} Style definition map used for generated component CSS.
      */
-    get _styles() {
+    static get styles() {
         return {
             ":host": {
                 width: "auto"

@@ -51,3 +51,15 @@ test("explicit validation rules keep precedence over native constraints", () => 
 
     assert.equal(controller.getValidationRules(), "required|max:60|email");
 });
+
+test("contains rules preserve each distinct character requirement", () => {
+    const controller = new FieldValidationController(createHost("password"));
+
+    assert.equal(
+        controller.mergeRuleStrings(
+            "contains:uppercase|contains:lowercase",
+            "contains:number|contains:symbol|contains:uppercase"
+        ),
+        "contains:uppercase|contains:lowercase|contains:number|contains:symbol"
+    );
+});

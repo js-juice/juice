@@ -52,15 +52,15 @@ class InputRadio extends InputComponent {
      * Lists attributes that are observed for runtime updates.
      * @returns {*} List of observed attribute names.
      */
-    static get observedAttributes() {
-        return [...super.observedAttributes, "bgcolor", "checkcolor"];
+    static get observed() {
+        return ["bgcolor", "checkcolor"];
     }
 
     /**
        * Returns component-scoped style definitions used to generate CSS.
      * @returns {*} Style definition map used for generated component CSS.
      */
-    get _styles() {
+    static get styles() {
         return {
             ...checkableContentViewStyles,
             ":host": {

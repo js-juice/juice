@@ -45,6 +45,14 @@ test("form info refreshes from validation, input, change, focus, and form mutati
     assert.match(source, /new MutationObserver/);
 });
 
+test("form info disables submit controls until required fields are complete and valid", () => {
+    assert.match(source, /const SUBMIT_CONTROL_SELECTOR/);
+    assert.match(source, /_isSubmissionReady\(\)/);
+    assert.match(source, /field\.required \|\| field\.status === "complete"/);
+    assert.match(source, /field\.status !== "invalid"/);
+    assert.match(source, /data-form-info-disabled/);
+});
+
 test("form info checklist exposes dialog relationships and receives keyboard focus", () => {
     assert.match(source, /role="dialog"/);
     assert.match(source, /setAttribute\("aria-labelledby", title\.id\)/);

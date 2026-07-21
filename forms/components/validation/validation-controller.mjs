@@ -15,6 +15,7 @@ const KNOWN_RULE_TYPES = new Set([
     "integer",
     "string",
     "number",
+    "contains",
     "array",
     "boolean",
     "object",
@@ -208,7 +209,8 @@ class FieldValidationController {
 
     mergeRuleStrings(primaryRules = "", secondaryRules = "") {
         const mergedTokens = [];
-        const seenTypes = new Set();
+        const seenRules = new Set();
+        const repeatableTypes = new Set(["contains"]);
         const candidates = [primaryRules, secondaryRules]
             .filter(Boolean)
             .join("|")
@@ -219,8 +221,9 @@ class FieldValidationController {
         for (let i = 0; i < candidates.length; i += 1) {
             const token = candidates[i];
             const type = this.ruleTypeFromToken(token);
-            if (!type || seenTypes.has(type)) continue;
-            seenTypes.add(type);
+            const identity = repeatableTypes.has(type) ? token.toLowerCase() : type;
+            if (!type || seenRules.has(identity)) continue;
+            seenRules.add(identity);
             mergedTokens.push(token);
         }
 

@@ -13,7 +13,8 @@
     "manifest:animation-docs": "node scripts/generate-animation-doc-manifest.mjs animation",
     "manifest:components": "node scripts/generate-component-manifest.mjs",
     "docs:standardize-components": "node scripts/standardize-component-docs.mjs",
-    "manifest:components:from-docs": "node scripts/generate-component-manifest-from-docs.mjs"
+    "manifest:components:from-docs": "node scripts/generate-component-manifest-from-docs.mjs",
+    "make:forminput": "cd forms/.make && node input.js"
   },
   "keywords": [],
   "author": "",

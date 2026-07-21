@@ -15,7 +15,7 @@
  *
  * Attribute Reference:
  * - Inherits base input attributes and constraints (`required`, `maxlength`, `validation`, etc).
- * - Uses native textarea-relevant attributes such as `rows` when passed through as the minimum row count.
+ * - Always begins at one row; preset and entered content determine the expanded height.
  *
  * Property Reference:
  * - Inherits base properties (`value`, `disabled`, `nativeInput`, ...).
@@ -35,7 +35,7 @@ class InputTextarea extends InputComponent {
      * Returns component-scoped style definitions used to generate CSS.
      * @returns {*} Style definition map used for generated component CSS.
      */
-    get _styles() {
+    static get styles() {
         return {
             ".input-wrapper": {
                 padding: "var(--input-padding)",
@@ -126,7 +126,7 @@ class InputTextarea extends InputComponent {
      */
     _createNativeControl() {
         const textarea = document.createElement("textarea");
-        textarea.rows = Number(this.getAttribute("rows") || 1);
+        textarea.rows = 1;
         return textarea;
     }
 
@@ -138,7 +138,7 @@ class InputTextarea extends InputComponent {
         const textarea = this._dom.native;
         if (!textarea) return;
 
-        textarea.rows = Number(this.getAttribute("rows") || 1);
+        textarea.rows = 1;
         textarea.style.height = "auto";
         textarea.style.height = `${textarea.scrollHeight}px`;
     }

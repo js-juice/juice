@@ -16,6 +16,13 @@ const FIELD_SELECTOR = [
     "[validate]"
 ].join(",");
 
+const SUBMIT_CONTROL_SELECTOR = [
+    'input-button[type="submit"]',
+    'button[type="submit"]',
+    "button:not([type])",
+    'input[type="submit"]'
+].join(",");
+
 const STATUS_LABELS = {
     complete: "Complete",
     invalid: "Error",
@@ -37,6 +44,7 @@ class FormInfo extends HTMLElement {
         this._validationTarget = null;
         this._fieldStates = [];
         this._fieldObserver = null;
+        this._submitControls = new Map();
         this._refreshFrame = 0;
         this._onValidationChange = () => this._queueRefresh();
         this._onFieldActivity = () => this._queueRefresh();
@@ -56,6 +64,8 @@ class FormInfo extends HTMLElement {
                 :host {
                     display: block;
                     width: 100%;
+                    max-width: 100%;
+                    min-width: 0;
                     margin: 0;
                     box-sizing: border-box;
                     font-family: var(--form-font-family, system-ui, sans-serif);
@@ -142,7 +152,8 @@ class FormInfo extends HTMLElement {
                     z-index: 100100;
                     top: calc(100% + 0.5rem);
                     right: 0;
-                    width: min(760px, calc(100vw - 2rem));
+                    width: min(760px, calc(100vw - 10vw));
+                    max-width: calc(100vw - 10vw);
                     max-height: min(70vh, 620px);
                     overflow: auto;
                     border: var(--input-border, 1px solid #c8c8c8);
@@ -436,6 +447,7 @@ class FormInfo extends HTMLElement {
         document.removeEventListener("pointerdown", this._onDocumentPointerDown);
         document.removeEventListener("keydown", this._onDocumentKeyDown);
         this._unbindValidationSource();
+        this._clearSubmitControls();
         if (this._refreshFrame) cancelAnimationFrame(this._refreshFrame);
     }
 
@@ -488,6 +500,7 @@ class FormInfo extends HTMLElement {
         this._validationTarget = target;
         if (!target) {
             this._fieldStates = [];
+            this._syncSubmitControls();
             this._renderProgress();
             return;
         }
@@ -501,7 +514,19 @@ class FormInfo extends HTMLElement {
             subtree: true,
             childList: true,
             attributes: true,
-            attributeFilter: ["label", "name", "value", "checked", "validation-state"]
+            attributeFilter: [
+                "label",
+                "name",
+                "value",
+                "checked",
+                "required",
+                "validation",
+                "validate",
+                "validation-state",
+                "hidden",
+                "aria-hidden",
+                "data-form-info-ignore"
+            ]
         });
         this._refreshFieldStates();
     }
@@ -531,7 +556,10 @@ class FormInfo extends HTMLElement {
         if (!this._validationTarget) return;
         const groups = new Map();
         const fields = Array.from(this._validationTarget.querySelectorAll(FIELD_SELECTOR)).filter(
-            (field) => !field.disabled && !field.hasAttribute("disabled")
+            (field) =>
+                !field.disabled &&
+                !field.hasAttribute("disabled") &&
+                !field.closest("[hidden], [aria-hidden=\"true\"], [data-form-info-ignore]")
         );
 
         fields.forEach((field, index) => {
@@ -544,6 +572,7 @@ class FormInfo extends HTMLElement {
             this._createFieldState(property, groupedFields, index)
         );
         this._renderProgress();
+        this._syncSubmitControls();
     }
 
     _createFieldState(property, fields, index) {
@@ -567,9 +596,83 @@ class FormInfo extends HTMLElement {
             label: primary.getAttribute("label") || primary.getAttribute("name") || `Field ${index + 1}`,
             fields,
             primary,
+            required: fields.some((field) => this._isRequiredField(field)),
             status,
             messages
         };
+    }
+
+    _isRequiredField(field) {
+        if (field.hasAttribute("required")) return true;
+        const rules = `${field.getAttribute("validation") || ""}|${field.getAttribute("validate") || ""}`
+            .toLowerCase()
+            .split(/[|,\s]+/);
+        return rules.includes("required");
+    }
+
+    _isSubmissionReady() {
+        return this._fieldStates.every(
+            (field) => (!field.required || field.status === "complete") && field.status !== "invalid"
+        );
+    }
+
+    _submitControlsForTarget() {
+        const target = this._validationTarget;
+        if (!target) return [];
+
+        const controls = Array.from(target.querySelectorAll(SUBMIT_CONTROL_SELECTOR));
+        if (target.id) {
+            document.querySelectorAll("input-button[form], button[form], input[form]").forEach((control) => {
+                if (
+                    control.getAttribute("form") === target.id &&
+                    control.matches(SUBMIT_CONTROL_SELECTOR)
+                ) {
+                    controls.push(control);
+                }
+            });
+        }
+
+        return [...new Set(controls)].filter(
+            (control) => !control.hasAttribute("data-form-info-submit-ignore")
+        );
+    }
+
+    _syncSubmitControls() {
+        const controls = new Set(this._submitControlsForTarget());
+        for (const [control, state] of this._submitControls) {
+            if (!controls.has(control)) {
+                this._setSubmitControlBlocked(control, state, false);
+                this._submitControls.delete(control);
+            }
+        }
+
+        const blocked = !this._isSubmissionReady();
+        controls.forEach((control) => {
+            let state = this._submitControls.get(control);
+            if (!state) {
+                state = {
+                    disabled: Boolean(control.disabled),
+                    formInfoDisabled: control.hasAttribute("data-form-info-disabled")
+                };
+                this._submitControls.set(control, state);
+            }
+            this._setSubmitControlBlocked(control, state, blocked);
+        });
+    }
+
+    _setSubmitControlBlocked(control, state, blocked) {
+        if (control.tagName.toLowerCase() === "input-button") {
+            control.toggleAttribute("data-form-info-disabled", blocked || state.formInfoDisabled);
+            return;
+        }
+        control.disabled = blocked || state.disabled;
+    }
+
+    _clearSubmitControls() {
+        for (const [control, state] of this._submitControls) {
+            this._setSubmitControlBlocked(control, state, false);
+        }
+        this._submitControls.clear();
     }
 
     _fieldValue(field) {

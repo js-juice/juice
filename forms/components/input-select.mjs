@@ -388,9 +388,8 @@ class InputSelect extends InputComponent {
      * Lists attributes that are observed for runtime updates.
      * @returns {*} List of observed attribute names.
      */
-    static get observedAttributes() {
+    static get observed() {
         return [
-            ...super.observedAttributes,
             "options",
             "force-native",
             "editable",
@@ -433,7 +432,7 @@ class InputSelect extends InputComponent {
      * Returns component-scoped style definitions used to generate CSS.
      * @returns {*} Style definition map used for generated component CSS.
      */
-    get _styles() {
+    static get styles() {
         return {
             ":host": {
                 cursor: "pointer",
@@ -1476,6 +1475,8 @@ class InputSelect extends InputComponent {
         this._dom.native.addEventListener("input", () => {
             if (!this._editingCustomValue) return;
             this.selected = { value: this._dom.native.value, label: this._dom.native.value, description: "" };
+            this._syncHostFromNative();
+            this._updateFormValue();
         });
 
         this._dom.native.addEventListener("blur", () => {

@@ -10,8 +10,8 @@ const UNITS = {
 class InputAngleComponent extends InputComponent {
     static tag = "input-angle";
 
-    static get observedAttributes() {
-        return [...super.observedAttributes, "unit"];
+    static get observed() {
+        return ["unit"];
     }
 
     constructor() {
@@ -22,7 +22,7 @@ class InputAngleComponent extends InputComponent {
         this.dragPointerId = null;
     }
 
-    get _styles() {
+    static get styles() {
         return {
             ".input-wrapper": {
                 border: 0

@@ -49,8 +49,8 @@ class InputCheckbox extends InputComponent {
      * Lists attributes that are observed for runtime updates.
      * @returns {*} List of observed attribute names.
      */
-    static get observedAttributes() {
-        return [...super.observedAttributes, "bgcolor", "checkcolor", "label-checked"];
+    static get observed() {
+        return ["bgcolor", "checkcolor", "label-checked"];
     }
 
     _syncCheckedLabel() {
@@ -66,7 +66,7 @@ class InputCheckbox extends InputComponent {
      * Returns component-scoped style definitions used to generate CSS.
      * @returns {*} Style definition map used for generated component CSS.
      */
-    get _styles() {
+    static get styles() {
         return {
             ...checkableContentViewStyles,
             label: {
@@ -130,6 +130,9 @@ class InputCheckbox extends InputComponent {
                 stroke: "var(--check-color, #222222)",
                 strokeDashoffset: "0",
                 transition: "stroke-dashoffset 0.25s ease"
+            },
+            ".input-root > label": {
+                marginBottom: "0"
             }
         };
     }

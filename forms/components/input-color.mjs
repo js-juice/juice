@@ -1,7 +1,7 @@
 import InputComponent from "./input-component.mjs";
 import "./input-text.mjs";
 
-const FORMATS = ["hex", "rgb", "rgba", "hsl", "hsla"];
+const FORMATS = ["hex", "rgb", "rgba", "hsl", "hsla", "hsb"];
 
 function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
@@ -191,6 +191,18 @@ function parseColor(value) {
         };
     }
 
+    match = color.match(/^hsb\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*\)$/i);
+    if (match) {
+        return {
+            format: "hsb",
+            ...hsvToRgb({
+                h: Number(match[1]) || 0,
+                s: (Number(match[2]) || 0) / 100,
+                v: (Number(match[3]) || 0) / 100
+            })
+        };
+    }
+
     return parseColor("#000000");
 }
 
@@ -202,6 +214,7 @@ function formatColor(color, format) {
         a: clamp(Number(color.a ?? 1), 0, 1)
     };
     const hsl = rgbToHsl(rgb);
+    const hsb = rgbToHsv(rgb);
 
     switch (format) {
         case "rgb":
@@ -212,6 +225,8 @@ function formatColor(color, format) {
             return `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
         case "hsla":
             return `hsla(${hsl.h}, ${hsl.s}%, ${hsl.l}%, ${Number(rgb.a.toFixed(2))})`;
+        case "hsb":
+            return `hsb(${hsb.h}, ${Math.round(hsb.s * 100)}%, ${Math.round(hsb.v * 100)}%)`;
         default:
             return rgbToHex(rgb);
     }
@@ -222,23 +237,33 @@ class InputColorComponent extends InputComponent {
 
     static tag = "input-color";
 
-    static get observedAttributes() {
-        return [...super.observedAttributes.filter((name) => name !== "type"), "format", "formats"];
+    static get observed() {
+        return ["format", "formats"];
     }
 
     constructor() {
         super({ _layout: "label:input:>:default:native:status:<:validation", ignoreHeight: true });
-        this.colorFormat = "hex";
+        this.colorFormat = null;
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
         super.attributeChangedCallback(name, oldValue, newValue);
-        if (oldValue === newValue || name !== "formats") return;
-        this._renderFormatOptions();
-        this._syncVisualState();
+        if (oldValue === newValue) return;
+
+        if (name === "format") {
+            this.colorFormat = this._firstAllowedFormat(newValue, this.colorFormat);
+            this._syncVisualState();
+            return;
+        }
+
+        if (name === "formats") {
+            this._renderFormatOptions();
+            this.colorFormat = this._firstAllowedFormat(this.colorFormat, this.getAttribute("format"));
+            this._syncVisualState();
+        }
     }
 
-    get _styles() {
+    static get styles() {
         return {
             ".native-wrapper": {
                 display: "none"
@@ -249,13 +274,20 @@ class InputColorComponent extends InputComponent {
                 "--label-inside-bgcolor": "#333333",
                 "--input-text-indent": "5px"
             },
+            ":host, .input-root, .input-container, .input-wrapper, .color-input, .channels, .channel": {
+                overflow: "visible"
+            },
+            label: {
+                textIndent: "0.5rem"
+            },
+            ".channels input-text, .full-value input-text": {
+                "--form-label-color": "#ffffff"
+            },
             ".color-input": {
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.5rem",
                 position: "relative",
-                display: "grid",
-                gridTemplateColumns: "1fr 64px",
-                gridTemplateRows: "minmax(132px, auto) 32px",
-                gap: "8px",
-                padding: "10px",
                 width: "100%",
                 boxSizing: "border-box"
             },
@@ -265,7 +297,7 @@ class InputColorComponent extends InputComponent {
                 gridRow: "1",
                 minHeight: "132px",
                 border: "1px solid #cbd5e1",
-                borderRadius: "6px",
+
                 background: "var(--color-value, #000000)",
                 overflow: "visible"
             },
@@ -309,15 +341,34 @@ class InputColorComponent extends InputComponent {
             },
             ".channels": {
                 display: "flex",
-                gridColumn: "2",
-                gridRow: "1",
+                margin: "0 1rem",
+                marginBottom: "1rem",
                 flexDirection: "column",
                 gap: "6px",
                 alignContent: "start"
             },
             ".channel": {
+                position: "relative",
                 display: "grid",
-                gap: "2px"
+                gridTemplateColumns: "80px 1fr",
+                gap: "0.5rem"
+            },
+            ".channel-slider-panel": {
+                position: "relative",
+                boxSizing: "border-box",
+                borderRadius: "6px",
+                background: "#ffffff"
+            },
+            ".channel-slider-panel[hidden]": {},
+            ".channel-slider": {
+                display: "block",
+                width: "100%",
+                height: "28px",
+                margin: 0,
+                padding: 0,
+                appearance: "auto",
+                accentColor: "var(--color-value, #2563eb)",
+                cursor: "pointer"
             },
             ".channel label": {
                 fontSize: "10px",
@@ -342,8 +393,8 @@ class InputColorComponent extends InputComponent {
             },
             ".full-value": {
                 display: "grid",
-                gridColumn: "1 / -1",
-                gridRow: "2",
+                gridTemplateColumns: "1fr 1fr",
+                margin: "0 1rem",
                 gridTemplateColumns: "1fr 34px",
                 gap: "8px",
                 alignItems: "center"
@@ -451,12 +502,14 @@ class InputColorComponent extends InputComponent {
                     <input class="picker-hue" type="range" min="0" max="360" value="0" aria-label="Hue">
                 </div>
             </div>
-            <div class="channels"></div>
+            
             <div class="full-value">
                 <input-text class="text" label-placement="inside" show-requirement="false"></input-text>
                 <button class="picker" type="button" aria-label="Pick color"></button>
                 <button class="picker-close" type="button" aria-label="Close color picker" disabled>X</button>
             </div>
+
+            <div class="channels"></div>
         `;
 
         const preview = this._dom.default.querySelector(".preview");
@@ -638,6 +691,14 @@ class InputColorComponent extends InputComponent {
             return fields;
         }
 
+        if (format === "hsb") {
+            return [
+                { key: "h", label: "H", min: 0, max: 360 },
+                { key: "s", label: "S", min: 0, max: 100 },
+                { key: "b", label: "B", min: 0, max: 100 }
+            ];
+        }
+
         const fields = [
             { key: "r", label: "R", min: 0, max: 255 },
             { key: "g", label: "G", min: 0, max: 255 },
@@ -657,12 +718,22 @@ class InputColorComponent extends InputComponent {
         }
 
         if (format.startsWith("hsl")) return rgbToHsl(color);
+        if (format === "hsb") {
+            const hsb = rgbToHsv(color);
+            return { h: hsb.h, s: Math.round(hsb.s * 100), b: Math.round(hsb.v * 100) };
+        }
         return {
             r: Math.round(color.r),
             g: Math.round(color.g),
             b: Math.round(color.b),
             a: clamp(Number(color.a ?? 1), 0, 1)
         };
+    }
+
+    formatValue(format = this.colorFormat) {
+        const normalizedFormat = String(format || "hex").toLowerCase();
+        const targetFormat = FORMATS.includes(normalizedFormat) ? normalizedFormat : "hex";
+        return formatColor(parseColor(this.value), targetFormat);
     }
 
     channelsToColor() {
@@ -683,6 +754,17 @@ class InputColorComponent extends InputComponent {
                     s: Number(values.s) || 0,
                     l: Number(values.l) || 0,
                     a: clamp(Number(values.a ?? 1) || 0, 0, 1)
+                }),
+                format
+            );
+        }
+
+        if (format === "hsb") {
+            return formatColor(
+                hsvToRgb({
+                    h: Number(values.h) || 0,
+                    s: (Number(values.s) || 0) / 100,
+                    v: (Number(values.b) || 0) / 100
                 }),
                 format
             );
@@ -727,7 +809,57 @@ class InputColorComponent extends InputComponent {
             });
             input.addEventListener("change", () => this.commit(this.channelsToColor()));
 
-            wrap.append(input);
+            const slider = document.createElement("input");
+            slider.className = "channel-slider";
+            slider.type = "range";
+            slider.min = field.min === null ? 0 : field.min;
+            slider.max = field.max === null ? 255 : field.max;
+            slider.step = field.step ?? 1;
+            slider.value = field.min === null ? parseInt(value || "00", 16) : value;
+            slider.setAttribute("aria-label", `${field.label} value`);
+            const sliderPanel = document.createElement("div");
+            sliderPanel.className = "channel-slider-panel";
+            sliderPanel.append(slider);
+
+            const showSlider = () => {
+                this._dom.channels.querySelectorAll(".channel-slider-panel").forEach((candidate) => {
+                    candidate.hidden = candidate !== sliderPanel;
+                });
+                slider.value = field.min === null ? parseInt(input.value || "00", 16) : input.value;
+                sliderPanel.hidden = false;
+            };
+
+            input.addEventListener("click", showSlider);
+            input.addEventListener("focusin", showSlider);
+            slider.addEventListener("input", () => {
+                const channelValue = field.min === null ? componentToHex(Number(slider.value)) : slider.value;
+                input.value = channelValue;
+                input.setAttribute("value", channelValue);
+
+                const next = this.channelsToColor();
+                this._setTextValue(next);
+                this.preview(next);
+                this._dom.native.value = next;
+                this._isSyncing = true;
+                try {
+                    this.setAttribute("value", next);
+                } finally {
+                    this._isSyncing = false;
+                }
+                this._updateFormValue();
+                this.dispatchEvent(new Event("input", { bubbles: true }));
+            });
+            slider.addEventListener("change", () => {
+                this.dispatchEvent(new Event("change", { bubbles: true }));
+            });
+            slider.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") {
+                    sliderPanel.hidden = true;
+                    input.focus();
+                }
+            });
+
+            wrap.append(input, sliderPanel);
             this._dom.channels.appendChild(wrap);
         });
     }
@@ -754,7 +886,7 @@ class InputColorComponent extends InputComponent {
         if (!this._dom.default || !this._dom.native) return;
         const parsed = parseColor(this.value);
         this._renderFormatOptions();
-        this.colorFormat = this._firstAllowedFormat(this.getAttribute("format"), parsed.format, this.colorFormat);
+        this.colorFormat = this._firstAllowedFormat(this.colorFormat, this.getAttribute("format"), parsed.format);
         this._syncFormatSelect();
         this._dom.text.setAttribute("label", this.colorFormat.toUpperCase());
         this._setTextValue(formatColor(parsed, this.colorFormat));

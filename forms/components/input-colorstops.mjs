@@ -47,7 +47,7 @@ class InputColorStops extends InputComponent {
         this._escapeHandler = null;
     }
 
-    get _styles() {
+    static get styles() {
         return {
             ".native-wrapper": {
                 display: "none"

@@ -57,7 +57,7 @@ class InputText extends InputComponent {
        * Returns component-scoped style definitions used to generate CSS.
      * @returns {*} Style definition map used for generated component CSS.
      */
-    get _styles() {
+    static get styles() {
         return {
             ":root": {
                 "--input-padding": "0.2em"

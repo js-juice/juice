@@ -26,7 +26,8 @@ const MESSAGES = {
     unique: "%s must be unique this has been used already",
     in: "%s must be one of the following: %a...",
     required: "%s is a required field",
-    chars: "%s contains invalid characters"
+    chars: "%s contains invalid characters",
+    contains: "%s must contain at least one %s character"
 };
 
 /**

@@ -32,6 +32,7 @@ const KNOWN_TYPES = new Set([
     "equals",
     "in",
     "chars",
+    "contains",
     "empty",
     "notEmpty",
     "null"

@@ -58,9 +58,8 @@ class InputDialComponent extends InputComponent {
      * Lists attributes that are observed for runtime updates.
      * @returns {*} List of observed attribute names.
      */
-    static get observedAttributes() {
+    static get observed() {
         return [
-            ...super.observedAttributes.filter((name) => name !== "type"),
             "units",
             "step",
             "decimals",
@@ -170,7 +169,7 @@ class InputDialComponent extends InputComponent {
      * Returns component-scoped style definitions used to generate CSS.
      * @returns {*} Style definition map used for generated component CSS.
      */
-    get _styles() {
+    static get styles() {
         return {
             ":host": {
                 display: "inline-block",

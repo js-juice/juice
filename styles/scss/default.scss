@@ -644,3 +644,10 @@ a.button\:lt {
 
 /* Anchor Start */
 @include anchor.anchor-writer();
+
+/* Contents Styles */
+
+.content\:centered {
+    display: grid;
+    place-items: center;
+}

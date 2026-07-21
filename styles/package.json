@@ -4,12 +4,12 @@
   "description": "SCSS Stylesheets",
   "license": "ISC",
   "author": "",
-  "type": "commonjs",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "build": "sass --no-source-map scss:build",
     "buildto": "sass --no-source-map --style=compressed ",
-    "watch": "sass scss:build --watch --no-source-map"
+    "watch": "node watch/watch.js"
   },
   "devDependencies": {
     "sass": "^1.101.0"

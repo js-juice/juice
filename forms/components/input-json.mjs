@@ -82,7 +82,7 @@ export default class InputJsonComponent extends InputComponent {
         };
     }
 
-    get _styles() {
+    static get styles() {
         return {
             ":host": {
                 display: "block"
@@ -266,7 +266,7 @@ export default class InputJsonComponent extends InputComponent {
         this._renderingJson = false;
     }
 
-    html() {
+    static html() {
         return `
             <div id="code" part="json-editor">
                 <header>{</header>

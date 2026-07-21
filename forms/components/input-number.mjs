@@ -40,8 +40,8 @@ class InputNumber extends InputComponent {
      * Lists attributes that are observed for runtime updates.
      * @returns {*} List of observed attribute names.
      */
-    static get observedAttributes() {
-        return [...super.observedAttributes.filter((name) => name !== "type"), "units", "step", "decimals"];
+    static get observed() {
+        return ["units", "step", "decimals"];
     }
     /**
      * Initializes component state, DOM references, and default behavior.
@@ -59,7 +59,7 @@ class InputNumber extends InputComponent {
      * Returns component-scoped style definitions used to generate CSS.
      * @returns {*} Style definition map used for generated component CSS.
      */
-    get _styles() {
+    static get styles() {
         return {
             ":host": {
                 "--input-padding": "0.2em"

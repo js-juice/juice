@@ -10,7 +10,9 @@ export function normalizePercent(value) {
 }
 
 export function componentToHex(value) {
-    return clamp(Math.round(Number(value) || 0), 0, 255).toString(16).padStart(2, "0");
+    return clamp(Math.round(Number(value) || 0), 0, 255)
+        .toString(16)
+        .padStart(2, "0");
 }
 
 export function rgbToHex({ r, g, b }) {

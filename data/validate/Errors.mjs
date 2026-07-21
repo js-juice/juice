@@ -91,7 +91,11 @@ export class ValidationErrors extends Emitter {
             }
         }
 
-        const alreadySet = this.get(property).some((existing) => existing.type === error.type);
+        const alreadySet = this.get(property).some((existing) => {
+            if (existing.type !== error.type) return false;
+            if (error.type !== "contains") return true;
+            return JSON.stringify(existing.rule?.args || []) === JSON.stringify(error.rule?.args || []);
+        });
         if (!alreadySet) {
             this.properties[property].push(error);
         }

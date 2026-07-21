@@ -4851,3 +4851,9 @@ a.button\:lt[aria-disabled=true] {
 .left\:100 {
   left: 100%;
 }
+
+/* Contents Styles */
+.content\:centered {
+  display: grid;
+  place-items: center;
+}

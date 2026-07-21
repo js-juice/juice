@@ -55,8 +55,8 @@ class InputImageComponent extends InputComponent {
         validation: false
     };
 
-    static get observedAttributes() {
-        return [...super.observedAttributes, "accept", "width", "height", "aspect", "button-label"];
+    static get observed() {
+        return ["accept", "width", "height", "aspect", "button-label"];
     }
 
     constructor() {
@@ -72,7 +72,7 @@ class InputImageComponent extends InputComponent {
         this._openPicker = () => this._dom.native?.click();
     }
 
-    html() {
+    static html() {
         return `
             <div class="image-input">
                 <canvas class="image-canvas" part="canvas"></canvas>
@@ -85,7 +85,7 @@ class InputImageComponent extends InputComponent {
         `;
     }
 
-    get _styles() {
+    static get styles() {
         return {
             ".image-input": {
                 display: "grid",

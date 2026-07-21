@@ -35,6 +35,18 @@ test("input height remains CSS-owned instead of being measured per component typ
     assert.match(inputTextarea, /height:\s*"var\(--input-control-size\)"/);
 });
 
+test("textareas always begin at one row and grow to their content", async () => {
+    const inputTextarea = await readFile(
+        new URL("./input-textarea.mjs", import.meta.url),
+        "utf8"
+    );
+
+    assert.equal((inputTextarea.match(/textarea\.rows = 1;/g) || []).length, 2);
+    assert.doesNotMatch(inputTextarea, /getAttribute\("rows"\)/);
+    assert.match(inputTextarea, /addEventListener\("input", this\._boundAutoGrow\)/);
+    assert.match(inputTextarea, /textarea\.style\.height = `\$\{textarea\.scrollHeight\}px`/);
+});
+
 test("browser-prefilled controls color the complete input wrapper", async () => {
     const inputComponent = await readFile(
         new URL("./input-component.mjs", import.meta.url),
