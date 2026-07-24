@@ -291,6 +291,13 @@ class InputColorComponent extends InputComponent {
                 width: "100%",
                 boxSizing: "border-box"
             },
+            ':host([layout="horizontal"]) .color-input': {
+                display: "grid",
+                gridTemplateColumns: "minmax(132px, 0.75fr) minmax(240px, 1.25fr)",
+                gridTemplateRows: "auto 1fr",
+                gap: "0.75rem",
+                alignItems: "stretch"
+            },
             ".preview": {
                 position: "relative",
                 gridColumn: "1",
@@ -300,6 +307,11 @@ class InputColorComponent extends InputComponent {
 
                 background: "var(--color-value, #000000)",
                 overflow: "visible"
+            },
+            ':host([layout="horizontal"]) .preview': {
+                gridColumn: "1",
+                gridRow: "1 / span 2",
+                minHeight: "100%"
             },
             ".format": {
                 position: "absolute",
@@ -346,6 +358,14 @@ class InputColorComponent extends InputComponent {
                 flexDirection: "column",
                 gap: "6px",
                 alignContent: "start"
+            },
+            ':host([layout="horizontal"]) .channels': {
+                gridColumn: "2",
+                gridRow: "2",
+                margin: 0,
+                marginBottom: 0,
+                padding: "0 0.75rem 0.75rem 0",
+                boxSizing: "border-box"
             },
             ".channel": {
                 position: "relative",
@@ -399,6 +419,13 @@ class InputColorComponent extends InputComponent {
                 gap: "8px",
                 alignItems: "center"
             },
+            ':host([layout="horizontal"]) .full-value': {
+                gridColumn: "2",
+                gridRow: "1",
+                margin: 0,
+                padding: "0.75rem 0.75rem 0 0",
+                boxSizing: "border-box"
+            },
             ".color-input[picker-open] .full-value": {
                 gridTemplateColumns: "1fr 34px 34px"
             },
@@ -444,6 +471,9 @@ class InputColorComponent extends InputComponent {
                 display: "grid",
                 gridTemplateRows: "1fr 16px",
                 gap: "8px"
+            },
+            ':host([layout="horizontal"]) .picker-panel': {
+                right: "-5px"
             },
             ".picker-sv": {
                 position: "relative",

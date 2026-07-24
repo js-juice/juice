@@ -54,6 +54,7 @@ class InputTextarea extends InputComponent {
             },
             textarea: {
                 margin: "0",
+                padding: 0,
                 border: "0",
                 outline: 0,
                 minWidth: "calc(100% - 0.4rem) ",

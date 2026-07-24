@@ -32,7 +32,8 @@ test("input height remains CSS-owned instead of being measured per component typ
 
     assert.doesNotMatch(inputComponent, /measuredInputHeights/);
     assert.doesNotMatch(inputComponent, /_measureNativeInputHeight/);
-    assert.match(inputTextarea, /height:\s*"var\(--input-control-size\)"/);
+    assert.match(inputTextarea, /minHeight:\s*"var\(--input-control-size\)"/);
+    assert.match(inputTextarea, /padding:\s*0/);
 });
 
 test("textareas always begin at one row and grow to their content", async () => {

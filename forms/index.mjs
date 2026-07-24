@@ -1,3 +1,32 @@
+import { getJuiceConfig } from "../config/juice-config.mjs";
+
+const ROOT_STYLE_ATTRIBUTE = "data-juice-forms-root-styles";
+
+function applyRootStyles() {
+    if (typeof document === "undefined") return;
+
+    let style = document.head.querySelector(`style[${ROOT_STYLE_ATTRIBUTE}]`);
+    if (!style) {
+        style = document.createElement("style");
+        style.setAttribute(ROOT_STYLE_ATTRIBUTE, "");
+        document.head.appendChild(style);
+    }
+
+    const configuredStyles = getJuiceConfig("forms.styles") || {};
+    const declarations = Object.entries(configuredStyles)
+        .filter(([property, value]) => property.startsWith("--") && value != null)
+        .map(([property, value]) => `    ${property}: ${String(value)};`)
+        .join("\n");
+
+    style.textContent = declarations ? `:root {\n${declarations}\n}` : "";
+}
+
+applyRootStyles();
+
+if (typeof document !== "undefined") {
+    document.addEventListener("juice:configchange", applyRootStyles);
+}
+
 import "./components/juice-form.mjs";
 import "./components/input-checkbox.mjs";
 import "./components/input-radio.mjs";

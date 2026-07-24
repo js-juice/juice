@@ -24,6 +24,25 @@ const formsConfig = {
             // Named toolsets referenced with tools="@name".
             presets: {}
         }
+    },
+    styles: {
+        "--form-font-family": "system-ui, Segoe UI, Roboto, Arial, sans-serif",
+        "--form-label-color": "var(--color-text-primary, #48484a)",
+        "--form-label-font-size": "0.7rem",
+        "--form-label-weight": "700",
+        "--form-label-text-transform": "uppercase",
+        "--form-guidance-color": "var(--color-text-secondary, #64748b)",
+        "--form-accent-color": "var(--color-primary, #2563eb)",
+        "--input-height": "1.5rem",
+        "--input-padding": "0.5em",
+        "--input-bgcolor": "var(--color-input-background, #ffffff)",
+        "--input-color": "var(--color-input-text, #293241)",
+        "--input-border": "1px solid var(--color-input-border, #c8c8c8)",
+        "--input-border-radius": "var(--button-border-radius, 5px)",
+        "--input-focus-bgcolor": "var(--color-input-background, #ffffff)",
+        "--input-disabled-bgcolor": "var(--color-disabled-background, #f1f5f9)",
+        "--validation-color": "var(--color-error, #dc2626)",
+        "--juice-forms-gap": "1rem"
     }
 };
 
@@ -33,5 +52,6 @@ export const groups = formsConfig.groups;
 export const formatters = formsConfig.formatters;
 export const validation = formsConfig.validation;
 export const inputs = formsConfig.inputs;
+export const styles = formsConfig.styles;
 
 export default formsConfig;
