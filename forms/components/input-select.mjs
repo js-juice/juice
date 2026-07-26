@@ -469,10 +469,10 @@ class InputSelect extends InputComponent {
                 content: "''",
                 display: "block",
                 position: "absolute",
-                "--s": "var(--select-arrow-size, 5px)",
+                "--s": "var(--select-arrow-size, 6px)",
                 width: "50%",
                 maxWidth: "var(--select-arrow-max-width, 50%)",
-                aspectRatio: "5/3",
+                aspectRatio: "5/3.2",
                 clipPath: "polygon(0 0,0 var(--s),50% 100%,100% var(--s),100% 0,50% calc(100% - var(--s)))",
                 background:
                     "var(--form-select-tab-arrow, var(--select-arrow-color, var(--form-accent-color, #0059ff)))",
@@ -484,11 +484,15 @@ class InputSelect extends InputComponent {
                 display: "none",
                 position: "relative",
                 flex: "0 0 auto",
-                width: "var(--input-height)",
-                height: "var(--input-height)",
+                width: "calc(var(--input-height) + var(--input-padding) + var(--input-padding))",
+                height: "calc(var(--input-height) + var(--input-padding) + var(--input-padding))",
                 borderLeft: "var(--form-select-edit-tab-border, var(--form-select-tab-border, 1px solid #c8c8c8))",
                 background:
                     "var(--form-select-edit-tab-bg, linear-gradient(0deg, rgba(204, 204, 204, 1) 0%, rgba(224, 224, 224, 1) 100%))"
+            },
+            ".select-edit:hover": {
+                background: "#6e6e6e",
+                color: "#ffffff"
             },
             ":host([editable]) .edit-tab": {
                 display: "block"
@@ -512,8 +516,8 @@ class InputSelect extends InputComponent {
             },
             ".select-edit svg": {
                 display: "block",
-                width: "16px",
-                height: "16px"
+                width: "clamp(12px, 50%, 30px)",
+                aspectRatio: 1
             },
             ":host(.has-validation) .tab::after": {
                 background: "var(--validation-color, var(--form-accent-color), #0059f)"
@@ -1168,6 +1172,7 @@ class InputSelect extends InputComponent {
         let defaultValue;
         if (this.hasAttribute("default")) {
             defaultValue = this.getAttribute("default");
+            this.defaultValue = defaultValue;
         }
 
         if (this._useNativeMode()) {
@@ -1176,6 +1181,7 @@ class InputSelect extends InputComponent {
                 const optionData = this._options[i];
                 const option = document.createElement("option");
                 option.value = optionData.value;
+                if (optionData.value === "") this.defaultValue = optionData.value;
                 option.textContent = optionData.label;
                 if (optionData.selected) option.selected = true;
                 this._dom.native.appendChild(option);
@@ -1197,6 +1203,8 @@ class InputSelect extends InputComponent {
                 const li = document.createElement("div");
                 const option = document.createElement("div");
                 const label = document.createElement("span");
+
+                if (optionData.value === "") this.defaultValue = optionData.value;
 
                 li.id = `${this._optionList.id}-option-${i}`;
                 li.className = "select-option";
@@ -1503,6 +1511,7 @@ class InputSelect extends InputComponent {
             this.classList.add("editing-custom-value");
             this._dom.native.readOnly = false;
             this._dom.native.value = this.selected.value || this._dom.native.value || "";
+            if (this._dom.native.value == this.defaultValue) this._dom.native.value = "";
             this._dom.native.focus();
             this._dom.native.select();
         });

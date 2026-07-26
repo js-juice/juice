@@ -7,7 +7,7 @@
 import Emitter from "../../event/emitter.mjs";
 import ObserveTools from "./Tools.mjs";
 import Timeline from "../../../animation/timeline.mjs";
-import DomUtil from "../../Util/Dom.mjs";
+import DomUtil from "../operations.mjs";
 
 /**
  * Target for position observation.

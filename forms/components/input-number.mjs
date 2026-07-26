@@ -61,11 +61,8 @@ class InputNumber extends InputComponent {
      */
     static get styles() {
         return {
-            ":host": {
-                "--input-padding": "0.2em"
-            },
+            ":host": {},
             "input.native": {
-                margin: "var(--input-padding)",
                 width: "100%",
                 boxSizing: "border-box"
             },
@@ -87,13 +84,15 @@ class InputNumber extends InputComponent {
                 position: "relative",
                 right: "0",
                 top: "0",
+                height: `calc(var(--input-height) + var(--input-padding) + var(--input-padding))`,
                 borderRight: "1px solid #cccccc"
             },
             ".stepers .step": {
                 flex: "0 0 auto",
-                width: "1.5em",
+                width: "calc(var(--input-height) * 0.7)",
                 height: "50%",
                 display: "flex",
+                padding: "0 0.5rem",
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
@@ -110,9 +109,10 @@ class InputNumber extends InputComponent {
             },
             ".stepers .step:before": {
                 content: "''",
+                position: "relative",
                 display: "block",
                 "--s": "3px",
-                height: "50%",
+                height: "35%",
                 aspectRatio: "7/5",
                 clipPath:
                     "polygon(0 100%,0 calc(100% - var(--s)),50% 0,100% calc(100% - var(--s)),100% 100%,50% var(--s))",
@@ -145,12 +145,14 @@ class InputNumber extends InputComponent {
      */
     connectedCallback() {
         super.connectedCallback();
+        if (this.connected) return;
         this._bindStepers();
         if (this.hasAttribute("units")) {
             const unit = this.getAttribute("units");
             //this._wireframe["div.units"].style.width = `${unit.length * 4}ch`; // unit.length
             this._wireframe["div.units"].innerHTML = `<div>${unit}</div>`; // this.getAttribute("units");
         }
+        this.connected = true;
     }
 
     /**

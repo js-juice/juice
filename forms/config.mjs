@@ -2,6 +2,13 @@ import layoutDefaults from "./presets/layout.mjs";
 import formatDefaults from "./presets/format.mjs";
 import validationDefaults from "./presets/validation.mjs";
 
+const input = document.createElement("input");
+input.type = "text";
+
+document.body.appendChild(input);
+const inputHeight = getComputedStyle(input).height;
+input.remove();
+
 const formsConfig = {
     layout: layoutDefaults.layout,
     presets: layoutDefaults.presets,
@@ -33,8 +40,9 @@ const formsConfig = {
         "--form-label-text-transform": "uppercase",
         "--form-guidance-color": "var(--color-text-secondary, #64748b)",
         "--form-accent-color": "var(--color-primary, #2563eb)",
-        "--input-height": "1.5rem",
-        "--input-padding": "0.5em",
+        "--input-height": inputHeight,
+        "--input-padding": "0.25em",
+        "--input-text-indent": "0.75em",
         "--input-bgcolor": "var(--color-input-background, #ffffff)",
         "--input-color": "var(--color-input-text, #293241)",
         "--input-border": "1px solid var(--color-input-border, #c8c8c8)",
@@ -42,7 +50,9 @@ const formsConfig = {
         "--input-focus-bgcolor": "var(--color-input-background, #ffffff)",
         "--input-disabled-bgcolor": "var(--color-disabled-background, #f1f5f9)",
         "--validation-color": "var(--color-error, #dc2626)",
-        "--juice-forms-gap": "1rem"
+        "--juice-forms-gap": "1rem",
+        "--input-button-bgcolor": "var(--color-primary, #2563eb)",
+        "--input-button-color": "#ffffff"
     }
 };
 

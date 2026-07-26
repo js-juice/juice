@@ -5,12 +5,12 @@
  */
 
 /**
- * DomUtil class provides static utility methods for DOM operations.
+ * DomOperations class provides static utility methods for DOM operations.
  * Includes methods for element selection, sibling traversal, class checking, and visibility detection.
- * @class DomUtil
+ * @class DomOperations
  * @example
- * DomUtil.first('.my-class') // returns first matching element
- * DomUtil.hasClass(element, 'active') // checks if element has class
+ * DomOperations.first('.my-class') // returns first matching element
+ * DomOperations.hasClass(element, 'active') // checks if element has class
  */
 class DomOperations {
     /**
@@ -20,7 +20,7 @@ class DomOperations {
      * @returns {Element|null} The first matching element or null
      * @static
      * @example
-     * DomUtil.first('.container') // returns first .container element
+     * DomOperations.first('.container') // returns first .container element
      */
     static first(selector, scope) {
         return (document || scope).querySelector(selector);
@@ -39,7 +39,7 @@ class DomOperations {
      * @returns {NodeList} NodeList of matching elements
      * @static
      * @example
-     * DomUtil.all('.item') // returns all .item elements
+     * DomOperations.all('.item') // returns all .item elements
      */
     static all(selector, scope) {
         return (document || scope).querySelectorAll(selector);
@@ -52,7 +52,7 @@ class DomOperations {
      * @returns {boolean} True if element exists
      * @static
      * @example
-     * DomUtil.exists('.modal') // returns true if .modal element exists
+     * DomOperations.exists('.modal') // returns true if .modal element exists
      */
     static exists(selector, scope) {
         return (document || scope).querySelector(selector) ? true : false;
@@ -64,7 +64,7 @@ class DomOperations {
      * @returns {Array<Element>} Array of sibling elements (excludes the element itself)
      * @static
      * @example
-     * DomUtil.siblings(myElement) // returns array of sibling elements
+     * DomOperations.siblings(myElement) // returns array of sibling elements
      */
     static siblings(element) {
         // for collecting siblings
@@ -93,7 +93,7 @@ class DomOperations {
      * @param {Function} fn - Function to call for each element (receives element and index)
      * @static
      * @example
-     * DomUtil.each(document.querySelectorAll('.item'), (el, i) => {
+     * DomOperations.each(document.querySelectorAll('.item'), (el, i) => {
      *   console.log(el, i);
      * });
      */
@@ -110,7 +110,7 @@ class DomOperations {
      * @returns {boolean} True if element has the class
      * @static
      * @example
-     * DomUtil.hasClass(myElement, 'active') // returns true if element has 'active' class
+     * DomOperations.hasClass(myElement, 'active') // returns true if element has 'active' class
      */
     static hasClass(element, className) {
         return new RegExp("(\\s|^)" + className + "(\\s|$)").test(element.className);
@@ -124,7 +124,7 @@ class DomOperations {
      * @param {boolean} [bubble=false] - Whether to use event bubbling
      * @static
      * @example
-     * DomUtil.on(myElement, 'click', handleClick);
+     * DomOperations.on(myElement, 'click', handleClick);
      */
     static on(element, event, fn, bubble = false) {
         element.addEventListener(event, fn, bubble);
@@ -136,7 +136,7 @@ class DomOperations {
      * @returns {DOMRect} The bounding rectangle of the element
      * @static
      * @example
-     * const rect = DomUtil.rect(myElement);
+     * const rect = DomOperations.rect(myElement);
      * console.log(rect.top, rect.left, rect.width, rect.height);
      */
     static rect(element) {
@@ -184,11 +184,11 @@ class DomOperations {
      * @returns {boolean} True if pointer is within rect bounds
      * @static
      * @example
-     * DomUtil.pointerOverRect(rect, {clientX: 100, clientY: 200})
+     * DomOperations.pointerOverRect(rect, {clientX: 100, clientY: 200})
      */
     static pointerOverRect(rect, { clientX: x, clientY: y }) {
         return rect.left <= x && rect.right >= x && rect.top <= y && rect.bottom >= y;
     }
 }
 
-export default DomUtil;
+export default DomOperations;

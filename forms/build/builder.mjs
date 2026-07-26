@@ -32,10 +32,66 @@ export class FormRow {
     }
 }
 
+export function formRow(...inputs) {
+    return new FormRow(...inputs);
+}
+
+export function input(object) {
+    if (!object.type) object.type = "text";
+    const input = document.createElement(`input-${object.tag || object.type}`);
+    input.name = object.name;
+    input.value = object.value;
+    if (object.id) input.id = object.id;
+    delete object.id;
+    if (object.className) input.className = object.className;
+    delete object.className;
+    if (object.class) {
+        if (typeof object.class === "string") {
+            input.className = object.class;
+        } else if (Array.isArray(object.class)) {
+            for (let i = 0; i < object.class.length; i++) {
+                input.classList.add(object.class[i]);
+            }
+        }
+        delete object.class;
+    }
+    if (object.options) {
+        for (let i = 0; i < object.options.length; i++) {
+            let value = object.options[i].value || object.options[i];
+            let label = object.options[i].label || object.options[i];
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = label;
+            input.appendChild(option);
+        }
+        delete object.options;
+    }
+
+    for (let i = 0; i < Object.keys(object).length; i++) {
+        input.setAttribute(Object.keys(object)[i], object[Object.keys(object)[i]]);
+    }
+    return input;
+}
+
 export class FormBuilder extends EventTarget {
     title = "form";
     inputs = [];
     layout = [];
+
+    fromMap(formMap) {
+        const form = document.createElement("form");
+        for (let i = 0; i < formMap.length; i++) {
+            if (Array.isArray(formMap[i])) {
+                const row = this.fromMap(formMap[i]);
+                form.appendChild(row);
+            } else if (typeof formMap[i] == "object") {
+                const el = input(formMap[i]);
+                form.appendChild(el);
+            }
+        }
+        return form;
+    }
+
     constructor(name, title, config = {}) {
         super();
         this.name = name;
@@ -64,6 +120,7 @@ export class FormBuilder extends EventTarget {
     }
 
     build() {
+        const config = this.config;
         const form = document.createElement("form");
         form.name = this.name;
 
@@ -72,7 +129,7 @@ export class FormBuilder extends EventTarget {
         const formBody = document.createElement("main");
         formBody.className = "form-body";
 
-        if (this.includeInfo) {
+        if (config.includeInfo || this.includeInfo) {
             const info = document.createElement("form-info");
             form.appendChild(info);
         }
@@ -80,12 +137,6 @@ export class FormBuilder extends EventTarget {
         form.appendChild(formBody);
 
         this.layout.forEach((asset) => {
-            /*
-            asset.subscribe((e) => {
-                this.dispatchEvent(new CustomEvent("input", { detail: e }));
-            });
-            */
-
             formBody.appendChild(asset.build ? asset.build() : asset);
         });
 

@@ -92,6 +92,63 @@ class RestAPI {
             return response.json();
         });
     }
+
+    eventStream(path, payload) {
+        const endpoint = this.endpoint;
+
+        function _parseEvent(rawBlock) {
+            let data = "";
+            for (const line of rawBlock.split("\n")) {
+                if (line.startsWith("data:")) {
+                    data += (data ? "\n" : "") + line.replace("data:", "").trim();
+                }
+            }
+            return { data };
+        }
+        async function* stream() {
+            const controller = new AbortController();
+
+            const response = await fetch(`${endpoint}${path}`, {
+                method: "GET",
+                headers: { "Content-Type": "text/event-stream" },
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+
+            if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let buffer = "";
+
+            try {
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const parts = buffer.split("\n\n");
+                    buffer = parts.pop() || "";
+
+                    for (const part of parts) {
+                        if (!part.trim()) continue;
+
+                        // Use "this" to call helper methods within the class
+                        yield _parseEvent(part);
+                    }
+                }
+            } finally {
+                reader.releaseLock();
+            }
+        }
+
+        return {
+            stream: stream(),
+            close: () => controller.abort()
+        };
+    }
+
+    // Private class helper for parsing
 }
 
 export default RestAPI;

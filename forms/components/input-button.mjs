@@ -70,6 +70,7 @@ class InputButtonComponent extends HTMLElement {
                         var(--input-padding, 0px) +
                         var(--input-padding, 0px)
                     );
+                    height: var(--input-control-size);
                     position:relative;
                     display: inline-block;
                     box-sizing: border-box;
@@ -127,19 +128,24 @@ class InputButtonComponent extends HTMLElement {
                 }
 
                 .content {
+                position: relative;
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
                     gap: 0.45rem;
                     min-width: 0;
+                    height: 100%;
+                    max-height: 100%;
                 }
 
                 .icon-wrap {
+                    position: relative;
                     display: none;
                     align-items: center;
                     justify-content: center;
                     flex: 0 0 auto;
                     min-width: 0.9em;
+                    height: 90%;
                 }
 
                 :host(.has-icon) .icon-wrap {
@@ -155,12 +161,28 @@ class InputButtonComponent extends HTMLElement {
                 }
 
                 .icon-slot {
+                position: relative;
+                height: 100%;
                     display: inline-flex;
+                }
+
+                slot[name="icon"]{
+                    position: relative;
+                    display: inline-flex;
+                    max-height: 100%;
                 }
 
                 .label {
                     display: inline-block;
                     white-space: nowrap;
+                }
+
+                .label:empty {
+                    display: none;
+                }
+
+                :host(.has-icon) button{
+                padding:0 0.25rem;
                 }
             </style>
             <div class="input-root">
