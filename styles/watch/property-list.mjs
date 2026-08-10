@@ -3,18 +3,66 @@
  *
  * text:center
  * text:color:red
- * padding:1o2
- * padding:left:1o5rem
+ * padding:1.2rem
+ * padding:left:1.5rem
  * margin:top:20px
- * width:50
+ * width:50%
  *
- * The letter "o" between digits represents a decimal point:
- * 1o5rem -> 1.5rem
- *
- * Bare numeric values default to percentages:
- * 1o2 -> 1.2%
- * 50   -> 50%
+ * Dimensional values always include an encoded or CSS unit:
+ * width:50% -> 50%
+ * padding:1.2rem -> 1.2rem
+ * padding:12.5% -> 12.5%
  */
+
+const LEGACY_COLORS = {
+    blue: "#007cc7",
+    red: "#bb1414",
+    yellow: "#ffab1a",
+    black: "#1b2020",
+    grey: "#c8cdd0",
+    darkgrey: "#415058",
+    lime: "#7ed321",
+    teal: "teal",
+    primary: "#0d6efd",
+    secondary: "#6c757d",
+    success: "#198754",
+    danger: "#dc3545",
+    warning: "#ffc107",
+    info: "#0dcaf0",
+    white: "#ffffff",
+    "gray-100": "#f8f9fa",
+    "gray-200": "#e9ecef",
+    "gray-300": "#dee2e6",
+    "gray-400": "#ced4da",
+    "gray-500": "#adb5bd",
+    "gray-600": "#6c757d",
+    "gray-700": "#495057",
+    "gray-800": "#343a40",
+    "gray-900": "#212529",
+    "pitch-black": "#000000",
+    orange: "#fd7e14",
+    cyan: "#17a2b8",
+    indigo: "#6610f2",
+    purple: "#6f42c1",
+    pink: "#d63384",
+    "pastel-pink": "#ffb3c6",
+    "pastel-green": "#b8e994",
+    "pastel-blue": "#a3c9f9",
+    "pastel-yellow": "#fff3b0",
+    "pastel-purple": "#d4a5f9",
+    navy: "#001f3f",
+    maroon: "maroon",
+    olive: "#556b2f",
+    brown: "#8b4513",
+    gold: "gold",
+    silver: "silver"
+};
+
+function colorUtilities(property) {
+    return Object.fromEntries(
+        Object.entries(LEGACY_COLORS).map(([name, value]) => [name, { [property]: value }])
+    );
+}
 
 export const CHECK_CSS_PROPERTIES = {
     // Sizing
@@ -26,11 +74,25 @@ export const CHECK_CSS_PROPERTIES = {
     "max-width": { $: { maxWidth: "@" } },
     "max-height": { $: { maxHeight: "@" } },
 
-    w: { $: { width: "@" } },
+    w: {
+        $: { width: "@" },
+        sm: { width: "320px" },
+        med: { width: "512px" },
+        lg: { width: "800px" },
+        xl: { width: "1024px" },
+        xxl: { width: "1280px" }
+    },
     h: { $: { height: "@" } },
     minw: { $: { minWidth: "@" } },
     minh: { $: { minHeight: "@" } },
-    maxw: { $: { maxWidth: "@" } },
+    maxw: {
+        $: { maxWidth: "@" },
+        sm: { maxWidth: "320px" },
+        med: { maxWidth: "512px" },
+        lg: { maxWidth: "800px" },
+        xl: { maxWidth: "1024px" },
+        xxl: { maxWidth: "1280px" }
+    },
     maxh: { $: { maxHeight: "@" } },
 
     // Position
@@ -104,21 +166,29 @@ export const CHECK_CSS_PROPERTIES = {
     block: { display: "block" },
     inline: { display: "inline" },
     "inline-block": { display: "inline-block" },
+    "inline-flex": { display: "inline-flex" },
+    "inline-grid": { display: "inline-grid" },
+    table: { display: "table" },
+    "inline-table": { display: "inline-table" },
     hidden: { display: "none" },
+    "no-decoration": { textDecoration: "none" },
 
     // Flexbox
     flex: {
+        $self: { display: "flex" },
         display: { display: "flex" },
         inline: { display: "inline-flex" },
 
         value: { $: { flex: "@" } },
         direction: { $: { flexDirection: "@" } },
-        grow: { $: { flexGrow: "@" } },
-        shrink: { $: { flexShrink: "@" } },
+        grow: { $self: { flex: "1 0 auto" }, $: { flexGrow: "@" } },
+        shrink: { $self: { flex: "0 1 auto" }, $: { flexShrink: "@" } },
+        all: { flex: "1 1 100%" },
+        static: { flex: "0 0 auto" },
         basis: { $: { flexBasis: "@" } },
 
-        row: { flexDirection: "row" },
-        column: { flexDirection: "column" },
+        row: { position: "relative", display: "flex", flexDirection: "row", flexWrap: "nowrap" },
+        column: { position: "relative", display: "flex", flexDirection: "column" },
         wrap: { flexWrap: "wrap" },
         nowrap: { flexWrap: "nowrap" }
     },
@@ -159,6 +229,7 @@ export const CHECK_CSS_PROPERTIES = {
 
     // Grid
     grid: {
+        $self: { display: "grid" },
         display: { display: "grid" },
         inline: { display: "inline-grid" },
         columns: { $: { gridTemplateColumns: "@" } },
@@ -176,6 +247,7 @@ export const CHECK_CSS_PROPERTIES = {
         weight: { $: { fontWeight: "@" } },
         style: { $: { fontStyle: "@" } }
     },
+    "font-size": { $: { fontSize: "@" } },
 
     bold: { fontWeight: "bold" },
     italic: { fontStyle: "italic" },
@@ -183,6 +255,13 @@ export const CHECK_CSS_PROPERTIES = {
 
     // Text
     text: {
+        ...colorUtilities("color"),
+        uppercase: { textTransform: "uppercase" },
+        lowercase: { textTransform: "lowercase" },
+        capitalize: { textTransform: "capitalize" },
+        none: { textTransform: "none" },
+        nowrap: { whiteSpace: "nowrap" },
+        "break-all": { wordBreak: "break-all" },
         upper: { textTransform: "uppercase" },
         lower: { textTransform: "lowercase" },
         capital: { textTransform: "capitalize" },
@@ -206,6 +285,7 @@ export const CHECK_CSS_PROPERTIES = {
 
     // Background
     bg: {
+        ...colorUtilities("backgroundColor"),
         $: { background: "@" },
         color: { $: { backgroundColor: "@" } },
         image: { $: { backgroundImage: "@" } },
@@ -217,6 +297,7 @@ export const CHECK_CSS_PROPERTIES = {
 
     // Border
     border: {
+        ...colorUtilities("borderColor"),
         $: { border: "@" },
         width: { $: { borderWidth: "@" } },
         style: { $: { borderStyle: "@" } },
@@ -276,11 +357,18 @@ export const CHECK_CSS_PROPERTIES = {
     "white-space": { $: { whiteSpace: "@" } },
     "word-break": { $: { wordBreak: "@" } },
     "box-sizing": { $: { boxSizing: "@" } }
+    ,
+    row: {
+        display: "flex",
+        flexDirection: "row",
+        flexWrap: "wrap",
+        width: "100%"
+    }
 };
 
 /*
- * These properties accept unitless numeric values. All other bare numeric
- * values receive the default "%" unit.
+ * These properties accept unitless numeric values. Dimensional properties
+ * require the unit to be present in the class value.
  */
 export const UNITLESS_PROPERTIES = new Set([
     "zIndex",

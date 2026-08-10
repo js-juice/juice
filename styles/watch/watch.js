@@ -11,6 +11,7 @@ const __dirname = path.dirname(__filename);
 
 const watchArgument = process.argv[2];
 const outputArgument = process.argv[3];
+const runOnce = process.argv.includes("--once");
 
 if (!watchArgument || !outputArgument) {
     console.error("Usage: node watcher.mjs <watch-directory> <output-file-or-directory>");
@@ -72,7 +73,36 @@ const UNITLESS_PROPERTIES = new Set(
     ]
 );
 
-const DEFAULT_UNIT = "%";
+const PERCENT_PROPERTIES = new Set([
+    "width",
+    "minWidth",
+    "maxWidth",
+    "height",
+    "minHeight",
+    "maxHeight",
+    "top",
+    "right",
+    "bottom",
+    "left",
+    "inset",
+    "flexBasis"
+]);
+const REM_PROPERTIES = new Set([
+    "margin",
+    "marginTop",
+    "marginRight",
+    "marginBottom",
+    "marginLeft",
+    "padding",
+    "paddingTop",
+    "paddingRight",
+    "paddingBottom",
+    "paddingLeft",
+    "gap",
+    "rowGap",
+    "columnGap",
+    "fontSize"
+]);
 const REBUILD_DELAY = 30;
 
 const CLASS_ATTRIBUTE = /\bclass(?:Name)?\s*(?:=|:)\s*(["'`])([\s\S]*?)\1/g;
@@ -341,12 +371,6 @@ function decodeValue(rawValue) {
     return (
         rawValue
             /*
-             * Decimal encoding:
-             * 1o5 -> 1.5
-             */
-            .replace(/(\d)o(?=\d)/g, "$1.")
-
-            /*
              * Optional class-safe encodings:
              * "_" represents a space
              * "|" represents a comma
@@ -383,15 +407,20 @@ function normalizeValue(rawValue, property, template) {
     }
 
     /*
-     * Bare numeric values default to percentages.
+     * Dimensional numeric values require an explicit unit.
      *
-     * 50       -> 50%
-     * 1o5      -> 1.5%
-     * 1o5rem   -> 1.5rem
+     * width:50% -> 50%
+     * padding:1.5rem -> 1.5rem
+     * padding:1.5% -> 1.5%
+     * 1.5rem   -> 1.5rem
      * 20px     -> 20px
      */
     if (isNumeric(value)) {
-        return `${value}${DEFAULT_UNIT}`;
+        if (REM_PROPERTIES.has(property) || PERCENT_PROPERTIES.has(property)) {
+            return null;
+        }
+
+        return value;
     }
 
     return value;
@@ -439,8 +468,14 @@ function resolveClass(className) {
      *
      * text:center
      */
-    if (index === parts.length && isStyleObject(current)) {
-        return current;
+    if (index === parts.length) {
+        if (isStyleObject(current)) {
+            return current;
+        }
+
+        if (isStyleObject(current?.$self)) {
+            return current.$self;
+        }
     }
 
     /*
@@ -465,13 +500,19 @@ function resolveClass(className) {
         return null;
     }
 
-    return Object.fromEntries(
-        Object.entries(current.$).map(([property, template]) => {
-            const value = normalizeValue(rawValue, property, template);
+    const declarations = [];
 
-            return [property, template.replaceAll("@", value)];
-        })
-    );
+    for (const [property, template] of Object.entries(current.$)) {
+        const value = normalizeValue(rawValue, property, template);
+
+        if (value === null) {
+            return null;
+        }
+
+        declarations.push([property, template.replaceAll("@", value)]);
+    }
+
+    return Object.fromEntries(declarations);
 }
 
 function getResolvedClass(className) {
@@ -649,6 +690,13 @@ watcher
     .on("ready", async () => {
         initialScanComplete = true;
         await writeStyleSheet();
+
+        if (runOnce) {
+            await watcher.close();
+            console.log("Initial scan complete.");
+            return;
+        }
+
         console.log("Initial scan complete. Watching...");
     })
     .on("error", (error) => {

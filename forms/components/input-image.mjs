@@ -37,6 +37,15 @@ function loadImageFromFile(file) {
     });
 }
 
+function loadImageFromSource(source) {
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error(`Unable to load image source: ${source}`));
+        image.src = source;
+    });
+}
+
 function colorToHex(r, g, b) {
     return `#${[r, g, b].map((value) => value.toString(16).padStart(2, "0")).join("")}`;
 }
@@ -56,7 +65,7 @@ class InputImageComponent extends InputComponent {
     };
 
     static get observed() {
-        return ["accept", "width", "height", "aspect", "button-label"];
+        return ["accept", "width", "height", "aspect", "button-label", "src", "overlay-button"];
     }
 
     constructor() {
@@ -69,7 +78,17 @@ class InputImageComponent extends InputComponent {
         this._fileName = null;
         this._button = null;
         this._loadToken = 0;
-        this._openPicker = () => this._dom.native?.click();
+        this._openPicker = () => {
+            if (this.hasAttribute("external-picker")) {
+                this.dispatchEvent(new CustomEvent("image-edit-request", {
+                    bubbles: true,
+                    composed: true,
+                    detail: { source: this }
+                }));
+                return;
+            }
+            this._dom.native?.click();
+        };
     }
 
     static html() {
@@ -90,7 +109,8 @@ class InputImageComponent extends InputComponent {
             ".image-input": {
                 display: "grid",
                 gap: "0.55rem",
-                width: "100%"
+                width: "100%",
+                position: "relative"
             },
             ".image-canvas": {
                 display: "block",
@@ -131,6 +151,15 @@ class InputImageComponent extends InputComponent {
                 minWidth: 0,
                 color: "var(--form-description-color, #48484A)"
             },
+            ":host([overlay-button]) .image-actions": {
+                position: "absolute",
+                top: "0.5rem",
+                right: "0.5rem",
+                zIndex: 1
+            },
+            ":host([overlay-button]) .image-file": {
+                display: "none"
+            },
             "input.native[type='file']": {
                 display: "none !important",
                 width: "0 !important",
@@ -155,6 +184,7 @@ class InputImageComponent extends InputComponent {
         this._syncImageControls();
 
         if (this._loadedImage) this._drawImage(this._loadedImage);
+        else if (this.getAttribute("src")) void this._loadSource();
         else this._clearCanvas();
     }
 
@@ -174,6 +204,10 @@ class InputImageComponent extends InputComponent {
 
         if (name === "button-label") {
             this._syncImageControls();
+        }
+
+        if (name === "src" && !this._selectedFile) {
+            void this._loadSource();
         }
     }
 
@@ -215,7 +249,8 @@ class InputImageComponent extends InputComponent {
 
         if (!file) {
             this._loadedImage = null;
-            this._clearCanvas();
+            if (this.getAttribute("src")) await this._loadSource();
+            else this._clearCanvas();
             this._syncImageControls();
             return;
         }
@@ -245,6 +280,30 @@ class InputImageComponent extends InputComponent {
             this._syncImageControls();
             this.dispatchEvent(
                 new CustomEvent("image-error", { bubbles: true, composed: true, detail: { file, error } })
+            );
+        }
+    }
+
+    async _loadSource() {
+        const source = this.getAttribute("src");
+        if (!source) {
+            this._loadedImage = null;
+            this._clearCanvas();
+            return;
+        }
+
+        const token = (this._loadToken += 1);
+        try {
+            const image = await loadImageFromSource(source);
+            if (token !== this._loadToken || this._selectedFile) return;
+            this._loadedImage = image;
+            this._drawImage(image);
+        } catch (error) {
+            if (token !== this._loadToken) return;
+            this._loadedImage = null;
+            this._clearCanvas();
+            this.dispatchEvent(
+                new CustomEvent("image-error", { bubbles: true, composed: true, detail: { source, error } })
             );
         }
     }
@@ -410,7 +469,8 @@ class InputImageComponent extends InputComponent {
         this._loadToken += 1;
         if (this._dom.native) this._dom.native.value = "";
         this.removeAttribute("value");
-        this._clearCanvas();
+        if (this.getAttribute("src")) void this._loadSource();
+        else this._clearCanvas();
         this._syncImageControls();
         this._updateFormValue();
         this._queueValidation();

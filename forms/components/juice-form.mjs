@@ -22,7 +22,7 @@
  * - Internal form node available as `this._form` for component internals.
  *
  * CSS Variables:
- * - None (uses shared styles from rendered layout helpers/components).
+ * - `--input-height`: Native input height measured once in this form's style context.
  *
  * Part Names:
  * - None.
@@ -48,6 +48,9 @@ class JuiceFormElement extends HTMLElement {
         super();
 
         this._fields = {};
+        this._inputHeightMeasured = false;
+        this._typographySignature = "";
+        this._resizeObserver = null;
         this._shadow = this.attachShadow({ mode: "open", delegatesFocus: true });
         this._style = render("style");
 
@@ -97,7 +100,58 @@ class JuiceFormElement extends HTMLElement {
      * @returns {*} void.
      */
     connectedCallback() {
+        this._measureInputHeight();
+        if (typeof ResizeObserver === "function" && !this._resizeObserver) {
+            this._resizeObserver = new ResizeObserver(() => this._measureInputHeight());
+            this._resizeObserver.observe(this);
+        }
         this._render();
+    }
+
+    disconnectedCallback() {
+        this._resizeObserver?.disconnect();
+        this._resizeObserver = null;
+    }
+
+    /**
+     * Measures one native input in this form's inherited style context.
+     * All Juice inputs in the form inherit the resulting local height.
+     * @returns {void}
+     */
+    _measureInputHeight() {
+        const computed = getComputedStyle(this);
+        const typographySignature = [
+            computed.fontFamily,
+            computed.fontSize,
+            computed.fontStyle,
+            computed.fontWeight,
+            computed.lineHeight,
+            computed.letterSpacing
+        ].join("|");
+
+        if (this._inputHeightMeasured && typographySignature === this._typographySignature) return;
+
+        const probe = document.createElement("input");
+        probe.type = "text";
+        probe.tabIndex = -1;
+        probe.setAttribute("aria-hidden", "true");
+        probe.style.position = "absolute";
+        probe.style.visibility = "hidden";
+        probe.style.pointerEvents = "none";
+        probe.style.margin = "0";
+        probe.style.padding = "0";
+        probe.style.border = "0";
+        probe.style.font = "inherit";
+
+        this.appendChild(probe);
+        const height = probe.getBoundingClientRect().height;
+        probe.remove();
+
+        if (!Number.isFinite(height) || height <= 0) return;
+
+        this.style.setProperty("--input-height", `${height}px`);
+        this._typographySignature = typographySignature;
+        this._inputHeightMeasured = true;
     }
 
     /**
