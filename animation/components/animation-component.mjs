@@ -109,7 +109,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 return `
                     <animation-anchor id="anchor">
                         <div id="body" part="body" class="animation-body">
-                            ${this.bodyHTML ? this.bodyHTML() : ""}
+                            ${this.bodyHTML !== undefined && typeof this.bodyHTML == "function" ? this.bodyHTML() : ""}
                             <slot></slot>
                         </div>
                     </animation-anchor>
@@ -468,7 +468,12 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 if (!route) {
                     let value;
                     if (config.linked && this.hasAttribute(property)) {
-                        value = this.parseConfiguredValue(property, this.getAttribute(property), config, config.default ?? null);
+                        value = this.parseConfiguredValue(
+                            property,
+                            this.getAttribute(property),
+                            config,
+                            config.default ?? null
+                        );
                     } else if (Object.prototype.hasOwnProperty.call(this, property)) {
                         value = this[property];
                     } else {
@@ -500,7 +505,12 @@ function ComponentCompiler(name, BaseHTMLElement) {
 
                 let value;
                 if (config.linked && this.hasAttribute(property)) {
-                    value = this.parseConfiguredValue(property, this.getAttribute(property), config, config.default ?? null);
+                    value = this.parseConfiguredValue(
+                        property,
+                        this.getAttribute(property),
+                        config,
+                        config.default ?? null
+                    );
                 } else if (targets[0].parent[targets[0].key] !== undefined) {
                     value = targets[0].parent[targets[0].key];
                 } else {
@@ -517,7 +527,12 @@ function ComponentCompiler(name, BaseHTMLElement) {
                         if (config.type === "exists") {
                             newValue = ![false, "false", 0, "0", null, undefined].includes(newValue);
                         } else {
-                            newValue = this.parseConfiguredValue(property, newValue, config, targets[0].parent[targets[0].key]);
+                            newValue = this.parseConfiguredValue(
+                                property,
+                                newValue,
+                                config,
+                                targets[0].parent[targets[0].key]
+                            );
                         }
 
                         const oldValue = targets[0].parent[targets[0].key];
@@ -537,7 +552,10 @@ function ComponentCompiler(name, BaseHTMLElement) {
                     return;
                 }
 
-                if (config.unit === "position" && Object.prototype.hasOwnProperty.call(this.pendingPositionValues, property)) {
+                if (
+                    config.unit === "position" &&
+                    Object.prototype.hasOwnProperty.call(this.pendingPositionValues, property)
+                ) {
                     return;
                 }
 
@@ -803,20 +821,18 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 const anchor = this.ref("anchor");
                 if (!anchor?.setDebugValue) return;
 
-                const debugValues =
-                    values ||
-                    {
-                        "--width": `${this.w.value}px`,
-                        "--height": `${this.h.value}px`,
-                        "--scale": this.s.value,
-                        "--x": `${this.position.x}px`,
-                        "--y": `${this.position.y}px`,
-                        "--z": `${this.position.z}px`,
-                        "--rotation": `${this.rotation.x}deg`,
-                        "--rotation-x": `${this.rotation.x}deg`,
-                        "--rotation-y": `${this.rotation.y}deg`,
-                        "--rotation-z": `${this.rotation.z}deg`
-                    };
+                const debugValues = values || {
+                    "--width": `${this.w.value}px`,
+                    "--height": `${this.h.value}px`,
+                    "--scale": this.s.value,
+                    "--x": `${this.position.x}px`,
+                    "--y": `${this.position.y}px`,
+                    "--z": `${this.position.z}px`,
+                    "--rotation": `${this.rotation.x}deg`,
+                    "--rotation-x": `${this.rotation.x}deg`,
+                    "--rotation-y": `${this.rotation.y}deg`,
+                    "--rotation-z": `${this.rotation.z}deg`
+                };
 
                 Object.entries(debugValues).forEach(([key, value]) => anchor.setDebugValue(key, value));
             }
@@ -1027,7 +1043,8 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 }
 
                 const methodName = value.trim();
-                const method = this.animation?.getMethod?.(methodName) || this.animation?._methods?.[methodName] || null;
+                const method =
+                    this.animation?.getMethod?.(methodName) || this.animation?._methods?.[methodName] || null;
                 if (typeof method !== "function") {
                     this.pendingMethodValues[property] = methodName;
                     this.watchPendingMethodValues();

@@ -97,6 +97,9 @@
  * - `setOrbit(enabled, options)`, `setRepel(enabled, options)`, and `setMode(mode)` change interaction mode.
  * - `createRepelPoint(options)` and `createOrbitPoint(options)` return handles with `moveTo()`, `position()`, `update()`, and `disable()`.
  * - `setMotion(config)` / `applyMotionConfig(config)` update drift/orbit/repel motion.
+ * - `setStates({ a, b, boundary })` enables two GPU state packs separated by a moving screen-space boundary.
+ * - `setStateBoundary(config)` moves or reconfigures that boundary; `transitionSpeed` is normalized screen distance/second.
+ * - `clearStates()` returns to the global particle settings.
  * - `setCameraPan(x, y, z)`, `moveCameraPan(x, y, z)`, `setCameraAngle(yaw, pitch)`, `moveCameraAngle(yaw, pitch)`,
  *   `setCameraMotion(config)`, and `setCameraDepthEffect(value)` control the fake depth/parallax camera.
  * - `setDebugCrosshair(mode)` controls the particle debug overlay.
@@ -1028,6 +1031,34 @@ class ParticleWorldComponent extends Component.HTMLElement {
         const viewer = this.getViewer();
         if (!viewer?.setFriction) return;
         viewer.setFriction(value);
+    }
+
+    /**
+     * Enables two continuously blended particle state packs.
+     * State fields include gravity, friction, drift, driftSpeed, color, opacity,
+     * size, minSize, target, orbitReach, orbitSpeed, and orbitStrength. Every
+     * numeric field or vector component accepts `"rand(min, max)"`.
+     *
+     * @param {{a?:object,b?:object,boundary?:object}} states
+     * @returns {object|undefined}
+     */
+    setStates(states = {}) {
+        return this.getViewer()?.setStates?.(states);
+    }
+
+    /**
+     * Moves/configures the A/B boundary without resetting live particle state.
+     *
+     * @param {{orientation?:"horizontal"|"vertical"|"diagonal",position?:number,feather?:number,angle?:number,transitionSpeed?:number,speed?:number,immediate?:boolean}} boundary
+     * @returns {object|undefined}
+     */
+    setStateBoundary(boundary = {}) {
+        return this.getViewer()?.setStateBoundary?.(boundary);
+    }
+
+    /** Disables the A/B state system and resumes global settings. */
+    clearStates() {
+        this.getViewer()?.clearStates?.();
     }
 
     /**

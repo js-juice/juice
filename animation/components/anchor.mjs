@@ -124,7 +124,7 @@ class Anchor extends HTMLElement {
                 <div id="debug-anchor" class="stat">(Anchor): <span id="debug-anchor-value" class="value">0%, 0%</span></div>
             </div>
         </div>
-        <div id="target">
+        <div id="target" part="target">
             <slot></slot>
         </div>
         </div>

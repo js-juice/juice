@@ -594,6 +594,8 @@ function ComponentCompiler(name, BaseHTMLElement) {
                     }
                 });
 
+                if (config.cssVar) this.style.setProperty(config.cssVar, value);
+
                 Object.defineProperty(this, property, {
                     get: () => {
                         return routes[0].parent[routes[0].route];
@@ -607,6 +609,8 @@ function ComponentCompiler(name, BaseHTMLElement) {
                         if (this.changed.indexOf(property) === -1) this.changed.push(property);
                         const oldValue = routes[0].parent[routes[0].route];
                         routes.forEach((r) => (r.parent[r.route] = newValue));
+
+                        if (config.cssVar) this.style.setProperty(config.cssVar, newValue);
 
                         if (config.linked) {
                             if (config.type === "exists") {
@@ -780,6 +784,11 @@ function ComponentCompiler(name, BaseHTMLElement) {
                     }
 
                     if (this.ref("html")) this.ref("html").classList.add("connected");
+
+                    for (let key in this.config.properties) {
+                        const props = this.static.config.properties[key];
+                        if (props.cssVar) this.style.setProperty(props.cssVar, this[key]);
+                    }
                 }, 0);
 
                 // Call onSlotChange on slotchange event

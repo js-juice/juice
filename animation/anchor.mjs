@@ -119,7 +119,7 @@ export function toAnchorCSSPosition(value) {
  */
 
 export function parseAnchorForContent(string, content) {
-    const { x, y } = parseAnchor(string);
+    let { x, y } = parseAnchor(string);
     if ([x, y].some((v) => typeof v === "string")) {
         [x, y].forEach((v, i) => {
             if (v.endsWith("px")) {

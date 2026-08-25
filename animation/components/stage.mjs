@@ -87,7 +87,7 @@ class AnimationStage extends Component.HTMLElement {
                     // top: "var(--anchor-y, 0)",
                 },
                 'slot[name="paralax-background"]': {
-                    pointerEvents: "auto",
+                    pointerEvents: "var(--stage-slot-pointer-events, auto)",
                     width: "100%",
                     height: "100%",
                     position: "absolute",
@@ -97,7 +97,7 @@ class AnimationStage extends Component.HTMLElement {
                     zIndex: -1
                 },
                 'slot[name="paralax-assets"]': {
-                    pointerEvents: "auto",
+                    pointerEvents: "var(--stage-slot-pointer-events, auto)",
                     width: "100%",
                     height: "100%",
                     position: "absolute",
@@ -107,7 +107,7 @@ class AnimationStage extends Component.HTMLElement {
                     zIndex: 2
                 },
                 'slot[name="world-background"]': {
-                    pointerEvents: "auto",
+                    pointerEvents: "var(--stage-slot-pointer-events, auto)",
                     width: "100%",
                     height: "100%",
                     position: "absolute",
@@ -117,7 +117,7 @@ class AnimationStage extends Component.HTMLElement {
                     zIndex: -1
                 },
                 'slot[name="world-effects"]': {
-                    pointerEvents: "auto",
+                    pointerEvents: "var(--stage-slot-pointer-events, auto)",
                     width: "100%",
                     height: "100%",
                     position: "absolute",
@@ -129,6 +129,7 @@ class AnimationStage extends Component.HTMLElement {
                 "slot:not([name])": {
                     position: "absolute",
                     display: "block",
+                    pointerEvents: "var(--stage-slot-pointer-events, auto)",
                     left: "var(--anchor-x, 0%)",
                     top: "var(--anchor-y, 0%)"
                 },
