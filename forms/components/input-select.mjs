@@ -1518,7 +1518,7 @@ class InputSelect extends InputComponent {
         });
 
         this._optionList.addEventListener("click", (event) => {
-            const target = event.target instanceof HTMLElement ? event.target.closest(".select-option") : null;
+            const target = event.target instanceof Element ? event.target.closest(".select-option") : null;
             if (!target || !this._optionList.contains(target)) return;
             this._dom.native.blur();
             const value = target.dataset.value || "";

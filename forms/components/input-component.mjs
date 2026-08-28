@@ -475,6 +475,10 @@ const BASE_STYLES = {
     ".input-root > label": {
         marginBottom: "0.25rem"
     },
+    ".input-root > label:empty": {
+        marginBottom: "0",
+        display: "none"
+    },
     label: {
         position: "relative",
         display: "block",
