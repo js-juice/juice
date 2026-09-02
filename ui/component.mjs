@@ -310,6 +310,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
             _resizeMutationObserver = null;
             _positionMutationObserver = null;
             _childrenMutationObserver = null;
+            _attributeAliases = {};
 
             constructor(contents = null) {
                 super();

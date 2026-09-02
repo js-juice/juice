@@ -102,6 +102,13 @@ class InputBuilder {
         return this.applyConfig(input, config);
     }
 
+    static files(name, value, config = {}) {
+        const input = document.createElement("input-files");
+        input.setAttribute("name", name);
+        if (value && typeof value !== "string") input.files = value;
+        return this.applyConfig(input, config);
+    }
+
     static password(name, value, config = {}) {
         const input = document.createElement("input-password");
         input.setAttribute("name", name);

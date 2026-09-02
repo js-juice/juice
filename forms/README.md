@@ -2,8 +2,7 @@
 
 Juice Forms is a web component form system with:
 
-- Custom input elements (`input-text`, `input-select`, `input-checkbox`, `input-radio`, `input-textarea`)
-- Custom input elements (`input-text`, `input-select`, `input-checkbox`, `input-radio`, `input-textarea`, `input-button`)
+- Custom input elements (`input-text`, `input-select`, `input-checkbox`, `input-radio`, `input-textarea`, `input-button`, `input-file`, `input-files`)
 - Inline field validation
 - Form history support through `form-info` (undo/revert actions)
 - Form runtime registration through `window.JUICE_FORMS`
@@ -17,6 +16,7 @@ Juice Forms is a web component form system with:
 - `components/input-radio.mjs`: `input-radio`
 - `components/input-select.mjs`: `input-select`
 - `components/input-button.mjs`: `input-button`
+- `components/input-files.mjs`: `input-files` multi-file drop area with previews
 - `components/option-group.mjs`: `option-group`
 - `components/juice-forms.mjs`: `juice-forms` container entry
 - `components/form-info.mjs`: `form-info` state/actions panel
@@ -36,6 +36,21 @@ Juice Forms is a web component form system with:
 2. Open `index.html`.
 3. Inputs are registered by `juice-forms.mjs`.
 4. Validation runs automatically for inputs with `validation` or `validate` attributes.
+
+### Multiple files
+
+`input-files` submits every selected file under the provided name. Use array-style names when the server expects an array:
+
+```html
+<input-files
+  name="attachments[]"
+  label="Attachments"
+  accept="image/*,.pdf"
+  required
+></input-files>
+```
+
+Files can be selected repeatedly or dropped onto the component. Image files receive object-URL thumbnails; other files receive extension-labeled icons. The `files` property returns the current `File[]`, and `addFiles()`, `removeFile()`, and `clear()` update that same submission list.
 
 ## Examples
 

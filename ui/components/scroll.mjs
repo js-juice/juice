@@ -299,7 +299,9 @@ class ScrollBar extends Component.HTMLElement {
     }
 
     onFirstConnect() {
-        this.scrollView = this.closest("scroll-view");
+        const root = this.getRootNode();
+        this.scrollView =
+            this.closest("scroll-view") || (root?.host?.matches?.("scroll-view") ? root.host : null);
         this.content = this.resolveContent();
 
         if (!this.content) {
@@ -846,6 +848,10 @@ class ScrollView extends Component.HTMLElement {
         if (html) {
             html.style.setProperty("--scroll-x-progress", xPercent);
             html.style.setProperty("--scroll-y-progress", yPercent);
+        }
+        if (this.varSave) {
+            this.varSave.style.setProperty("--scroll-x-progress", xPercent);
+            this.varSave.style.setProperty("--scroll-y-progress", yPercent);
         }
         this.dispatchEvent(new CustomEvent("scroll-x", { detail: { value: x, percent: xPercent }, bubbles: true }));
         this.dispatchEvent(new CustomEvent("scroll-y", { detail: { value: y, percent: yPercent }, bubbles: true }));

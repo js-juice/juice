@@ -38,6 +38,7 @@
                 <input-select name="country" label="Country"
                     options="usa:USA, canada:Canada, mexico:Mexico"></input-select>
             </div>
+            <input-files name="attachments[]" label="Attachments"></input-files>
             <div>
                 <input-radio name="color" label="Red" value="red"></input-radio>
                 <input-radio name="color" label="Green" value="green"></input-radio>
@@ -79,7 +80,7 @@
                 const form = document.getElementById('demoForm');
                 const out = {};
                 const fields = form.querySelectorAll(
-                    'input-text,input-textarea,input-select,input-number,input-checkbox,input-radio'
+                    'input-text,input-textarea,input-select,input-number,input-checkbox,input-radio,input-files'
                 );
 
                 fields.forEach((field) => {
@@ -95,6 +96,11 @@
                     if (tag === 'input-radio') {
                         if (!(name in out)) out[name] = null;
                         if (field.checked) out[name] = field.value;
+                        return;
+                    }
+
+                    if (tag === 'input-files') {
+                        out[name] = field.files.map((file) => file.name);
                         return;
                     }
 
@@ -200,7 +206,7 @@
 
                 const formFields = Array.from(
                     formEl.querySelectorAll(
-                        'input-text,input-checkbox,input-select,input-number,input-radio,input-textarea'
+                        'input-text,input-checkbox,input-select,input-number,input-radio,input-textarea,input-files'
                     )
                 );
 

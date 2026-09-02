@@ -12,6 +12,7 @@ const FIELD_SELECTOR = [
     "input-number",
     "input-range",
     "input-file",
+    "input-files",
     "[validation]",
     "[validate]"
 ].join(",");
