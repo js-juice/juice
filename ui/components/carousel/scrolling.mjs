@@ -69,7 +69,7 @@ class ScrollingCarousel extends Component.HTMLElement {
                 }
             },
             `
-            @keyframes scroll-carousel-scroll { 
+            @keyframes scroll-carousel-scroll {
                 from {
                     transform: translateX(0);
                 }
