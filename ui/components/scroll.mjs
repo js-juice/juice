@@ -857,6 +857,50 @@ class ScrollView extends Component.HTMLElement {
         this.dispatchEvent(new CustomEvent("scroll-y", { detail: { value: y, percent: yPercent }, bubbles: true }));
     }
 
+    scrollToPosition(y, { behavior = "smooth" } = {}) {
+        const requestedY = Number(y);
+        if (!Number.isFinite(requestedY)) return false;
+
+        if (this.usesNativeScroll()) {
+            const maxY = Math.max(0, this.scrollHeight - this.clientHeight);
+            this.scrollTo({ top: Math.max(0, Math.min(maxY, requestedY)), behavior });
+            return true;
+        }
+
+        if (this.scrollTop) this.scrollTop = 0;
+
+        const scrollBar = this.scrollY;
+        if (!scrollBar) return false;
+
+        scrollBar.refreshMeasurements();
+        const maxY = Math.max(0, scrollBar.maxContentOffset || 0);
+        const targetY = Math.max(0, Math.min(maxY, requestedY));
+        scrollBar.scroll.target.value = targetY;
+        scrollBar.scroll.target.percent = maxY > 0 ? targetY / maxY : 0;
+
+        if (behavior !== "smooth") {
+            scrollBar.scroll.current.value = targetY;
+            scrollBar.scroll.current.percent = scrollBar.scroll.target.percent;
+        }
+
+        if (!scrollBar.scrolling) scrollBar.smoothScroll();
+        return true;
+    }
+
+    scrollToElement(element, { behavior = "smooth", offset = 0 } = {}) {
+        if (!(element instanceof Element) || !this.contains(element)) return false;
+
+        const viewTop = this.getBoundingClientRect().top;
+        const targetTop = element.getBoundingClientRect().top;
+        const nativeY = this.scrollTop || 0;
+        const currentY = this.usesNativeScroll() ? nativeY : this.scrollY?.scroll.current.value || 0;
+        const browserHashOffset = this.usesNativeScroll() ? 0 : nativeY;
+
+        return this.scrollToPosition(currentY + targetTop - viewTop + browserHashOffset - (Number(offset) || 0), {
+            behavior
+        });
+    }
+
     onPropertyChanged(prop, previous, value) {
         switch (prop) {
             case "x":

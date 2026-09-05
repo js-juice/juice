@@ -33,6 +33,7 @@ class Anchor extends HTMLElement {
                 height: 0px;
                 left: var(--origin-x, 0%);
                 top: var(--origin-y, 0%);
+                transform: translate3d(var(--x, 0px), var(--y, 0px), var(--z, 0px));
             }
             #html{
                 position: absolute;
@@ -45,7 +46,7 @@ class Anchor extends HTMLElement {
                 position: absolute;
                 width: 100%;
                 height: 100%;
-                scale: var(--scale, --scale-x, 1) var(--scale, --scale-y, 1);
+                scale: var(--scale, var(--scale-x, 1)) var(--scale, var(--scale-y, 1));
                 transform: rotate(var(--rotation, 0deg));
                 transform-origin: var(--anchor-x, 0%) var(--anchor-y, 0%);
             }

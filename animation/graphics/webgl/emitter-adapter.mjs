@@ -17,9 +17,11 @@ export default class EmitterAdapter {
     }
 
     configure(config = {}) {
-        this.rate = Number(config.particlesPerSecond) || 10;
+        const rate = Number(config.particlesPerSecond);
+        this.rate = Number.isFinite(rate) ? Math.max(0, rate) : 10;
         this.direction = Number(config.direction) || 0;
-        this.speed = Number(config.speed) || 0.2; // world units per second (tunable)
+        const speed = Number(config.speed);
+        this.speed = Number.isFinite(speed) ? Math.max(0, speed) : 0.2; // world units per second (tunable)
         this.spread = Number(config.spread) || Math.PI / 8;
         this.size = Number(config.size) || 1;
         this.life = Number(config.lifespan) || 2;
@@ -30,6 +32,10 @@ export default class EmitterAdapter {
             0
         );
         this.spawnRadius = Number.isFinite(Number(config.spawnRadius)) ? Math.max(0, Number(config.spawnRadius)) : 0.01;
+        this.spawnShape = ["line", "ellipse-arc"].includes(config.spawnShape) ? config.spawnShape : "disc";
+        this.spawnDirectionVec = config.spawnDirectionVec || null;
+        this.spawnSurface = config.spawnSurface || null;
+        this.impactOnSpawn = config.impactOnSpawn === true;
         this.position = { x: Number(config.x) || 0, y: Number(config.y) || 0, z: Number(config.z) || 0 };
         this.interpolateSpawnPosition = config.interpolateSpawnPosition !== false;
         // Mask configuration: either a maskIndex (into particles.masks) or an explicit mask object
@@ -151,9 +157,35 @@ export default class EmitterAdapter {
         for (let i = 0; i < toSpawn; i++) {
             const spawnAngle = Math.random() * Math.PI * 2;
             const spawnDistance = Math.sqrt(Math.random()) * this.spawnRadius;
-            let px = this.position.x + Math.cos(spawnAngle) * spawnDistance;
-            let py = this.position.y + Math.sin(spawnAngle) * spawnDistance;
+            const lineDirection = this._normalize(this.spawnDirectionVec || { x: 1, y: 0, z: 0 });
+            const lineOffset = (Math.random() * 2 - 1) * this.spawnRadius;
+            let px = this.position.x;
+            let py = this.position.y;
             let pz = this.position.z || 0;
+            let surfaceDirection = null;
+
+            if (this.spawnShape === "ellipse-arc" && this.spawnSurface) {
+                const radiusX = Math.max(0, Number(this.spawnSurface.radiusX) || 0);
+                const radiusY = Math.max(0, Number(this.spawnSurface.radiusY) || 0);
+                const centerAngle = Number(this.spawnSurface.angle) || 0;
+                const arc = Math.max(0, Number(this.spawnSurface.arc) || 0);
+                const angle = centerAngle + (Math.random() - 0.5) * arc;
+                px = (Number(this.spawnSurface.x) || 0) + Math.cos(angle) * radiusX;
+                py = (Number(this.spawnSurface.y) || 0) + Math.sin(angle) * radiusY;
+                pz = Number.isFinite(Number(this.spawnSurface.z)) ? Number(this.spawnSurface.z) : pz;
+                surfaceDirection = this._normalize({
+                    x: Math.cos(angle) / Math.max(0.0001, radiusX),
+                    y: Math.sin(angle) / Math.max(0.0001, radiusY),
+                    z: 0
+                });
+            } else if (this.spawnShape === "line") {
+                px += lineDirection.x * lineOffset;
+                py += lineDirection.y * lineOffset;
+                pz += lineDirection.z * lineOffset;
+            } else {
+                px += Math.cos(spawnAngle) * spawnDistance;
+                py += Math.sin(spawnAngle) * spawnDistance;
+            }
             let spawnColor = null;
 
             // If a mask is configured, spawn from the mask points.
@@ -187,11 +219,11 @@ export default class EmitterAdapter {
             let vx = 0,
                 vy = 0,
                 vz = 0;
-            const sp = Math.max(0.01, this._randomizedValue(this.speed, this.speedRandomness) || 0.01);
+            const sp = Math.max(0, this._randomizedValue(this.speed, this.speedRandomness));
             const particleSize = Math.max(0.01, this._randomizedValue(this.size, this.sizeRandomness) || 0.01);
             const particleLife = Math.max(0.01, this._randomizedValue(this.life, this.lifespanRandomness) || 0.01);
             const hasDirectionVec = this.directionVec && typeof this.directionVec === "object";
-            const normalizedDirectionVec = hasDirectionVec ? this._normalize(this.directionVec) : null;
+            const normalizedDirectionVec = surfaceDirection || (hasDirectionVec ? this._normalize(this.directionVec) : null);
             const validDirectionVec =
                 normalizedDirectionVec &&
                 (Math.abs(normalizedDirectionVec.x) > 1e-6 ||
@@ -247,8 +279,8 @@ export default class EmitterAdapter {
                         }
                         break;
                     case "states":
-                        data[cursor++] = pz;
-                        data[cursor++] = -(frameAge + 0.000001);
+                        data[cursor++] = this.impactOnSpawn ? 0 : pz;
+                        data[cursor++] = -(frameAge + 0.000001 + (this.impactOnSpawn ? 10000 : 0));
                         data[cursor++] = px;
                         data[cursor++] = py;
                         break;

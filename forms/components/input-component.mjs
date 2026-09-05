@@ -2407,6 +2407,7 @@ class InputComponent extends HTMLElement {
         this._dom.native.value = normalized;
         this._applyFormatting();
         this.setAttribute("value", this._dom.native.value);
+        this._syncVisualState();
         this._updateFormValue();
         this._queueValidation();
     }

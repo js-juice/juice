@@ -105,6 +105,9 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 }
             };
 
+            usePhysics = true;
+            writeCSSVars = true;
+
             static html() {
                 return `
                     <animation-anchor id="anchor">
@@ -126,9 +129,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
                         left: 0px;
                         top: 0px;
                     }
-                    animation-anchor {
-                        transform: translate3d(var(--x, 0px), var(--y, 0px), var(--z, 0px));
-                    }
+                   
                     #body {
                         position: absolute;
                         width: var(--width);
@@ -638,7 +639,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 Object.assign(this._.styleVars, vars);
 
                 for (const [key, value] of Object.entries(vars)) {
-                    root.style.setProperty(key, value);
+                    root.style.setProperty(key, `var( ${key}-override, ${value})`);
                     if (root !== this && this.style?.getPropertyValue(key)) this.style.removeProperty(key);
                     if (root !== this.ref("html") && this.ref("html")?.style?.getPropertyValue(key)) {
                         this.ref("html").style.removeProperty(key);
@@ -759,11 +760,13 @@ function ComponentCompiler(name, BaseHTMLElement) {
             update() {
                 if (!this.animate) return null;
 
-                if (this.velocity.hasValue()) {
-                    this.position.x += this.velocity.x;
-                    this.position.y += this.velocity.y;
-                    this.position.z += this.velocity.z;
-                    this.worldPosition.set(this.position);
+                if (this.usePhysics) {
+                    if (this.velocity.hasValue()) {
+                        this.position.x += this.velocity.x;
+                        this.position.y += this.velocity.y;
+                        this.position.z += this.velocity.z;
+                        this.worldPosition.set(this.position);
+                    }
                 }
 
                 if (!this.frozen) {
@@ -776,43 +779,45 @@ function ComponentCompiler(name, BaseHTMLElement) {
             render(time) {
                 if (!this.visible) return;
 
-                const updates = {};
+                if (this.writeCSSVars) {
+                    const updates = {};
 
-                if (this.beforeRender) this.beforeRender(time);
+                    if (this.beforeRender) this.beforeRender(time);
 
-                if (this.w.dirty) {
-                    updates["--width"] = `${this.w.value}px`;
-                    this.w.save();
+                    if (this.w.dirty) {
+                        updates["--width"] = `${this.w.value}px`;
+                        this.w.save();
+                    }
+
+                    if (this.h.dirty) {
+                        updates["--height"] = `${this.h.value}px`;
+                        this.h.save();
+                    }
+
+                    if (this.s.dirty) {
+                        updates["--scale"] = this.s.value;
+                        this.s.save();
+                    }
+
+                    if (this.position.dirty) {
+                        updates["--x"] = `${this.position.x}px`;
+                        updates["--y"] = `${this.position.y}px`;
+                        updates["--z"] = `${this.position.z}px`;
+                        this.position.clean();
+                    }
+
+                    if (this.rotation.dirty) {
+                        updates["--rotation"] = `${this.rotation.x}deg`;
+                        updates["--rotation-x"] = `${this.rotation.x}deg`;
+                        updates["--rotation-y"] = `${this.rotation.y}deg`;
+                        updates["--rotation-z"] = `${this.rotation.z}deg`;
+                        this.rotation.clean();
+                    }
+
+                    if (!Object.keys(updates).length) return;
+
+                    this.writeStyleVars(updates);
                 }
-
-                if (this.h.dirty) {
-                    updates["--height"] = `${this.h.value}px`;
-                    this.h.save();
-                }
-
-                if (this.s.dirty) {
-                    updates["--scale"] = this.s.value;
-                    this.s.save();
-                }
-
-                if (this.position.dirty) {
-                    updates["--x"] = `${this.position.x}px`;
-                    updates["--y"] = `${this.position.y}px`;
-                    updates["--z"] = `${this.position.z}px`;
-                    this.position.clean();
-                }
-
-                if (this.rotation.dirty) {
-                    updates["--rotation"] = `${this.rotation.x}deg`;
-                    updates["--rotation-x"] = `${this.rotation.x}deg`;
-                    updates["--rotation-y"] = `${this.rotation.y}deg`;
-                    updates["--rotation-z"] = `${this.rotation.z}deg`;
-                    this.rotation.clean();
-                }
-
-                if (!Object.keys(updates).length) return;
-
-                this.writeStyleVars(updates);
                 this.updateAnchorDebugValues(updates);
             }
 

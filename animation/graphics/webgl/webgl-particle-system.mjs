@@ -117,6 +117,18 @@ class WebGLParticleSystem {
         this.repelFieldRadius = null;
         this.repelMode = "3d";
         this.repelPlaneAngle = 0;
+        this.repelAffectsLifetime = false;
+        this.repelDistanceScale = REPEL_RADIUS_SCALE;
+        this.repelCollisionOnly = false;
+        this.repelRestitution = 0.7;
+        this.repelSurfaceFriction = 0.2;
+        this.repelSettleSpeed = 0;
+        this.repelRadiusX = null;
+        this.repelRadiusY = null;
+        this.repelShellX = 0;
+        this.repelShellY = 0;
+        this.repelImpactPoint = [0, 0, 0];
+        this.repelImpactRadius = 0;
 
         // uMotion = [driftScale, orbitSpeedScale, repelStrengthScale, orbitPullScale]
         this.driftScale = 1.0;
@@ -155,6 +167,12 @@ class WebGLParticleSystem {
             endScale: 3,
             fadeStart: 0.72,
             fadeEnd: 1
+        };
+        this.impactBehavior = {
+            startScale: 1,
+            endScale: 4.5,
+            growthDuration: 4,
+            damping: 1.4
         };
         this.debugCrosshairMode = "none";
         this.debugCrosshairPreviewMode = "none";
@@ -1473,6 +1491,12 @@ class WebGLParticleSystem {
             this.particles.projection.matrix
         );
         this.uRepel = this.feedback.addUniform("uRepel", VariableTypes.BOOL, false);
+        this.uRepelLifetime = this.feedback.addUniform("uRepelLifetime", VariableTypes.BOOL, false);
+        this.uRepelCollision = this.feedback.addUniform("uRepelCollision", VariableTypes.FLOAT_VEC4, [0.0, 0.7, 0.2, 0.0]);
+        this.uRepelSurface = this.feedback.addUniform("uRepelSurface", VariableTypes.FLOAT_VEC2, [0.4, 0.4]);
+        this.uRepelShell = this.feedback.addUniform("uRepelShell", VariableTypes.FLOAT_VEC2, [0.0, 0.0]);
+        this.uRepelImpact = this.feedback.addUniform("uRepelImpact", VariableTypes.FLOAT_VEC4, [0.0, 0.0, 0.0, 0.0]);
+        this.uImpactPhysics = this.feedback.addUniform("uImpactPhysics", VariableTypes.FLOAT_VEC2, [1.4, 0.0]);
         this.uOrbit = this.feedback.addUniform("uOrbit", VariableTypes.BOOL, false);
         this.uOrbitFieldRadius = this.feedback.addUniform("uOrbitFieldRadius", VariableTypes.FLOAT, 1.2);
         this.uOrbitEscape = this.feedback.addUniform("uOrbitEscape", VariableTypes.FLOAT_VEC2, [0.0, 1.0]);
@@ -1617,9 +1641,15 @@ class WebGLParticleSystem {
             float activeOrbitFieldRadius = mix(activeOrbitFieldRadiusMin, activeOrbitFieldRadiusMax, particleRandomC.z);
             bool gravityActive = length(activeGravity) > 0.000001;
             bool lifetimeParticle = aState[1] < 0.0;
-            float particleAge = abs(aState[1]);
+            float encodedParticleAge = abs(aState[1]);
+            bool surfaceExpired = lifetimeParticle && encodedParticleAge >= 20000.0;
+            bool surfaceImpacted = lifetimeParticle && encodedParticleAge >= 10000.0;
+            float particleAge = surfaceExpired
+                ? encodedParticleAge - 20000.0
+                : (surfaceImpacted ? encodedParticleAge - 10000.0 : encodedParticleAge);
+            float impactStartAge = aState[0];
             vec3 home = vec3(aState[2], aState[3], aState[0]);
-            if (home.z > -near || home.z < -far) {
+            if (!lifetimeParticle && (home.z > -near || home.z < -far)) {
                 home.z = position.z;
             }
             float absoluteDriftX = position.x;
@@ -1852,6 +1882,108 @@ class WebGLParticleSystem {
                 velocity.y = 0.0;
             }
             position += velocity * delta;
+            if (uRepel && uRepelLifetime && lifetimeParticle) {
+                vec3 target = uTargetPoint.xyz;
+                vec2 surfaceRadius = max(uRepelSurface, vec2(0.0001));
+                float targetRadius = max(surfaceRadius.x, surfaceRadius.y);
+                float fieldRadius = max(targetRadius, uRepelFieldRadius);
+                vec3 away = position - target;
+                if (uInteractionPlane.z > 0.5) {
+                    away -= repelPlaneNormal * dot(away, repelPlaneNormal);
+                }
+                float targetDistance = length(away);
+                vec2 ellipsePosition = away.xy / surfaceRadius;
+                float ellipseDistance = length(ellipsePosition);
+                vec3 ellipseNormal = normalize(vec3(
+                    away.x / (surfaceRadius.x * surfaceRadius.x),
+                    away.y / (surfaceRadius.y * surfaceRadius.y),
+                    0.0
+                ) + vec3(0.000001, 0.0, 0.0));
+                vec3 normal = targetDistance > 0.0001
+                    ? (uRepelCollision.x > 0.5 && uInteractionPlane.z > 0.5 ? ellipseNormal : away / targetDistance)
+                    : normalize(vec3(-velocity.xy, 0.0) + vec3(0.0001, 0.0, 0.0));
+
+                if (targetDistance <= fieldRadius) {
+                    float influence = 1.0 - smoothstep(targetRadius, fieldRadius, targetDistance);
+                    float incomingSpeed = dot(velocity, normal);
+                    bool insideSurface = uRepelCollision.x > 0.5 && uInteractionPlane.z > 0.5
+                        ? ellipseDistance <= 1.0
+                        : targetDistance <= targetRadius;
+                    if (insideSurface) {
+                        if (!surfaceImpacted) impactStartAge = particleAge;
+                        surfaceImpacted = true;
+                        if (uRepelCollision.x > 0.5 && uInteractionPlane.z > 0.5) {
+                            position.xy = target.xy + away.xy / max(ellipseDistance, 0.0001);
+                        } else {
+                            position += normal * (targetRadius - targetDistance);
+                        }
+                        if (incomingSpeed < 0.0) {
+                            float restitution = clamp(
+                                uRepelCollision.y * mix(0.65, 1.35, particleRandomD.z),
+                                0.0,
+                                1.0
+                            );
+                            velocity -= normal * incomingSpeed * (1.0 + restitution);
+                        }
+                        vec3 normalVelocity = normal * dot(velocity, normal);
+                        vec3 tangentVelocity = velocity - normalVelocity;
+                        velocity = normalVelocity + tangentVelocity * (1.0 - clamp(uRepelCollision.z, 0.0, 1.0));
+                        if (length(velocity) <= max(0.0, uRepelCollision.w)) {
+                            velocity = vec3(0.0);
+                        }
+                    }
+
+                    if (
+                        surfaceImpacted &&
+                        uRepelCollision.x > 0.5 &&
+                        uInteractionPlane.z > 0.5 &&
+                        length(uRepelShell) > 0.0001
+                    ) {
+                        vec3 shellAway = position - target;
+                        float cloudAngle = atan(
+                            shellAway.y / max(0.0001, surfaceRadius.y),
+                            shellAway.x / max(0.0001, surfaceRadius.x)
+                        );
+                        float hillProfile = 0.48
+                            + sin(cloudAngle * 5.0 + 0.8) * 0.18
+                            + sin(cloudAngle * 11.0 - 0.35) * 0.11;
+                        hillProfile += (particleRandomC.w - 0.5) * 0.14;
+                        float floatingWisp = step(0.94, particleRandomD.x);
+                        float shellScale = mix(clamp(hillProfile, 0.18, 0.82), 1.0, floatingWisp);
+                        vec2 shellRadius = surfaceRadius + max(uRepelShell, vec2(0.0)) * shellScale;
+                        float shellDistance = length(shellAway.xy / max(shellRadius, vec2(0.0001)));
+                        if (shellDistance >= 1.0) {
+                            vec3 shellNormal = normalize(vec3(
+                                shellAway.x / (shellRadius.x * shellRadius.x),
+                                shellAway.y / (shellRadius.y * shellRadius.y),
+                                0.0
+                            ) + vec3(0.000001, 0.0, 0.0));
+                            position.xy = target.xy + shellAway.xy / max(shellDistance, 0.0001);
+                            float escapingSpeed = dot(velocity, shellNormal);
+                            if (escapingSpeed > 0.0) {
+                                velocity -= shellNormal * escapingSpeed * 1.15;
+                            }
+                        }
+                        velocity *= 1.0 - clamp(delta * max(0.0, uImpactPhysics.x), 0.0, 0.12);
+                    }
+
+                    if (surfaceImpacted && uRepelImpact.w > 0.0001) {
+                        vec3 fromImpact = position - uRepelImpact.xyz;
+                        fromImpact.z = 0.0;
+                        float distanceFromImpact = length(fromImpact);
+                        float randomImpactRadius = uRepelImpact.w * mix(0.7, 1.0, particleRandomC.z);
+                        if (distanceFromImpact > randomImpactRadius) {
+                            surfaceExpired = true;
+                            velocity = vec3(0.0);
+                        }
+                    }
+
+                    if (uRepelCollision.x < 0.5) {
+                        velocity += normal * influence * max(0.0, uMotion.z) * delta * 0.18;
+                        velocity *= 1.0 - clamp(delta * (0.22 + influence * 0.35), 0.0, 0.12);
+                    }
+                }
+            }
             if (driftAbsolute) {
                 position.x = absoluteDriftX;
                 position.y = absoluteDriftY;
@@ -1887,7 +2019,9 @@ class WebGLParticleSystem {
             aPositionOut = position;
             aVelocityOut = velocity;
             float nextParticleAge = particleAge + delta;
-            aStateOut = vec4(home.z, lifetimeParticle ? -nextParticleAge : nextParticleAge, home.x, home.y);
+            float nextEncodedAge = nextParticleAge + (surfaceExpired ? 20000.0 : (surfaceImpacted ? 10000.0 : 0.0));
+            float nextStateX = lifetimeParticle && surfaceImpacted ? impactStartAge : home.z;
+            aStateOut = vec4(nextStateX, lifetimeParticle ? -nextEncodedAge : nextEncodedAge, home.x, home.y);
             aColorOut = aColor;
         `);
 
@@ -1952,6 +2086,12 @@ class WebGLParticleSystem {
             this.particleBehavior.fadeStart,
             this.particleBehavior.fadeEnd
         ]);
+        this.uImpactBehavior = vertex.addUniform("uImpactBehavior", VariableTypes.FLOAT_VEC4, [
+            this.impactBehavior.startScale,
+            this.impactBehavior.endScale,
+            this.impactBehavior.growthDuration,
+            0
+        ]);
 
         vertex.main(`
             vec3 renderPosition = aPosition;
@@ -2010,12 +2150,24 @@ class WebGLParticleSystem {
             );
             vec4 activeStateColor = mix(aColor, mix(stateColorA, stateColorB, renderStateMix), float(uRenderStateEnabled));
             float depth = max(0.2, abs(renderPosition.z));
-            float ageProgress = aLife > 0.001 ? clamp(abs(aState.y) / aLife, 0.0, 1.0) : 0.0;
+            float encodedParticleAge = abs(aState.y);
+            bool surfaceExpired = encodedParticleAge >= 20000.0;
+            bool surfaceImpacted = encodedParticleAge >= 10000.0;
+            float particleAge = surfaceExpired
+                ? encodedParticleAge - 20000.0
+                : (surfaceImpacted ? encodedParticleAge - 10000.0 : encodedParticleAge);
+            float ageProgress = aLife > 0.001 ? clamp(particleAge / aLife, 0.0, 1.0) : 0.0;
             float smokeGrowth = mix(max(0.01, uLifeBehavior.x), max(0.01, uLifeBehavior.y), smoothstep(0.0, 1.0, ageProgress));
+            float impactAge = max(0.0, particleAge - aState.x);
+            float impactProgress = smoothstep(0.0, 1.0, impactAge / max(0.001, uImpactBehavior.z));
+            float impactGrowth = mix(max(0.01, uImpactBehavior.x), max(0.01, uImpactBehavior.y), impactProgress);
+            impactGrowth *= mix(0.8, 1.35, renderRandomPoint.x);
+            impactGrowth *= mix(1.0, 1.8, step(0.94, renderRandomPoint.y));
+            smokeGrowth *= surfaceImpacted ? impactGrowth : 1.0;
             float particleScale = max(0.01, aSize) * smokeGrowth;
             gl_PointSize = max(activePointSize.y, (activePointSize.x * particleScale) / depth);
             float lifeAlpha = 1.0 - smoothstep(clamp(uLifeBehavior.z, 0.0, 1.0), clamp(uLifeBehavior.w, 0.0, 1.0), ageProgress);
-            particleStateColor = vec4(activeStateColor.rgb, activeStateColor.a * lifeAlpha);
+            particleStateColor = vec4(activeStateColor.rgb, activeStateColor.a * lifeAlpha * (surfaceExpired ? 0.0 : 1.0));
         `);
 
         fragment.setPrecision("high", "float");
@@ -3009,7 +3161,7 @@ class WebGLParticleSystem {
     }
 
     _scaleRepelDistance(value) {
-        return Math.max(0.0001, (Number(value) || 0) * REPEL_RADIUS_SCALE);
+        return Math.max(0.0001, (Number(value) || 0) * this.repelDistanceScale);
     }
 
     _scaledRepelPointArray() {
@@ -3446,9 +3598,40 @@ class WebGLParticleSystem {
      * Enables/disables repel mode and optional target update.
      *
      * @param {boolean} enabled
-     * @param {{x?:number,y?:number,z?:number,radius?:number,fieldRadius?:number}} [options={}]
+     * @param {{x?:number,y?:number,z?:number,radius?:number,radiusX?:number,radiusY?:number,shellX?:number,shellY?:number,fieldRadius?:number,impactPoint?:{x:number,y:number,z?:number},impactRadius?:number,rawDistance?:boolean,affectLifetime?:boolean,collisionOnly?:boolean,restitution?:number,surfaceFriction?:number,settleSpeed?:number}} [options={}]
      */
     setRepel(enabled, options = {}) {
+        this.repelDistanceScale = options.rawDistance ? 1 : REPEL_RADIUS_SCALE;
+        this.repelAffectsLifetime = Boolean(options.affectLifetime);
+        this.repelCollisionOnly = Boolean(options.collisionOnly);
+        if (options.restitution !== undefined) {
+            this.repelRestitution = Math.max(0, Math.min(1, Number(options.restitution) || 0));
+        }
+        if (options.surfaceFriction !== undefined) {
+            this.repelSurfaceFriction = Math.max(0, Math.min(1, Number(options.surfaceFriction) || 0));
+        }
+        if (options.settleSpeed !== undefined) {
+            this.repelSettleSpeed = Math.max(0, Number(options.settleSpeed) || 0);
+        }
+        if (options.radiusX !== undefined) {
+            this.repelRadiusX = Math.max(0.0001, Number(options.radiusX) || 0.0001);
+        }
+        if (options.radiusY !== undefined) {
+            this.repelRadiusY = Math.max(0.0001, Number(options.radiusY) || 0.0001);
+        }
+        if (options.shellX !== undefined) this.repelShellX = Math.max(0, Number(options.shellX) || 0);
+        if (options.shellY !== undefined) this.repelShellY = Math.max(0, Number(options.shellY) || 0);
+        if (options.impactPoint !== undefined) {
+            const impactPoint = options.impactPoint || {};
+            this.repelImpactPoint = [
+                Number(impactPoint.x) || 0,
+                Number(impactPoint.y) || 0,
+                Number(impactPoint.z) || 0
+            ];
+        }
+        if (options.impactRadius !== undefined) {
+            this.repelImpactRadius = Math.max(0, Number(options.impactRadius) || 0);
+        }
         if (options.x !== undefined) this.repelPoint[0] = Number(options.x) || 0;
         if (options.y !== undefined) this.repelPoint[1] = Number(options.y) || 0;
         if (options.z !== undefined) this.repelPoint[2] = Number(options.z) || 0;
@@ -3818,6 +4001,35 @@ class WebGLParticleSystem {
                 ];
             }
             if (this.uRepelFieldRadius) this.uRepelFieldRadius.value = repelFieldRadius;
+            if (this.uRepelLifetime) this.uRepelLifetime.value = this.repelAffectsLifetime;
+            if (this.uRepelCollision) {
+                this.uRepelCollision.value = [
+                    this.repelCollisionOnly ? 1 : 0,
+                    this.repelRestitution,
+                    this.repelSurfaceFriction,
+                    this.repelSettleSpeed
+                ];
+            }
+            if (this.uRepelSurface) {
+                this.uRepelSurface.value = [
+                    this._scaleRepelDistance(this.repelRadiusX ?? this.repelPoint[3]),
+                    this._scaleRepelDistance(this.repelRadiusY ?? this.repelPoint[3])
+                ];
+            }
+            if (this.uRepelShell) {
+                this.uRepelShell.value = [
+                    Math.max(0, this.repelShellX * this.repelDistanceScale),
+                    Math.max(0, this.repelShellY * this.repelDistanceScale)
+                ];
+            }
+            if (this.uRepelImpact) {
+                this.uRepelImpact.value = [
+                    this.repelImpactPoint[0],
+                    this.repelImpactPoint[1],
+                    this.repelImpactPoint[2],
+                    Math.max(0, this.repelImpactRadius * this.repelDistanceScale)
+                ];
+            }
             if (this.uInteractionPlane) {
                 this.uInteractionPlane.value = [
                     this.orbitMode === "2d" ? 1 : 0,
@@ -3915,6 +4127,24 @@ class WebGLParticleSystem {
                 Number(this.particleBehavior.endScale) || 1,
                 Number(this.particleBehavior.fadeStart) || 0,
                 Number(this.particleBehavior.fadeEnd) || 1
+            ];
+        }
+    }
+
+    setImpactBehavior(config = {}) {
+        this.impactBehavior = {
+            ...this.impactBehavior,
+            ...config
+        };
+        if (this.uImpactPhysics) {
+            this.uImpactPhysics.value = [Math.max(0, Number(this.impactBehavior.damping) || 0), 0];
+        }
+        if (this.uImpactBehavior) {
+            this.uImpactBehavior.value = [
+                Math.max(0.01, Number(this.impactBehavior.startScale) || 1),
+                Math.max(0.01, Number(this.impactBehavior.endScale) || 1),
+                Math.max(0.001, Number(this.impactBehavior.growthDuration) || 1),
+                0
             ];
         }
     }

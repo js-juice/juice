@@ -6,7 +6,8 @@ class ScrollSectionTracker {
         attribute = "scroll-id",
         root = document.documentElement,
         styleSheetId = null,
-        progressVariable = "--scroll-progress"
+        progressVariable = "--scroll-progress",
+        progressSource = null
     } = {}) {
         if (!container) {
             throw new Error("ScrollSectionTracker requires a scroll container.");
@@ -20,8 +21,11 @@ class ScrollSectionTracker {
         this.styleSheetId = styleSheetId;
 
         this.progressVariable = this.normalizeVariable(progressVariable);
+        this.progressSource = progressSource ?? container.closest?.("scroll-view") ?? null;
+        this.currentProgress = 0;
 
         this.elements = new Map();
+        this.sections = new Map();
 
         this.measureFrame = null;
 
@@ -116,7 +120,15 @@ class ScrollSectionTracker {
     }
 
     getScopedVariable(id) {
-        return new CSSProgressVariable(`${this.getPrefix(id)}-progress`);
+        return new CSSProgressVariable(`${this.getPrefix(id)}-progress`, 0, 1, {
+            current: () => this.getProgress(id)
+        });
+    }
+
+    getMasterVariable() {
+        return new CSSProgressVariable(this.progressVariable, 0, 1, {
+            current: () => this.currentProgress
+        });
     }
 
     setVariable(variable, value) {
@@ -127,7 +139,9 @@ class ScrollSectionTracker {
     }
 
     removeVariable(variable) {
-        this.styleTarget.removeProperty(this.normalizeVariable(variable));
+        const normalized = this.normalizeVariable(variable);
+        this.variables.delete(normalized);
+        this.styleTarget.removeProperty(normalized);
 
         return this;
     }
@@ -161,6 +175,8 @@ class ScrollSectionTracker {
          * Run again once external resources have loaded.
          */
         window.addEventListener("load", this.handleLoad);
+
+        this.progressSource?.addEventListener?.("scroll-y", this.handleScroll);
 
         this.scheduleMeasure();
     }
@@ -202,10 +218,15 @@ class ScrollSectionTracker {
 
         const data = {
             id,
-            element
+            element,
+            top: 0,
+            height: 0,
+            start: 0,
+            end: 0
         };
 
         this.elements.set(element, data);
+        this.sections.set(id, data);
 
         /*
          * Automatically create all derived section
@@ -233,6 +254,9 @@ class ScrollSectionTracker {
         this.removeSectionVariables(data.id);
 
         this.elements.delete(element);
+        if (this.sections.get(data.id) === data) {
+            this.sections.delete(data.id);
+        }
 
         this.scheduleMeasure();
     }
@@ -361,12 +385,21 @@ class ScrollSectionTracker {
         const scrollRange = this.container.scrollHeight - window.innerHeight;
 
         if (scrollRange <= 0) {
+            data.top = top;
+            data.height = height;
+            data.start = 0;
+            data.end = 0;
             return;
         }
 
         const start = top / scrollRange;
 
         const end = bottom / scrollRange;
+
+        data.top = top;
+        data.height = height;
+        data.start = start;
+        data.end = end;
 
         const prefix = this.getPrefix(data.id);
 
@@ -451,6 +484,10 @@ class ScrollSectionTracker {
         this.scheduleMeasure();
     };
 
+    handleScroll = (event) => {
+        this.setProgress(event.detail?.percent);
+    };
+
     /* =========================================================
        DOM MUTATIONS
     ========================================================= */
@@ -479,7 +516,13 @@ class ScrollSectionTracker {
                     if (existing && existing.id !== id) {
                         this.removeSectionVariables(existing.id);
 
+                        if (this.sections.get(existing.id) === existing) {
+                            this.sections.delete(existing.id);
+                        }
+
                         existing.id = id;
+
+                        this.sections.set(id, existing);
 
                         this.createSectionVariables(id);
                     } else if (!existing) {
@@ -585,30 +628,43 @@ class ScrollSectionTracker {
         return this;
     }
 
-    get(id) {
-        for (const data of this.elements.values()) {
-            if (data.id === id) {
-                return data.element;
-            }
+    setProgress(value) {
+        const progress = Number(value);
+
+        if (Number.isFinite(progress)) {
+            this.currentProgress = Math.max(0, Math.min(1, progress));
         }
 
-        return null;
+        return this;
+    }
+
+    getProgress(id) {
+        const section = this.sections.get(id);
+
+        if (!section || section.end === section.start) {
+            return 0;
+        }
+
+        return Math.max(
+            0,
+            Math.min(1, (this.currentProgress - section.start) / (section.end - section.start))
+        );
+    }
+
+    get(id) {
+        return this.sections.get(id)?.element ?? null;
     }
 
     has(id) {
-        for (const data of this.elements.values()) {
-            if (data.id === id) {
-                return true;
-            }
-        }
-
-        return false;
+        return this.sections.has(id);
     }
 
     destroy() {
         window.removeEventListener("resize", this.handleResize);
 
         window.removeEventListener("load", this.handleLoad);
+
+        this.progressSource?.removeEventListener?.("scroll-y", this.handleScroll);
 
         this.resizeObserver.disconnect();
 
@@ -621,6 +677,7 @@ class ScrollSectionTracker {
         }
 
         this.elements.clear();
+        this.sections.clear();
     }
 }
 

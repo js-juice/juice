@@ -1079,7 +1079,7 @@ class ParticleWorldComponent extends Component.HTMLElement {
      * Enables/disables orbit mode.
      *
      * @param {boolean} enabled
-     * @param {{x?:number,y?:number,z?:number,radius?:number,fieldRadius?:number}} [options={}]
+     * @param {{x?:number,y?:number,z?:number,radius?:number,fieldRadius?:number,rawDistance?:boolean,affectLifetime?:boolean}} [options={}]
      */
     setOrbit(enabled, options = {}) {
         const viewer = this.getViewer();
@@ -1091,7 +1091,7 @@ class ParticleWorldComponent extends Component.HTMLElement {
      * Enables/disables repel mode.
      *
      * @param {boolean} enabled
-     * @param {{x?:number,y?:number,z?:number,radius?:number,fieldRadius?:number}} [options={}]
+     * @param {{x?:number,y?:number,z?:number,radius?:number,radiusX?:number,radiusY?:number,shellX?:number,shellY?:number,fieldRadius?:number,impactPoint?:{x:number,y:number,z?:number},impactRadius?:number,rawDistance?:boolean,affectLifetime?:boolean,collisionOnly?:boolean,restitution?:number,surfaceFriction?:number,settleSpeed?:number}} [options={}]
      */
     setRepel(enabled, options = {}) {
         const viewer = this.getViewer();
@@ -1262,6 +1262,12 @@ class ParticleWorldComponent extends Component.HTMLElement {
         const viewer = this.getViewer();
         if (!viewer?.setParticleBehavior) return;
         viewer.setParticleBehavior(config);
+    }
+
+    setImpactBehavior(config = {}) {
+        const viewer = this.getViewer();
+        if (!viewer?.setImpactBehavior) return;
+        viewer.setImpactBehavior(config);
     }
 
     /**

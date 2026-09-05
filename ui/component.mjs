@@ -93,7 +93,7 @@ class ComponentTemplate {
         this.dom = document.createElement("template");
         this.dom.innerHTML = `
             <div id="style-box" class="component--styles vdom-noupdate">${this.style}</div>
-            <div id="html" class="component--html" >
+            <div id="html" class="component--html" part="html">
                 ${this.html}
             </div>
         `;

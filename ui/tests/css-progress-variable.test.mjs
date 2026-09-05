@@ -50,3 +50,159 @@ test("unknown easing names fail explicitly", () => {
 
     assert.throws(() => progress.slice(0, 1, "missing"), /Unknown easing/);
 });
+
+test("keyframes map a sliced timeline with CSS-only math", () => {
+    const progress = new CSSProgressVariable("progress");
+    const slice = progress.slice(0, 0.001);
+    const timeline = slice.keyframes([
+        { progress: 0, value: 100 },
+        { progress: 0.5, value: 200 }
+    ]);
+
+    assert.equal(timeline.progress, slice.value);
+    assert.deepEqual(timeline.frames, [
+        { progress: 0, value: 100 },
+        { progress: 0.5, value: 200 }
+    ]);
+    assert.equal(typeof timeline.value, "string");
+    assert.match(compact(timeline.value), /^calc\(100\+\(200-100\)\*calc\(clamp\(/);
+    assert.match(timeline.value, /var\(--progress\)/);
+});
+
+test("keyframes sort progress and support CSS values with easing", () => {
+    const progress = new CSSProgressVariable("progress");
+    const timeline = progress.keyframes(
+        [
+            { progress: 1, value: "100px" },
+            { progress: 0, value: "0px" },
+            { progress: 0.5, value: "25px" }
+        ],
+        { easing: "easeOutQuad" }
+    );
+
+    assert.deepEqual(
+        timeline.frames.map((frame) => frame.progress),
+        [0, 0.5, 1]
+    );
+    assert.equal(timeline.easing, "easeOutQuad");
+    assert.match(compact(timeline.value), /^calc\(0px\+\(25px-0px\)\*calc\(1-pow\(/);
+});
+
+test("keyframe values remain chainable", () => {
+    const progress = new CSSProgressVariable("progress");
+    const first = progress.slice(0, 0.5).keyframes([
+        { progress: 0, value: 0 },
+        { progress: 1, value: 1 }
+    ]);
+    const second = first.keyframes([
+        { progress: 0, value: 10 },
+        { progress: 1, value: 20 }
+    ]);
+
+    assert.equal(second.progress, first.value);
+});
+
+test("keyframes reject invalid definitions", () => {
+    const progress = new CSSProgressVariable("progress");
+
+    assert.throws(() => progress.keyframes({}), /array/);
+    assert.throws(() => progress.keyframes([]), /at least two/);
+    assert.throws(
+        () =>
+            progress.keyframes([
+                { progress: 0, value: 0 },
+                { progress: 0, value: 1 }
+            ]),
+        /duplicate progress/
+    );
+    assert.throws(
+        () =>
+            progress.keyframes([
+                { progress: 0, value: 0 },
+                { progress: 1.1, value: 1 }
+            ]),
+        /between 0 and 1/
+    );
+    assert.throws(
+        () =>
+            progress.keyframes([
+                { progress: 0, value: 0 },
+                { progress: 1, value: "" }
+            ]),
+        /finite numbers or non-empty CSS values/
+    );
+    assert.throws(
+        () =>
+            progress.keyframes(
+                [
+                    { progress: 0, value: 0 },
+                    { progress: 1, value: 1 }
+                ],
+                { easing: "missing" }
+            ),
+        /Unknown easing/
+    );
+});
+
+test("current reads from a cached JavaScript value when provided", () => {
+    let current = 0.25;
+    const progress = new CSSProgressVariable("progress", 0, 1, {
+        current: () => current
+    });
+
+    assert.equal(progress.current, 0.25);
+
+    current = 0.75;
+
+    assert.equal(progress.current, 0.75);
+});
+
+test("sliced current values use the cached source progress", () => {
+    let current = 0.5;
+    const progress = new CSSProgressVariable("progress", 0, 1, {
+        current: () => current
+    });
+    const slice = progress.slice(0.2, 0.8);
+
+    assert.ok(Math.abs(slice.current - 0.5) < Number.EPSILON * 4);
+
+    current = 0;
+    assert.equal(slice.current, 0);
+
+    current = 1;
+    assert.equal(slice.current, 1);
+});
+
+test("keyframed current values interpolate the cached sliced progress", () => {
+    let current = 0.25;
+    const progress = new CSSProgressVariable("progress", 0, 1, {
+        current: () => current
+    });
+    const timeline = progress.slice(0, 1).keyframes([
+        { progress: 0, value: 100 },
+        { progress: 0.5, value: 200 }
+    ]);
+
+    assert.equal(timeline.current, 150);
+
+    current = 0.75;
+    assert.equal(timeline.current, 200);
+});
+
+test("keyframed current values interpolate matching CSS units", () => {
+    let current = 0.5;
+    const progress = new CSSProgressVariable("progress", 0, 1, {
+        current: () => current
+    });
+    const compatible = progress.keyframes([
+        { progress: 0, value: "0deg" },
+        { progress: 1, value: "90deg" }
+    ]);
+    const incompatible = progress.keyframes([
+        { progress: 0, value: "0px" },
+        { progress: 1, value: "100%" }
+    ]);
+
+    assert.equal(compatible.current, "45deg");
+    assert.equal(incompatible.current, null);
+});
