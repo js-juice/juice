@@ -130,4 +130,3 @@ export default class Modal extends Component.HTMLElement {
 }
 
 customElements.define(Modal.tag, Modal);
-
