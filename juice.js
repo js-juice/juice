@@ -23,12 +23,13 @@ import JuiceQueues from "./core/inc/Queues.mjs";
  * @returns {{name: string, path: string, dir: string, ext: string}} Object containing path components
  * @private
  */
-function parseFilePath(path) {
+function parseFilePath(url) {
+    const pathname = new URL(url).pathname;
     return {
-        name: path.split("/").pop(),
-        path,
-        dir: path.substr(0, path.lastIndexOf("/")),
-        ext: path.split(".").pop()
+        name: pathname.split("/").pop(),
+        path: pathname,
+        dir: pathname.substring(0, pathname.lastIndexOf("/") + 1),
+        ext: pathname.split(".").pop()
     };
 }
 
@@ -65,8 +66,7 @@ function getDefaultPaths() {
  * const file = currentFile(import.meta);
  */
 export function currentFile(meta) {
-    const _url = meta.url;
-    return parseFilePath(_url);
+    return parseFilePath(meta.url);
 }
 
 root.currentFile = currentFile;
