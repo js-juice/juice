@@ -45,8 +45,6 @@ function getRuntimeRoot() {
 
 function getDefaultPaths() {
     const cwd = parseFilePath(import.meta.url).dir;
-    const vendor = path.resolve(cwd, "vendor");
-    const state = path.resolve(cwd, ".juice");
     const data = path.resolve(cwd, "data");
     return {
         cwd,
