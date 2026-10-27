@@ -1,6 +1,6 @@
 import Component from "../component.mjs";
 
-class Modal extends Component.HTMLElement {
+export default class Modal extends Component.HTMLElement {
     static tag = "juice-modal";
 
     static config = {
@@ -131,4 +131,3 @@ class Modal extends Component.HTMLElement {
 
 customElements.define(Modal.tag, Modal);
 
-export default Modal;
