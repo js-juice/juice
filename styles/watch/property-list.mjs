@@ -25,6 +25,8 @@ export const CHECK_CSS_PROPERTIES = {
     "min-height": { $: { minHeight: "@" } },
     "max-width": { $: { maxWidth: "@" } },
     "max-height": { $: { maxHeight: "@" } },
+    "aspect-ratio": { $: { aspectRatio: "@" } },
+    outline: { $: { outline: "@" } },
 
     w: { $: { width: "@" } },
     h: { $: { height: "@" } },
@@ -120,7 +122,8 @@ export const CHECK_CSS_PROPERTIES = {
         row: { flexDirection: "row" },
         column: { flexDirection: "column" },
         wrap: { flexWrap: "wrap" },
-        nowrap: { flexWrap: "nowrap" }
+        nowrap: { flexWrap: "nowrap" },
+        columns: { $: {} }
     },
 
     justify: {
@@ -131,6 +134,14 @@ export const CHECK_CSS_PROPERTIES = {
         between: { justifyContent: "space-between" },
         around: { justifyContent: "space-around" },
         evenly: { justifyContent: "space-evenly" }
+    },
+
+    "justify-self": {
+        value: { $: { justifySelf: "@" } },
+        start: { justifySelf: "start" },
+        center: { justifySelf: "center" },
+        end: { justifySelf: "end" },
+        stretch: { justifySelf: "stretch" }
     },
 
     items: {
@@ -218,14 +229,34 @@ export const CHECK_CSS_PROPERTIES = {
     // Border
     border: {
         $: { border: "@" },
-        width: { $: { borderWidth: "@" } },
+        width: { $: { borderWidth: "@", borderStyle: "solid" } },
         style: { $: { borderStyle: "@" } },
         color: { $: { borderColor: "@" } },
 
-        top: { $: { borderTop: "@" } },
-        right: { $: { borderRight: "@" } },
-        bottom: { $: { borderBottom: "@" } },
-        left: { $: { borderLeft: "@" } }
+        top: {
+            $: { borderTop: "@" },
+            width: { $: { borderTopWidth: "@", borderTopStyle: "solid" } },
+            style: { $: { borderTopStyle: "@" } },
+            color: { $: { borderTopColor: "@" } }
+        },
+        right: {
+            $: { borderRight: "@" },
+            width: { $: { borderRightWidth: "@", borderRightStyle: "solid" } },
+            style: { $: { borderRightStyle: "@" } },
+            color: { $: { borderRightColor: "@" } }
+        },
+        bottom: {
+            $: { borderBottom: "@" },
+            width: { $: { borderBottomWidth: "@", borderBottomStyle: "solid" } },
+            style: { $: { borderBottomStyle: "@" } },
+            color: { $: { borderBottomColor: "@" } }
+        },
+        left: {
+            $: { borderLeft: "@" },
+            width: { $: { borderLeftWidth: "@", borderLeftStyle: "solid" } },
+            style: { $: { borderLeftStyle: "@" } },
+            color: { $: { borderLeftColor: "@" } }
+        }
     },
 
     radius: {

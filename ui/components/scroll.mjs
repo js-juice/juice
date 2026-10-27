@@ -8,6 +8,10 @@ import Observe from "../../core/Dom/Observe/Observe.mjs";
 import { fixedClamp } from "../../core/Util/Math.mjs";
 import AnimationValue from "../../animation/properties/Value.mjs";
 
+function isNativeScrollTarget(target) {
+    return Boolean(target?.closest?.("[data-native-scroll]"));
+}
+
 class TrackedView extends Component.HTMLElement {
     static tag = "tracked-view";
 
@@ -300,8 +304,7 @@ class ScrollBar extends Component.HTMLElement {
 
     onFirstConnect() {
         const root = this.getRootNode();
-        this.scrollView =
-            this.closest("scroll-view") || (root?.host?.matches?.("scroll-view") ? root.host : null);
+        this.scrollView = this.closest("scroll-view") || (root?.host?.matches?.("scroll-view") ? root.host : null);
         this.content = this.resolveContent();
 
         if (!this.content) {
@@ -372,6 +375,7 @@ class ScrollBar extends Component.HTMLElement {
 
     onWheel(event) {
         if (this.scrollView?.usesNativeScroll?.()) return;
+        if (isNativeScrollTarget(event.target)) return;
 
         this.refreshMeasurements();
         const maxContentOffset = Math.max(0, this.maxContentOffset || 0);
@@ -974,5 +978,5 @@ if (typeof customElements !== "undefined") {
     }
 }
 
-export { ScrollBar, ScrollView, TrackedView };
+export { isNativeScrollTarget, ScrollBar, ScrollView, TrackedView };
 export default ScrollView;

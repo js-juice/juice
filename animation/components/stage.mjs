@@ -178,7 +178,17 @@ class AnimationStage extends Component.HTMLElement {
      * @returns {*} Current dimentions value.
      */
     get dimentions() {
-        const { width, height } = this.ref("html").getBoundingClientRect();
+        const html = this.ref?.("html");
+        if (!html?.getBoundingClientRect) {
+            this.onRef("html", () => {
+                const { width, height } = this.ref?.("html").getBoundingClientRect();
+                this.height = height;
+                this.width = width;
+            });
+            return { width: 0, height: 0 };
+        }
+
+        const { width, height } = html.getBoundingClientRect();
         return { width, height };
     }
 
@@ -293,7 +303,8 @@ class AnimationStage extends Component.HTMLElement {
             return existing;
         }
 
-        const placement = options.placement || (element.getAttribute?.("slot") === "paralax-background" ? "paralax" : "world");
+        const placement =
+            options.placement || (element.getAttribute?.("slot") === "paralax-background" ? "paralax" : "world");
         const bg = {
             element: element,
             placement,

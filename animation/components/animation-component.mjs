@@ -598,12 +598,20 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 this.rendered = 1;
             }
 
+            refListeners = {};
+
+            onRef(id, fn) {
+                if (!this.refListeners[id]) this.refListeners[id] = [];
+                this.refListeners[id].push(fn);
+            }
+
             collectRefs() {
                 this.refs = {};
                 this.slots = {};
 
                 this.root.querySelectorAll("[id]").forEach((element) => {
                     this.refs[element.id] = element;
+                    if (this.refListeners[element.id]) this.refs[element.id].forEach((fn) => fn(element));
                 });
 
                 this.root.querySelectorAll("slot").forEach((slot) => {
@@ -778,10 +786,9 @@ function ComponentCompiler(name, BaseHTMLElement) {
 
             render(time) {
                 if (!this.visible) return;
+                const updates = {};
 
                 if (this.writeCSSVars) {
-                    const updates = {};
-
                     if (this.beforeRender) this.beforeRender(time);
 
                     if (this.w.dirty) {

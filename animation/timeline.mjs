@@ -468,7 +468,7 @@ class Timeline {
      * @returns {*} Result of addAnimator.
      */
     addAnimator(animator) {
-        console.log("Adding animator to timeline", { animator });
+        //console.log("Adding animator to timeline", { animator });
         animator._timeline = this;
         const updateFn =
             typeof animator.update === "function" ? animator.update.bind(animator.scope || animator) : null;
@@ -480,11 +480,11 @@ class Timeline {
             animator = animator.animation;
         }
         if (typeof animator.update === "function") {
-            console.log(animator.update);
+            //console.log(animator.update);
             this.animators.updaters.push(updateFn);
         }
         if (typeof animator.render === "function") {
-            console.log(animator.render);
+            //console.log(animator.render);
             this.animators.renderers.push(renderFn);
         }
         this._syncActivity();

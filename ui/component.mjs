@@ -424,9 +424,10 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 const root = target || this.ref("html") || this.shadowRoot?.host || this.root || this;
                 if (!root || !root.style) return;
                 if (vars) Object.assign(this._.styleVars, vars);
-                root.style.cssText = Object.entries(this._.styleVars)
-                    .map(([k, v]) => `${k}: ${v}`)
-                    .join(";");
+                // An explicit target must not receive cached variables owned by another element.
+                for (const [key, value] of Object.entries(target && vars ? vars : this._.styleVars)) {
+                    root.style.setProperty(key, value);
+                }
             }
 
             /**
@@ -950,8 +951,17 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 element.classList.add("events-set");
             }
 
+            refListeners = {};
+
+            onRef(id, fn) {
+                if (this.#refs[id]) return fn(this.#refs[id]);
+                if (!this.refListeners[id]) this.refListeners[id] = [];
+                this.refListeners[id].push(fn);
+            }
+
             setRef(ref, el) {
                 this.#refs[ref] = el;
+                if (this.refListeners[ref]) this.refListeners[ref].forEach((fn) => fn(el));
             }
 
             slot(name = "default") {
@@ -995,7 +1005,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 if (this.rendered == 0) {
                     const refs = this.root.querySelectorAll("[id]:not(.ref)");
                     for (let i = 0; i < refs.length; i++) {
-                        this.#refs[refs[i].getAttribute("id")] = refs[i];
+                        this.setRef(refs[i].getAttribute("id"), refs[i]);
                         refs[i].removeAttribute("ref");
                         refs[i].classList.add("ref");
                     }

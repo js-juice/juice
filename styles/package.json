@@ -9,7 +9,7 @@
   "scripts": {
     "build": "sass --no-source-map scss:build",
     "buildto": "sass --no-source-map --style=compressed ",
-    "watch": "node watch/watch.js"
+    "watch": "node watch/watch.js ../../../scss ../../../views ../../../css"
   },
   "devDependencies": {
     "sass": "^1.101.0"
