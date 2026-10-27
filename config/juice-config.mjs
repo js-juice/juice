@@ -7,9 +7,26 @@
 import DotNotation from "../core/Util/DotNotation.mjs";
 import DEFAULT_CONFIG from "./defaults.mjs";
 
+function parseFilePath(path) {
+    return {
+        name: path.split("/").pop(),
+        path,
+        dir: path.substr(0, path.lastIndexOf("/")),
+        ext: path.split(".").pop()
+    };
+}
+
+function currentFile(meta = import.meta) {
+    const _url = meta.url;
+    return parseFilePath(_url);
+}
+
+const CONFIG_DIR = currentFile(import.meta).dir;
+const MANIFEST_PATH = CONFIG_DIR + "/manifest.json";
+
 const root = typeof globalThis !== "undefined" ? globalThis : {};
 const juiceRootDir = import.meta.resolve("../");
-const manifestFilePath = import.meta.resolve("./manifest.json");
+const manifestFilePath = MANIFEST_PATH;
 
 function loadJSON(path) {
     try {
@@ -19,7 +36,7 @@ function loadJSON(path) {
     }
 }
 
-const manifestJSON = loadJSON(manifestFilePath);
+const manifestJSON = loadJSON(MANIFEST_PATH);
 
 function isPlainObject(value) {
     return value != null && typeof value === "object" && !Array.isArray(value);
