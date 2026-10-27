@@ -106,6 +106,41 @@ class ComponentTemplate {
     }
 }
 
+class ComponentSlot {
+    callbacks = {};
+    static fromSlot(slot) {
+        const slotName = slot.name || "default";
+        const component = slot.getRootNode().host;
+        return new ComponentSlot(slotName, component);
+    }
+
+    constructor(name, component) {
+        this.name = name;
+        this.component = component;
+        const slotElement = component.shadowRoot.querySelector(`slot[name="${name}"]`);
+        this.slot = slotElement;
+        this.initialize();
+    }
+
+    nodes() {
+        const nodes = slot.assignedNodes({ flatten: true });
+        return nodes;
+    }
+
+    changed(callback) {
+        this.callbacks["slotchange"] = this.callbacks["slotchange"] || [];
+        this.callbacks["slotchange"].push(callback.bind(this));
+    }
+
+    initialize() {
+        this.slot.addEventListener("slotchange", (e) => {
+            if (this.callbacks["slotchange"]) {
+                this.callbacks["slotchange"].forEach((callback) => callback(e));
+            }
+        });
+    }
+}
+
 //HTML Element Extend Class Creator
 function ComponentCompiler(name, BaseHTMLElement) {
     //console.log('ComponentCompiler', name, BaseHTMLElement.name, BaseHTMLElement );
