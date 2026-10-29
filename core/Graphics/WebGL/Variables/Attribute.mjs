@@ -5,8 +5,8 @@
  */
 
 import WebGL from "../Lib/WebGL.mjs";
-import VariableSettings from "../Lib/VariableSettings.mjs";
-import VariableBase from "../Lib/VariableBase.mjs";
+import VariableSettings from "./VariableSettings.mjs";
+import VariableBase from "./VariableBase.mjs";
 
 /**
  * Attribute variable for vertex shader input.

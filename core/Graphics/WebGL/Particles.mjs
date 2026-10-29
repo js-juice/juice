@@ -8,9 +8,9 @@ import { createProgram } from "./Lib/Helper.mjs";
 import { random, randomInt, randomBetween, diff } from "../../Util/Math.mjs";
 import WebGL from "./Lib/WebGL.mjs";
 const { VariableTypes, ShaderTypes } = WebGL;
-import { Vector2D, Vector3D, Vector4D } from "../../../animation/Properties/Vector.mjs";
-import Particles from "../Particles/Particles.mjs";
-import AnimationValue from "../../../animation/Properties/Value.mjs";
+import { Vector2D, Vector3D, Vector4D } from "../../../animation/properties/Vector.mjs";
+import Particles from "../../../animation/graphicswebgl-particle-system.mjs";
+import AnimationValue from "../../../animation/properties/Value.mjs";
 import TransformFeedback from "./Lib/TransformFeedback.mjs";
 import WebGLDebugUtils from "./debug/webgl-debug.mjs";
 
@@ -178,12 +178,9 @@ class GLParticles {
         //Initialize uniforms describing environment
         //Uniforms stay constant between draw call
 
-        this.uTargetPoint = this.feedback.addUniform(
-            "uTargetPoint",
-            VariableTypes.FLOAT_VEC4,
-            [0.0, 0.0, -2.0, 0.0],
-            { debug: false }
-        );
+        this.uTargetPoint = this.feedback.addUniform("uTargetPoint", VariableTypes.FLOAT_VEC4, [0.0, 0.0, -2.0, 0.0], {
+            debug: false
+        });
         //this.uTime = this.feedback.addUniform("uTime", VariableTypes.FLOAT_VEC4, [0.0, 0.0, 0.0, 0.0]);
         //this.uSpeed = this.feedback.addUniform("uSpeed", VariableTypes.FLOAT, this.speed.value);
         //this.uMovement = this.feedback.addUniform("uMovement", VariableTypes.FLOAT_VEC4, [0.0, 0.0, 0.0, 0.3]);
@@ -699,7 +696,11 @@ class GLParticles {
                 this.repelPoint.clean();
             }
 
-            if (this.uRepelParams && this.repelParams.dirty && (this.uRepelParams.value = this.repelParams.toArray()) !== false) {
+            if (
+                this.uRepelParams &&
+                this.repelParams.dirty &&
+                (this.uRepelParams.value = this.repelParams.toArray()) !== false
+            ) {
                 this.repelParams.clean();
             }
         }
