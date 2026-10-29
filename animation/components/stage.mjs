@@ -364,8 +364,9 @@ class AnimationStage extends Component.HTMLElement {
             pointerEvents: options.pointerEvents ?? element.style.pointerEvents ?? "none"
         });
         if (options.zIndex !== undefined) element.style.zIndex = `${options.zIndex}`;
-        console.log(element);
+
         if (!element.parentNode) this.appendChild(element);
+        console.log(element, element.parentNode);
         return { element, slot, ...options };
     }
 
