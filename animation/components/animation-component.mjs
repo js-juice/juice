@@ -307,7 +307,6 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 if (property && typeof property === "object" && !Array.isArray(property)) {
                     return this.tweenProperties(property, value || {});
                 }
-
                 return this.tweenProperty(property, value, options);
             }
 

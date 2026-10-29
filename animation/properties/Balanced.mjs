@@ -26,7 +26,7 @@ class BalancedProperty {
     animate = true;
     /** @type {number} Current movement direction (-1, 0, 1) */
     _direction = 0;
-    
+
     /**
      * Creates a new BalancedProperty instance.
      * @param {number} range - Maximum distance from center
@@ -48,7 +48,7 @@ class BalancedProperty {
      */
     direction(direction) {
         this._direction = direction;
-        console.log("Direction", this._direction);
+        //console.log("Direction", this._direction);
     }
 
     /**
