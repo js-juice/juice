@@ -35,13 +35,13 @@ import.meta.glob([MANIFEST_PATH], {
 
 function loadJSON(path) {
     try {
-        return JSON.parse(root.fetch(path).then((res) => res?.text() || {}));
+        return JSON.parse(root.fetch(path).then((res) => res?.text() || null));
     } catch (e) {
         return {};
     }
 }
 console.trace(MANIFEST_PATH);
-const manifestJSON = loadJSON(MANIFEST_PATH);
+const manifestJSON = MANIFEST || loadJSON(MANIFEST_PATH);
 console.log(manifestJSON, MANIFEST);
 
 function isPlainObject(value) {
