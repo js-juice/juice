@@ -27,11 +27,7 @@ const MANIFEST_PATH = CONFIG_DIR + "/manifest.json";
 
 const root = typeof globalThis !== "undefined" ? globalThis : {};
 const juiceRootDir = import.meta.resolve("../");
-const manifestFilePath = MANIFEST_PATH;
 
-import.meta.glob([MANIFEST_PATH], {
-    eager: true
-});
 
 function loadJSON(path) {
     try {
@@ -40,9 +36,9 @@ function loadJSON(path) {
         return {};
     }
 }
-console.trace(MANIFEST_PATH);
-const manifestJSON = MANIFEST || loadJSON(MANIFEST_PATH);
-console.log(manifestJSON, MANIFEST);
+
+const manifestJSON = MANIFEST.hash ? MANIFEST || loadJSON(MANIFEST_PATH);
+console.log(manifestJSON);
 
 function isPlainObject(value) {
     return value != null && typeof value === "object" && !Array.isArray(value);
