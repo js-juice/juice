@@ -1,4 +1,4 @@
-import Component from "../../Component.mjs";
+import Component from "../../component.mjs";
 
 export default class ChatBox extends Component.HTMLElement {
     static tag = "chat-box";
@@ -9,7 +9,19 @@ export default class ChatBox extends Component.HTMLElement {
 
     static get config() {
         return {
-            tag: "chat-box"
+            tag: "chat-box",
+            properties: {
+                state: {
+                    type: String,
+                    default: "hidden",
+                    allowed: ChatBox.allowedStates
+                },
+                networkState: {
+                    type: String,
+                    default: "disconnected",
+                    allowed: ChatBox.networkStates
+                }
+            }
         };
     }
 
