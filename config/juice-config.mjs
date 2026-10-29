@@ -6,6 +6,7 @@
 
 import DotNotation from "../core/Util/DotNotation.mjs";
 import DEFAULT_CONFIG from "./defaults.mjs";
+import MANIFEST from "./manifest.json";
 
 function parseFilePath(path) {
     return {
