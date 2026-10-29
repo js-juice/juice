@@ -28,15 +28,20 @@ const root = typeof globalThis !== "undefined" ? globalThis : {};
 const juiceRootDir = import.meta.resolve("../");
 const manifestFilePath = MANIFEST_PATH;
 
+import.meta.glob([MANIFEST_PATH], {
+    eager: true
+});
+
 function loadJSON(path) {
     try {
-        return JSON.parse(root.fetch(path).then((res) => res.text()));
+        return JSON.parse(root.fetch(path).then((res) => res?.text() || {}));
     } catch (e) {
         return {};
     }
 }
-
+console.trace(MANIFEST_PATH);
 const manifestJSON = loadJSON(MANIFEST_PATH);
+console.log(manifestJSON);
 
 function isPlainObject(value) {
     return value != null && typeof value === "object" && !Array.isArray(value);
