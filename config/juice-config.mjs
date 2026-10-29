@@ -42,7 +42,7 @@ function loadJSON(path) {
 }
 console.trace(MANIFEST_PATH);
 const manifestJSON = loadJSON(MANIFEST_PATH);
-console.log(manifestJSON);
+console.log(manifestJSON, MANIFEST);
 
 function isPlainObject(value) {
     return value != null && typeof value === "object" && !Array.isArray(value);
