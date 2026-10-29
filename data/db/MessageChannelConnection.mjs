@@ -4,7 +4,7 @@
  * @module DB/AsyncConnection
  */
 
-import EventEmitter from "../../core/Event/Emitter.mjs";
+import EventEmitter from "../../core/event/emitter.mjs";
 
 /**
  * Async database connection using message ports for remote DB operations
