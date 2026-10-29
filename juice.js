@@ -170,7 +170,7 @@ class Juice {
         this.logger = logger;
 
         if (this.meta.env === "production") {
-            logger.slience();
+            //logger.slience();
         }
 
         this.creator = new Error().stack.split("\n")[1].trim();
