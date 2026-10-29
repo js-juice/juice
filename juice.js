@@ -5,7 +5,7 @@
  * @module Core
  */
 
-import "./core/Dev/Log.mjs";
+import logger from "./core/Dev/logger.mjs";
 import { blendClasses } from "./core/Util/Class.mjs";
 import _config from "./config/juice-config.mjs";
 import path from "./core/Util/Path.mjs";
@@ -16,6 +16,17 @@ const nodeProcess = root.process?.versions?.node && typeof root.process.cwd === 
 
 import JuiceStorage from "./core/inc/Storage.mjs";
 import JuiceQueues from "./core/inc/Queues.mjs";
+
+function getMetaValue(name) {
+    if (Array.isArray(name)) {
+        for (const n of name) {
+            const value = getMetaValue(n);
+            if (value !== null) return value;
+        }
+    }
+    const meta = document.querySelector(`meta[name="${name}"]`);
+    return meta ? meta.content : null;
+}
 
 /**
  * Parses a file path into its component parts.
@@ -106,6 +117,18 @@ class Juice {
         // Set the singleton instance to this
         Juice.#instance = this;
 
+        this.meta = Object.freeze({
+            isBrowser: Juice.isBrowser,
+            isNode: Juice.isNode,
+            env: configuration.env || getMetaValue(["environment", "env"]) || "unknown"
+        });
+
+        this.logger = logger;
+
+        if (this.meta.env === "production") {
+            logger.slience();
+        }
+
         this.creator = new Error().stack.split("\n")[1].trim();
         this.root = root;
         this.resolve = import.meta.resolve;
@@ -127,7 +150,7 @@ class Juice {
     }
 
     dev() {
-        this.import("core", "Dev/Log.mjs");
+        this.logger.show();
     }
 
     static dbDrivers = {

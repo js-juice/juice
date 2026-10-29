@@ -118,10 +118,7 @@ export default class KeyGroup extends Component.HTMLElement {
         });
 
         window.addEventListener("keydown", (e) => {
-            console.log("Key down:", e.key, e.code, e.key.toUpperCase());
-            console.log(this.keys);
             const keyElement = this.keys[e.code.toUpperCase()];
-            console.log("Mapped key element:", keyElement);
             if (keyElement) {
                 keyElement.press();
             }

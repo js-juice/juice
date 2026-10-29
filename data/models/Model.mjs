@@ -4,7 +4,7 @@
  * @module DB/Model/Model
  */
 
-import EventEmitter from "../../core/Event/Emitter.mjs";
+import EventEmitter from "../../core/event/emitter.mjs";
 import Collection from "./Collection.mjs";
 import DistinctArray from "../../core/DataTypes/DistinctArray.mjs";
 import { type, empty, equals, exists } from "../../core/Util/Core.mjs";

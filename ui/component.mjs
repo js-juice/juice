@@ -10,6 +10,7 @@ import Util, { type } from "../core/Util/Core.mjs";
 import VDom from "../core/VirtualDom/VDom.mjs";
 import { getJuiceConfig } from "../config/juice-config.mjs";
 import "../core/Dom/Extend.mjs";
+import { DataType } from "../data/types.mjs";
 
 //Default Configuration
 const DEFAULT_CONFIG = {
@@ -190,6 +191,18 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 const baseConfig = this.baseConfig || {};
 
                 this.config = ObjUtil.merge(defaultConfig, userConfig, baseConfig, componentConfig, true);
+
+                const properties = this.config.properties || {};
+                for (const property in properties) {
+                    const schema = properties[property];
+                    if (schema.type) {
+                        if (DataType.isType(schema.type)) {
+                            schema.dataType = DataType.get(schema.type);
+                        }
+                    } else {
+                        schema.type = "string";
+                    }
+                }
 
                 this.template = new ComponentTemplate(this.config);
                 const styleProperties = ["baseStyle", "style", "_style"];
@@ -575,6 +588,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
 
                 //Parse Config Type
                 const configType = config.attrtype || config.type || "string";
+
                 //Handle Aliases
                 if (alias) {
                     Object.defineProperty(this, property, {
