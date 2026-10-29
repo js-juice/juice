@@ -11,12 +11,28 @@ import _config from "./config/juice-config.mjs";
 import path from "./core/Util/Path.mjs";
 import { createStyleManager } from "./core/Style/Styles.mjs";
 
+/**
+ * Description placeholder
+ *
+ * @type {{}}
+ */
 export const root = typeof globalThis !== "undefined" ? globalThis : {};
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const nodeProcess = root.process?.versions?.node && typeof root.process.cwd === "function" ? root.process : null;
 
 import JuiceStorage from "./core/inc/Storage.mjs";
 import JuiceQueues from "./core/inc/Queues.mjs";
 
+/**
+ * Description placeholder
+ *
+ * @param {*} name
+ * @returns {*}
+ */
 function getMetaValue(name) {
     if (Array.isArray(name)) {
         for (const n of name) {
@@ -44,6 +60,11 @@ function parseFilePath(url) {
     };
 }
 
+/**
+ * Description placeholder
+ *
+ * @returns {*}
+ */
 function getRuntimeRoot() {
     if (nodeProcess) return nodeProcess.cwd();
 
@@ -55,6 +76,11 @@ function getRuntimeRoot() {
     return "/";
 }
 
+/**
+ * Description placeholder
+ *
+ * @returns {{ cwd: string; root: string; app: string; src: string; nodeModules: any; data: any; config: any; }}
+ */
 function getDefaultPaths() {
     const cwd = parseFilePath(import.meta.url).dir;
     const data = path.resolve(cwd, "data");
@@ -88,9 +114,27 @@ root.currentFile = currentFile;
  * @class Juice
  */
 class Juice {
+    /**
+     * Description placeholder
+     *
+     * @static
+     * @type {boolean}
+     */
     static #instance = false;
 
+    /**
+     * Description placeholder
+     *
+     * @static
+     * @type {boolean}
+     */
     static isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
+    /**
+     * Description placeholder
+     *
+     * @static
+     * @type {*}
+     */
     static isNode = Boolean(nodeProcess);
     static rootSections = ["animation", "core", "data", "forms", "style", "ui"];
     /**
@@ -149,6 +193,7 @@ class Juice {
         );
     }
 
+    /** Description placeholder */
     dev() {
         this.logger.show();
     }
@@ -158,6 +203,15 @@ class Juice {
         mysql: "db/SQL/MySQL/Database.mjs"
     };
 
+    /**
+     * Description placeholder
+     *
+     * @async
+     * @param {*} type
+     * @param {*} name
+     * @param {*} models
+     * @returns {unknown}
+     */
     async db(type, name, models) {
         const dbConfig = this.config.db || {};
         const dataPath = this.config.get("paths.data");
@@ -213,6 +267,13 @@ class Juice {
         return Juice.blend(...mixins);
     }
 
+    /**
+     * Description placeholder
+     *
+     * @param {*} scope
+     * @param {*} relative
+     * @returns {*}
+     */
     path(scope, relative) {
         const configuredPath = this.config.get(`paths.${scope}`);
         if (!relative) {
@@ -224,6 +285,12 @@ class Juice {
         return relative;
     }
 
+    /**
+     * Description placeholder
+     *
+     * @param {{}} [options={}]
+     * @returns {*}
+     */
     styles(options = {}) {
         const normalizedOptions =
             typeof options === "string" ||
@@ -305,6 +372,12 @@ class Juice {
         globalScope.juice = this;
     }
 
+    /**
+     * Description placeholder
+     *
+     * @readonly
+     * @type {{ animation: { index: string; }; core: { index: string; }; data: { index: string; }; forms: { index: string; }; styles: { index: string; }; ui: { index: string; }; }}
+     */
     get importSections() {
         return {
             animation: {
