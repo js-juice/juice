@@ -189,7 +189,7 @@ root.stackTrace = function stackTrace(parsed = false) {
     const error = new Error();
     const stack = error.stack || "";
     //console.log(stack);
-    const stackArray = stack.split("\n").slice(5);
+    const stackArray = stack.split("\n").slice(4);
     //console.log(stackArray);
     // Remove the first two lines which are the error message and this function call
     return parsed ? stackArray.map(ConsoleMessage.parse) : stackArray;
@@ -198,8 +198,6 @@ root.stackTrace = function stackTrace(parsed = false) {
 root.caller = function caller() {
     return stackTrace(true);
 };
-
-logger.intercept();
 
 root.debug = root.log = logger.methods.log;
 root.trace = console._trace;

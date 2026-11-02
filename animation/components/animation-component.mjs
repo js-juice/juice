@@ -87,6 +87,22 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 properties: {
                     width: { type: "number", route: "w.value", default: 0, linked: true, unit: "size", axis: "x" },
                     height: { type: "number", route: "h.value", default: 0, linked: true, unit: "size", axis: "y" },
+                    maxWidth: {
+                        type: "number",
+                        route: "maxw.value",
+                        default: 0,
+                        linked: true,
+                        unit: "size",
+                        axis: "x"
+                    },
+                    maxHeight: {
+                        type: "number",
+                        route: "maxh.value",
+                        default: 0,
+                        linked: true,
+                        unit: "size",
+                        axis: "y"
+                    },
                     scale: { type: "number", route: "s.value", default: 1, linked: true },
                     x: { type: "number", route: "position.x", default: 0, linked: true, unit: "position", axis: "x" },
                     y: { type: "number", route: "position.y", default: 0, linked: true, unit: "position", axis: "y" },
@@ -134,6 +150,8 @@ function ComponentCompiler(name, BaseHTMLElement) {
                         position: absolute;
                         width: var(--width);
                         height: var(--height);
+                        max-width: var(--max-width, none);
+                        max-height: var(--max-height, none);
                     }
                     #body slot {
                         position: relative;
@@ -153,7 +171,23 @@ function ComponentCompiler(name, BaseHTMLElement) {
 
             static get observed() {
                 return {
-                    all: ["x", "y", "z", "r", "rx", "ry", "rz", "scale", "vx", "vy", "width", "height", "debug"],
+                    all: [
+                        "x",
+                        "y",
+                        "z",
+                        "r",
+                        "rx",
+                        "ry",
+                        "rz",
+                        "scale",
+                        "vx",
+                        "vy",
+                        "width",
+                        "height",
+                        "maxWidth",
+                        "maxHeight",
+                        "debug"
+                    ],
                     attributes: ["anchor", "origin", "offset", "position"],
                     properties: []
                 };
@@ -244,6 +278,8 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 this.s = new AnimationValue(1, { min: 0 });
                 this.w = new AnimationValue(0, { min: 0 });
                 this.h = new AnimationValue(0, { min: 0 });
+                this.maxw = new AnimationValue(0, { min: 0 });
+                this.maxh = new AnimationValue(0, { min: 0 });
 
                 Object.defineProperty(this, "offset", {
                     get: () => ({
@@ -752,6 +788,8 @@ function ComponentCompiler(name, BaseHTMLElement) {
                     "--z": `${this.position.z}px`,
                     "--width": `${this.w.value}px`,
                     "--height": `${this.h.value}px`,
+                    "--max-width": this.maxw.value > 0 ? `${this.maxw.value}px` : "none",
+                    "--max-height": this.maxh.value > 0 ? `${this.maxh.value}px` : "none",
                     "--scale": this.s.value,
                     "--rotation": `${this.rotation.x}deg`,
                     "--rotation-x": `${this.rotation.x}deg`,
@@ -766,7 +804,6 @@ function ComponentCompiler(name, BaseHTMLElement) {
 
             update() {
                 if (!this.animate) return null;
-
                 if (this.usePhysics) {
                     if (this.velocity.hasValue()) {
                         this.position.x += this.velocity.x;
@@ -798,6 +835,16 @@ function ComponentCompiler(name, BaseHTMLElement) {
                     if (this.h.dirty) {
                         updates["--height"] = `${this.h.value}px`;
                         this.h.save();
+                    }
+
+                    if (this.maxw.dirty) {
+                        updates["--max-width"] = this.maxw.value > 0 ? `${this.maxw.value}px` : "none";
+                        this.maxw.save();
+                    }
+
+                    if (this.maxh.dirty) {
+                        updates["--max-height"] = this.maxh.value > 0 ? `${this.maxh.value}px` : "none";
+                        this.maxh.save();
                     }
 
                     if (this.s.dirty) {
@@ -835,6 +882,8 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 const debugValues = values || {
                     "--width": `${this.w.value}px`,
                     "--height": `${this.h.value}px`,
+                    "--max-width": this.maxw.value > 0 ? `${this.maxw.value}px` : "none",
+                    "--max-height": this.maxh.value > 0 ? `${this.maxh.value}px` : "none",
                     "--scale": this.s.value,
                     "--x": `${this.position.x}px`,
                     "--y": `${this.position.y}px`,
@@ -912,6 +961,10 @@ function ComponentCompiler(name, BaseHTMLElement) {
                     const height = `${this.h.value}px`;
                     this.writeStyleVars({ "--height": height });
                     this.updateAnchorDebugValues({ "--height": height });
+                } else if (property === "maxWidth" || property === "maxHeight") {
+                    const axis = property === "maxWidth" ? "width" : "height";
+                    const value = this[property];
+                    this.writeStyleVars({ [`--max-${axis}`]: value > 0 ? `${value}px` : "none" });
                 } else if (property === "scale") {
                     this.writeStyleVars({ "--scale": this.s.value });
                     this.updateAnchorDebugValues({ "--scale": this.s.value });

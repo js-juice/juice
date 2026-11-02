@@ -39,7 +39,8 @@ class Anchor extends HTMLElement {
                 position: absolute;
                 width: var(--width, auto);
                 height: var(--height, auto);
-                
+                max-width: var(--max-width, none);
+                max-height: var(--max-height, none);
                 transform: translate(calc(var(--anchor-x, 0%) * -1), calc(var(--anchor-y, 0%) * -1));
             }
             #target {

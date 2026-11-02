@@ -584,7 +584,7 @@ class AnimationStage extends Component.HTMLElement {
 
         if (this.viewer?.onAssetAdded) {
             this.viewer.onAssetAdded(child);
-        } else {
+        } else if (this.animation?.tree) {
             this.animation.tree.addAsset(child, this);
         }
     }
@@ -615,6 +615,10 @@ class AnimationStage extends Component.HTMLElement {
      */
     onFirstConnect() {
         AnimationComponentUtil.initialize(this);
+        // Children can finish upgrading before their stage is defined.
+        for (const child of this.children) {
+            if (child.ready) this.onCustomChildReady(child);
+        }
         this._setDimensionVar("width", this.width);
         this._setDimensionVar("height", this.height);
 

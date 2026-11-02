@@ -7,34 +7,104 @@ import { fileURLToPath } from "node:url";
 import stylesConfig from "../config.mjs";
 import { CHECK_CSS_PROPERTIES, UNITLESS_PROPERTIES as EXPORTED_UNITLESS_PROPERTIES } from "../property-list.mjs";
 
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const __filename = fileURLToPath(import.meta.url);
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const __dirname = path.dirname(__filename);
 
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const argumentsAfterNode = process.argv.slice(2);
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const outputArgument = argumentsAfterNode[argumentsAfterNode.length - 1];
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const watchArguments = argumentsAfterNode.length > 1 ? argumentsAfterNode.slice(0, -1) : argumentsAfterNode;
+/**
+ * Description placeholder
+ *
+ * @type {boolean}
+ */
 const isDirectExecution = process.argv[1] && path.resolve(process.argv[1]) === __filename;
 
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const DEFAULT_WATCH_DIR = path.resolve(process.cwd(), "../../../scss");
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const DEFAULT_VIEW_DIR = path.resolve(process.cwd(), "../../../views");
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const DEFAULT_OUTPUT_DIR = path.resolve(process.cwd(), "../../../css");
 
+/**
+ * Description placeholder
+ *
+ * @type {{}}
+ */
 const defaultWatchDirs = [DEFAULT_WATCH_DIR, DEFAULT_VIEW_DIR];
 
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const watchDirs = isDirectExecution
     ? watchArguments.length > 0
         ? watchArguments.map((value) => path.resolve(process.cwd(), value))
         : defaultWatchDirs
     : defaultWatchDirs;
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const outputArgumentPath = isDirectExecution
     ? path.resolve(process.cwd(), outputArgument || DEFAULT_OUTPUT_DIR)
     : DEFAULT_OUTPUT_DIR;
 
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const outputFile =
     path.extname(outputArgumentPath).toLowerCase() === ".css"
         ? outputArgumentPath
         : path.join(outputArgumentPath, "generated.css");
 
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const SUPPORTED_EXTENSIONS = new Set([
     ".html",
     ".htm",
@@ -56,6 +126,11 @@ const SUPPORTED_EXTENSIONS = new Set([
     ".less"
 ]);
 
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const IGNORED_DIRECTORIES = new Set([
     ".git",
     ".svn",
@@ -69,6 +144,11 @@ const IGNORED_DIRECTORIES = new Set([
     ".cache"
 ]);
 
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const UNITLESS_PROPERTIES = new Set(
     EXPORTED_UNITLESS_PROPERTIES ?? [
         "zIndex",
@@ -82,36 +162,106 @@ const UNITLESS_PROPERTIES = new Set(
     ]
 );
 
+/**
+ * Description placeholder
+ *
+ * @type {"%"}
+ */
 const DEFAULT_UNIT = "%";
+/**
+ * Description placeholder
+ *
+ * @type {30}
+ */
 const REBUILD_DELAY = 30;
 
+/**
+ * Description placeholder
+ *
+ * @type {{}}
+ */
 const CLASS_ATTRIBUTE = /\bclass(?:Name)?\s*(?:=|:)\s*(["'`])([\s\S]*?)\1/g;
 
+/**
+ * Description placeholder
+ *
+ * @type {{}}
+ */
 const CLASS_LIST_CALL = /\bclassList\.(?:add|remove|toggle|contains|replace)\s*\(([^)]*)\)/g;
 
+/**
+ * Description placeholder
+ *
+ * @type {{}}
+ */
 const BLADE_CLASS_DIRECTIVE = /@class\s*\(\s*\[([\s\S]*?)\]\s*\)/g;
 
+/**
+ * Description placeholder
+ *
+ * @type {{}}
+ */
 const STRING_LITERAL = /(["'`])([\s\S]*?)\1/g;
 
 /*
  * Absolute filepath -> Set<className>
+ */
+/**
+ * Description placeholder
+ *
+ * @type {*}
  */
 const fileClassCache = new Map();
 
 /*
  * className -> number of files using it
  */
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const classReferenceCounts = new Map();
 
 /*
  * className -> resolved declarations or null
  */
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const resolvedClassCache = new Map();
 
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 let rebuildTimer = null;
+/**
+ * Description placeholder
+ *
+ * @type {boolean}
+ */
 let initialScanComplete = false;
+/**
+ * Description placeholder
+ *
+ * @type {boolean}
+ */
 let writeInProgress = false;
+/**
+ * Description placeholder
+ *
+ * @type {boolean}
+ */
 let writeRequested = false;
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 let lastWrittenCSS = null;
 
 function normalizePath(filePath) {
@@ -160,6 +310,13 @@ function isSupportedFile(filePath) {
     return SUPPORTED_EXTENSIONS.has(getExtension(filePath));
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {*} filePath
+ * @param {*} stats
+ * @returns {boolean}
+ */
 function shouldIgnore(filePath, stats) {
     const absolutePath = normalizePath(filePath);
 
@@ -183,6 +340,12 @@ function shouldIgnore(filePath, stats) {
     return false;
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {*} classes
+ * @param {*} value
+ */
 function addClasses(classes, value) {
     String(value)
         .split(/\s+/)
@@ -207,6 +370,12 @@ function addClasses(classes, value) {
         });
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {*} contents
+ * @returns {*}
+ */
 function extractClassList(contents) {
     const classes = new Set();
     let match;
@@ -244,6 +413,12 @@ function extractClassList(contents) {
     return classes;
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {*} className
+ * @returns {boolean}
+ */
 function incrementClassReference(className) {
     const currentCount = classReferenceCounts.get(className) ?? 0;
 
@@ -252,6 +427,12 @@ function incrementClassReference(className) {
     return currentCount === 0;
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {*} className
+ * @returns {boolean}
+ */
 function decrementClassReference(className) {
     const currentCount = classReferenceCounts.get(className) ?? 0;
 
@@ -266,6 +447,13 @@ function decrementClassReference(className) {
     return false;
 }
 
+/**
+ * Description placeholder
+ *
+ * @async
+ * @param {*} filePath
+ * @returns {*}
+ */
 async function updateFile(filePath) {
     const absolutePath = normalizePath(filePath);
 
@@ -320,6 +508,11 @@ async function updateFile(filePath) {
     }
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {*} filePath
+ */
 function removeFile(filePath) {
     const absolutePath = normalizePath(filePath);
     const previousClasses = fileClassCache.get(absolutePath);
@@ -398,6 +591,12 @@ function getScreenMap(config = stylesConfig) {
     );
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {*} [config=stylesConfig]
+ * @returns {{}}
+ */
 function getStateMap(config = stylesConfig) {
     return mergeConfigMaps(
         {
@@ -423,6 +622,12 @@ function isStyleObject(value) {
     );
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {*} value
+ * @returns {*}
+ */
 function isStyleMethod(value) {
     return (
         value !== null &&
@@ -433,6 +638,12 @@ function isStyleMethod(value) {
     );
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {*} property
+ * @returns {*}
+ */
 function toKebabCase(property) {
     return property.replace(/[A-Z]/g, (character) => `-${character.toLowerCase()}`);
 }
@@ -464,6 +675,14 @@ function isZero(value) {
     return /^-?0+(?:\.0+)?$/.test(value);
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {*} rawValue
+ * @param {*} property
+ * @param {*} template
+ * @returns {*}
+ */
 function normalizeValue(rawValue, property, template) {
     const value = decodeValue(rawValue);
 
@@ -497,6 +716,12 @@ function normalizeValue(rawValue, property, template) {
     return value;
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {*} value
+ * @returns {boolean}
+ */
 function isSafeCSSValue(value) {
     return value.length > 0 && !/[;{}]/.test(value) && !value.includes("/*") && !value.includes("*/");
 }
@@ -664,6 +889,11 @@ function serializeClass(className, declarations, context = parseClassContext(cla
     return `${selector} {\n${body}\n}`;
 }
 
+/**
+ * Description placeholder
+ *
+ * @returns {string}
+ */
 function generateStyleSheet() {
     const blocks = [];
 
@@ -680,6 +910,12 @@ function generateStyleSheet() {
     return blocks.length > 0 ? `${blocks.join("\n\n")}\n` : "";
 }
 
+/**
+ * Description placeholder
+ *
+ * @async
+ * @returns {*}
+ */
 async function writeStyleSheet() {
     /*
      * Prevent overlapping filesystem writes. If another rebuild is
@@ -741,6 +977,7 @@ async function writeStyleSheet() {
     }
 }
 
+/** Description placeholder */
 function scheduleBuild() {
     if (rebuildTimer !== null) {
         clearTimeout(rebuildTimer);
