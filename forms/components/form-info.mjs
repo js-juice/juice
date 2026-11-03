@@ -2,6 +2,24 @@
  * Form-level progress summary and field checklist.
  */
 
+<<<<<<< HEAD
+=======
+const FIELD_SELECTOR = [
+    "input-text",
+    "input-textarea",
+    "input-wysiwyg",
+    "input-select",
+    "input-checkbox",
+    "input-radio",
+    "input-number",
+    "input-range",
+    "input-file",
+    "input-files",
+    "[validation]",
+    "[validate]"
+].join(",");
+
+>>>>>>> 5d077de4cad8a2fc2e432ebf2a31aaefbc52decd
 const SUBMIT_CONTROL_SELECTOR = [
     'input-button[type="submit"]',
     'button[type="submit"]',

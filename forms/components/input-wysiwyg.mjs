@@ -862,6 +862,11 @@ class InputWysiwyg extends InputComponent {
         }
     }
 
+    _syncHostFromNative() {
+        super._syncHostFromNative();
+        this._updateFormValue();
+    }
+
     _syncEditorToNative() {
         if (!this._editor || !this._dom.native) return;
         const html = this._editor.innerHTML;
@@ -874,6 +879,8 @@ class InputWysiwyg extends InputComponent {
     _syncNativeToEditor() {
         if (!this._editor || !this._dom.native) return;
         const html = this.getAttribute("value") ?? this._dom.native.value ?? "";
+        this._dom.native.value = html;
+        this._updateFormValue();
         if (this._sourceMode && this._sourceEditor) {
             this._sourceEditor.value = html;
         } else if (this._editor.innerHTML !== html) {

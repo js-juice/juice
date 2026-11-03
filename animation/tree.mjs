@@ -57,7 +57,7 @@ class AnimationTree {
         this.assets.set(element, descriptor);
         element._asset = descriptor;
         this.animation.timeline.addAnimator(element);
-        console.log("Added asset to animation tree", { element, descriptor });
+        //console.log("Added asset to animation tree", { element, descriptor });
         return descriptor;
     }
 

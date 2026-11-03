@@ -29,6 +29,7 @@
  */
 
 import InputComponent from "./input-component.mjs";
+import enhanceMarkdown from "./textarea-markdown.mjs";
 
 class InputTextarea extends InputComponent {
     /**
@@ -87,6 +88,7 @@ class InputTextarea extends InputComponent {
      */
     _afterConnected() {
         this._dom.native?.addEventListener("input", this._boundAutoGrow);
+        enhanceMarkdown(this);
         this._syncAutoGrowHeight();
     }
 

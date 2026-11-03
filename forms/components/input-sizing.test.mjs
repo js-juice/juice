@@ -48,6 +48,18 @@ test("textareas always begin at one row and grow to their content", async () => 
     assert.match(inputTextarea, /textarea\.style\.height = `\$\{textarea\.scrollHeight\}px`/);
 });
 
+test("programmatic input values refresh component-specific visual state", async () => {
+    const inputComponent = await readFile(
+        new URL("./input-component.mjs", import.meta.url),
+        "utf8"
+    );
+
+    assert.match(
+        inputComponent,
+        /set value\(value\) \{[\s\S]*?this\.setAttribute\("value", this\._dom\.native\.value\);\s*this\._syncVisualState\(\);/
+    );
+});
+
 test("browser-prefilled controls color the complete input wrapper", async () => {
     const inputComponent = await readFile(
         new URL("./input-component.mjs", import.meta.url),

@@ -507,6 +507,10 @@ const BASE_STYLES = {
     ".input-root > label": {
         marginBottom: "0.25rem"
     },
+    ".input-root > label:empty": {
+        marginBottom: "0",
+        display: "none"
+    },
     label: {
         position: "relative",
         display: "block",
@@ -2457,6 +2461,7 @@ class InputComponent extends HTMLElement {
         this._dom.native.value = normalized;
         this._applyFormatting();
         this.setAttribute("value", this._dom.native.value);
+        this._syncVisualState();
         this._updateFormValue();
         this._queueValidation();
     }

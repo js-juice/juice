@@ -1,6 +1,16 @@
 import fs from "fs";
 
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const type = process.argv[2];
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 const value = process.argv[3] || "";
 
 //type must be lower case dashed format
@@ -14,6 +24,11 @@ if (!type) {
     process.exit(1);
 }
 //Replace - with PascalCase
+/**
+ * Description placeholder
+ *
+ * @type {string}
+ */
 const className =
     "Input" +
     type
@@ -22,6 +37,11 @@ const className =
         .join("") +
     "Component";
 
+/**
+ * Description placeholder
+ *
+ * @type {string}
+ */
 const out = `import InputComponent from "./input-component.mjs";
 
 class ${className} extends InputComponent {

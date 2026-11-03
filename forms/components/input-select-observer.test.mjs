@@ -8,3 +8,7 @@ test("option observer ignores host attribute changes to prevent value refresh lo
     assert.match(source, /mutation\.type !== "attributes" \|\| mutation\.target !== this/);
     assert.match(source, /if \(optionsChanged\) this\._refreshOptions\(\)/);
 });
+
+test("custom options accept clicks from nested SVG icons", () => {
+    assert.match(source, /event\.target instanceof Element \? event\.target\.closest\("\.select-option"\)/);
+});
