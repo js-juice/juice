@@ -413,7 +413,7 @@ class InputSelect extends InputComponent {
         this.inputType = "select";
         this.syncCharWidth = false;
         this._options = [];
-        this.selected = { value: "", label: "", description: "" };
+        this._selectedOption = { value: "", label: "", description: "" };
         this._optionList = null;
         this._optionObserver = null;
         this._customBoundNative = null;
@@ -1028,7 +1028,7 @@ class InputSelect extends InputComponent {
             const normalized = newValue == null ? "" : String(newValue);
             this._setSelectedByValue(normalized);
             if (this._dom.native && !this._useNativeMode()) {
-                this._dom.native.value = this.selected.label;
+                this._dom.native.value = this._selectedOption.label;
             }
             this._updateFormValue();
             this._syncSelectedDescription();
@@ -1102,7 +1102,7 @@ class InputSelect extends InputComponent {
     _setSelectedByValue(value) {
         const normalized = value == null ? "" : String(value);
         const option = this._options.find((o) => o.value === normalized) || null;
-        this.selected = {
+        this._selectedOption = {
             value: normalized,
             label: option ? option.label : this.hasAttribute("editable") ? normalized : "",
             description: option ? option.description || "" : ""
@@ -1257,7 +1257,7 @@ class InputSelect extends InputComponent {
                     li.classList.add("selected");
                     li.setAttribute("aria-selected", "true");
                     this._dom.labelValue.value = optionData.label;
-                    this.selected = {
+                    this._selectedOption = {
                         value: optionData.value,
                         label: optionData.label,
                         description: optionData.description || ""
@@ -1269,7 +1269,7 @@ class InputSelect extends InputComponent {
                 maxLen = Math.max(maxLen, optionData.label.length);
             }
 
-            this._selectOptionByValue(this.selected.value);
+            this._selectOptionByValue(this._selectedOption.value);
         }
 
         // this._dom.native.style.width = `calc(${maxLen}ch + 1.5rem)`;
@@ -1334,12 +1334,12 @@ class InputSelect extends InputComponent {
         if (this._descriptionEl.parentNode !== this._wireframe.root) {
             this._wireframe.root.appendChild(this._descriptionEl);
         }
-        this._descriptionEl.textContent = this.selected.description || "";
+        this._descriptionEl.textContent = this._selectedOption.description || "";
     }
 
     _onNativeInputEvent() {
         if (!this._editingCustomValue) return;
-        this.selected = { value: this._dom.native.value, label: this._dom.native.value, description: "" };
+        this._selectedOption = { value: this._dom.native.value, label: this._dom.native.value, description: "" };
     }
 
     /**
@@ -1469,20 +1469,20 @@ class InputSelect extends InputComponent {
         this._dom.native.addEventListener("keydown", this._customKeydownHandler);
 
         if (!this._useSelectBarMode()) {
-            this._wireframe.input.addEventListener("click", () => {
+            if (this._customWrapperClickHandler) {
+                this._wireframe.input.removeEventListener("click", this._customWrapperClickHandler);
+            }
+            this._customWrapperClickHandler = () => {
                 if (this._editingCustomValue) return;
                 this._expandOptionList();
-            });
+            };
+            this._wireframe.input.addEventListener("click", this._customWrapperClickHandler);
 
-            this._dom.native.addEventListener("focus", () => {
-                if (this._editingCustomValue) return;
-                this._expandOptionList();
-            });
         }
 
         this._dom.native.addEventListener("input", () => {
             if (!this._editingCustomValue) return;
-            this.selected = { value: this._dom.native.value, label: this._dom.native.value, description: "" };
+            this._selectedOption = { value: this._dom.native.value, label: this._dom.native.value, description: "" };
             this._syncHostFromNative();
             this._updateFormValue();
         });
@@ -1490,7 +1490,7 @@ class InputSelect extends InputComponent {
         this._dom.native.addEventListener("blur", () => {
             setTimeout(() => {
                 if (this._editingCustomValue) {
-                    this.selected = { value: this._dom.native.value, label: this._dom.native.value, description: "" };
+                    this._selectedOption = { value: this._dom.native.value, label: this._dom.native.value, description: "" };
                     this._editingCustomValue = false;
                     this.classList.remove("editing-custom-value");
                     this._dom.native.readOnly = true;
@@ -1510,7 +1510,7 @@ class InputSelect extends InputComponent {
             this._editingCustomValue = true;
             this.classList.add("editing-custom-value");
             this._dom.native.readOnly = false;
-            this._dom.native.value = this.selected.value || this._dom.native.value || "";
+            this._dom.native.value = this._selectedOption.value || this._dom.native.value || "";
             if (this._dom.native.value == this.defaultValue) this._dom.native.value = "";
             this._dom.native.focus();
             this._dom.native.select();
@@ -1539,7 +1539,7 @@ class InputSelect extends InputComponent {
         if (this._useNativeMode()) {
             return super._getFormValue();
         }
-        return this.selected && typeof this.selected.value === "string" ? this.selected.value : "";
+        return this._selectedOption && typeof this._selectedOption.value === "string" ? this._selectedOption.value : "";
     }
 
     /**
@@ -1550,7 +1550,7 @@ class InputSelect extends InputComponent {
         if (this._useNativeMode()) {
             return super.value;
         }
-        return this.selected && typeof this.selected.value === "string" ? this.selected.value : "";
+        return this._selectedOption && typeof this._selectedOption.value === "string" ? this._selectedOption.value : "";
     }
 
     /**
@@ -1575,7 +1575,7 @@ class InputSelect extends InputComponent {
         }
 
         if (this._dom.native) {
-            this._dom.native.value = this.selected.label;
+            this._dom.native.value = this._selectedOption.label;
         }
 
         this._syncSelectedDescription();

@@ -298,6 +298,17 @@ class InputImageComponent extends InputComponent {
             if (token !== this._loadToken || this._selectedFile) return;
             this._loadedImage = image;
             this._drawImage(image);
+            this.dispatchEvent(
+                new CustomEvent("image-load", {
+                    bubbles: true,
+                    composed: true,
+                    detail: {
+                        source,
+                        canvas: this.canvas,
+                        imageData: this.getImageData()
+                    }
+                })
+            );
         } catch (error) {
             if (token !== this._loadToken) return;
             this._loadedImage = null;

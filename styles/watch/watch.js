@@ -9,16 +9,17 @@ import { CHECK_CSS_PROPERTIES, UNITLESS_PROPERTIES as EXPORTED_UNITLESS_PROPERTI
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const watchArgument = process.argv[2];
-const outputArgument = process.argv[3];
 const runOnce = process.argv.includes("--once");
+const positionalArguments = process.argv.slice(2).filter((argument) => argument !== "--once");
+const outputArgument = positionalArguments.pop();
+const watchArguments = positionalArguments;
 
-if (!watchArgument || !outputArgument) {
-    console.error("Usage: node watcher.mjs <watch-directory> <output-file-or-directory>");
+if (watchArguments.length === 0 || !outputArgument) {
+    console.error("Usage: node watch.js <watch-directory...> <output-file-or-directory>");
     process.exit(1);
 }
 
-const watchDir = path.resolve(process.cwd(), watchArgument);
+const watchDirs = watchArguments.map((watchArgument) => path.resolve(process.cwd(), watchArgument));
 const outputArgumentPath = path.resolve(process.cwd(), outputArgument);
 
 const outputFile =
@@ -143,12 +144,16 @@ function isOutputFile(filePath) {
 }
 
 function isIgnoredDirectory(filePath) {
-    const relativePath = path.relative(watchDir, filePath);
+    const root = watchDirs.find((watchDir) => {
+        const relativePath = path.relative(watchDir, filePath);
+        return relativePath === "" || (!relativePath.startsWith("..") && !path.isAbsolute(relativePath));
+    });
 
-    if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+    if (!root) {
         return false;
     }
 
+    const relativePath = path.relative(root, filePath);
     return relativePath.split(path.sep).some((segment) => IGNORED_DIRECTORIES.has(segment));
 }
 
@@ -631,8 +636,10 @@ function scheduleBuild() {
     }, REBUILD_DELAY);
 }
 
-if (!existsSync(watchDir)) {
-    console.error(`Watch directory does not exist: ${watchDir}`);
+const missingWatchDirs = watchDirs.filter((watchDir) => !existsSync(watchDir));
+
+if (missingWatchDirs.length > 0) {
+    console.error(`Watch directories do not exist: ${missingWatchDirs.join(", ")}`);
     process.exit(1);
 }
 
@@ -641,10 +648,10 @@ if (!CHECK_CSS_PROPERTIES || typeof CHECK_CSS_PROPERTIES !== "object") {
     process.exit(1);
 }
 
-console.log(`Watching: ${watchDir}`);
+console.log(`Watching: ${watchDirs.join(", ")}`);
 console.log(`Output:   ${outputFile}`);
 
-const watcher = chokidar.watch(watchDir, {
+const watcher = chokidar.watch(watchDirs, {
     persistent: true,
 
     /*

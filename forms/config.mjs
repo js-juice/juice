@@ -50,7 +50,7 @@ const formsConfig = {
         "--input-focus-bgcolor": "var(--color-input-background, #ffffff)",
         "--input-disabled-bgcolor": "var(--color-disabled-background, #f1f5f9)",
         "--validation-color": "var(--color-error, #dc2626)",
-        "--juice-forms-gap": "1rem",
+        "--juice-forms-gap": "2rem",
         "--input-button-bgcolor": "var(--color-primary, #2563eb)",
         "--input-button-color": "#ffffff"
     }

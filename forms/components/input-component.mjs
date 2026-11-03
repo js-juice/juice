@@ -195,6 +195,38 @@ function createNativeElement(config = {}) {
     return element;
 }
 
+function normalizeStatusConfig(config) {
+    if (!isPlainObject(config)) {
+        return {
+            tag: "input-status",
+            iconOnly: true,
+            cover: true,
+            attrs: { fill: true }
+        };
+    }
+
+    const attrs = isPlainObject(config.attrs)
+        ? config.attrs
+        : isPlainObject(config.attributes)
+          ? config.attributes
+          : {};
+
+    return {
+        tag: String(config.tag || "input-status").trim() || "input-status",
+        iconOnly: config.iconOnly !== false,
+        cover: config.cover !== false,
+        attrs
+    };
+}
+
+function createStatusElement(config) {
+    const element = createNativeElement({ tag: config.tag, attrs: config.attrs });
+    element.classList.add("status");
+    element.toggleAttribute("icon-only", config.iconOnly);
+    if (!element.hasAttribute("state")) element.setAttribute("state", "idle");
+    return element;
+}
+
 function createNativeControls(config) {
     const nativeConfig = Array.isArray(config) ? config : [config || { tag: "input" }];
     const controls = [];
@@ -583,7 +615,7 @@ const BASE_STYLES = {
         overflow: "hidden",
         color: "#FFFFFF"
     },
-    "input-status": {
+    ".status-wrapper > .status": {
         position: "absolute",
         top: 0,
         right: 0,
@@ -670,7 +702,10 @@ const BASE_STYLES = {
         textTransform: "none"
     },
     ".field-description": {
-        color: "var(--form-description-color, #48484A)"
+        marginTop: "0.35rem",
+        color: "var(--form-description-color, var(--form-label-color, #48484A))",
+        fontSize: "0.8em",
+        lineHeight: "1.35"
     },
     ".field-description:empty, .field-example:empty, .field-format:empty": {
         display: "none"
@@ -787,6 +822,12 @@ class InputComponent extends HTMLElement {
         return {
             value: { type: "string", default: "" },
             native: { tag: "input", attrs: { type: "text" } },
+            status: {
+                tag: "input-status",
+                iconOnly: true,
+                cover: true,
+                attrs: { fill: true }
+            },
             format: undefined,
             validation: undefined
         };
@@ -827,6 +868,7 @@ class InputComponent extends HTMLElement {
         this._validationMessages = [];
         this._validationErrors = [];
         this._lastValidationStatus = null;
+        this._statusConfig = normalizeStatusConfig(getConfigValue(this, "status"));
         this._fieldFeedbackFrame = 0;
         this._onFieldFeedbackViewportChange = null;
         this._validationController = new FieldValidationController(this);
@@ -850,7 +892,8 @@ class InputComponent extends HTMLElement {
             input: render('div.input-wrapper[part="input-wrapper"]'),
             native: render("div.native-wrapper[part='native-wrapper']"),
             icon: render("div.icon-wrapper[part='icon-wrapper']"),
-            status: render("div.status-wrapper > div.cover[part='status-cover']"),
+            status: render("div.status-wrapper"),
+            statusCover: render("div.cover[part='status-cover']"),
             default: render("div.default[part='default']"),
             validation: render("div.validation-wrapper[part='validation-wrapper']")
         };
@@ -873,7 +916,7 @@ class InputComponent extends HTMLElement {
             native: null,
             template: null,
             default: null,
-            status: render("input-status.status"),
+            status: createStatusElement(this._statusConfig),
             feedbackHeading: render("div.field-feedback-heading"),
             feedbackHeadingLabel: render("span.field-feedback-heading-label"),
             description: render("div.field-description"),
@@ -885,10 +928,6 @@ class InputComponent extends HTMLElement {
             validationAssist: render("div.validation-assist.visually-hidden")
         };
 
-        this._dom.status.setAttribute("fill", "");
-        this._dom.status.setAttribute("icon-only", "");
-        this._dom.status.setAttribute("state", "idle");
-
         this._wireframe.validation.id = uniqueId("field-feedback");
         this._dom.descriptionAssist.id = uniqueId("field-description");
         this._dom.validationAssist.id = uniqueId("field-error");
@@ -899,11 +938,11 @@ class InputComponent extends HTMLElement {
         this._dom.guidance.append(this._dom.format);
         this._wireframe.validation.append(
             this._dom.feedbackHeading,
-            this._dom.description,
             this._dom.validationMessage,
             this._dom.guidance
         );
 
+        if (this._statusConfig.cover) this._wireframe.status.appendChild(this._wireframe.statusCover);
         this._wireframe.status.appendChild(this._dom.status);
         this._shadow.append(
             this._dom.style,
@@ -1539,16 +1578,20 @@ class InputComponent extends HTMLElement {
     _getEffectiveLayout() {
         const base = this._initialLayout || this._layout || "label:input";
         const settings = resolveInputSettings(this);
+        const hasDescription = Boolean(
+            (this.getAttribute("description") || settings.metadata.description || "").trim()
+        );
         const hasFieldFeedback =
             this.hasValidation ||
-            Boolean((this.getAttribute("description") || "").trim()) ||
             Boolean((this.getAttribute("example") || "").trim()) ||
-            Boolean(settings.metadata.description || settings.metadata.example);
+            Boolean(settings.metadata.example);
         const tokens = base
             .split(":")
             .map((token) => String(token).trim())
             .filter(Boolean)
             .filter((token) => token !== "validation" || hasFieldFeedback);
+
+        if (hasDescription && !tokens.includes("description")) tokens.push("description");
 
         const hasExplicitValidationToken = base
             .split(":")
@@ -1648,6 +1691,7 @@ class InputComponent extends HTMLElement {
             input: this._wireframe.input,
             native: this._wireframe.native,
             icon: this._wireframe.icon,
+            description: this._dom.description,
             validation: this._wireframe.validation,
             status: this._wireframe.status,
             default: this._wireframe.default
@@ -1670,7 +1714,7 @@ class InputComponent extends HTMLElement {
                 }
                 continue;
             }
-            let node = map[token];
+            let node = map[token] || this._wireframe[token];
             if (!node) {
                 node = render(token);
                 this._wireframe[token] = node;
@@ -1697,6 +1741,11 @@ class InputComponent extends HTMLElement {
         if (this._dom.template && this._dom.template.parentNode) {
             this._dom.template.parentNode.removeChild(this._dom.template);
             this._dom.template = null;
+        }
+
+        if (this._dom.default && this._dom.default.parentNode) {
+            this._dom.default.parentNode.removeChild(this._dom.default);
+            this._dom.default = null;
         }
 
         // Template/view override preserves back-compat while default views stay subclass-owned.
@@ -1983,7 +2032,12 @@ class InputComponent extends HTMLElement {
         if (!icon) return;
 
         icon.setAttribute("state", STATUS_ICON_STATES[status] || "idle");
-        icon.removeAttribute("color");
+        const configuredColor = this._statusConfig.attrs.color;
+        if (configuredColor === false || configuredColor == null) {
+            icon.removeAttribute("color");
+        } else {
+            icon.setAttribute("color", configuredColor === true ? "" : String(configuredColor));
+        }
 
         const show = status !== "none";
         icon.toggleAttribute("hidden", !show);
@@ -2077,7 +2131,7 @@ class InputComponent extends HTMLElement {
             .filter(Boolean)
             .join(" ");
 
-        const hasContent = Boolean(fieldLabel || description || example || format || messages.length);
+        const hasContent = Boolean(fieldLabel || example || format || messages.length);
         const shouldShow = hasContent && this.showFeedback;
         wrapper.hidden = !shouldShow;
 

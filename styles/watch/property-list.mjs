@@ -59,9 +59,7 @@ const LEGACY_COLORS = {
 };
 
 function colorUtilities(property) {
-    return Object.fromEntries(
-        Object.entries(LEGACY_COLORS).map(([name, value]) => [name, { [property]: value }])
-    );
+    return Object.fromEntries(Object.entries(LEGACY_COLORS).map(([name, value]) => [name, { [property]: value }]));
 }
 
 export const CHECK_CSS_PROPERTIES = {
@@ -76,6 +74,7 @@ export const CHECK_CSS_PROPERTIES = {
 
     w: {
         $: { width: "@" },
+        container: { width: "100%" },
         sm: { width: "320px" },
         med: { width: "512px" },
         lg: { width: "800px" },
@@ -194,6 +193,7 @@ export const CHECK_CSS_PROPERTIES = {
     },
 
     justify: {
+        $: { justifyContent: "@" },
         value: { $: { justifyContent: "@" } },
         start: { justifyContent: "flex-start" },
         center: { justifyContent: "center" },
@@ -211,6 +211,9 @@ export const CHECK_CSS_PROPERTIES = {
         stretch: { alignItems: "stretch" },
         baseline: { alignItems: "baseline" }
     },
+
+    align: { $: { alignItems: "@" } },
+    "items-wrap": { flexWrap: "wrap" },
 
     self: {
         value: { $: { alignSelf: "@" } },
@@ -237,6 +240,12 @@ export const CHECK_CSS_PROPERTIES = {
         column: { $: { gridColumn: "@" } },
         row: { $: { gridRow: "@" } },
         area: { $: { gridArea: "@" } }
+    },
+    columns: {
+        $: {
+            display: "grid",
+            gridTemplateColumns: "repeat(@, minmax(0, 1fr))"
+        }
     },
 
     // Font
@@ -356,8 +365,7 @@ export const CHECK_CSS_PROPERTIES = {
     "user-select": { $: { userSelect: "@" } },
     "white-space": { $: { whiteSpace: "@" } },
     "word-break": { $: { wordBreak: "@" } },
-    "box-sizing": { $: { boxSizing: "@" } }
-    ,
+    "box-sizing": { $: { boxSizing: "@" } },
     row: {
         display: "flex",
         flexDirection: "row",
