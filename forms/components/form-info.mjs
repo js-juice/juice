@@ -2,6 +2,8 @@
  * Form-level progress summary and field checklist.
  */
 
+<<<<<<< HEAD
+=======
 const FIELD_SELECTOR = [
     "input-text",
     "input-json",
@@ -13,10 +15,12 @@ const FIELD_SELECTOR = [
     "input-number",
     "input-range",
     "input-file",
+    "input-files",
     "[validation]",
     "[validate]"
 ].join(",");
 
+>>>>>>> 5d077de4cad8a2fc2e432ebf2a31aaefbc52decd
 const SUBMIT_CONTROL_SELECTOR = [
     'input-button[type="submit"]',
     'button[type="submit"]',
@@ -45,8 +49,12 @@ class FormInfo extends HTMLElement {
         this._validationTarget = null;
         this._fieldStates = [];
         this._fieldObserver = null;
+        this._resizeObserver = typeof ResizeObserver === "function"
+            ? new ResizeObserver(() => this._queueMapRefresh())
+            : null;
         this._submitControls = new Map();
         this._refreshFrame = 0;
+        this._mapFrame = 0;
         this._onValidationChange = () => this._queueRefresh();
         this._onFieldActivity = () => this._queueRefresh();
         this._onDocumentPointerDown = (event) => {
@@ -70,7 +78,7 @@ class FormInfo extends HTMLElement {
                     margin: 0;
                     box-sizing: border-box;
                     font-family: var(--form-font-family, system-ui, sans-serif);
-                    margin-bottom: var(--input-margin-bottom, 1rem);
+                    margin-bottom: 0;
                 }
 
                 *, *::before, *::after {
@@ -219,8 +227,8 @@ class FormInfo extends HTMLElement {
 
                 .map-field {
                     position: absolute;
-                    min-width: 18px;
-                    min-height: 14px;
+                    min-width: 4px;
+                    min-height: 4px;
                     padding: 0;
                     border: 1px solid rgb(0 0 0 / 16%);
                     border-radius: 4px;
@@ -450,6 +458,7 @@ class FormInfo extends HTMLElement {
         this._unbindValidationSource();
         this._clearSubmitControls();
         if (this._refreshFrame) cancelAnimationFrame(this._refreshFrame);
+        if (this._mapFrame) cancelAnimationFrame(this._mapFrame);
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -529,6 +538,7 @@ class FormInfo extends HTMLElement {
                 "data-form-info-ignore"
             ]
         });
+        this._resizeObserver?.observe(target);
         this._refreshFieldStates();
     }
 
@@ -542,6 +552,7 @@ class FormInfo extends HTMLElement {
         }
         if (this._fieldObserver) this._fieldObserver.disconnect();
         this._fieldObserver = null;
+        this._resizeObserver?.disconnect();
         this._validationTarget = null;
     }
 
@@ -553,15 +564,43 @@ class FormInfo extends HTMLElement {
         });
     }
 
+    _queueMapRefresh() {
+        if (!this._open) return;
+        if (this._mapFrame) cancelAnimationFrame(this._mapFrame);
+        this._mapFrame = requestAnimationFrame(() => {
+            this._mapFrame = requestAnimationFrame(() => {
+                this._mapFrame = 0;
+                this._renderFormMap();
+            });
+        });
+    }
+
+    _isTrackableField(field) {
+        const tag = field.tagName.toLowerCase();
+        const type = String(field.getAttribute("type") || field.type || "").toLowerCase();
+        const nativeControl = tag === "input" || tag === "textarea" || tag === "select";
+        const juiceControl = field.isInputComponent === true;
+
+        if (!nativeControl && !juiceControl) return false;
+        if (["hidden", "button", "submit", "reset", "image"].includes(type)) return false;
+        if (tag === "input-button") return false;
+        return !field.closest("[hidden], [aria-hidden=\"true\"], [data-form-info-ignore]");
+    }
+
     _refreshFieldStates() {
         if (!this._validationTarget) return;
         const groups = new Map();
+<<<<<<< HEAD
         const fields = Array.from(this._validationTarget.querySelectorAll(FIELD_SELECTOR)).filter(
             (field) =>
                 !field.disabled &&
                 !field.hasAttribute("disabled") &&
                 !field.closest('[hidden], [aria-hidden="true"], [data-form-info-ignore]')
         );
+=======
+        const fields = Array.from(this._validationTarget.querySelectorAll("*"))
+            .filter((field) => this._isTrackableField(field));
+>>>>>>> 6ad6b2c0404c6de89ba06db181d837bddfe15b72
 
         fields.forEach((field, index) => {
             const property = (field.getAttribute("name") || field.id || `field-${index + 1}`).trim();
@@ -572,6 +611,9 @@ class FormInfo extends HTMLElement {
         this._fieldStates = Array.from(groups.entries()).map(([property, groupedFields], index) =>
             this._createFieldState(property, groupedFields, index)
         );
+        this._resizeObserver?.disconnect();
+        this._resizeObserver?.observe(this._validationTarget);
+        fields.forEach((field) => this._resizeObserver?.observe(field));
         this._renderProgress();
         this._syncSubmitControls();
     }
@@ -597,6 +639,7 @@ class FormInfo extends HTMLElement {
             label: primary.getAttribute("label") || primary.getAttribute("name") || `Field ${index + 1}`,
             fields,
             primary,
+            disabled: fields.every((field) => field.disabled || field.hasAttribute("disabled")),
             required: fields.some((field) => this._isRequiredField(field)),
             status,
             messages
@@ -613,7 +656,7 @@ class FormInfo extends HTMLElement {
 
     _isSubmissionReady() {
         return this._fieldStates.every(
-            (field) => (!field.required || field.status === "complete") && field.status !== "invalid"
+            (field) => field.disabled || ((!field.required || field.status === "complete") && field.status !== "invalid")
         );
     }
 
@@ -696,7 +739,7 @@ class FormInfo extends HTMLElement {
         this._refs["popover-summary"].textContent = `${completed}/${total} complete`;
 
         this._renderFieldList();
-        this._renderFormMap();
+        this._queueMapRefresh();
         this._syncView();
     }
 
@@ -751,14 +794,27 @@ class FormInfo extends HTMLElement {
         map.replaceChildren();
         if (!this._validationTarget || !this._fieldStates.length) return;
 
-        const formRect = this._validationTarget.getBoundingClientRect();
-        if (!formRect.width || !formRect.height) return;
-
-        this._fieldStates.forEach((field) => {
-            const rects = field.fields
+        const layouts = this._fieldStates.map((field) => ({
+            field,
+            rects: field.fields
                 .map((element) => element.getBoundingClientRect())
-                .filter((rect) => rect.width > 0 && rect.height > 0);
-            if (!rects.length) return;
+                .filter((rect) => rect.width > 0 && rect.height > 0)
+        })).filter((layout) => layout.rects.length);
+        if (!layouts.length) return;
+
+        const allRects = layouts.flatMap((layout) => layout.rects);
+        const padding = 8;
+        const bounds = {
+            left: Math.min(...allRects.map((rect) => rect.left)) - padding,
+            top: Math.min(...allRects.map((rect) => rect.top)) - padding,
+            right: Math.max(...allRects.map((rect) => rect.right)) + padding,
+            bottom: Math.max(...allRects.map((rect) => rect.bottom)) + padding
+        };
+        const boundsWidth = bounds.right - bounds.left;
+        const boundsHeight = bounds.bottom - bounds.top;
+        if (!boundsWidth || !boundsHeight) return;
+
+        layouts.forEach(({ field, rects }) => {
 
             const left = Math.min(...rects.map((rect) => rect.left));
             const top = Math.min(...rects.map((rect) => rect.top));
@@ -769,10 +825,10 @@ class FormInfo extends HTMLElement {
             block.className = `map-field ${field.status}`;
             block.dataset.fieldIndex = String(field.index);
             block.title = `${field.label}: ${STATUS_LABELS[field.status]}`;
-            block.style.left = `${Math.max(0, ((left - formRect.left) / formRect.width) * 100)}%`;
-            block.style.top = `${Math.max(0, ((top - formRect.top) / formRect.height) * 100)}%`;
-            block.style.width = `${Math.min(100, ((right - left) / formRect.width) * 100)}%`;
-            block.style.height = `${Math.min(100, ((bottom - top) / formRect.height) * 100)}%`;
+            block.style.left = `${Math.max(0, ((left - bounds.left) / boundsWidth) * 100)}%`;
+            block.style.top = `${Math.max(0, ((top - bounds.top) / boundsHeight) * 100)}%`;
+            block.style.width = `${Math.min(100, ((right - left) / boundsWidth) * 100)}%`;
+            block.style.height = `${Math.min(100, ((bottom - top) / boundsHeight) * 100)}%`;
             block.addEventListener("pointerenter", () => this._highlightField(field.index));
             block.addEventListener("pointerleave", () => this._clearFieldHighlight());
             block.addEventListener("focus", () => this._highlightField(field.index));
@@ -829,8 +885,8 @@ class FormInfo extends HTMLElement {
         this._refs.toggle.setAttribute("aria-label", this._open ? "Close form checklist" : "Open form checklist");
         if (this._open) {
             this._refreshFieldStates();
+            this._queueMapRefresh();
             requestAnimationFrame(() => {
-                this._renderFormMap();
                 const firstField = this._refs["field-list"].querySelector(".field-item");
                 (firstField || this._refs.popover).focus();
             });

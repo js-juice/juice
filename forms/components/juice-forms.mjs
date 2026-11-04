@@ -388,7 +388,7 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > .juice-form-actions[layout-direction
     _focusFirstInvalidField() {
         if (!this._form) return;
         const fields = Array.from(this._form.querySelectorAll(
-            "input-text, input-textarea, input-wysiwyg, input-select, input-checkbox, input-radio, input-number, input-range, input-file, input, textarea, select"
+            "input-text, input-textarea, input-wysiwyg, input-select, input-checkbox, input-radio, input-number, input-range, input-file, input-files, input, textarea, select"
         ));
         const invalid = fields.find((field) => {
             if (field.disabled || field.hasAttribute("disabled")) return false;
@@ -727,7 +727,9 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > .juice-form-actions[layout-direction
         probe.style.height = "0";
         probe.style.overflow = "hidden";
         probe.style.width = cssValue;
-        this._form.appendChild(probe);
+        // Keep measurement nodes outside the observed form. Appending the
+        // probe to the form retriggers its MutationObserver indefinitely.
+        document.body.appendChild(probe);
         const width = probe.getBoundingClientRect().width;
         probe.remove();
 

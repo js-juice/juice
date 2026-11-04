@@ -59,6 +59,8 @@ export default class Tween extends EventEmitter {
         this.startTime = null;
         this.animationFrameId = null;
         this.running = false;
+        this.loopLimit = 0;
+        this.loopCount = 0;
         this.value = {
             start: startValue,
             end: endValue,
@@ -88,6 +90,7 @@ export default class Tween extends EventEmitter {
         this.time.current = 0;
         this.time.last = 0;
         this.time.delta = 0;
+        this.loopCount = 0;
 
         if (this.duration === 0) {
             if (this.callbacks.update) this.callbacks.update(this.value.end, 1);
@@ -121,6 +124,22 @@ export default class Tween extends EventEmitter {
     }
 
     /**
+     * Repeats the tween after it reaches its end value.
+     * @param {boolean|number} [iterations=true] - `true` repeats forever; a number is the number of additional runs.
+     * @returns {Tween} This instance for chaining.
+     */
+    loop(iterations = true) {
+        if (iterations === false || iterations === 0) {
+            this.loopLimit = 0;
+        } else if (iterations === true) {
+            this.loopLimit = Infinity;
+        } else {
+            this.loopLimit = Math.max(0, Math.floor(Number(iterations) || 0));
+        }
+        return this;
+    }
+
+    /**
      * Internal update method called on each frame.
      * @param {number} currentTime - Current timestamp from requestAnimationFrame
      * @private
@@ -139,6 +158,13 @@ export default class Tween extends EventEmitter {
         if (this.callbacks.update) this.callbacks.update(currentValue, progress);
 
         if (progress < 1) {
+            this.animationFrameId = raf(this._update);
+        } else if (this.loopCount < this.loopLimit) {
+            this.loopCount += 1;
+            this.time.start = nowMS();
+            this.time.current = 0;
+            this.time.last = 0;
+            this.time.delta = 0;
             this.animationFrameId = raf(this._update);
         } else {
             if (this.callbacks.complete) this.callbacks.complete();

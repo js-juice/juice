@@ -29,6 +29,7 @@
  */
 
 import InputComponent from "./input-component.mjs";
+import enhanceMarkdown from "./textarea-markdown.mjs";
 
 class InputTextarea extends InputComponent {
     /**
@@ -63,6 +64,7 @@ class InputTextarea extends InputComponent {
                 overflow: "hidden",
                 boxSizing: "border-box",
                 backgroundColor: "transparent",
+<<<<<<< HEAD
                 textIndent: "var(--input-textarea-indent, 0px)",
                 fontSize: "1em",
                 lineHeight: "1.5",
@@ -70,6 +72,11 @@ class InputTextarea extends InputComponent {
                 paddingBottom: "0.2rem",
                 paddingLeft: "0.5rem",
                 paddingRight: "0.5rem",
+=======
+                textIndent: "var(--input-text-indent, 0px)",
+                fontSize: "1em",
+                lineHeight: "var(--input-height)",
+>>>>>>> 6ad6b2c0404c6de89ba06db181d837bddfe15b72
                 fontFamily: "inherit",
                 resize: "none"
             }
@@ -91,6 +98,7 @@ class InputTextarea extends InputComponent {
      */
     _afterConnected() {
         this._dom.native?.addEventListener("input", this._boundAutoGrow);
+        enhanceMarkdown(this);
         this._syncAutoGrowHeight();
     }
 

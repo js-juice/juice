@@ -386,9 +386,42 @@ class InputColorComponent extends InputComponent {
                 height: "28px",
                 margin: 0,
                 padding: 0,
-                appearance: "auto",
-                accentColor: "var(--color-value, #2563eb)",
+                appearance: "none",
+                background: "transparent",
                 cursor: "pointer"
+            },
+            ".channel-slider::-webkit-slider-runnable-track": {
+                height: "8px",
+                borderRadius: "999px",
+                background: "var(--channel-track, #cbd5e1)"
+            },
+            ".channel-slider::-moz-range-track": {
+                height: "8px",
+                border: 0,
+                borderRadius: "999px",
+                background: "var(--channel-track, #cbd5e1)"
+            },
+            ".channel-slider::-moz-range-progress": {
+                height: "8px",
+                background: "transparent"
+            },
+            ".channel-slider::-webkit-slider-thumb": {
+                width: "18px",
+                height: "18px",
+                marginTop: "-5px",
+                border: "2px solid #ffffff",
+                borderRadius: "50%",
+                background: "var(--color-value, #2563eb)",
+                boxShadow: "0 0 0 1px rgba(15, 23, 42, 0.65)",
+                appearance: "none"
+            },
+            ".channel-slider::-moz-range-thumb": {
+                width: "18px",
+                height: "18px",
+                border: "2px solid #ffffff",
+                borderRadius: "50%",
+                background: "var(--color-value, #2563eb)",
+                boxShadow: "0 0 0 1px rgba(15, 23, 42, 0.65)"
             },
             ".channel label": {
                 fontSize: "10px",
@@ -760,6 +793,57 @@ class InputColorComponent extends InputComponent {
         };
     }
 
+    channelTrack(field, color, format = this.colorFormat) {
+        const hueTrack = "linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)";
+        const alphaTrack = `linear-gradient(to right, rgba(${color.r}, ${color.g}, ${color.b}, 0), rgba(${color.r}, ${color.g}, ${color.b}, 1)), repeating-conic-gradient(#cbd5e1 0 25%, #fff 0 50%) 0 / 12px 12px`;
+        if (field.key === "a") return alphaTrack;
+
+        if (format === "hex" || format.startsWith("rgb")) {
+            const channel = { rr: "r", gg: "g", bb: "b" }[field.key] || field.key;
+            const colors = {
+                r: "linear-gradient(to right, #000, #f00)",
+                g: "linear-gradient(to right, #000, #0f0)",
+                b: "linear-gradient(to right, #000, #00f)"
+            };
+            return colors[channel] || "#cbd5e1";
+        }
+
+        if (format.startsWith("hsl")) {
+            const hsl = rgbToHsl(color);
+            if (field.key === "h") return hueTrack;
+            if (field.key === "s") {
+                return `linear-gradient(to right, hsl(${hsl.h}, 0%, ${hsl.l}%), hsl(${hsl.h}, 100%, ${hsl.l}%))`;
+            }
+            if (field.key === "l") {
+                return `linear-gradient(to right, #000, hsl(${hsl.h}, ${hsl.s}%, 50%), #fff)`;
+            }
+        }
+
+        if (format === "hsb") {
+            const hsb = rgbToHsv(color);
+            if (field.key === "h") return hueTrack;
+            if (field.key === "s") {
+                const start = formatColor(hsvToRgb({ h: hsb.h, s: 0, v: hsb.v }), "rgb");
+                const end = formatColor(hsvToRgb({ h: hsb.h, s: 1, v: hsb.v }), "rgb");
+                return `linear-gradient(to right, ${start}, ${end})`;
+            }
+            if (field.key === "b") {
+                const end = formatColor(hsvToRgb({ h: hsb.h, s: hsb.s, v: 1 }), "rgb");
+                return `linear-gradient(to right, #000, ${end})`;
+            }
+        }
+
+        return "#cbd5e1";
+    }
+
+    _syncChannelTracks(color) {
+        const fields = new Map(this.channelConfig().map((field) => [field.key, field]));
+        this._dom.channels.querySelectorAll(".channel-slider[data-channel]").forEach((slider) => {
+            const field = fields.get(slider.dataset.channel);
+            if (field) slider.style.setProperty("--channel-track", this.channelTrack(field, color));
+        });
+    }
+
     formatValue(format = this.colorFormat) {
         const normalizedFormat = String(format || "hex").toLowerCase();
         const targetFormat = FORMATS.includes(normalizedFormat) ? normalizedFormat : "hex";
@@ -836,6 +920,7 @@ class InputColorComponent extends InputComponent {
                 const next = this.channelsToColor();
                 this._setTextValue(next);
                 this.preview(next);
+                this._syncChannelTracks(parseColor(next));
             });
             input.addEventListener("change", () => this.commit(this.channelsToColor()));
 
@@ -847,6 +932,8 @@ class InputColorComponent extends InputComponent {
             slider.step = field.step ?? 1;
             slider.value = field.min === null ? parseInt(value || "00", 16) : value;
             slider.setAttribute("aria-label", `${field.label} value`);
+            slider.dataset.channel = field.key;
+            slider.style.setProperty("--channel-track", this.channelTrack(field, color));
             const sliderPanel = document.createElement("div");
             sliderPanel.className = "channel-slider-panel";
             sliderPanel.append(slider);
@@ -869,6 +956,7 @@ class InputColorComponent extends InputComponent {
                 const next = this.channelsToColor();
                 this._setTextValue(next);
                 this.preview(next);
+                this._syncChannelTracks(parseColor(next));
                 this._dom.native.value = next;
                 this._isSyncing = true;
                 try {

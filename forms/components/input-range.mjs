@@ -75,7 +75,8 @@ class InputRangeComponent extends InputComponent {
                 width: "100%",
                 height: "100%",
                 display: "flex",
-                flexDirection: "row"
+                flexDirection: "row",
+                alignItems: "center"
             },
             ".slider": {
                 position: "relative",
@@ -332,7 +333,11 @@ class InputRangeComponent extends InputComponent {
         bar.addEventListener("pointerdown", (e) => {
             if (e.target === marker) return;
             e.preventDefault();
-            const value = valueFromClientX(e.clientX, bar.getBoundingClientRect(), marker.getBoundingClientRect().width);
+            const value = valueFromClientX(
+                e.clientX,
+                bar.getBoundingClientRect(),
+                marker.getBoundingClientRect().width
+            );
             this._setRangeValue(value, "input");
             this._setRangeValue(value, "change");
         });

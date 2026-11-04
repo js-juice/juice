@@ -2,7 +2,7 @@
  * MySQL database driver.
  *
  * The client never speaks MySQL directly — it persists juice models over the
- * toolkit model API (POST/GET/PUT/DELETE /api/model/{table}), which is backed by
+ * Keystone model API (POST/GET/PUT/DELETE /api/model/{table}), which is backed by
  * the server's MySQL database. The same Model — save(), pull(), delete() —
  * round-trips to Laravel, and server-side validation reuses the model's own
  * rules, mirroring the client schema. This lives in its own engine folder

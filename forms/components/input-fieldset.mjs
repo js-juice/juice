@@ -1,5 +1,3 @@
-
-
 /**
  * AUTODOC:START
  * Component: <input-fieldset>
@@ -58,7 +56,7 @@ class InputFieldset extends HTMLElement {
     }
 
     /**
-        * Initializes component state, DOM references, and default behavior.
+     * Initializes component state, DOM references, and default behavior.
      * @returns {*} void.
      */
     constructor() {
@@ -103,7 +101,7 @@ class InputFieldset extends HTMLElement {
     }
 
     /**
-      * Renders wireframe UI content.
+     * Renders wireframe UI content.
      * @returns {*} void.
      */
     _renderWireframe() {

@@ -175,8 +175,19 @@ class KeyFramedValue {
 }
 
 class KeyFramedObject {
+    /**
+     * Description placeholder
+     *
+     * @type {{}}
+     */
     head = {};
 
+    /**
+     * Description placeholder
+     *
+     * @param {*} time
+     * @returns {this}
+     */
     seek(time) {
         const t = Number(time) || 0;
         for (const prop in this) {
@@ -187,6 +198,11 @@ class KeyFramedObject {
         return this;
     }
 
+    /**
+     * Description placeholder
+     *
+     * @returns {{}}
+     */
     getCurrentValues() {
         const properties = {};
         for (const prop in this.head) {
@@ -195,6 +211,13 @@ class KeyFramedObject {
         return properties;
     }
 
+    /**
+     * Description placeholder
+     *
+     * @param {*} prop
+     * @param {*} time
+     * @returns {*}
+     */
     getPropertyValue(prop, time) {
         const entry = this[prop];
         if (entry && entry.isKeyFramedValue && typeof entry.getFrameBySecs === "function") {
@@ -202,6 +225,13 @@ class KeyFramedObject {
         }
     }
 
+    /**
+     * Description placeholder
+     *
+     * @param {*} prop
+     * @param {{}} [opts={}]
+     * @returns {*}
+     */
     getKeyFramedValue(prop, opts = {}) {
         if (this[prop] instanceof KeyFramedValue) {
             return this[prop].compile(opts);
