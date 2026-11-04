@@ -17,7 +17,7 @@
  *
  * Attribute Reference:
  * - Host form attributes (for example `method`, `action`, `novalidate`) are forwarded to the internal form.
- * - Field-level attributes such as `span`, `group`, and `preset` participate in layout resolution.
+ * - Field-level attributes such as `layout-span`, `group`, and `preset` participate in layout resolution.
  *
  * Property Reference:
  * - `form`: Internal native `<form>` element.
@@ -26,8 +26,8 @@
  *
  * CSS Variables:
  * - `--juice-forms-gap`: Grid gap between fields.
- * - `--juice-forms-columns`: Active responsive column count.
- * - `--juice-field-span`: Per-field resolved column span.
+ * - `--layout-columns`: Active responsive column count.
+ * - `--layout-column`: Per-item resolved grid-column value.
  * - `--juice-group-start-gap`: Vertical spacing before a new field group.
  *
  * Part Names:
@@ -182,6 +182,7 @@ class JuiceFormsElement extends HTMLElement {
         this._onJuiceConfigChange = null;
         this._isApplyingLayout = false;
         this._layoutConfig = { ...LAYOUT_DEFAULTS };
+        this._layoutSpans = new WeakMap();
     }
 
     /**
@@ -249,10 +250,10 @@ juice-forms {
 }
 
 juice-forms > form.${INTERNAL_FORM_CLASS} {
-    --juice-forms-gap: 1rem;
-    --juice-forms-columns: 1;
+    --juice-forms-gap: 2rem;
+    --layout-columns: 1;
     display: grid;
-    grid-template-columns: repeat(var(--juice-forms-columns), minmax(0, 1fr));
+    grid-template-columns: repeat(var(--layout-columns), minmax(0, 1fr));
     gap: var(--juice-forms-gap);
     align-items: start;
     container-type: inline-size;
@@ -261,15 +262,24 @@ juice-forms > form.${INTERNAL_FORM_CLASS} {
 
 juice-forms > form.${INTERNAL_FORM_CLASS} > * {
     min-width: 0;
-    grid-column: span var(--juice-field-span, 1);
-}
-
-juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-span="full"] {
-    grid-column: 1 / -1;
+    grid-column: var(--layout-column, span 1);
 }
 
 juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
     margin-top: var(--juice-group-start-gap, 0);
+}
+
+juice-forms > form.${INTERNAL_FORM_CLASS} > .juice-form-actions {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    gap: var(--juice-form-actions-gap, var(--juice-forms-gap, 2rem));
+    grid-column: 1 / -1;
+}
+
+juice-forms > form.${INTERNAL_FORM_CLASS} > .juice-form-actions[layout-direction="vertical"] {
+    flex-direction: column;
+    align-items: stretch;
 }
 `;
         this.prepend(style);
@@ -482,8 +492,7 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
             attributes: true,
             attributeFilter: [
                 "name",
-                "span",
-                "data-span",
+                "layout-span",
                 "group",
                 "preset",
                 "maxlength",
@@ -600,7 +609,7 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
         }
         if (!isFieldLikeElement(field)) return "full";
 
-        const explicitSpan = normalizeSpan(field.getAttribute("span") || field.getAttribute("data-span"));
+        const explicitSpan = normalizeSpan(field.getAttribute("layout-span"));
         if (explicitSpan) return explicitSpan;
 
         const presetSpan = normalizeSpan(preset && preset.span);
@@ -690,7 +699,7 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
 
                 const desiredSpan = this._getDesiredSpan(field, preset, layoutConfig);
                 const baseSpan = desiredSpan === "full" ? "full" : String(desiredSpan || 1);
-                field.setAttribute("data-juice-span-base", baseSpan);
+                this._layoutSpans.set(field, baseSpan);
             }
 
             this._setGroupMetadata(items, groupsConfig, layoutConfig);
@@ -748,24 +757,22 @@ juice-forms > form.${INTERNAL_FORM_CLASS} > [data-juice-group-start] {
             columns = Math.max(1, Math.min(layout.maxColumns, candidate || 1));
         }
 
-        this._form.style.setProperty("--juice-forms-columns", String(columns));
-        this._form.setAttribute("data-juice-columns", String(columns));
+        this._form.style.setProperty("--layout-columns", String(columns));
+        this._form.setAttribute("layout-columns", String(columns));
 
         const items = this._collectLayoutItems();
         for (let i = 0; i < items.length; i += 1) {
             const field = items[i];
-            const base = field.getAttribute("data-juice-span-base") || "1";
+            const base = this._layoutSpans.get(field) || "1";
 
             if (base === "full") {
-                field.setAttribute("data-juice-span", "full");
-                field.style.removeProperty("--juice-field-span");
+                field.style.setProperty("--layout-column", "1 / -1");
                 continue;
             }
 
             const desired = Math.max(1, toPositiveInteger(base, 1));
             const resolved = Math.min(desired, columns);
-            field.setAttribute("data-juice-span", String(resolved));
-            field.style.setProperty("--juice-field-span", String(resolved));
+            field.style.setProperty("--layout-column", `span ${resolved}`);
         }
     }
 

@@ -1,5 +1,5 @@
 export const layout = {
-    gap: "1rem",
+    gap: "2rem",
     minColumnWidth: "16rem",
     maxColumns: 4,
     collapseAt: "42rem",

@@ -59,10 +59,17 @@ class InputTextarea extends InputComponent {
                 outline: 0,
                 minWidth: "calc(100% - 0.4rem) ",
                 height: "auto",
+                minHeight: "var(--input-height)",
                 overflow: "hidden",
                 boxSizing: "border-box",
+                backgroundColor: "transparent",
+                textIndent: "var(--input-textarea-indent, 0px)",
                 fontSize: "1em",
-                lineHeight: "1.5em",
+                lineHeight: "1.5",
+                paddingTop: "0.2rem",
+                paddingBottom: "0.2rem",
+                paddingLeft: "0.5rem",
+                paddingRight: "0.5rem",
                 fontFamily: "inherit",
                 resize: "none"
             }

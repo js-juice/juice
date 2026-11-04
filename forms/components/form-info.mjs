@@ -4,6 +4,7 @@
 
 const FIELD_SELECTOR = [
     "input-text",
+    "input-json",
     "input-textarea",
     "input-wysiwyg",
     "input-select",
@@ -559,7 +560,7 @@ class FormInfo extends HTMLElement {
             (field) =>
                 !field.disabled &&
                 !field.hasAttribute("disabled") &&
-                !field.closest("[hidden], [aria-hidden=\"true\"], [data-form-info-ignore]")
+                !field.closest('[hidden], [aria-hidden="true"], [data-form-info-ignore]')
         );
 
         fields.forEach((field, index) => {
@@ -623,18 +624,13 @@ class FormInfo extends HTMLElement {
         const controls = Array.from(target.querySelectorAll(SUBMIT_CONTROL_SELECTOR));
         if (target.id) {
             document.querySelectorAll("input-button[form], button[form], input[form]").forEach((control) => {
-                if (
-                    control.getAttribute("form") === target.id &&
-                    control.matches(SUBMIT_CONTROL_SELECTOR)
-                ) {
+                if (control.getAttribute("form") === target.id && control.matches(SUBMIT_CONTROL_SELECTOR)) {
                     controls.push(control);
                 }
             });
         }
 
-        return [...new Set(controls)].filter(
-            (control) => !control.hasAttribute("data-form-info-submit-ignore")
-        );
+        return [...new Set(controls)].filter((control) => !control.hasAttribute("data-form-info-submit-ignore"));
     }
 
     _syncSubmitControls() {
@@ -821,6 +817,8 @@ class FormInfo extends HTMLElement {
         requestAnimationFrame(() => {
             if (target._dom && typeof target._dom.native?.focus === "function") target._dom.native.focus();
             else if (typeof target.focus === "function") target.focus();
+
+            if (typeof target.highlight === "function") target.highlight();
         });
     }
 

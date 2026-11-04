@@ -531,6 +531,10 @@ const BASE_STYLES = {
     ":host([disabled]) .input-wrapper": {
         "--input-state-bgcolor": "var(--input-disabled-bgcolor, var(--input-bgcolor, #ffffff))"
     },
+    ":host([highlight]) .input-wrapper": {
+        background: "var(--input-highlight-bgcolor, var(--input-bgcolor, #ffffff))",
+        outline: "var(--input-highlight-outline, 2px solid #cdff1a)"
+    },
     ".input-wrapper > label": {
         lineHeight: "var(--input-height)",
         background:
@@ -1670,7 +1674,7 @@ class InputComponent extends HTMLElement {
                 }
                 continue;
             }
-            let node = map[token];
+            let node = map[token] || this._wireframe[token];
             if (!node) {
                 node = render(token);
                 this._wireframe[token] = node;
@@ -2471,6 +2475,17 @@ class InputComponent extends HTMLElement {
         for (const event of events) {
             this.addEventListener(event, fn.bind(this));
         }
+    }
+
+    highlight() {
+        function highlightClickHandler(event) {
+            if (!this._wireframe.root) return;
+            if (this._wireframe.root.contains(event.target)) return;
+            this.removeAttribute("highlight");
+            window.removeEventListener("click", highlightClickHandler.bind(this));
+        }
+
+        window.addEventListener("click", highlightClickHandler.bind(this));
     }
 }
 
