@@ -97,6 +97,9 @@ class InputCheckbox extends InputComponent {
             ":host([checked]) .input-wrapper": {
                 borderColor: "var(--checked-border-color, var(--check-color, #222222))"
             },
+            ":host([align-middle]))": {
+                height: "var(--input-control-size)"
+            },
             ".input-wrapper::before": {
                 content: "''",
                 position: "absolute",

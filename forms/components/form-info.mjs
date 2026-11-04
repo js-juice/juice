@@ -2,25 +2,6 @@
  * Form-level progress summary and field checklist.
  */
 
-<<<<<<< HEAD
-=======
-const FIELD_SELECTOR = [
-    "input-text",
-    "input-json",
-    "input-textarea",
-    "input-wysiwyg",
-    "input-select",
-    "input-checkbox",
-    "input-radio",
-    "input-number",
-    "input-range",
-    "input-file",
-    "input-files",
-    "[validation]",
-    "[validate]"
-].join(",");
-
->>>>>>> 5d077de4cad8a2fc2e432ebf2a31aaefbc52decd
 const SUBMIT_CONTROL_SELECTOR = [
     'input-button[type="submit"]',
     'button[type="submit"]',
@@ -590,17 +571,8 @@ class FormInfo extends HTMLElement {
     _refreshFieldStates() {
         if (!this._validationTarget) return;
         const groups = new Map();
-<<<<<<< HEAD
-        const fields = Array.from(this._validationTarget.querySelectorAll(FIELD_SELECTOR)).filter(
-            (field) =>
-                !field.disabled &&
-                !field.hasAttribute("disabled") &&
-                !field.closest('[hidden], [aria-hidden="true"], [data-form-info-ignore]')
-        );
-=======
         const fields = Array.from(this._validationTarget.querySelectorAll("*"))
             .filter((field) => this._isTrackableField(field));
->>>>>>> 6ad6b2c0404c6de89ba06db181d837bddfe15b72
 
         fields.forEach((field, index) => {
             const property = (field.getAttribute("name") || field.id || `field-${index + 1}`).trim();
