@@ -104,7 +104,8 @@ const renderElement = (vNode, withRefs, refs = {}) => {
         return fragment;
     }
     let tag = vNode.tag;
-let { attributes = {}, children = [], options = {} } = vNode;
+    const { attributes = {}, options = {} } = vNode;
+    let { children = [] } = vNode;
     if (!tag && attributes) tag = "div";
     if (!tag) return "";
     const element = options.namespace ? document.createElementNS(options.namespace, tag) : document.createElement(tag);

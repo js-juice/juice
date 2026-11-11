@@ -13,12 +13,6 @@ import WebGL from "./Lib/WebGL.mjs";
 const { VariableTypes } = WebGL;
 import { Vector4D } from "../../properties/Vector.mjs";
 import ParticleStateBuffer from "../particles/particle-state-buffer.mjs";
-import {
-    advanceStateBoundary,
-    normalizeRandomRange,
-    normalizeStateBoundary,
-    stateBoundaryUniform
-} from "../particles/particle-state-system.mjs";
 import AnimationValue from "../../properties/Value.mjs";
 import TransformFeedback from "./Lib/TransformFeedback.mjs";
 import EmitterAdapter from "./emitter-adapter.mjs";
@@ -117,18 +111,6 @@ class WebGLParticleSystem {
         this.repelFieldRadius = null;
         this.repelMode = "3d";
         this.repelPlaneAngle = 0;
-        this.repelAffectsLifetime = false;
-        this.repelDistanceScale = REPEL_RADIUS_SCALE;
-        this.repelCollisionOnly = false;
-        this.repelRestitution = 0.7;
-        this.repelSurfaceFriction = 0.2;
-        this.repelSettleSpeed = 0;
-        this.repelRadiusX = null;
-        this.repelRadiusY = null;
-        this.repelShellX = 0;
-        this.repelShellY = 0;
-        this.repelImpactPoint = [0, 0, 0];
-        this.repelImpactRadius = 0;
 
         // uMotion = [driftScale, orbitSpeedScale, repelStrengthScale, orbitPullScale]
         this.driftScale = 1.0;
@@ -139,16 +121,6 @@ class WebGLParticleSystem {
         this.orbitPullScale = 1.0;
         this.gravity = [0, 0, 0];
         this.friction = 0;
-        this.stateSystemEnabled = false;
-        this.particleStates = { a: null, b: null };
-        this.stateBoundary = {
-            orientation: "horizontal",
-            position: 0.5,
-            targetPosition: 0.5,
-            feather: 0,
-            angle: 45,
-            transitionSpeed: 0
-        };
         this.cameraPan = { x: 0, y: 0 };
         this.cameraPan.z = 0;
         this._previousCameraPan = { x: 0, y: 0, z: 0 };
@@ -167,12 +139,6 @@ class WebGLParticleSystem {
             endScale: 3,
             fadeStart: 0.72,
             fadeEnd: 1
-        };
-        this.impactBehavior = {
-            startScale: 1,
-            endScale: 4.5,
-            growthDuration: 4,
-            damping: 1.4
         };
         this.debugCrosshairMode = "none";
         this.debugCrosshairPreviewMode = "none";
@@ -1491,12 +1457,6 @@ class WebGLParticleSystem {
             this.particles.projection.matrix
         );
         this.uRepel = this.feedback.addUniform("uRepel", VariableTypes.BOOL, false);
-        this.uRepelLifetime = this.feedback.addUniform("uRepelLifetime", VariableTypes.BOOL, false);
-        this.uRepelCollision = this.feedback.addUniform("uRepelCollision", VariableTypes.FLOAT_VEC4, [0.0, 0.7, 0.2, 0.0]);
-        this.uRepelSurface = this.feedback.addUniform("uRepelSurface", VariableTypes.FLOAT_VEC2, [0.4, 0.4]);
-        this.uRepelShell = this.feedback.addUniform("uRepelShell", VariableTypes.FLOAT_VEC2, [0.0, 0.0]);
-        this.uRepelImpact = this.feedback.addUniform("uRepelImpact", VariableTypes.FLOAT_VEC4, [0.0, 0.0, 0.0, 0.0]);
-        this.uImpactPhysics = this.feedback.addUniform("uImpactPhysics", VariableTypes.FLOAT_VEC2, [1.4, 0.0]);
         this.uOrbit = this.feedback.addUniform("uOrbit", VariableTypes.BOOL, false);
         this.uOrbitFieldRadius = this.feedback.addUniform("uOrbitFieldRadius", VariableTypes.FLOAT, 1.2);
         this.uOrbitEscape = this.feedback.addUniform("uOrbitEscape", VariableTypes.FLOAT_VEC2, [0.0, 1.0]);
@@ -1509,46 +1469,6 @@ class WebGLParticleSystem {
         // Gravity (world units/sec^2) and friction (damping per second)
         this.uGravity = this.feedback.addUniform("uGravity", VariableTypes.FLOAT_VEC3, [0.0, 0.0, 0.0]);
         this.uFriction = this.feedback.addUniform("uFriction", VariableTypes.FLOAT, 0.0);
-        this.uStateEnabled = this.feedback.addUniform("uStateEnabled", VariableTypes.BOOL, false);
-        this.uStateBoundary = this.feedback.addUniform(
-            "uStateBoundary",
-            VariableTypes.FLOAT_VEC4,
-            [0.0, 1.0, 0.0, 0.0]
-        );
-        this.uStateGravityA = this.feedback.addUniform("uStateGravityA", VariableTypes.FLOAT_VEC3, [0.0, 0.0, 0.0]);
-        this.uStateGravityB = this.feedback.addUniform("uStateGravityB", VariableTypes.FLOAT_VEC3, [0.0, 0.0, 0.0]);
-        this.uStateGravityMaxA = this.feedback.addUniform(
-            "uStateGravityMaxA",
-            VariableTypes.FLOAT_VEC3,
-            [0.0, 0.0, 0.0]
-        );
-        this.uStateGravityMaxB = this.feedback.addUniform(
-            "uStateGravityMaxB",
-            VariableTypes.FLOAT_VEC3,
-            [0.0, 0.0, 0.0]
-        );
-        this.uStateMotionA = this.feedback.addUniform("uStateMotionA", VariableTypes.FLOAT_VEC4, [1.0, 1.0, 1.0, 0.0]);
-        this.uStateMotionB = this.feedback.addUniform("uStateMotionB", VariableTypes.FLOAT_VEC4, [1.0, 1.0, 1.0, 0.0]);
-        this.uStateMotionMaxA = this.feedback.addUniform("uStateMotionMaxA", VariableTypes.FLOAT_VEC4, [1.0, 1.0, 1.0, 0.0]);
-        this.uStateMotionMaxB = this.feedback.addUniform("uStateMotionMaxB", VariableTypes.FLOAT_VEC4, [1.0, 1.0, 1.0, 0.0]);
-        this.uStateEnvironmentA = this.feedback.addUniform(
-            "uStateEnvironmentA",
-            VariableTypes.FLOAT_VEC2,
-            [1.0, 0.0]
-        );
-        this.uStateEnvironmentB = this.feedback.addUniform(
-            "uStateEnvironmentB",
-            VariableTypes.FLOAT_VEC2,
-            [1.0, 0.0]
-        );
-        this.uStateEnvironmentMaxA = this.feedback.addUniform("uStateEnvironmentMaxA", VariableTypes.FLOAT_VEC2, [1.0, 0.0]);
-        this.uStateEnvironmentMaxB = this.feedback.addUniform("uStateEnvironmentMaxB", VariableTypes.FLOAT_VEC2, [1.0, 0.0]);
-        this.uStateTargetA = this.feedback.addUniform("uStateTargetA", VariableTypes.FLOAT_VEC4, [0.0, 0.0, -2.0, 0.4]);
-        this.uStateTargetB = this.feedback.addUniform("uStateTargetB", VariableTypes.FLOAT_VEC4, [0.0, 0.0, -2.0, 0.4]);
-        this.uStateTargetMaxA = this.feedback.addUniform("uStateTargetMaxA", VariableTypes.FLOAT_VEC4, [0.0, 0.0, -2.0, 0.4]);
-        this.uStateTargetMaxB = this.feedback.addUniform("uStateTargetMaxB", VariableTypes.FLOAT_VEC4, [0.0, 0.0, -2.0, 0.4]);
-        this.uStateOrbitReach = this.feedback.addUniform("uStateOrbitReach", VariableTypes.FLOAT_VEC2, [1.2, 1.2]);
-        this.uStateOrbitReachMax = this.feedback.addUniform("uStateOrbitReachMax", VariableTypes.FLOAT_VEC2, [1.2, 1.2]);
 
         this.feedbackPosition = this.feedback.addVariable(
             "aPosition",
@@ -1573,34 +1493,10 @@ class WebGLParticleSystem {
         // - wrap to frustum bounds
         this.feedback.setScript(`
             int index = gl_VertexID;
-            float particleSeed = float(index) + 1.0;
-            vec4 particleRandomA = vec4(
-                random(particleSeed * 7.13 + 11.0),
-                random(particleSeed * 11.71 + 19.0),
-                random(particleSeed * 17.17 + 29.0),
-                random(particleSeed * 19.91 + 37.0)
-            );
-            vec4 particleRandomB = vec4(
-                random(particleSeed * 23.03 + 41.0),
-                random(particleSeed * 29.29 + 43.0),
-                random(particleSeed * 31.31 + 47.0),
-                random(particleSeed * 37.37 + 53.0)
-            );
-            vec4 particleRandomC = vec4(
-                random(particleSeed * 41.41 + 59.0),
-                random(particleSeed * 43.43 + 61.0),
-                random(particleSeed * 47.47 + 67.0),
-                random(particleSeed * 53.53 + 71.0)
-            );
-            vec4 particleRandomD = vec4(
-                random(particleSeed * 59.59 + 73.0),
-                random(particleSeed * 61.61 + 79.0),
-                random(particleSeed * 67.67 + 83.0),
-                random(particleSeed * 71.71 + 89.0)
-            );
 
             float time = uScene[2];
             float delta = uScene[3];
+            bool gravityActive = length(uGravity) > 0.000001;
             vec3 orbitPlaneNormal = normalize(vec3(0.0, sin(uInteractionPlane.y), cos(uInteractionPlane.y)));
             vec3 repelPlaneNormal = normalize(vec3(0.0, sin(uInteractionPlane.w), cos(uInteractionPlane.w)));
 
@@ -1609,47 +1505,10 @@ class WebGLParticleSystem {
 
             vec3 position = aPosition;
             vec3 velocity = aVelocity;
-            vec4 stateClipPosition = uProjectionMatrix * vec4(position, 1.0);
-            vec2 stateNdc = stateClipPosition.xy / max(0.0001, abs(stateClipPosition.w));
-            float stateDistance = dot(stateNdc, uStateBoundary.xy) - uStateBoundary.z;
-            float stateMix = uStateBoundary.w > 0.000001
-                ? smoothstep(-uStateBoundary.w, uStateBoundary.w, stateDistance)
-                : step(0.0, stateDistance);
-            stateMix *= float(uStateEnabled);
-            vec3 activeGravityMin = mix(uGravity, mix(uStateGravityA, uStateGravityB, stateMix), float(uStateEnabled));
-            vec3 activeGravityMax = mix(uGravity, mix(uStateGravityMaxA, uStateGravityMaxB, stateMix), float(uStateEnabled));
-            vec3 activeGravity = mix(activeGravityMin, activeGravityMax, particleRandomA.xyz);
-            vec4 activeMotionMin = mix(uMotion, mix(uStateMotionA, uStateMotionB, stateMix), float(uStateEnabled));
-            vec4 activeMotionMax = mix(uMotion, mix(uStateMotionMaxA, uStateMotionMaxB, stateMix), float(uStateEnabled));
-            vec4 activeMotion = mix(activeMotionMin, activeMotionMax, particleRandomB);
-            vec2 activeEnvironmentMin = mix(
-                vec2(uDriftSpeed, uFriction),
-                mix(uStateEnvironmentA, uStateEnvironmentB, stateMix),
-                float(uStateEnabled)
-            );
-            vec2 activeEnvironmentMax = mix(
-                vec2(uDriftSpeed, uFriction),
-                mix(uStateEnvironmentMaxA, uStateEnvironmentMaxB, stateMix),
-                float(uStateEnabled)
-            );
-            vec2 activeEnvironment = mix(activeEnvironmentMin, activeEnvironmentMax, particleRandomC.xy);
-            vec4 activeTargetMin = mix(uTargetPoint, mix(uStateTargetA, uStateTargetB, stateMix), float(uStateEnabled));
-            vec4 activeTargetMax = mix(uTargetPoint, mix(uStateTargetMaxA, uStateTargetMaxB, stateMix), float(uStateEnabled));
-            vec4 activeTarget = mix(activeTargetMin, activeTargetMax, particleRandomD);
-            float activeOrbitFieldRadiusMin = mix(uOrbitFieldRadius, mix(uStateOrbitReach.x, uStateOrbitReach.y, stateMix), float(uStateEnabled));
-            float activeOrbitFieldRadiusMax = mix(uOrbitFieldRadius, mix(uStateOrbitReachMax.x, uStateOrbitReachMax.y, stateMix), float(uStateEnabled));
-            float activeOrbitFieldRadius = mix(activeOrbitFieldRadiusMin, activeOrbitFieldRadiusMax, particleRandomC.z);
-            bool gravityActive = length(activeGravity) > 0.000001;
             bool lifetimeParticle = aState[1] < 0.0;
-            float encodedParticleAge = abs(aState[1]);
-            bool surfaceExpired = lifetimeParticle && encodedParticleAge >= 20000.0;
-            bool surfaceImpacted = lifetimeParticle && encodedParticleAge >= 10000.0;
-            float particleAge = surfaceExpired
-                ? encodedParticleAge - 20000.0
-                : (surfaceImpacted ? encodedParticleAge - 10000.0 : encodedParticleAge);
-            float impactStartAge = aState[0];
+            float particleAge = abs(aState[1]);
             vec3 home = vec3(aState[2], aState[3], aState[0]);
-            if (!lifetimeParticle && (home.z > -near || home.z < -far)) {
+            if (home.z > -near || home.z < -far) {
                 home.z = position.z;
             }
             float absoluteDriftX = position.x;
@@ -1663,7 +1522,7 @@ class WebGLParticleSystem {
             float boundBottom = bounds[3];
 
             if (uRepel && !lifetimeParticle) {
-                vec3 target = uTargetPoint.xyz;
+                vec3 target = vec3(uTargetPoint.x, uTargetPoint.y, uTargetPoint.z);
                 float targetRadius = max(0.0001, uTargetPoint.w);
                 float fieldRadius = max(targetRadius, uRepelFieldRadius);
 
@@ -1715,9 +1574,9 @@ class WebGLParticleSystem {
                 }
 
             } else if (uOrbit && !lifetimeParticle) {
-                vec3 target = activeTarget.xyz;
-                float targetRadius = max(0.02, activeTarget.w);
-                float fieldRadius = max(targetRadius, activeOrbitFieldRadius);
+                vec3 target = vec3(uTargetPoint.x, uTargetPoint.y, uTargetPoint.z);
+                float targetRadius = max(0.02, uTargetPoint.w);
+                float fieldRadius = max(targetRadius, uOrbitFieldRadius);
                 // Orbit reach is evaluated in XY so depth variation doesn't disqualify most particles.
                 vec3 homeOrbitRel = home - target;
                 if (uInteractionPlane.x > 0.5) {
@@ -1747,7 +1606,7 @@ class WebGLParticleSystem {
                     }
 
                     vec3 dir = rel / d;
-                    float pullScale = max(0.0, activeMotion.w);
+                    float pullScale = max(0.0, uMotion.w);
                     float escapeSeed = random(float(index) * 19.19 + 23.0);
                     float escapeActive = step(escapeSeed, clamp(uOrbitEscape.x, 0.0, 1.0));
                     float fieldInfluence = 1.0 - smoothstep(targetRadius, fieldRadius, d);
@@ -1782,7 +1641,7 @@ class WebGLParticleSystem {
                     }
                     tangent = tangent / max(0.0001, tangentLen);
 
-                    float orbitSpeed = (0.09 + 0.21 * random(float(index) + 13.0)) * activeMotion.y;
+                    float orbitSpeed = (0.09 + 0.21 * random(float(index) + 13.0)) * uMotion.y;
                     float ringLock = 1.0 - clamp(abs(desiredRadius - targetRadius) / (targetRadius * 8.0), 0.0, 1.0);
                     float flare = pow(max(0.0, sin(time * (0.45 + escapeSeed * 1.35) + escapeSeed * 6.2831853)), 10.0);
                     float escapePush = escapeActive * max(0.0, uOrbitEscape.y) * (0.012 + flare * 0.085) * delta;
@@ -1816,8 +1675,8 @@ class WebGLParticleSystem {
                 velocity *= (1.0 - settle);
 
                 float driftSeed = float(index) * 0.013;
-                float drift = 0.0045 * activeMotion.x;
-                float driftSpeed = max(0.0, activeEnvironment.x);
+                float drift = 0.0045 * uMotion.x;
+                float driftSpeed = max(0.0, uDriftSpeed);
                 float driftTime = time * max(0.001, driftSpeed);
                 float driftAmount = drift * step(0.0001, driftSpeed);
                 float wobbleX = sin(driftTime * 1.9 + driftSeed) + sin(driftTime * 0.63 + driftSeed * 2.3) * 0.45;
@@ -1858,22 +1717,8 @@ class WebGLParticleSystem {
 
             // Integrate velocity with gravity and friction.
             if (!lifetimeParticle) {
-                velocity += activeGravity * delta;
-                if (gravityActive) {
-                    float turbulenceTime = time * max(0.001, activeEnvironment.x);
-                    float turbulenceSeed = float(index) * 0.071;
-                    float turbulence = 0.035 * activeMotion.x;
-                    velocity.x +=
-                        (sin(turbulenceTime * 1.37 + turbulenceSeed) +
-                            sin(turbulenceTime * 0.53 + turbulenceSeed * 2.1) * 0.4) *
-                        turbulence *
-                        delta;
-                    velocity.y +=
-                        cos(turbulenceTime * 0.79 + turbulenceSeed * 1.7) * turbulence * 0.25 * delta;
-                    velocity.z +=
-                        sin(turbulenceTime * 0.61 + turbulenceSeed * 2.7) * turbulence * 0.35 * delta;
-                }
-                float damp = clamp(activeEnvironment.y * delta, 0.0, 1.0);
+                velocity += uGravity * delta;
+                float damp = clamp(uFriction * delta, 0.0, 1.0);
                 velocity = velocity * (1.0 - damp);
             }
             if (driftAbsolute) {
@@ -1882,108 +1727,6 @@ class WebGLParticleSystem {
                 velocity.y = 0.0;
             }
             position += velocity * delta;
-            if (uRepel && uRepelLifetime && lifetimeParticle) {
-                vec3 target = uTargetPoint.xyz;
-                vec2 surfaceRadius = max(uRepelSurface, vec2(0.0001));
-                float targetRadius = max(surfaceRadius.x, surfaceRadius.y);
-                float fieldRadius = max(targetRadius, uRepelFieldRadius);
-                vec3 away = position - target;
-                if (uInteractionPlane.z > 0.5) {
-                    away -= repelPlaneNormal * dot(away, repelPlaneNormal);
-                }
-                float targetDistance = length(away);
-                vec2 ellipsePosition = away.xy / surfaceRadius;
-                float ellipseDistance = length(ellipsePosition);
-                vec3 ellipseNormal = normalize(vec3(
-                    away.x / (surfaceRadius.x * surfaceRadius.x),
-                    away.y / (surfaceRadius.y * surfaceRadius.y),
-                    0.0
-                ) + vec3(0.000001, 0.0, 0.0));
-                vec3 normal = targetDistance > 0.0001
-                    ? (uRepelCollision.x > 0.5 && uInteractionPlane.z > 0.5 ? ellipseNormal : away / targetDistance)
-                    : normalize(vec3(-velocity.xy, 0.0) + vec3(0.0001, 0.0, 0.0));
-
-                if (targetDistance <= fieldRadius) {
-                    float influence = 1.0 - smoothstep(targetRadius, fieldRadius, targetDistance);
-                    float incomingSpeed = dot(velocity, normal);
-                    bool insideSurface = uRepelCollision.x > 0.5 && uInteractionPlane.z > 0.5
-                        ? ellipseDistance <= 1.0
-                        : targetDistance <= targetRadius;
-                    if (insideSurface) {
-                        if (!surfaceImpacted) impactStartAge = particleAge;
-                        surfaceImpacted = true;
-                        if (uRepelCollision.x > 0.5 && uInteractionPlane.z > 0.5) {
-                            position.xy = target.xy + away.xy / max(ellipseDistance, 0.0001);
-                        } else {
-                            position += normal * (targetRadius - targetDistance);
-                        }
-                        if (incomingSpeed < 0.0) {
-                            float restitution = clamp(
-                                uRepelCollision.y * mix(0.65, 1.35, particleRandomD.z),
-                                0.0,
-                                1.0
-                            );
-                            velocity -= normal * incomingSpeed * (1.0 + restitution);
-                        }
-                        vec3 normalVelocity = normal * dot(velocity, normal);
-                        vec3 tangentVelocity = velocity - normalVelocity;
-                        velocity = normalVelocity + tangentVelocity * (1.0 - clamp(uRepelCollision.z, 0.0, 1.0));
-                        if (length(velocity) <= max(0.0, uRepelCollision.w)) {
-                            velocity = vec3(0.0);
-                        }
-                    }
-
-                    if (
-                        surfaceImpacted &&
-                        uRepelCollision.x > 0.5 &&
-                        uInteractionPlane.z > 0.5 &&
-                        length(uRepelShell) > 0.0001
-                    ) {
-                        vec3 shellAway = position - target;
-                        float cloudAngle = atan(
-                            shellAway.y / max(0.0001, surfaceRadius.y),
-                            shellAway.x / max(0.0001, surfaceRadius.x)
-                        );
-                        float hillProfile = 0.48
-                            + sin(cloudAngle * 5.0 + 0.8) * 0.18
-                            + sin(cloudAngle * 11.0 - 0.35) * 0.11;
-                        hillProfile += (particleRandomC.w - 0.5) * 0.14;
-                        float floatingWisp = step(0.94, particleRandomD.x);
-                        float shellScale = mix(clamp(hillProfile, 0.18, 0.82), 1.0, floatingWisp);
-                        vec2 shellRadius = surfaceRadius + max(uRepelShell, vec2(0.0)) * shellScale;
-                        float shellDistance = length(shellAway.xy / max(shellRadius, vec2(0.0001)));
-                        if (shellDistance >= 1.0) {
-                            vec3 shellNormal = normalize(vec3(
-                                shellAway.x / (shellRadius.x * shellRadius.x),
-                                shellAway.y / (shellRadius.y * shellRadius.y),
-                                0.0
-                            ) + vec3(0.000001, 0.0, 0.0));
-                            position.xy = target.xy + shellAway.xy / max(shellDistance, 0.0001);
-                            float escapingSpeed = dot(velocity, shellNormal);
-                            if (escapingSpeed > 0.0) {
-                                velocity -= shellNormal * escapingSpeed * 1.15;
-                            }
-                        }
-                        velocity *= 1.0 - clamp(delta * max(0.0, uImpactPhysics.x), 0.0, 0.12);
-                    }
-
-                    if (surfaceImpacted && uRepelImpact.w > 0.0001) {
-                        vec3 fromImpact = position - uRepelImpact.xyz;
-                        fromImpact.z = 0.0;
-                        float distanceFromImpact = length(fromImpact);
-                        float randomImpactRadius = uRepelImpact.w * mix(0.7, 1.0, particleRandomC.z);
-                        if (distanceFromImpact > randomImpactRadius) {
-                            surfaceExpired = true;
-                            velocity = vec3(0.0);
-                        }
-                    }
-
-                    if (uRepelCollision.x < 0.5) {
-                        velocity += normal * influence * max(0.0, uMotion.z) * delta * 0.18;
-                        velocity *= 1.0 - clamp(delta * (0.22 + influence * 0.35), 0.0, 0.12);
-                    }
-                }
-            }
             if (driftAbsolute) {
                 position.x = absoluteDriftX;
                 position.y = absoluteDriftY;
@@ -2019,9 +1762,7 @@ class WebGLParticleSystem {
             aPositionOut = position;
             aVelocityOut = velocity;
             float nextParticleAge = particleAge + delta;
-            float nextEncodedAge = nextParticleAge + (surfaceExpired ? 20000.0 : (surfaceImpacted ? 10000.0 : 0.0));
-            float nextStateX = lifetimeParticle && surfaceImpacted ? impactStartAge : home.z;
-            aStateOut = vec4(nextStateX, lifetimeParticle ? -nextEncodedAge : nextEncodedAge, home.x, home.y);
+            aStateOut = vec4(home.z, lifetimeParticle ? -nextParticleAge : nextParticleAge, home.x, home.y);
             aColorOut = aColor;
         `);
 
@@ -2055,26 +1796,6 @@ class WebGLParticleSystem {
         );
         this.uRenderCamera = vertex.addUniform("uRenderCamera", VariableTypes.FLOAT_VEC4, [0.0, 0.0, 1.0, 1.0]);
         this.uRenderWrap = vertex.addUniform("uRenderWrap", VariableTypes.FLOAT, 1.0);
-        this.uRenderStateEnabled = vertex.addUniform("uRenderStateEnabled", VariableTypes.BOOL, false);
-        this.uRenderStateBoundary = vertex.addUniform(
-            "uRenderStateBoundary",
-            VariableTypes.FLOAT_VEC4,
-            [0.0, 1.0, 0.0, 0.0]
-        );
-        this.uRenderStateColorA = vertex.addUniform("uRenderStateColorA", VariableTypes.FLOAT_VEC4, [1.0, 1.0, 1.0, 1.0]);
-        this.uRenderStateColorB = vertex.addUniform("uRenderStateColorB", VariableTypes.FLOAT_VEC4, [1.0, 1.0, 1.0, 1.0]);
-        this.uRenderStateColorMaxA = vertex.addUniform("uRenderStateColorMaxA", VariableTypes.FLOAT_VEC4, [1.0, 1.0, 1.0, 1.0]);
-        this.uRenderStateColorMaxB = vertex.addUniform("uRenderStateColorMaxB", VariableTypes.FLOAT_VEC4, [1.0, 1.0, 1.0, 1.0]);
-        this.uRenderStateOpacity = vertex.addUniform("uRenderStateOpacity", VariableTypes.FLOAT_VEC4, [1.0, 1.0, 1.0, 1.0]);
-        this.uRenderStateColorOverride = vertex.addUniform(
-            "uRenderStateColorOverride",
-            VariableTypes.FLOAT_VEC2,
-            [0.0, 0.0]
-        );
-        this.uRenderStatePointA = vertex.addUniform("uRenderStatePointA", VariableTypes.FLOAT_VEC2, [this.particleSize, this.minParticleSize]);
-        this.uRenderStatePointB = vertex.addUniform("uRenderStatePointB", VariableTypes.FLOAT_VEC2, [this.particleSize, this.minParticleSize]);
-        this.uRenderStatePointMaxA = vertex.addUniform("uRenderStatePointMaxA", VariableTypes.FLOAT_VEC2, [this.particleSize, this.minParticleSize]);
-        this.uRenderStatePointMaxB = vertex.addUniform("uRenderStatePointMaxB", VariableTypes.FLOAT_VEC2, [this.particleSize, this.minParticleSize]);
         this.uPointSize = vertex.addUniform("uPointSize", VariableTypes.FLOAT_VEC2, [
             this.particleSize,
             this.minParticleSize
@@ -2085,12 +1806,6 @@ class WebGLParticleSystem {
             this.particleBehavior.endScale,
             this.particleBehavior.fadeStart,
             this.particleBehavior.fadeEnd
-        ]);
-        this.uImpactBehavior = vertex.addUniform("uImpactBehavior", VariableTypes.FLOAT_VEC4, [
-            this.impactBehavior.startScale,
-            this.impactBehavior.endScale,
-            this.impactBehavior.growthDuration,
-            0
         ]);
 
         vertex.main(`
@@ -2115,59 +1830,13 @@ class WebGLParticleSystem {
                 renderPosition.y = mod(renderPosition.y + halfHeight, renderSize.y) - halfHeight;
             }
             gl_Position = uProjectionMatrix * vec4(renderPosition, 1.0);
-            vec2 renderNdc = gl_Position.xy / max(0.0001, abs(gl_Position.w));
-            float renderStateDistance = dot(renderNdc, uRenderStateBoundary.xy) - uRenderStateBoundary.z;
-            float renderStateMix = uRenderStateBoundary.w > 0.000001
-                ? smoothstep(-uRenderStateBoundary.w, uRenderStateBoundary.w, renderStateDistance)
-                : step(0.0, renderStateDistance);
-            renderStateMix *= float(uRenderStateEnabled);
-            float renderSeed = float(gl_VertexID) + 1.0;
-            vec4 renderRandomColor = vec4(
-                fract(sin(renderSeed * 73.73 + 97.0) * 43758.5453123),
-                fract(sin(renderSeed * 79.79 + 101.0) * 43758.5453123),
-                fract(sin(renderSeed * 83.83 + 103.0) * 43758.5453123),
-                fract(sin(renderSeed * 89.89 + 107.0) * 43758.5453123)
-            );
-            vec2 renderRandomPoint = vec2(
-                fract(sin(renderSeed * 97.97 + 109.0) * 43758.5453123),
-                fract(sin(renderSeed * 101.101 + 113.0) * 43758.5453123)
-            );
-            float renderRandomOpacity = fract(sin(renderSeed * 103.103 + 127.0) * 43758.5453123);
-            vec2 statePointA = mix(uRenderStatePointA, uRenderStatePointMaxA, renderRandomPoint);
-            vec2 statePointB = mix(uRenderStatePointB, uRenderStatePointMaxB, renderRandomPoint);
-            vec2 activePointSize = mix(uPointSize, mix(statePointA, statePointB, renderStateMix), float(uRenderStateEnabled));
-            vec4 randomStateColorA = mix(uRenderStateColorA, uRenderStateColorMaxA, renderRandomColor);
-            vec4 randomStateColorB = mix(uRenderStateColorB, uRenderStateColorMaxB, renderRandomColor);
-            float stateOpacityA = mix(uRenderStateOpacity.x, uRenderStateOpacity.y, renderRandomOpacity);
-            float stateOpacityB = mix(uRenderStateOpacity.z, uRenderStateOpacity.w, renderRandomOpacity);
-            vec4 stateColorA = vec4(
-                mix(aColor.rgb, randomStateColorA.rgb, uRenderStateColorOverride.x),
-                aColor.a * randomStateColorA.a * stateOpacityA
-            );
-            vec4 stateColorB = vec4(
-                mix(aColor.rgb, randomStateColorB.rgb, uRenderStateColorOverride.y),
-                aColor.a * randomStateColorB.a * stateOpacityB
-            );
-            vec4 activeStateColor = mix(aColor, mix(stateColorA, stateColorB, renderStateMix), float(uRenderStateEnabled));
             float depth = max(0.2, abs(renderPosition.z));
-            float encodedParticleAge = abs(aState.y);
-            bool surfaceExpired = encodedParticleAge >= 20000.0;
-            bool surfaceImpacted = encodedParticleAge >= 10000.0;
-            float particleAge = surfaceExpired
-                ? encodedParticleAge - 20000.0
-                : (surfaceImpacted ? encodedParticleAge - 10000.0 : encodedParticleAge);
-            float ageProgress = aLife > 0.001 ? clamp(particleAge / aLife, 0.0, 1.0) : 0.0;
+            float ageProgress = aLife > 0.001 ? clamp(abs(aState.y) / aLife, 0.0, 1.0) : 0.0;
             float smokeGrowth = mix(max(0.01, uLifeBehavior.x), max(0.01, uLifeBehavior.y), smoothstep(0.0, 1.0, ageProgress));
-            float impactAge = max(0.0, particleAge - aState.x);
-            float impactProgress = smoothstep(0.0, 1.0, impactAge / max(0.001, uImpactBehavior.z));
-            float impactGrowth = mix(max(0.01, uImpactBehavior.x), max(0.01, uImpactBehavior.y), impactProgress);
-            impactGrowth *= mix(0.8, 1.35, renderRandomPoint.x);
-            impactGrowth *= mix(1.0, 1.8, step(0.94, renderRandomPoint.y));
-            smokeGrowth *= surfaceImpacted ? impactGrowth : 1.0;
             float particleScale = max(0.01, aSize) * smokeGrowth;
-            gl_PointSize = max(activePointSize.y, (activePointSize.x * particleScale) / depth);
-            float lifeAlpha = 1.0 - smoothstep(clamp(uLifeBehavior.z, 0.0, 1.0), clamp(uLifeBehavior.w, 0.0, 1.0), ageProgress);
-            particleStateColor = vec4(activeStateColor.rgb, activeStateColor.a * lifeAlpha * (surfaceExpired ? 0.0 : 1.0));
+            gl_PointSize = max(uPointSize.y, (uPointSize.x * particleScale) / depth);
+            float smokeAlpha = aColor.a * (1.0 - smoothstep(clamp(uLifeBehavior.z, 0.0, 1.0), clamp(uLifeBehavior.w, 0.0, 1.0), ageProgress));
+            particleStateColor = vec4(aColor.rgb, smokeAlpha);
         `);
 
         fragment.setPrecision("high", "float");
@@ -2193,7 +1862,6 @@ class WebGLParticleSystem {
 
         // Keep TF draw count aligned to active particles.
         this.feedback.points = Math.max(0, Math.min(this.maxParticles, this.particles.count || 0));
-        this._syncStateUniforms();
         this.captureSnapshot("origin");
     }
 
@@ -2412,206 +2080,6 @@ class WebGLParticleSystem {
     setFriction(value) {
         this.friction = Number(value) || 0;
         if (this.uFriction) this.uFriction.value = this.friction;
-    }
-
-    _defaultParticleState() {
-        const target = this.orbitPoint?.toArray?.() || [0, 0, -2, 0.4];
-        const radius = Math.max(0.0001, Number(target[3]) || 0.4);
-        const orbitReach =
-            Number.isFinite(Number(this.orbitFieldRadius)) && Number(this.orbitFieldRadius) > 0
-                ? Math.max(radius, Number(this.orbitFieldRadius))
-                : radius * 3;
-        return {
-            gravity: [...this.gravity],
-            gravityMax: [...this.gravity],
-            friction: Math.max(0, Number(this.friction) || 0),
-            frictionMax: Math.max(0, Number(this.friction) || 0),
-            drift: Math.max(0, Number(this.driftScale) || 0),
-            driftMax: Math.max(0, Number(this.driftScale) || 0),
-            driftSpeed: Math.max(0, Number(this.driftSpeedScale) || 0),
-            driftSpeedMax: Math.max(0, Number(this.driftSpeedScale) || 0),
-            orbitSpeed: Math.max(0, Number(this.orbitSpeedScale) || 0),
-            orbitSpeedMax: Math.max(0, Number(this.orbitSpeedScale) || 0),
-            orbitStrength: Math.max(0, Number(this.orbitPullScale) || 0),
-            orbitStrengthMax: Math.max(0, Number(this.orbitPullScale) || 0),
-            repelStrength: Math.max(0, Number(this.repelStrengthScale) || 0),
-            repelStrengthMax: Math.max(0, Number(this.repelStrengthScale) || 0),
-            target: [Number(target[0]) || 0, Number(target[1]) || 0, Number(target[2]) || 0, radius],
-            targetMax: [Number(target[0]) || 0, Number(target[1]) || 0, Number(target[2]) || 0, radius],
-            orbitReach,
-            orbitReachMax: orbitReach,
-            color: [1, 1, 1, 1],
-            colorMax: [1, 1, 1, 1],
-            colorOverride: false,
-            opacity: 1,
-            opacityMax: 1,
-            size: Math.max(0.1, Number(this.particleSize) || 1),
-            sizeMax: Math.max(0.1, Number(this.particleSize) || 1),
-            minSize: Math.max(0.1, Number(this.minParticleSize) || 1),
-            minSizeMax: Math.max(0.1, Number(this.minParticleSize) || 1)
-        };
-    }
-
-    _normalizeParticleState(config = {}, fallback = this._defaultParticleState()) {
-        const range = (value, defaultValue, lower = -Infinity, upper = Infinity) => {
-            const [min, max] = normalizeRandomRange(value, defaultValue);
-            return [Math.max(lower, Math.min(upper, min)), Math.max(lower, Math.min(upper, max))];
-        };
-        const vector = (value, defaultValue) => {
-            if (Array.isArray(value) || value instanceof Float32Array) return value;
-            if (value && typeof value === "object") {
-                return [value.x, value.y, value.z, value.radius];
-            }
-            return defaultValue;
-        };
-        const gravity = vector(config.gravity, fallback.gravity);
-        const targetConfig = config.target ?? config.orbitTarget;
-        const target = vector(targetConfig, fallback.target);
-        const colorProvided = config.color !== undefined;
-        const color = normalizeColorInput(config.color) || vector(config.color, fallback.color);
-        const gravityRanges = Array.from({ length: 3 }, (_, index) =>
-            range(gravity[index], fallback.gravity[index])
-        );
-        const targetRanges = Array.from({ length: 4 }, (_, index) =>
-            range(target[index], fallback.target[index], index === 3 ? 0.0001 : -Infinity)
-        );
-        const colorRanges = Array.from({ length: 4 }, (_, index) =>
-            range(color[index], fallback.color[index], 0, 1)
-        );
-        const friction = range(config.friction, fallback.friction, 0);
-        const drift = range(config.drift, fallback.drift, 0);
-        const driftSpeed = range(config.driftSpeed, fallback.driftSpeed, 0);
-        const orbitSpeed = range(config.orbitSpeed, fallback.orbitSpeed, 0);
-        const orbitStrength = range(config.orbitStrength ?? config.orbitPull, fallback.orbitStrength, 0);
-        const repelStrength = range(config.repelStrength, fallback.repelStrength, 0);
-        const orbitReach = range(config.orbitReach ?? config.fieldRadius, fallback.orbitReach, 0.0001);
-        const opacity = range(config.opacity, fallback.opacity, 0, 1);
-        const size = range(config.size ?? config.particleSize, fallback.size, 0.1);
-        const minSize = range(config.minSize ?? config.minParticleSize, fallback.minSize, 0.1);
-        return {
-            gravity: gravityRanges.map(([min]) => min),
-            gravityMax: gravityRanges.map(([, max]) => max),
-            friction: friction[0],
-            frictionMax: friction[1],
-            drift: drift[0],
-            driftMax: drift[1],
-            driftSpeed: driftSpeed[0],
-            driftSpeedMax: driftSpeed[1],
-            orbitSpeed: orbitSpeed[0],
-            orbitSpeedMax: orbitSpeed[1],
-            orbitStrength: orbitStrength[0],
-            orbitStrengthMax: orbitStrength[1],
-            repelStrength: repelStrength[0],
-            repelStrengthMax: repelStrength[1],
-            target: targetRanges.map(([min]) => min),
-            targetMax: targetRanges.map(([, max]) => max),
-            orbitReach: orbitReach[0],
-            orbitReachMax: orbitReach[1],
-            color: colorRanges.map(([min]) => min),
-            colorMax: colorRanges.map(([, max]) => max),
-            colorOverride: colorProvided || fallback.colorOverride,
-            opacity: opacity[0],
-            opacityMax: opacity[1],
-            size: size[0],
-            sizeMax: size[1],
-            minSize: minSize[0],
-            minSizeMax: minSize[1]
-        };
-    }
-
-    _normalizeStateBoundary(config = {}, current = this.stateBoundary) {
-        return normalizeStateBoundary(config, current, this.stateSystemEnabled);
-    }
-
-    _stateBoundaryUniform() {
-        return stateBoundaryUniform(this.stateBoundary);
-    }
-
-    _syncStateUniforms() {
-        const enabled = !!this.stateSystemEnabled;
-        const stateA = this.particleStates.a || this._defaultParticleState();
-        const stateB = this.particleStates.b || stateA;
-        const boundary = this._stateBoundaryUniform();
-        if (this.uStateEnabled) this.uStateEnabled.value = enabled;
-        if (this.uStateBoundary) this.uStateBoundary.value = boundary;
-        if (this.uStateGravityA) this.uStateGravityA.value = stateA.gravity;
-        if (this.uStateGravityB) this.uStateGravityB.value = stateB.gravity;
-        if (this.uStateGravityMaxA) this.uStateGravityMaxA.value = stateA.gravityMax;
-        if (this.uStateGravityMaxB) this.uStateGravityMaxB.value = stateB.gravityMax;
-        if (this.uStateMotionA) {
-            this.uStateMotionA.value = [stateA.drift, stateA.orbitSpeed, stateA.repelStrength, stateA.orbitStrength];
-        }
-        if (this.uStateMotionB) {
-            this.uStateMotionB.value = [stateB.drift, stateB.orbitSpeed, stateB.repelStrength, stateB.orbitStrength];
-        }
-        if (this.uStateMotionMaxA) {
-            this.uStateMotionMaxA.value = [stateA.driftMax, stateA.orbitSpeedMax, stateA.repelStrengthMax, stateA.orbitStrengthMax];
-        }
-        if (this.uStateMotionMaxB) {
-            this.uStateMotionMaxB.value = [stateB.driftMax, stateB.orbitSpeedMax, stateB.repelStrengthMax, stateB.orbitStrengthMax];
-        }
-        if (this.uStateEnvironmentA) this.uStateEnvironmentA.value = [stateA.driftSpeed, stateA.friction];
-        if (this.uStateEnvironmentB) this.uStateEnvironmentB.value = [stateB.driftSpeed, stateB.friction];
-        if (this.uStateEnvironmentMaxA) this.uStateEnvironmentMaxA.value = [stateA.driftSpeedMax, stateA.frictionMax];
-        if (this.uStateEnvironmentMaxB) this.uStateEnvironmentMaxB.value = [stateB.driftSpeedMax, stateB.frictionMax];
-        if (this.uStateTargetA) this.uStateTargetA.value = stateA.target;
-        if (this.uStateTargetB) this.uStateTargetB.value = stateB.target;
-        if (this.uStateTargetMaxA) this.uStateTargetMaxA.value = stateA.targetMax;
-        if (this.uStateTargetMaxB) this.uStateTargetMaxB.value = stateB.targetMax;
-        if (this.uStateOrbitReach) this.uStateOrbitReach.value = [stateA.orbitReach, stateB.orbitReach];
-        if (this.uStateOrbitReachMax) this.uStateOrbitReachMax.value = [stateA.orbitReachMax, stateB.orbitReachMax];
-        if (this.uRenderStateEnabled) this.uRenderStateEnabled.value = enabled;
-        if (this.uRenderStateBoundary) this.uRenderStateBoundary.value = boundary;
-        if (this.uRenderStateColorA) this.uRenderStateColorA.value = stateA.color;
-        if (this.uRenderStateColorB) this.uRenderStateColorB.value = stateB.color;
-        if (this.uRenderStateColorMaxA) this.uRenderStateColorMaxA.value = stateA.colorMax;
-        if (this.uRenderStateColorMaxB) this.uRenderStateColorMaxB.value = stateB.colorMax;
-        if (this.uRenderStateOpacity) {
-            this.uRenderStateOpacity.value = [stateA.opacity, stateA.opacityMax, stateB.opacity, stateB.opacityMax];
-        }
-        if (this.uRenderStateColorOverride) {
-            this.uRenderStateColorOverride.value = [stateA.colorOverride ? 1 : 0, stateB.colorOverride ? 1 : 0];
-        }
-        if (this.uRenderStatePointA) this.uRenderStatePointA.value = [stateA.size, stateA.minSize];
-        if (this.uRenderStatePointB) this.uRenderStatePointB.value = [stateB.size, stateB.minSize];
-        if (this.uRenderStatePointMaxA) this.uRenderStatePointMaxA.value = [stateA.sizeMax, stateA.minSizeMax];
-        if (this.uRenderStatePointMaxB) this.uRenderStatePointMaxB.value = [stateB.sizeMax, stateB.minSizeMax];
-    }
-
-    _advanceStateBoundary(delta) {
-        if (advanceStateBoundary(this.stateBoundary, delta)) this._syncStateUniforms();
-    }
-
-    /**
-     * Enables two continuously blended state packs without rebuilding particle buffers.
-     *
-     * @param {{a?:object,b?:object,boundary?:object}} states
-     */
-    setStates(states = {}) {
-        const fallback = this._defaultParticleState();
-        this.particleStates.a = this._normalizeParticleState(states.a || {}, fallback);
-        this.particleStates.b = this._normalizeParticleState(states.b || {}, fallback);
-        this.stateBoundary = this._normalizeStateBoundary(states.boundary || {}, this.stateBoundary);
-        this.stateSystemEnabled = true;
-        this._syncStateUniforms();
-        return this.particleStates;
-    }
-
-    /**
-     * Moves/configures the screen-space divider. Transition speed is normalized screen distance per second.
-     * A speed of zero applies the position immediately.
-     *
-     * @param {{orientation?:"horizontal"|"vertical"|"diagonal",position?:number,feather?:number,angle?:number,transitionSpeed?:number,speed?:number,immediate?:boolean}} boundary
-     */
-    setStateBoundary(boundary = {}) {
-        this.stateBoundary = this._normalizeStateBoundary(boundary, this.stateBoundary);
-        this._syncStateUniforms();
-        return { ...this.stateBoundary };
-    }
-
-    clearStates() {
-        this.stateSystemEnabled = false;
-        this._syncStateUniforms();
     }
 
     /**
@@ -3161,7 +2629,7 @@ class WebGLParticleSystem {
     }
 
     _scaleRepelDistance(value) {
-        return Math.max(0.0001, (Number(value) || 0) * this.repelDistanceScale);
+        return Math.max(0.0001, (Number(value) || 0) * REPEL_RADIUS_SCALE);
     }
 
     _scaledRepelPointArray() {
@@ -3598,40 +3066,9 @@ class WebGLParticleSystem {
      * Enables/disables repel mode and optional target update.
      *
      * @param {boolean} enabled
-     * @param {{x?:number,y?:number,z?:number,radius?:number,radiusX?:number,radiusY?:number,shellX?:number,shellY?:number,fieldRadius?:number,impactPoint?:{x:number,y:number,z?:number},impactRadius?:number,rawDistance?:boolean,affectLifetime?:boolean,collisionOnly?:boolean,restitution?:number,surfaceFriction?:number,settleSpeed?:number}} [options={}]
+     * @param {{x?:number,y?:number,z?:number,radius?:number,fieldRadius?:number}} [options={}]
      */
     setRepel(enabled, options = {}) {
-        this.repelDistanceScale = options.rawDistance ? 1 : REPEL_RADIUS_SCALE;
-        this.repelAffectsLifetime = Boolean(options.affectLifetime);
-        this.repelCollisionOnly = Boolean(options.collisionOnly);
-        if (options.restitution !== undefined) {
-            this.repelRestitution = Math.max(0, Math.min(1, Number(options.restitution) || 0));
-        }
-        if (options.surfaceFriction !== undefined) {
-            this.repelSurfaceFriction = Math.max(0, Math.min(1, Number(options.surfaceFriction) || 0));
-        }
-        if (options.settleSpeed !== undefined) {
-            this.repelSettleSpeed = Math.max(0, Number(options.settleSpeed) || 0);
-        }
-        if (options.radiusX !== undefined) {
-            this.repelRadiusX = Math.max(0.0001, Number(options.radiusX) || 0.0001);
-        }
-        if (options.radiusY !== undefined) {
-            this.repelRadiusY = Math.max(0.0001, Number(options.radiusY) || 0.0001);
-        }
-        if (options.shellX !== undefined) this.repelShellX = Math.max(0, Number(options.shellX) || 0);
-        if (options.shellY !== undefined) this.repelShellY = Math.max(0, Number(options.shellY) || 0);
-        if (options.impactPoint !== undefined) {
-            const impactPoint = options.impactPoint || {};
-            this.repelImpactPoint = [
-                Number(impactPoint.x) || 0,
-                Number(impactPoint.y) || 0,
-                Number(impactPoint.z) || 0
-            ];
-        }
-        if (options.impactRadius !== undefined) {
-            this.repelImpactRadius = Math.max(0, Number(options.impactRadius) || 0);
-        }
         if (options.x !== undefined) this.repelPoint[0] = Number(options.x) || 0;
         if (options.y !== undefined) this.repelPoint[1] = Number(options.y) || 0;
         if (options.z !== undefined) this.repelPoint[2] = Number(options.z) || 0;
@@ -3930,7 +3367,6 @@ class WebGLParticleSystem {
         }
         this.time.delta = Math.min(0.05, Math.max(0, this.time.current - this.time.last));
         this.time.last = this.time.current;
-        this._advanceStateBoundary(this.time.delta);
 
         const maskTransitionActive = this._applyMaskTransition(time);
 
@@ -4001,35 +3437,6 @@ class WebGLParticleSystem {
                 ];
             }
             if (this.uRepelFieldRadius) this.uRepelFieldRadius.value = repelFieldRadius;
-            if (this.uRepelLifetime) this.uRepelLifetime.value = this.repelAffectsLifetime;
-            if (this.uRepelCollision) {
-                this.uRepelCollision.value = [
-                    this.repelCollisionOnly ? 1 : 0,
-                    this.repelRestitution,
-                    this.repelSurfaceFriction,
-                    this.repelSettleSpeed
-                ];
-            }
-            if (this.uRepelSurface) {
-                this.uRepelSurface.value = [
-                    this._scaleRepelDistance(this.repelRadiusX ?? this.repelPoint[3]),
-                    this._scaleRepelDistance(this.repelRadiusY ?? this.repelPoint[3])
-                ];
-            }
-            if (this.uRepelShell) {
-                this.uRepelShell.value = [
-                    Math.max(0, this.repelShellX * this.repelDistanceScale),
-                    Math.max(0, this.repelShellY * this.repelDistanceScale)
-                ];
-            }
-            if (this.uRepelImpact) {
-                this.uRepelImpact.value = [
-                    this.repelImpactPoint[0],
-                    this.repelImpactPoint[1],
-                    this.repelImpactPoint[2],
-                    Math.max(0, this.repelImpactRadius * this.repelDistanceScale)
-                ];
-            }
             if (this.uInteractionPlane) {
                 this.uInteractionPlane.value = [
                     this.orbitMode === "2d" ? 1 : 0,
@@ -4076,17 +3483,12 @@ class WebGLParticleSystem {
             ];
         }
         if (this.uRenderWrap) {
-            let gravityActive =
+            const gravityActive =
                 Math.hypot(
                     Number(this.gravity?.[0]) || 0,
                     Number(this.gravity?.[1]) || 0,
                     Number(this.gravity?.[2]) || 0
                 ) > 0.000001;
-            if (this.stateSystemEnabled) {
-                gravityActive = [this.particleStates.a, this.particleStates.b].some(
-                    (state) => Math.hypot(...(state?.gravity || [0, 0, 0])) > 0.000001
-                );
-            }
             this.uRenderWrap.value = !gravityActive && this.repel.value !== 1 && this.orbit.value !== 1 ? 1 : 0;
         }
         if (this.uPointSize) {
@@ -4127,24 +3529,6 @@ class WebGLParticleSystem {
                 Number(this.particleBehavior.endScale) || 1,
                 Number(this.particleBehavior.fadeStart) || 0,
                 Number(this.particleBehavior.fadeEnd) || 1
-            ];
-        }
-    }
-
-    setImpactBehavior(config = {}) {
-        this.impactBehavior = {
-            ...this.impactBehavior,
-            ...config
-        };
-        if (this.uImpactPhysics) {
-            this.uImpactPhysics.value = [Math.max(0, Number(this.impactBehavior.damping) || 0), 0];
-        }
-        if (this.uImpactBehavior) {
-            this.uImpactBehavior.value = [
-                Math.max(0.01, Number(this.impactBehavior.startScale) || 1),
-                Math.max(0.01, Number(this.impactBehavior.endScale) || 1),
-                Math.max(0.001, Number(this.impactBehavior.growthDuration) || 1),
-                0
             ];
         }
     }

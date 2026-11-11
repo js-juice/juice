@@ -87,7 +87,7 @@ class AnimationStage extends Component.HTMLElement {
                     // top: "var(--anchor-y, 0)",
                 },
                 'slot[name="paralax-background"]': {
-                    pointerEvents: "var(--stage-slot-pointer-events, auto)",
+                    pointerEvents: "auto",
                     width: "100%",
                     height: "100%",
                     position: "absolute",
@@ -97,7 +97,7 @@ class AnimationStage extends Component.HTMLElement {
                     zIndex: -1
                 },
                 'slot[name="paralax-assets"]': {
-                    pointerEvents: "var(--stage-slot-pointer-events, auto)",
+                    pointerEvents: "auto",
                     width: "100%",
                     height: "100%",
                     position: "absolute",
@@ -107,7 +107,7 @@ class AnimationStage extends Component.HTMLElement {
                     zIndex: 2
                 },
                 'slot[name="world-background"]': {
-                    pointerEvents: "var(--stage-slot-pointer-events, auto)",
+                    pointerEvents: "auto",
                     width: "100%",
                     height: "100%",
                     position: "absolute",
@@ -117,7 +117,7 @@ class AnimationStage extends Component.HTMLElement {
                     zIndex: -1
                 },
                 'slot[name="world-effects"]': {
-                    pointerEvents: "var(--stage-slot-pointer-events, auto)",
+                    pointerEvents: "auto",
                     width: "100%",
                     height: "100%",
                     position: "absolute",
@@ -129,7 +129,6 @@ class AnimationStage extends Component.HTMLElement {
                 "slot:not([name])": {
                     position: "absolute",
                     display: "block",
-                    pointerEvents: "var(--stage-slot-pointer-events, auto)",
                     left: "var(--anchor-x, 0%)",
                     top: "var(--anchor-y, 0%)"
                 },
@@ -178,17 +177,7 @@ class AnimationStage extends Component.HTMLElement {
      * @returns {*} Current dimentions value.
      */
     get dimentions() {
-        const html = this.ref?.("html");
-        if (!html?.getBoundingClientRect) {
-            this.onRef("html", () => {
-                const { width, height } = this.ref?.("html").getBoundingClientRect();
-                this.height = height;
-                this.width = width;
-            });
-            return { width: 0, height: 0 };
-        }
-
-        const { width, height } = html.getBoundingClientRect();
+        const { width, height } = this.ref("html").getBoundingClientRect();
         return { width, height };
     }
 
@@ -303,8 +292,7 @@ class AnimationStage extends Component.HTMLElement {
             return existing;
         }
 
-        const placement =
-            options.placement || (element.getAttribute?.("slot") === "paralax-background" ? "paralax" : "world");
+        const placement = options.placement || (element.getAttribute?.("slot") === "paralax-background" ? "paralax" : "world");
         const bg = {
             element: element,
             placement,
@@ -364,9 +352,7 @@ class AnimationStage extends Component.HTMLElement {
             pointerEvents: options.pointerEvents ?? element.style.pointerEvents ?? "none"
         });
         if (options.zIndex !== undefined) element.style.zIndex = `${options.zIndex}`;
-
         if (!element.parentNode) this.appendChild(element);
-        console.log(element, element.parentNode);
         return { element, slot, ...options };
     }
 
@@ -584,7 +570,7 @@ class AnimationStage extends Component.HTMLElement {
 
         if (this.viewer?.onAssetAdded) {
             this.viewer.onAssetAdded(child);
-        } else if (this.animation?.tree) {
+        } else {
             this.animation.tree.addAsset(child, this);
         }
     }
@@ -615,10 +601,6 @@ class AnimationStage extends Component.HTMLElement {
      */
     onFirstConnect() {
         AnimationComponentUtil.initialize(this);
-        // Children can finish upgrading before their stage is defined.
-        for (const child of this.children) {
-            if (child.ready) this.onCustomChildReady(child);
-        }
         this._setDimensionVar("width", this.width);
         this._setDimensionVar("height", this.height);
 

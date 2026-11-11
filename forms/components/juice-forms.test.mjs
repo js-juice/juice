@@ -12,3 +12,8 @@ test("invalid form submission focuses the first invalid Juice field", () => {
     assert.match(source, /invalid\.scrollIntoView\(\{ behavior: "smooth", block: "center" \}\)/);
     assert.match(source, /invalid\._dom && invalid\._dom\.native/);
 });
+
+test("responsive measurements do not retrigger the observed form", () => {
+    assert.doesNotMatch(source, /this\._form\.appendChild\(probe\)/);
+    assert.match(source, /document\.body\.appendChild\(probe\)/);
+});

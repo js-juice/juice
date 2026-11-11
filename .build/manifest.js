@@ -3,41 +3,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import crypto from "node:crypto";
 
-/**
- * Description placeholder
- *
- * @type {*}
- */
 const __filename = fileURLToPath(import.meta.url);
-/**
- * Description placeholder
- *
- * @type {*}
- */
 const __dirname = path.dirname(__filename);
 
-/**
- * Description placeholder
- *
- * @type {*}
- */
 const root = path.join(__dirname, "..");
 
-/**
- * Description placeholder
- *
- * @type {{}}
- */
 const ignore = [".build", "node_modules", ".git", ".gitignore", "config/manifest.json"];
 
-/**
- * Description placeholder
- *
- * @async
- * @param {*} dir
- * @param {{ files: {}; folders: {}; configs: {}; }} [index={ files: [], folders: [], configs: [] }]
- * @returns {unknown}
- */
 async function walkFlat(dir, index = { files: [], folders: [], configs: [] }) {
     return new Promise((resolve) => {
         fs.readdir(dir, async (err, files) => {
@@ -65,12 +37,6 @@ async function walkFlat(dir, index = { files: [], folders: [], configs: [] }) {
     });
 }
 
-/**
- * Description placeholder
- *
- * @param {*} manifest
- * @returns {{}}
- */
 function indexEntries(manifest) {
     const searchMarkers = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
     const indexes = {};
@@ -99,15 +65,6 @@ function indexEntries(manifest) {
     return indexes;
 }
 
-/**
- * Description placeholder
- *
- * @export
- * @async
- * @param {*} location
- * @param {*} [writeToFile=null]
- * @returns {unknown}
- */
 export async function make(location, writeToFile = null) {
     if (!location.endsWith("/")) {
         location += "/";

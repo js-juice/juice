@@ -87,22 +87,6 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 properties: {
                     width: { type: "number", route: "w.value", default: 0, linked: true, unit: "size", axis: "x" },
                     height: { type: "number", route: "h.value", default: 0, linked: true, unit: "size", axis: "y" },
-                    maxWidth: {
-                        type: "number",
-                        route: "maxw.value",
-                        default: 0,
-                        linked: true,
-                        unit: "size",
-                        axis: "x"
-                    },
-                    maxHeight: {
-                        type: "number",
-                        route: "maxh.value",
-                        default: 0,
-                        linked: true,
-                        unit: "size",
-                        axis: "y"
-                    },
                     scale: { type: "number", route: "s.value", default: 1, linked: true },
                     x: { type: "number", route: "position.x", default: 0, linked: true, unit: "position", axis: "x" },
                     y: { type: "number", route: "position.y", default: 0, linked: true, unit: "position", axis: "y" },
@@ -121,14 +105,11 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 }
             };
 
-            usePhysics = true;
-            writeCSSVars = true;
-
             static html() {
                 return `
                     <animation-anchor id="anchor">
                         <div id="body" part="body" class="animation-body">
-                            ${this.bodyHTML !== undefined && typeof this.bodyHTML == "function" ? this.bodyHTML() : ""}
+                            ${this.bodyHTML ? this.bodyHTML() : ""}
                             <slot></slot>
                         </div>
                     </animation-anchor>
@@ -145,13 +126,13 @@ function ComponentCompiler(name, BaseHTMLElement) {
                         left: 0px;
                         top: 0px;
                     }
-                   
+                    animation-anchor {
+                        transform: translate3d(var(--x, 0px), var(--y, 0px), var(--z, 0px));
+                    }
                     #body {
                         position: absolute;
                         width: var(--width);
                         height: var(--height);
-                        max-width: var(--max-width, none);
-                        max-height: var(--max-height, none);
                     }
                     #body slot {
                         position: relative;
@@ -171,23 +152,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
 
             static get observed() {
                 return {
-                    all: [
-                        "x",
-                        "y",
-                        "z",
-                        "r",
-                        "rx",
-                        "ry",
-                        "rz",
-                        "scale",
-                        "vx",
-                        "vy",
-                        "width",
-                        "height",
-                        "maxWidth",
-                        "maxHeight",
-                        "debug"
-                    ],
+                    all: ["x", "y", "z", "r", "rx", "ry", "rz", "scale", "vx", "vy", "width", "height", "debug"],
                     attributes: ["anchor", "origin", "offset", "position"],
                     properties: []
                 };
@@ -278,8 +243,6 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 this.s = new AnimationValue(1, { min: 0 });
                 this.w = new AnimationValue(0, { min: 0 });
                 this.h = new AnimationValue(0, { min: 0 });
-                this.maxw = new AnimationValue(0, { min: 0 });
-                this.maxh = new AnimationValue(0, { min: 0 });
 
                 Object.defineProperty(this, "offset", {
                     get: () => ({
@@ -343,6 +306,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 if (property && typeof property === "object" && !Array.isArray(property)) {
                     return this.tweenProperties(property, value || {});
                 }
+
                 return this.tweenProperty(property, value, options);
             }
 
@@ -504,12 +468,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 if (!route) {
                     let value;
                     if (config.linked && this.hasAttribute(property)) {
-                        value = this.parseConfiguredValue(
-                            property,
-                            this.getAttribute(property),
-                            config,
-                            config.default ?? null
-                        );
+                        value = this.parseConfiguredValue(property, this.getAttribute(property), config, config.default ?? null);
                     } else if (Object.prototype.hasOwnProperty.call(this, property)) {
                         value = this[property];
                     } else {
@@ -541,12 +500,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
 
                 let value;
                 if (config.linked && this.hasAttribute(property)) {
-                    value = this.parseConfiguredValue(
-                        property,
-                        this.getAttribute(property),
-                        config,
-                        config.default ?? null
-                    );
+                    value = this.parseConfiguredValue(property, this.getAttribute(property), config, config.default ?? null);
                 } else if (targets[0].parent[targets[0].key] !== undefined) {
                     value = targets[0].parent[targets[0].key];
                 } else {
@@ -563,12 +517,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
                         if (config.type === "exists") {
                             newValue = ![false, "false", 0, "0", null, undefined].includes(newValue);
                         } else {
-                            newValue = this.parseConfiguredValue(
-                                property,
-                                newValue,
-                                config,
-                                targets[0].parent[targets[0].key]
-                            );
+                            newValue = this.parseConfiguredValue(property, newValue, config, targets[0].parent[targets[0].key]);
                         }
 
                         const oldValue = targets[0].parent[targets[0].key];
@@ -588,10 +537,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
                     return;
                 }
 
-                if (
-                    config.unit === "position" &&
-                    Object.prototype.hasOwnProperty.call(this.pendingPositionValues, property)
-                ) {
+                if (config.unit === "position" && Object.prototype.hasOwnProperty.call(this.pendingPositionValues, property)) {
                     return;
                 }
 
@@ -633,20 +579,12 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 this.rendered = 1;
             }
 
-            refListeners = {};
-
-            onRef(id, fn) {
-                if (!this.refListeners[id]) this.refListeners[id] = [];
-                this.refListeners[id].push(fn);
-            }
-
             collectRefs() {
                 this.refs = {};
                 this.slots = {};
 
                 this.root.querySelectorAll("[id]").forEach((element) => {
                     this.refs[element.id] = element;
-                    if (this.refListeners[element.id]) this.refs[element.id].forEach((fn) => fn(element));
                 });
 
                 this.root.querySelectorAll("slot").forEach((slot) => {
@@ -682,7 +620,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 Object.assign(this._.styleVars, vars);
 
                 for (const [key, value] of Object.entries(vars)) {
-                    root.style.setProperty(key, `var( ${key}-override, ${value})`);
+                    root.style.setProperty(key, value);
                     if (root !== this && this.style?.getPropertyValue(key)) this.style.removeProperty(key);
                     if (root !== this.ref("html") && this.ref("html")?.style?.getPropertyValue(key)) {
                         this.ref("html").style.removeProperty(key);
@@ -788,8 +726,6 @@ function ComponentCompiler(name, BaseHTMLElement) {
                     "--z": `${this.position.z}px`,
                     "--width": `${this.w.value}px`,
                     "--height": `${this.h.value}px`,
-                    "--max-width": this.maxw.value > 0 ? `${this.maxw.value}px` : "none",
-                    "--max-height": this.maxh.value > 0 ? `${this.maxh.value}px` : "none",
                     "--scale": this.s.value,
                     "--rotation": `${this.rotation.x}deg`,
                     "--rotation-x": `${this.rotation.x}deg`,
@@ -804,13 +740,12 @@ function ComponentCompiler(name, BaseHTMLElement) {
 
             update() {
                 if (!this.animate) return null;
-                if (this.usePhysics) {
-                    if (this.velocity.hasValue()) {
-                        this.position.x += this.velocity.x;
-                        this.position.y += this.velocity.y;
-                        this.position.z += this.velocity.z;
-                        this.worldPosition.set(this.position);
-                    }
+
+                if (this.velocity.hasValue()) {
+                    this.position.x += this.velocity.x;
+                    this.position.y += this.velocity.y;
+                    this.position.z += this.velocity.z;
+                    this.worldPosition.set(this.position);
                 }
 
                 if (!this.frozen) {
@@ -822,55 +757,44 @@ function ComponentCompiler(name, BaseHTMLElement) {
 
             render(time) {
                 if (!this.visible) return;
+
                 const updates = {};
 
-                if (this.writeCSSVars) {
-                    if (this.beforeRender) this.beforeRender(time);
+                if (this.beforeRender) this.beforeRender(time);
 
-                    if (this.w.dirty) {
-                        updates["--width"] = `${this.w.value}px`;
-                        this.w.save();
-                    }
-
-                    if (this.h.dirty) {
-                        updates["--height"] = `${this.h.value}px`;
-                        this.h.save();
-                    }
-
-                    if (this.maxw.dirty) {
-                        updates["--max-width"] = this.maxw.value > 0 ? `${this.maxw.value}px` : "none";
-                        this.maxw.save();
-                    }
-
-                    if (this.maxh.dirty) {
-                        updates["--max-height"] = this.maxh.value > 0 ? `${this.maxh.value}px` : "none";
-                        this.maxh.save();
-                    }
-
-                    if (this.s.dirty) {
-                        updates["--scale"] = this.s.value;
-                        this.s.save();
-                    }
-
-                    if (this.position.dirty) {
-                        updates["--x"] = `${this.position.x}px`;
-                        updates["--y"] = `${this.position.y}px`;
-                        updates["--z"] = `${this.position.z}px`;
-                        this.position.clean();
-                    }
-
-                    if (this.rotation.dirty) {
-                        updates["--rotation"] = `${this.rotation.x}deg`;
-                        updates["--rotation-x"] = `${this.rotation.x}deg`;
-                        updates["--rotation-y"] = `${this.rotation.y}deg`;
-                        updates["--rotation-z"] = `${this.rotation.z}deg`;
-                        this.rotation.clean();
-                    }
-
-                    if (!Object.keys(updates).length) return;
-
-                    this.writeStyleVars(updates);
+                if (this.w.dirty) {
+                    updates["--width"] = `${this.w.value}px`;
+                    this.w.save();
                 }
+
+                if (this.h.dirty) {
+                    updates["--height"] = `${this.h.value}px`;
+                    this.h.save();
+                }
+
+                if (this.s.dirty) {
+                    updates["--scale"] = this.s.value;
+                    this.s.save();
+                }
+
+                if (this.position.dirty) {
+                    updates["--x"] = `${this.position.x}px`;
+                    updates["--y"] = `${this.position.y}px`;
+                    updates["--z"] = `${this.position.z}px`;
+                    this.position.clean();
+                }
+
+                if (this.rotation.dirty) {
+                    updates["--rotation"] = `${this.rotation.x}deg`;
+                    updates["--rotation-x"] = `${this.rotation.x}deg`;
+                    updates["--rotation-y"] = `${this.rotation.y}deg`;
+                    updates["--rotation-z"] = `${this.rotation.z}deg`;
+                    this.rotation.clean();
+                }
+
+                if (!Object.keys(updates).length) return;
+
+                this.writeStyleVars(updates);
                 this.updateAnchorDebugValues(updates);
             }
 
@@ -879,20 +803,20 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 const anchor = this.ref("anchor");
                 if (!anchor?.setDebugValue) return;
 
-                const debugValues = values || {
-                    "--width": `${this.w.value}px`,
-                    "--height": `${this.h.value}px`,
-                    "--max-width": this.maxw.value > 0 ? `${this.maxw.value}px` : "none",
-                    "--max-height": this.maxh.value > 0 ? `${this.maxh.value}px` : "none",
-                    "--scale": this.s.value,
-                    "--x": `${this.position.x}px`,
-                    "--y": `${this.position.y}px`,
-                    "--z": `${this.position.z}px`,
-                    "--rotation": `${this.rotation.x}deg`,
-                    "--rotation-x": `${this.rotation.x}deg`,
-                    "--rotation-y": `${this.rotation.y}deg`,
-                    "--rotation-z": `${this.rotation.z}deg`
-                };
+                const debugValues =
+                    values ||
+                    {
+                        "--width": `${this.w.value}px`,
+                        "--height": `${this.h.value}px`,
+                        "--scale": this.s.value,
+                        "--x": `${this.position.x}px`,
+                        "--y": `${this.position.y}px`,
+                        "--z": `${this.position.z}px`,
+                        "--rotation": `${this.rotation.x}deg`,
+                        "--rotation-x": `${this.rotation.x}deg`,
+                        "--rotation-y": `${this.rotation.y}deg`,
+                        "--rotation-z": `${this.rotation.z}deg`
+                    };
 
                 Object.entries(debugValues).forEach(([key, value]) => anchor.setDebugValue(key, value));
             }
@@ -961,10 +885,6 @@ function ComponentCompiler(name, BaseHTMLElement) {
                     const height = `${this.h.value}px`;
                     this.writeStyleVars({ "--height": height });
                     this.updateAnchorDebugValues({ "--height": height });
-                } else if (property === "maxWidth" || property === "maxHeight") {
-                    const axis = property === "maxWidth" ? "width" : "height";
-                    const value = this[property];
-                    this.writeStyleVars({ [`--max-${axis}`]: value > 0 ? `${value}px` : "none" });
                 } else if (property === "scale") {
                     this.writeStyleVars({ "--scale": this.s.value });
                     this.updateAnchorDebugValues({ "--scale": this.s.value });
@@ -1107,8 +1027,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 }
 
                 const methodName = value.trim();
-                const method =
-                    this.animation?.getMethod?.(methodName) || this.animation?._methods?.[methodName] || null;
+                const method = this.animation?.getMethod?.(methodName) || this.animation?._methods?.[methodName] || null;
                 if (typeof method !== "function") {
                     this.pendingMethodValues[property] = methodName;
                     this.watchPendingMethodValues();

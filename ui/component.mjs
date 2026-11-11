@@ -10,7 +10,6 @@ import Util, { type } from "../core/Util/Core.mjs";
 import VDom from "../core/VirtualDom/VDom.mjs";
 import { getJuiceConfig } from "../config/juice-config.mjs";
 import "../core/Dom/Extend.mjs";
-import { DataType } from "../data/types.mjs";
 
 //Default Configuration
 const DEFAULT_CONFIG = {
@@ -94,7 +93,7 @@ class ComponentTemplate {
         this.dom = document.createElement("template");
         this.dom.innerHTML = `
             <div id="style-box" class="component--styles vdom-noupdate">${this.style}</div>
-            <div id="html" class="component--html" part="html">
+            <div id="html" class="component--html" >
                 ${this.html}
             </div>
         `;
@@ -104,41 +103,6 @@ class ComponentTemplate {
     clone() {
         if (this.changed) this.compile();
         return this.dom.content.cloneNode(true);
-    }
-}
-
-class ComponentSlot {
-    callbacks = {};
-    static fromSlot(slot) {
-        const slotName = slot.name || "default";
-        const component = slot.getRootNode().host;
-        return new ComponentSlot(slotName, component);
-    }
-
-    constructor(name, component) {
-        this.name = name;
-        this.component = component;
-        const slotElement = component.shadowRoot.querySelector(`slot[name="${name}"]`);
-        this.slot = slotElement;
-        this.initialize();
-    }
-
-    nodes() {
-        const nodes = slot.assignedNodes({ flatten: true });
-        return nodes;
-    }
-
-    changed(callback) {
-        this.callbacks["slotchange"] = this.callbacks["slotchange"] || [];
-        this.callbacks["slotchange"].push(callback.bind(this));
-    }
-
-    initialize() {
-        this.slot.addEventListener("slotchange", (e) => {
-            if (this.callbacks["slotchange"]) {
-                this.callbacks["slotchange"].forEach((callback) => callback(e));
-            }
-        });
     }
 }
 
@@ -191,18 +155,6 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 const baseConfig = this.baseConfig || {};
 
                 this.config = ObjUtil.merge(defaultConfig, userConfig, baseConfig, componentConfig, true);
-
-                const properties = this.config.properties || {};
-                for (const property in properties) {
-                    const schema = properties[property];
-                    if (schema.type) {
-                        if (DataType.isType(schema.type)) {
-                            schema.dataType = DataType.get(schema.type);
-                        }
-                    } else {
-                        schema.type = "string";
-                    }
-                }
 
                 this.template = new ComponentTemplate(this.config);
                 const styleProperties = ["baseStyle", "style", "_style"];
@@ -355,10 +307,11 @@ function ComponentCompiler(name, BaseHTMLElement) {
 
             #renderers = [];
 
+            _attributeAliases = {};
+
             _resizeMutationObserver = null;
             _positionMutationObserver = null;
             _childrenMutationObserver = null;
-            _attributeAliases = {};
 
             constructor(contents = null) {
                 super();
@@ -472,10 +425,9 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 const root = target || this.ref("html") || this.shadowRoot?.host || this.root || this;
                 if (!root || !root.style) return;
                 if (vars) Object.assign(this._.styleVars, vars);
-                // An explicit target must not receive cached variables owned by another element.
-                for (const [key, value] of Object.entries(target && vars ? vars : this._.styleVars)) {
-                    root.style.setProperty(key, value);
-                }
+                root.style.cssText = Object.entries(this._.styleVars)
+                    .map(([k, v]) => `${k}: ${v}`)
+                    .join(";");
             }
 
             /**
@@ -588,7 +540,6 @@ function ComponentCompiler(name, BaseHTMLElement) {
 
                 //Parse Config Type
                 const configType = config.attrtype || config.type || "string";
-
                 //Handle Aliases
                 if (alias) {
                     Object.defineProperty(this, property, {
@@ -645,8 +596,6 @@ function ComponentCompiler(name, BaseHTMLElement) {
                     }
                 });
 
-                if (config.cssVar) this.style.setProperty(config.cssVar, value);
-
                 Object.defineProperty(this, property, {
                     get: () => {
                         return routes[0].parent[routes[0].route];
@@ -660,8 +609,6 @@ function ComponentCompiler(name, BaseHTMLElement) {
                         if (this.changed.indexOf(property) === -1) this.changed.push(property);
                         const oldValue = routes[0].parent[routes[0].route];
                         routes.forEach((r) => (r.parent[r.route] = newValue));
-
-                        if (config.cssVar) this.style.setProperty(config.cssVar, newValue);
 
                         if (config.linked) {
                             if (config.type === "exists") {
@@ -835,11 +782,6 @@ function ComponentCompiler(name, BaseHTMLElement) {
                     }
 
                     if (this.ref("html")) this.ref("html").classList.add("connected");
-
-                    for (let key in this.config.properties) {
-                        const props = this.static.config.properties[key];
-                        if (props.cssVar) this.style.setProperty(props.cssVar, this[key]);
-                    }
                 }, 0);
 
                 // Call onSlotChange on slotchange event
@@ -1000,17 +942,8 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 element.classList.add("events-set");
             }
 
-            refListeners = {};
-
-            onRef(id, fn) {
-                if (this.#refs[id]) return fn(this.#refs[id]);
-                if (!this.refListeners[id]) this.refListeners[id] = [];
-                this.refListeners[id].push(fn);
-            }
-
             setRef(ref, el) {
                 this.#refs[ref] = el;
-                if (this.refListeners[ref]) this.refListeners[ref].forEach((fn) => fn(el));
             }
 
             slot(name = "default") {
@@ -1054,7 +987,7 @@ function ComponentCompiler(name, BaseHTMLElement) {
                 if (this.rendered == 0) {
                     const refs = this.root.querySelectorAll("[id]:not(.ref)");
                     for (let i = 0; i < refs.length; i++) {
-                        this.setRef(refs[i].getAttribute("id"), refs[i]);
+                        this.#refs[refs[i].getAttribute("id")] = refs[i];
                         refs[i].removeAttribute("ref");
                         refs[i].classList.add("ref");
                     }

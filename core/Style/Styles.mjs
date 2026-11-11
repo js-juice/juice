@@ -281,7 +281,7 @@ function resolveStyleTarget(target) {
 
 function getStyleContainer(target) {
     if (!target) {
-        return document.head;
+        throw new Error("Styles are only available in a document context.");
     }
 
     if (target === document.head) {
@@ -297,10 +297,7 @@ function getStyleContainer(target) {
 
 function getStyleSheetId(name, target) {
     const scopeName = target === document.head ? "global" : "target";
-    const safeName =
-        String(name || "default")
-            .replace(/[^a-z0-9_-]+/gi, "-")
-            .replace(/^-+|-+$/g, "") || "default";
+    const safeName = String(name || "default").replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "") || "default";
     return `juice-style--${scopeName}--${safeName}`;
 }
 
@@ -328,13 +325,7 @@ function getStyleSheetCache(registry, container) {
 }
 
 export function createStyleManager(registry, { name = "default", target = "global", scope = target } = {}) {
-    let styleTarget = null;
-    try {
-        styleTarget = resolveStyleTarget(scope);
-    } catch (e) {
-        styleTarget = null;
-    }
-
+    const styleTarget = resolveStyleTarget(scope);
     const container = getStyleContainer(styleTarget);
     const id = getStyleSheetId(name, styleTarget);
     const targetCache = getStyleSheetCache(registry, container);
@@ -362,20 +353,6 @@ export function createStyleManager(registry, { name = "default", target = "globa
             styleSheet.clear();
             if (styles !== undefined && styles !== null) {
                 styleSheet.add(styles);
-            }
-            return this;
-        },
-        update(selector, properties) {
-            styleSheet.update(selector, properties);
-            return this;
-        },
-        remove(styles) {
-            if (typeof styles === "string") {
-                styleSheet.remove(styles);
-            } else if (Array.isArray(styles)) {
-                styles.forEach((style) => {
-                    styleSheet.remove(style);
-                });
             }
             return this;
         }

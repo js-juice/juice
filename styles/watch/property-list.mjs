@@ -59,7 +59,9 @@ const LEGACY_COLORS = {
 };
 
 function colorUtilities(property) {
-    return Object.fromEntries(Object.entries(LEGACY_COLORS).map(([name, value]) => [name, { [property]: value }]));
+    return Object.fromEntries(
+        Object.entries(LEGACY_COLORS).map(([name, value]) => [name, { [property]: value }])
+    );
 }
 
 export const CHECK_CSS_PROPERTIES = {
@@ -71,12 +73,9 @@ export const CHECK_CSS_PROPERTIES = {
     "min-height": { $: { minHeight: "@" } },
     "max-width": { $: { maxWidth: "@" } },
     "max-height": { $: { maxHeight: "@" } },
-    "aspect-ratio": { $: { aspectRatio: "@" } },
-    outline: { $: { outline: "@" } },
 
     w: {
         $: { width: "@" },
-        container: { width: "100%" },
         sm: { width: "320px" },
         med: { width: "512px" },
         lg: { width: "800px" },
@@ -191,12 +190,10 @@ export const CHECK_CSS_PROPERTIES = {
         row: { position: "relative", display: "flex", flexDirection: "row", flexWrap: "nowrap" },
         column: { position: "relative", display: "flex", flexDirection: "column" },
         wrap: { flexWrap: "wrap" },
-        nowrap: { flexWrap: "nowrap" },
-        columns: { $: {} }
+        nowrap: { flexWrap: "nowrap" }
     },
 
     justify: {
-        $: { justifyContent: "@" },
         value: { $: { justifyContent: "@" } },
         start: { justifyContent: "flex-start" },
         center: { justifyContent: "center" },
@@ -204,14 +201,6 @@ export const CHECK_CSS_PROPERTIES = {
         between: { justifyContent: "space-between" },
         around: { justifyContent: "space-around" },
         evenly: { justifyContent: "space-evenly" }
-    },
-
-    "justify-self": {
-        value: { $: { justifySelf: "@" } },
-        start: { justifySelf: "start" },
-        center: { justifySelf: "center" },
-        end: { justifySelf: "end" },
-        stretch: { justifySelf: "stretch" }
     },
 
     items: {
@@ -222,9 +211,6 @@ export const CHECK_CSS_PROPERTIES = {
         stretch: { alignItems: "stretch" },
         baseline: { alignItems: "baseline" }
     },
-
-    align: { $: { alignItems: "@" } },
-    "items-wrap": { flexWrap: "wrap" },
 
     self: {
         value: { $: { alignSelf: "@" } },
@@ -251,12 +237,6 @@ export const CHECK_CSS_PROPERTIES = {
         column: { $: { gridColumn: "@" } },
         row: { $: { gridRow: "@" } },
         area: { $: { gridArea: "@" } }
-    },
-    columns: {
-        $: {
-            display: "grid",
-            gridTemplateColumns: "repeat(@, minmax(0, 1fr))"
-        }
     },
 
     // Font
@@ -319,34 +299,14 @@ export const CHECK_CSS_PROPERTIES = {
     border: {
         ...colorUtilities("borderColor"),
         $: { border: "@" },
-        width: { $: { borderWidth: "@", borderStyle: "solid" } },
+        width: { $: { borderWidth: "@" } },
         style: { $: { borderStyle: "@" } },
         color: { $: { borderColor: "@" } },
 
-        top: {
-            $: { borderTop: "@" },
-            width: { $: { borderTopWidth: "@", borderTopStyle: "solid" } },
-            style: { $: { borderTopStyle: "@" } },
-            color: { $: { borderTopColor: "@" } }
-        },
-        right: {
-            $: { borderRight: "@" },
-            width: { $: { borderRightWidth: "@", borderRightStyle: "solid" } },
-            style: { $: { borderRightStyle: "@" } },
-            color: { $: { borderRightColor: "@" } }
-        },
-        bottom: {
-            $: { borderBottom: "@" },
-            width: { $: { borderBottomWidth: "@", borderBottomStyle: "solid" } },
-            style: { $: { borderBottomStyle: "@" } },
-            color: { $: { borderBottomColor: "@" } }
-        },
-        left: {
-            $: { borderLeft: "@" },
-            width: { $: { borderLeftWidth: "@", borderLeftStyle: "solid" } },
-            style: { $: { borderLeftStyle: "@" } },
-            color: { $: { borderLeftColor: "@" } }
-        }
+        top: { $: { borderTop: "@" } },
+        right: { $: { borderRight: "@" } },
+        bottom: { $: { borderBottom: "@" } },
+        left: { $: { borderLeft: "@" } }
     },
 
     radius: {
@@ -396,7 +356,8 @@ export const CHECK_CSS_PROPERTIES = {
     "user-select": { $: { userSelect: "@" } },
     "white-space": { $: { whiteSpace: "@" } },
     "word-break": { $: { wordBreak: "@" } },
-    "box-sizing": { $: { boxSizing: "@" } },
+    "box-sizing": { $: { boxSizing: "@" } }
+    ,
     row: {
         display: "flex",
         flexDirection: "row",

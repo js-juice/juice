@@ -64,8 +64,7 @@ class InputNumber extends InputComponent {
             ":host": {},
             "input.native": {
                 width: "100%",
-                boxSizing: "border-box",
-                textAlign: "right"
+                boxSizing: "border-box"
             },
             ".native-wrapper": {
                 marginLeft: "0.5rem"
@@ -73,12 +72,11 @@ class InputNumber extends InputComponent {
             ".units": {
                 lineHeight: "var(--input-height)",
                 whiteSpace: "nowrap",
-                textOverflow: "ellipsis",
-                padding: "var(--input-padding)",
-                paddingRight: "1rem"
+                textOverflow: "ellipsis"
             },
-            ".units:empty": {
-                display: "none"
+            ".units > div": {
+                margin: "auto",
+                padding: "0 0.2em"
             },
             ".stepers": {
                 display: "flex",
@@ -152,7 +150,7 @@ class InputNumber extends InputComponent {
         if (this.hasAttribute("units")) {
             const unit = this.getAttribute("units");
             //this._wireframe["div.units"].style.width = `${unit.length * 4}ch`; // unit.length
-            this._wireframe["div.units"].innerHTML = `${unit}`; // this.getAttribute("units");
+            this._wireframe["div.units"].innerHTML = `<div>${unit}</div>`; // this.getAttribute("units");
         }
         this.connected = true;
     }

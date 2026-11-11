@@ -24,7 +24,7 @@ import TokenContent from "./content.mjs";
 class TemplateEngine extends EventEmitter {
     constructor({ root } = {}) {
         super();
-        this.root = root || new URL(".", import.meta.url).pathname;
+        this.root = root || new URL(".", import.meta.url).href;
     }
 
     /**

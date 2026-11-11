@@ -1,310 +1,309 @@
+/**
+ * A single form-associated verification-code input rendered as isolated character cells.
+ *
+ * Examples:
+ * <input-code name="code" length="6" characters="numeric" format="digits"></input-code>
+ * <input-code name="token" length="8" characters="alphanumeric" format="upper"></input-code>
+ * <input-code name="mixed" characters="\a\d\d\d\d\d" format="upper"></input-code>
+ */
+
 import InputComponent from "./input-component.mjs";
 
-const CODE_LENGTH = 6;
+const CHARACTER_TYPES = {
+    alpha: /[^a-z]/gi,
+    alphanumeric: /[^a-z0-9]/gi,
+    numeric: /\D/g
+};
 
-class InputCodeComponent extends InputComponent {
-    static tag = "input-code";
-
+class InputCode extends InputComponent {
     static config = {
-        native: {
-            tag: "input",
-            attrs: {
-                type: "hidden"
-            }
-        },
-        status: {
-            tag: "input-status",
-            iconOnly: false,
-            cover: false,
-            attrs: {
-                size: 40,
-                color: "currentColor",
-                style: "display:block"
-            }
-        },
-        autoSubmit: false,
-        validation: false
+        value: { type: "string", default: "" },
+        native: { tag: "input", attrs: { type: "text", autocomplete: "off" } }
     };
 
     static get observed() {
-        return ["auto-submit"];
-    }
-
-    constructor() {
-        super({ _layout: "input:>:default:status:<:validation" });
-        this.inputType = "code";
-        this._digits = [];
-        this._codeRoot = null;
-        this._autoSubmitting = false;
-        this.addEventListener("validation:change", () => {
-            if (this._autoSubmitting) this._showLoadingStatus();
-        });
-    }
-
-    get autoSubmit() {
-        if (this.hasAttribute("auto-submit")) {
-            return this.getAttribute("auto-submit") !== "false";
-        }
-
-        return this.constructor.config.autoSubmit === true;
-    }
-
-    static html() {
-        const digits = Array.from(
-            { length: CODE_LENGTH },
-            (_, index) => `
-            <input
-                class="code-digit"
-                part="digit"
-                type="text"
-                aria-label="Digit ${index + 1} of ${CODE_LENGTH}"
-                inputmode="numeric"
-                pattern="[0-9]*"
-                maxlength="1"
-                placeholder=" "
-                autocomplete="${index === 0 ? "one-time-code" : "off"}"
-            >
-        `
-        ).join("");
-
-        return `
-            <div class="code-input" part="code-input">${digits}</div>
-            <native></native>
-        `;
+        return ["length", "digits", "characters", "type", "invalid"];
     }
 
     static get styles() {
         return {
             ":host": {
-                display: "block",
+                display: "inline-block",
                 width: "fit-content",
                 maxWidth: "100%",
-                marginBottom: 0
+                marginBottom: "var(--input-margin-bottom, 1rem)"
             },
-            ".input-wrapper": {
-                width: "auto",
-                overflow: "visible",
-                border: 0,
-                background: "transparent"
-            },
-            ".html-view": {
-                width: "auto"
-            },
-            ".code-input": {
-                display: "flex",
-                flexWrap: "nowrap",
-                alignItems: "center",
-                gap: "clamp(0.35rem, 1.2vw, 0.9rem)"
-            },
-            ".code-digit": {
-                flex: "0 0 clamp(2.7rem, 7vw, 3.5rem)",
-                width: "clamp(2.7rem, 7vw, 3.5rem)",
-                height: "3.75rem",
+            ".input-root, .input-wrapper, .default": {
+                width: "fit-content",
+                maxWidth: "100%",
+                margin: 0,
                 padding: 0,
-                border: "1px solid var(--admin-border, #c8c8c8)",
-                borderRadius: "8px",
-                background: "#fff",
-                color: "#111827",
+                border: 0,
+                background: "transparent",
+                boxShadow: "none"
+            },
+            ".native-wrapper": {
+                display: "none"
+            },
+            ".code-inputs": {
+                display: "grid",
+                gridTemplateColumns: "repeat(var(--input-code-length), minmax(0, var(--input-code-size, 3.5rem)))",
+                gap: "var(--input-code-gap, clamp(0.35rem, 1.2vw, 0.9rem))",
+                width: "fit-content",
+                maxWidth: "100%"
+            },
+            ".code-character": {
+                boxSizing: "border-box",
+                width: "var(--input-code-size, 3.5rem)",
+                maxWidth: "100%",
+                height: "var(--input-code-height, 3.75rem)",
+                minWidth: 0,
+                padding: 0,
+                border: "var(--input-code-border, 1px solid var(--color-border, #c8c8c8))",
+                borderRadius: "var(--input-code-border-radius, 8px)",
+                background: "var(--input-code-bgcolor, #fff)",
+                color: "var(--input-code-color, #111827)",
                 font: "inherit",
-                fontSize: "2rem",
+                fontSize: "var(--input-code-font-size, 2rem)",
                 fontWeight: 800,
-                lineHeight: "3.75rem",
+                lineHeight: "var(--input-code-height, 3.75rem)",
                 textAlign: "center",
-                boxSizing: "border-box"
+                textTransform: "none"
             },
-            ".code-digit:focus": {
-                borderColor: "#007bc7",
-                outline: "3px solid rgb(0 123 199 / 25%)"
+            ".code-character:focus": {
+                borderColor: "var(--input-code-focus-color, var(--form-accent-color, #007bc7))",
+                outline: "3px solid color-mix(in srgb, var(--input-code-focus-color, var(--form-accent-color, #007bc7)) 25%, transparent)"
             },
-            ".code-digit:not(:placeholder-shown)": {
-                borderColor: "#73c322"
+            ".code-character:not(:placeholder-shown)": {
+                borderColor: "var(--input-code-complete-color, var(--juice-validation-color-valid, #73c322))"
             },
-            ":host([invalid]) .code-digit": {
-                borderColor: "#d41111"
+            ":host([invalid]) .code-inputs": {
+                animation: "input-code-shake 0.5s ease both"
             },
-            ".code-digit:disabled": {
-                cursor: "not-allowed",
-                opacity: 0.65
+            ":host([invalid]) .code-character": {
+                borderColor: "var(--input-code-invalid-color, var(--juice-validation-color-invalid, #d41111))"
             },
-            "input.native[type='hidden']": {
-                display: "none !important"
+            "@keyframes input-code-shake": {
+                "20%, 60%": { transform: "translateX(-5px)" },
+                "40%, 80%": { transform: "translateX(5px)" }
             },
-            ".status-wrapper": {
-                display: "flex",
-                marginLeft: "1rem !important",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "0.5rem 1rem"
-            },
-            "input-status": {
-                position: "relative !important",
-                height: "100% !important",
-                width: "auto !important",
-                aspectRatio: "1 !important",
-                top: "auto !important",
-                left: "auto !important",
-                right: "auto !important",
-                bottom: "auto !important",
-                margin: "0 auto !important"
+            "@media (max-width: 30rem)": {
+                ":host": {
+                    width: "100%"
+                },
+                ".code-inputs": {
+                    width: "100%",
+                    gridTemplateColumns: "repeat(var(--input-code-length), minmax(0, 1fr))"
+                },
+                ".code-character": {
+                    width: "100%",
+                    fontSize: "clamp(1.15rem, 7vw, 2rem)"
+                }
             }
         };
     }
 
-    _afterRender() {
-        this._codeRoot = this._dom.default?.querySelector(".code-input") || null;
-        this._digits = [...(this._dom.default?.querySelectorAll(".code-digit") || [])];
+    constructor() {
+        super({ _layout: "input:>:default:native:status:<:validation", ignoreHeight: true });
+        this.inputType = "code";
+        this.inputs = [];
+        this._lastComplete = null;
+    }
 
-        this._digits.forEach((digit, index) => {
-            digit.addEventListener("focus", () => this._clearError());
-            digit.addEventListener("input", () => {
-                if (digit.value && !/^\d$/.test(digit.value)) {
-                    digit.value = "";
-                    this._shake();
-                    this._commitDigits("input");
-                    return;
-                }
-                if (digit.value && index < CODE_LENGTH - 1) this._digits[index + 1].focus();
-                this._commitDigits("input");
-            });
-            digit.addEventListener("change", () => this._commitDigits("change"));
-            digit.addEventListener("keydown", (event) => this._handleKeydown(event, index));
-            digit.addEventListener("paste", (event) => this._handlePaste(event));
+    get codeLength() {
+        if (this.maskTokens.length) return this.maskTokens.length;
+        const requested = Number.parseInt(this.getAttribute("length") || this.getAttribute("digits") || "6", 10);
+        return Number.isFinite(requested) ? Math.min(12, Math.max(1, requested)) : 6;
+    }
+
+    get maskTokens() {
+        const specification = this.getAttribute("characters") || "";
+        return [...specification.matchAll(/\\([da])/gi)].map((match) => match[1].toLowerCase() === "a" ? "alpha" : "numeric");
+    }
+
+    get characterType() {
+        const requested = String(this.getAttribute("characters") || this.getAttribute("type") || "numeric").toLowerCase();
+        if (["alpha", "letter", "letters"].includes(requested)) return "alpha";
+        if (["alphanumeric", "mixed", "text"].includes(requested)) return "alphanumeric";
+        return "numeric";
+    }
+
+    get characterPattern() {
+        return this.maskTokens.length
+            ? this.maskTokens
+            : Array.from({ length: this.codeLength }, () => this.characterType);
+    }
+
+    get complete() {
+        return this.inputs.length === this.codeLength && this.inputs.every((input) => input.value.length === 1);
+    }
+
+    _createNativeControl() {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.autocomplete = "off";
+        input.className = "native";
+        input.tabIndex = -1;
+        input.setAttribute("aria-hidden", "true");
+        return input;
+    }
+
+    _renderDefault() {
+        this._dom.default?.remove();
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "code-inputs";
+        wrapper.setAttribute("role", "group");
+        wrapper.setAttribute("aria-label", this.getAttribute("label") || "Verification code");
+        wrapper.style.setProperty("--input-code-length", String(this.codeLength));
+
+        this.inputs = Array.from({ length: this.codeLength }, (_, index) => {
+            const input = document.createElement("input");
+            input.className = "code-character";
+            input.type = "text";
+            input.maxLength = 1;
+            input.placeholder = " ";
+            input.autocomplete = index === 0 ? "one-time-code" : "off";
+            input.inputMode = this.characterPattern[index] === "numeric" ? "numeric" : "text";
+            input.setAttribute("aria-label", `Character ${index + 1} of ${this.codeLength}`);
+
+            input.addEventListener("focus", () => this.removeAttribute("invalid"));
+            input.addEventListener("input", () => this._handleCharacterInput(input, index));
+            input.addEventListener("change", () => this._commit("change"));
+            input.addEventListener("keydown", (event) => this._handleKeyDown(event, index));
+            input.addEventListener("paste", (event) => this._handlePaste(event, index));
+
+            wrapper.appendChild(input);
+            return input;
         });
 
+        this._dom.default = wrapper;
         this._syncVisualState();
-        if (this.hasAttribute("invalid")) this._shake();
     }
 
-    _handleKeydown(event, index) {
-        const hasModifier = event.ctrlKey || event.metaKey || event.altKey;
-        if (!hasModifier && event.key.length === 1 && !/^\d$/.test(event.key)) {
-            event.preventDefault();
-            this._shake();
-        } else if (event.key === "Backspace" && !this._digits[index].value && index > 0) {
-            this._digits[index - 1].focus();
-        } else if (event.key === "ArrowLeft" && index > 0) {
-            event.preventDefault();
-            this._digits[index - 1].focus();
-        } else if (event.key === "ArrowRight" && index < CODE_LENGTH - 1) {
-            event.preventDefault();
-            this._digits[index + 1].focus();
+    _sanitize(value, startIndex = 0) {
+        const pattern = this.characterPattern;
+        let position = startIndex;
+        let result = "";
+
+        for (const character of String(value || "")) {
+            const expected = pattern[position];
+            if (!expected) break;
+            if (!character.replace(CHARACTER_TYPES[expected], "")) continue;
+            result += character;
+            position += 1;
         }
+
+        return result;
     }
 
-    _handlePaste(event) {
-        const digits = event.clipboardData?.getData("text").trim() || "";
-        if (!digits) return;
+    _rawValue() {
+        let value = "";
+        for (const input of this.inputs) {
+            if (!input.value) break;
+            value += input.value;
+        }
+        return value;
+    }
 
-        event.preventDefault();
-        if (!new RegExp(`^\\d{1,${CODE_LENGTH}}$`).test(digits)) {
-            this._shake();
+    _handleCharacterInput(input, index) {
+        const entered = this._sanitize(input.value, index);
+        if (entered.length > 1) {
+            this._fillFrom(entered, index);
             return;
         }
-        this._digits.forEach((digit, index) => {
-            digit.value = digits[index] || "";
-        });
-        this._digits[Math.min(digits.length, CODE_LENGTH) - 1].focus();
-        this._commitDigits("input");
+
+        input.value = entered.slice(-1);
+        this._commit("input");
+        if (input.value && index < this.inputs.length - 1) this.inputs[index + 1].focus();
     }
 
-    _commitDigits(eventType) {
+    _handleKeyDown(event, index) {
+        if (["Backspace", "Delete"].includes(event.key)) {
+            event.preventDefault();
+            if (this.inputs[index].value) {
+                this.inputs[index].value = "";
+            } else if (index > 0) {
+                this.inputs[index - 1].value = "";
+                this.inputs[index - 1].focus();
+            }
+            this._commit("input");
+            return;
+        }
+        if (event.key === "Enter") {
+            event.preventDefault();
+            this._commit("change");
+            if (this.complete) this.form?.requestSubmit();
+            return;
+        }
+        if (event.key === "ArrowLeft" && index > 0) {
+            event.preventDefault();
+            this.inputs[index - 1].focus();
+        }
+        if (event.key === "ArrowRight" && index < this.inputs.length - 1) {
+            event.preventDefault();
+            this.inputs[index + 1].focus();
+        }
+    }
+
+    _handlePaste(event, index) {
+        const value = this._sanitize(event.clipboardData?.getData("text") || "", index);
+        if (!value) return;
+        event.preventDefault();
+        this._fillFrom(value, index);
+    }
+
+    _fillFrom(value, startIndex = 0) {
+        const characters = this._sanitize(value, startIndex).split("");
+        characters.forEach((character, offset) => {
+            if (this.inputs[startIndex + offset]) this.inputs[startIndex + offset].value = character;
+        });
+        const focusIndex = Math.min(startIndex + characters.length, this.inputs.length) - 1;
+        this.inputs[Math.max(0, focusIndex)]?.focus();
+        this._commit("input");
+    }
+
+    _commit(eventName = "input") {
         if (!this._dom.native) return;
-
-        this._clearError();
-        this._dom.native.value = this._digits.map((digit) => digit.value).join("");
-        this._dom.native.dispatchEvent(new Event(eventType, { bubbles: true }));
-
-        const complete = new RegExp(`^\\d{${CODE_LENGTH}}$`).test(this._dom.native.value);
-        this.dispatchEvent(
-            new CustomEvent(complete ? "filled" : "unfilled", {
-                bubbles: true,
-                composed: true,
-                detail: { value: this._dom.native.value }
-            })
-        );
-
-        if (eventType === "input" && complete && this.autoSubmit) {
-            this._submitCompletedCode();
-        }
-    }
-
-    _queueValidation() {
-        const value = this._digits.length
-            ? this._digits.map((digit) => digit.value).join("")
-            : String(this._dom.native?.value || "");
-
-        if (!new RegExp(`^\\d{${CODE_LENGTH}}$`).test(value)) return;
-        super._queueValidation();
-    }
-
-    _submitCompletedCode() {
-        if (this._autoSubmitting) return;
-
-        const form = this.closest("form");
-        if (!(form instanceof HTMLFormElement)) return;
-
-        this._autoSubmitting = true;
-        this._setValidationState(true, [], []);
-        this.setSubmissionState("loading");
-        form.requestSubmit();
-    }
-
-    setSubmissionState(state) {
-        const pending = state === "loading";
-        this._autoSubmitting = pending;
-        this._digits.forEach((digit) => {
-            digit.disabled = pending || this.disabled;
-        });
-        this._dom.status?.removeAttribute("hidden");
-        this._dom.status?.setAttribute("state", state);
-        if (this._wireframe.status) this._wireframe.status.hidden = false;
-
-        if (state === "error") {
-            this._shake();
-            this.focus();
-        }
-    }
-
-    _showLoadingStatus() {
-        this.setSubmissionState("loading");
-    }
-
-    _clearError() {
-        if (this.hasAttribute("invalid")) this.removeAttribute("invalid");
-    }
-
-    _shake() {
-        if (!this._codeRoot?.animate) return;
-        this._codeRoot.animate(
-            [
-                { transform: "translateX(0)" },
-                { transform: "translateX(-5px)" },
-                { transform: "translateX(5px)" },
-                { transform: "translateX(-5px)" },
-                { transform: "translateX(5px)" },
-                { transform: "translateX(0)" }
-            ],
-            { duration: 500, easing: "ease" }
-        );
+        this._dom.native.value = this._sanitize(this._rawValue());
+        this._dom.native.dispatchEvent(new Event(eventName, { bubbles: true, composed: true }));
     }
 
     _syncVisualState() {
-        const value = String(this.value || "")
-            .replace(/\D/g, "")
-            .slice(0, CODE_LENGTH);
-        this._digits.forEach((digit, index) => {
-            digit.value = value[index] || "";
-            digit.disabled = this.disabled;
-            digit.readOnly = this.hasAttribute("readonly");
+        if (!this._dom.native || !this.inputs.length) return;
+        const characters = this._sanitize(this._dom.native.value).split("");
+        this.inputs.forEach((input, index) => {
+            const next = characters[index] || "";
+            if (input.value !== next) input.value = next;
+            input.disabled = this.disabled;
+            input.setAttribute("aria-invalid", String(this.hasAttribute("invalid")));
         });
+
+        const complete = this.complete;
+        if (complete === this._lastComplete) return;
+        this._lastComplete = complete;
+        this.dispatchEvent(new CustomEvent(complete ? "filled" : "unfilled", {
+            bubbles: true,
+            composed: true,
+            detail: { complete, length: this.codeLength, value: this.value }
+        }));
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        super.attributeChangedCallback(name, oldValue, newValue);
+        if (oldValue === newValue || !this._hasCreated) return;
+        if (["length", "digits", "characters", "type"].includes(name)) {
+            this._renderDefault();
+            this._ensureDefaultMountedInInputContainer();
+        }
+        if (name === "invalid") this._syncVisualState();
     }
 
     focus(options) {
-        const target = this._digits.find((digit) => !digit.value) || this._digits[0];
-        target?.focus(options);
+        this.inputs[0]?.focus(options);
     }
 }
 
-customElements.define(InputCodeComponent.tag, InputCodeComponent);
+customElements.define("input-code", InputCode);
 
-export default InputCodeComponent;
+export default InputCode;

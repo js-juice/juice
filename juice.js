@@ -5,44 +5,17 @@
  * @module Core
  */
 
-import logger from "./core/Dev/logger.mjs";
+import "./core/Dev/Log.mjs";
 import { blendClasses } from "./core/Util/Class.mjs";
 import _config from "./config/juice-config.mjs";
 import path from "./core/Util/Path.mjs";
 import { createStyleManager } from "./core/Style/Styles.mjs";
 
-/**
- * Description placeholder
- *
- * @type {{}}
- */
 export const root = typeof globalThis !== "undefined" ? globalThis : {};
-/**
- * Description placeholder
- *
- * @type {*}
- */
 const nodeProcess = root.process?.versions?.node && typeof root.process.cwd === "function" ? root.process : null;
 
 import JuiceStorage from "./core/inc/Storage.mjs";
 import JuiceQueues from "./core/inc/Queues.mjs";
-
-/**
- * Description placeholder
- *
- * @param {*} name
- * @returns {*}
- */
-function getMetaValue(name) {
-    if (Array.isArray(name)) {
-        for (const n of name) {
-            const value = getMetaValue(n);
-            if (value !== null) return value;
-        }
-    }
-    const meta = document.querySelector(`meta[name="${name}"]`);
-    return meta ? meta.content : null;
-}
 
 /**
  * Parses a file path into its component parts.
@@ -50,21 +23,15 @@ function getMetaValue(name) {
  * @returns {{name: string, path: string, dir: string, ext: string}} Object containing path components
  * @private
  */
-function parseFilePath(url) {
-    const pathname = new URL(url).pathname;
+function parseFilePath(path) {
     return {
-        name: pathname.split("/").pop(),
-        path: pathname,
-        dir: pathname.substring(0, pathname.lastIndexOf("/") + 1),
-        ext: pathname.split(".").pop()
+        name: path.split("/").pop(),
+        path,
+        dir: path.substr(0, path.lastIndexOf("/")),
+        ext: path.split(".").pop()
     };
 }
 
-/**
- * Description placeholder
- *
- * @returns {*}
- */
 function getRuntimeRoot() {
     if (nodeProcess) return nodeProcess.cwd();
 
@@ -76,13 +43,10 @@ function getRuntimeRoot() {
     return "/";
 }
 
-/**
- * Description placeholder
- *
- * @returns {{ cwd: string; root: string; app: string; src: string; nodeModules: any; data: any; config: any; }}
- */
 function getDefaultPaths() {
     const cwd = parseFilePath(import.meta.url).dir;
+    const vendor = path.resolve(cwd, "vendor");
+    const state = path.resolve(cwd, ".juice");
     const data = path.resolve(cwd, "data");
     return {
         cwd,
@@ -103,7 +67,8 @@ function getDefaultPaths() {
  * const file = currentFile(import.meta);
  */
 export function currentFile(meta) {
-    return parseFilePath(meta.url);
+    const _url = meta.url;
+    return parseFilePath(_url);
 }
 
 root.currentFile = currentFile;
@@ -114,27 +79,9 @@ root.currentFile = currentFile;
  * @class Juice
  */
 class Juice {
-    /**
-     * Description placeholder
-     *
-     * @static
-     * @type {boolean}
-     */
     static #instance = false;
 
-    /**
-     * Description placeholder
-     *
-     * @static
-     * @type {boolean}
-     */
     static isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
-    /**
-     * Description placeholder
-     *
-     * @static
-     * @type {*}
-     */
     static isNode = Boolean(nodeProcess);
     static rootSections = ["animation", "core", "data", "forms", "style", "ui"];
     /**
@@ -161,18 +108,6 @@ class Juice {
         // Set the singleton instance to this
         Juice.#instance = this;
 
-        this.meta = Object.freeze({
-            isBrowser: Juice.isBrowser,
-            isNode: Juice.isNode,
-            env: configuration.env || getMetaValue(["environment", "env"]) || "unknown"
-        });
-
-        this.logger = logger;
-
-        if (this.meta.env === "production") {
-            //logger.slience();
-        }
-
         this.creator = new Error().stack.split("\n")[1].trim();
         this.root = root;
         this.resolve = import.meta.resolve;
@@ -193,9 +128,8 @@ class Juice {
         );
     }
 
-    /** Description placeholder */
     dev() {
-        this.logger.show();
+        this.import("core", "Dev/Log.mjs");
     }
 
     static dbDrivers = {
@@ -203,15 +137,6 @@ class Juice {
         mysql: "db/SQL/MySQL/Database.mjs"
     };
 
-    /**
-     * Description placeholder
-     *
-     * @async
-     * @param {*} type
-     * @param {*} name
-     * @param {*} models
-     * @returns {unknown}
-     */
     async db(type, name, models) {
         const dbConfig = this.config.db || {};
         const dataPath = this.config.get("paths.data");
@@ -267,13 +192,6 @@ class Juice {
         return Juice.blend(...mixins);
     }
 
-    /**
-     * Description placeholder
-     *
-     * @param {*} scope
-     * @param {*} relative
-     * @returns {*}
-     */
     path(scope, relative) {
         const configuredPath = this.config.get(`paths.${scope}`);
         if (!relative) {
@@ -285,12 +203,6 @@ class Juice {
         return relative;
     }
 
-    /**
-     * Description placeholder
-     *
-     * @param {{}} [options={}]
-     * @returns {*}
-     */
     styles(options = {}) {
         const normalizedOptions =
             typeof options === "string" ||
@@ -372,12 +284,6 @@ class Juice {
         globalScope.juice = this;
     }
 
-    /**
-     * Description placeholder
-     *
-     * @readonly
-     * @type {{ animation: { index: string; }; core: { index: string; }; data: { index: string; }; forms: { index: string; }; styles: { index: string; }; ui: { index: string; }; }}
-     */
     get importSections() {
         return {
             animation: {
@@ -423,6 +329,11 @@ class Juice {
         let modulePath = null;
         let section = null;
         let isSectionImport = false;
+        let moduleConfig = null;
+
+        if (typeof args[args.length - 1] === "object" && !Array.isArray(args[args.length - 1])) {
+            moduleConfig = args.pop();
+        }
 
         if (Array.isArray(args[args.length - 1])) {
             //Multiple Modules
@@ -464,6 +375,10 @@ class Juice {
                 }
             });
             this[section] = loadedModule;
+        }
+
+        if (moduleConfig !== null) {
+            _config.merge(section, moduleConfig);
         }
 
         this._cache[modulePath] = loadedModule;

@@ -13,3 +13,8 @@ export { UIContent, UITabs } from "./components/controls/tabs.mjs";
 export { UIProgress } from "./components/graphics/progress.mjs";
 export * as Graphics from "./components/graphics/index.mjs";
 export { default as render, renderAttrs, mount, unmount } from "./render.mjs";
+export { Notification } from "./components/notifications/notification.mjs";
+export { Notifier } from "./components/notifications/notifier.mjs";
+
+export { ProgressRing } from "./components/graphics/ring.mjs";
+export { default as Notifications } from "./components/notifications/notifications.mjs";

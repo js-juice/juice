@@ -1,0 +1,70 @@
+/* Default Juice form theme. Override forms.stylesheet to replace this file.
+ * Body scope resolves theme aliases where body.dark defines its colors.
+ * Low specificity allows application styles to override the defaults.
+ */
+:where(:root, body) {
+    --form-font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
+    --form-label-font-size: 0.7rem;
+    --form-label-weight: 700;
+    --form-label-text-transform: uppercase;
+    --input-padding: 0.25em;
+    --input-text-indent: 0.75em;
+    --input-border-radius: var(--button-border-radius, 5px);
+    --juice-forms-gap: 2rem;
+    --input-border: 1px solid var(--input-border-color);
+    --form-label-color: var(--color-text-primary, #48484a);
+    --form-description-color: var(--color-text-secondary, #64748b);
+    --form-guidance-color: var(--color-text-secondary, #64748b);
+    --form-feedback-color: var(--color-text-primary, #48484a);
+    --form-accent-color: var(--color-link, #2563eb);
+    --input-bgcolor: var(--color-input-background, #ffffff);
+    --input-color: var(--color-input-text, #293241);
+    --input-border-color: var(--color-input-border, #c8c8c8);
+    --input-focus-bgcolor: var(--color-input-background, #ffffff);
+    --input-prefill-bgcolor: var(--color-input-background, #e8f0fe);
+    --input-disabled-bgcolor: var(--color-disabled-background, #f1f5f9);
+    --input-help-color: var(--color-text-secondary, #64748b);
+    --label-inside-bgcolor: var(--color-surface-elevated, #e5e7eb);
+    --input-button-bgcolor: var(--color-primary, #2563eb);
+    --input-button-color: var(--color-primary-text, #ffffff);
+    --validation-color: var(--color-error, #dc2626);
+    --juice-validation-color-invalid: var(--color-error, #dc2626);
+    --juice-validation-color-valid: var(--color-success, #28854a);
+    --juice-validation-color-incomplete: var(--color-warning, #8a5a00);
+    --form-select-wrapper-bg: var(--color-surface, #ffffff);
+    --form-select-option-color: var(--color-text-primary, #293241);
+    --form-select-option-hover-bg: var(--color-surface-elevated, #efefef);
+    --form-select-option-hover-color: var(--color-text-primary, #293241);
+    --form-select-option-selected-bg: var(--color-primary, #2563eb);
+    --form-select-option-selected-color: var(--color-primary-text, #ffffff);
+    --form-select-description-color: var(--color-text-secondary, #64748b);
+}
+
+:where(body.dark, html.dark, html.dark body) {
+    --form-label-color: var(--color-text-primary, #edf0f2);
+    --form-description-color: var(--color-text-secondary, #b8bec5);
+    --form-guidance-color: var(--color-text-secondary, #b8bec5);
+    --form-feedback-color: var(--color-text-primary, #edf0f2);
+    --form-accent-color: var(--color-link, #8cc9bc);
+    --input-bgcolor: var(--color-input-background, #1b1e22);
+    --input-color: var(--color-input-text, #edf0f2);
+    --input-border-color: var(--color-input-border, #697580);
+    --input-focus-bgcolor: var(--color-input-background, #1b1e22);
+    --input-prefill-bgcolor: var(--color-input-background, #1b1e22);
+    --input-disabled-bgcolor: var(--color-disabled-background, #2a2e33);
+    --input-help-color: var(--color-text-secondary, #b8bec5);
+    --label-inside-bgcolor: var(--color-surface-elevated, #2a2e33);
+    --input-button-bgcolor: var(--color-primary, #344b49);
+    --input-button-color: var(--color-primary-text, #f4f7f6);
+    --validation-color: var(--color-error, #ed9999);
+    --juice-validation-color-invalid: var(--color-error, #ed9999);
+    --juice-validation-color-valid: var(--color-success, #85c9a3);
+    --juice-validation-color-incomplete: var(--color-warning, #e2bf77);
+    --form-select-wrapper-bg: var(--color-surface, #212428);
+    --form-select-option-color: var(--color-text-primary, #edf0f2);
+    --form-select-option-hover-bg: var(--color-surface-elevated, #2a2e33);
+    --form-select-option-hover-color: var(--color-text-primary, #edf0f2);
+    --form-select-option-selected-bg: var(--color-primary, #344b49);
+    --form-select-option-selected-color: var(--color-primary-text, #f4f7f6);
+    --form-select-description-color: var(--color-text-secondary, #b8bec5);
+}

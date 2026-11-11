@@ -8,14 +8,8 @@ import Observe from "../../core/Dom/Observe/Observe.mjs";
 import { fixedClamp } from "../../core/Util/Math.mjs";
 import AnimationValue from "../../animation/properties/Value.mjs";
 
-function isNativeScrollTarget(target) {
-    return Boolean(target?.closest?.("[data-native-scroll]"));
-}
-
 class TrackedView extends Component.HTMLElement {
     static tag = "tracked-view";
-
-    static allowedStates = ["initial", "enter", "leave", "visible", "hidden"];
 
     static config = {
         name: "tracked-view",
@@ -39,27 +33,10 @@ class TrackedView extends Component.HTMLElement {
         this._scheduleUpdate = this._scheduleUpdate.bind(this);
         this._wasInView = false;
         this._raf = 0;
-        this.state = "initial";
-        this.lastState = "initial";
-        this.saved = null;
     }
 
     updateBounds() {
         const rect = this.getBoundingClientRect();
-        if (rect === this.saved) return;
-
-        let direction = "idle";
-        if (this.saved) {
-            if (rect.top !== this.saved.top) {
-                direction = rect.top < this.saved.top ? "up" : "down";
-            } else {
-                direction = rect.left < this.saved.left ? "left" : "right";
-            }
-        }
-        rect.direction = direction;
-
-        this.saved = rect;
-
         const scrollView = this.closest("scroll-view");
         const viewport = scrollView
             ? scrollView.getBoundingClientRect()
@@ -84,22 +61,6 @@ class TrackedView extends Component.HTMLElement {
         const travel = Math.max(1, viewport.height + rect.height);
         const progress = fixedClamp(0, 100)(((viewport.bottom - rect.top) / travel) * 100);
         const visiblePercent = rect.height > 0 ? fixedClamp(0, 100)((visibleHeight / rect.height) * 100) : 0;
-
-        let state;
-        if (visiblePercent >= 100) {
-            state = "visible";
-        } else if (visiblePercent <= 0) {
-            state = "hidden";
-        } else if (visiblePercent > 0 && visiblePercent < 100) {
-            if (this.state === "enter" || this.state === "leave") {
-                state = this.state;
-            } else if (inView && !this._wasInView) {
-                state = "enter";
-            } else {
-                state = "leave";
-            }
-        }
-
         const detail = {
             percent: progress,
             progress,
@@ -107,30 +68,21 @@ class TrackedView extends Component.HTMLElement {
             visibleRatio: visiblePercent / 100,
             inView,
             rect,
-            viewport,
-            state,
-            direction
+            viewport
         };
 
-        if (state !== this.state) {
-            if (this.varSave) {
-                this.varSave.style.setProperty(`--${this.varName}-state`, state);
-                if (this.lastState) this.classList.remove(`state\:${this.lastState}`);
-                this.classList.add(`state\:${state}`);
-                this.lastState = state;
-            }
-            this.state = state;
+        this.ref("html").style.setProperty("--view-progress", progress);
 
-            this.dispatchEvent(new CustomEvent(state, { detail, bubbles: true }));
+        if (inView && !this._wasInView) {
+            this.dispatchEvent(new CustomEvent("enter", { detail, bubbles: true }));
         }
 
         if (inView) {
-            this.ref("html").style.setProperty("--view-progress", progress);
-            if (this.varSave) {
-                this.varSave.style.setProperty(`--${this.varName}-progress`, progress);
-            }
-
             this.dispatchEvent(new CustomEvent("progress", { detail, bubbles: true }));
+        }
+
+        if (!inView && this._wasInView) {
+            this.dispatchEvent(new CustomEvent("leave", { detail, bubbles: true }));
         }
 
         this._wasInView = inView;
@@ -147,11 +99,6 @@ class TrackedView extends Component.HTMLElement {
     onFirstConnect() {
         this.scrollView = this.closest("scroll-view");
         const source = this.scrollView || window;
-        if (this.hasAttribute("var-save")) {
-            const selector = this.getAttribute("var-save");
-            this.varSave = document.querySelector(selector);
-            if (this.varSave) this.varName = `${this.getAttribute("var-name") || this.id}`;
-        }
         source.addEventListener("scroll-y", this._scheduleUpdate);
         source.addEventListener("scroll-x", this._scheduleUpdate);
         source.addEventListener("scroll", this._scheduleUpdate, { passive: true });
@@ -194,10 +141,6 @@ class ScrollBar extends Component.HTMLElement {
     visible;
 
     scroll = {
-        last: {
-            percent: 0,
-            value: 0
-        },
         current: {
             percent: 0,
             value: 0
@@ -303,8 +246,7 @@ class ScrollBar extends Component.HTMLElement {
     }
 
     onFirstConnect() {
-        const root = this.getRootNode();
-        this.scrollView = this.closest("scroll-view") || (root?.host?.matches?.("scroll-view") ? root.host : null);
+        this.scrollView = this.closest("scroll-view");
         this.content = this.resolveContent();
 
         if (!this.content) {
@@ -375,7 +317,6 @@ class ScrollBar extends Component.HTMLElement {
 
     onWheel(event) {
         if (this.scrollView?.usesNativeScroll?.()) return;
-        if (isNativeScrollTarget(event.target)) return;
 
         this.refreshMeasurements();
         const maxContentOffset = Math.max(0, this.maxContentOffset || 0);
@@ -442,7 +383,7 @@ class ScrollBar extends Component.HTMLElement {
         this.scrolling = true;
 
         const scrollAnimation = () => {
-            const { current, target, last } = this.scroll;
+            const { current, target } = this.scroll;
             const maxContentOffset = Math.max(0, this.maxContentOffset || 0);
             const maxOffset = Math.max(0, this.maxOffset || 0);
             const ease = Math.min(0.22, Math.max(0.1, this.scrollSpeed * 6));
@@ -472,24 +413,13 @@ class ScrollBar extends Component.HTMLElement {
                 this.handle.style.top = `${this.offset}px`;
             }
 
-            if (Math.abs(target.value - current.value) < 0.25) {
-                current.direction = 0;
-            } else if (last.value > current.value) {
-                current.direction = -1;
-            } else if (last.value < current.value) {
-                current.direction = 1;
-            }
-
             if (this.hooks.length > 0) {
                 for (let i = 0; i < this.hooks.length; i++) {
                     this.hooks[i](current);
                 }
             }
 
-            last.value = current.value;
-            last.percent = current.percent;
-
-            if (current.direction !== 0) {
+            if (Math.abs(target.value - current.value) > 0.25) {
                 requestAnimationFrame(scrollAnimation);
             } else {
                 this.scrolling = false;
@@ -753,36 +683,16 @@ class ScrollView extends Component.HTMLElement {
         this.scrollX = this.ref("scroll-x");
         this.scrollY = this.ref("scroll-y");
 
-        if (this.hasAttribute("var-save")) {
-            const selector = this.getAttribute("var-save");
-            this.varSave = selector == "doc" ? document.documentElement : document.querySelector(selector);
-            if (this.varSave) this.varSave.style.setProperty("--scroll-y-progress", 0);
-            if (this.varSave) this.varSave.style.setProperty("--scroll-x-progress", 0);
-        }
-
-        let lastXDirection = 0;
-        this.scrollX.hook(({ value, percent, direction }) => {
+        this.scrollX.hook(({ value, percent }) => {
             this.xValue.value = value;
             this.dispatchEvent(new CustomEvent("scroll-x", { detail: { value, percent } }));
             this.ref("html").style.setProperty("--scroll-x-progress", percent);
-            if (this.varSave) this.varSave.style.setProperty("--scroll-x-progress", percent);
-            if (direction !== lastXDirection) {
-                this.ref("html").style.setProperty("--scroll-x-direction", direction);
-                if (this.varSave) this.varSave.style.setProperty("--scroll-x-direction", direction);
-                lastXDirection = direction;
-            }
         });
-        let lastYDirection = 0;
-        this.scrollY.hook(({ value, percent, direction }) => {
+
+        this.scrollY.hook(({ value, percent }) => {
             this.yValue.value = value;
             this.dispatchEvent(new CustomEvent("scroll-y", { detail: { value, percent } }));
             this.ref("html").style.setProperty("--scroll-y-progress", percent);
-            if (this.varSave) this.varSave.style.setProperty("--scroll-y-progress", percent);
-            if (direction !== lastYDirection) {
-                this.ref("html").style.setProperty("--scroll-y-direction", direction);
-                if (this.varSave) this.varSave.style.setProperty("--scroll-y-direction", direction);
-                lastYDirection = direction;
-            }
         });
 
         this.addEventListener("scroll", this.onNativeScroll, { passive: true });
@@ -853,56 +763,8 @@ class ScrollView extends Component.HTMLElement {
             html.style.setProperty("--scroll-x-progress", xPercent);
             html.style.setProperty("--scroll-y-progress", yPercent);
         }
-        if (this.varSave) {
-            this.varSave.style.setProperty("--scroll-x-progress", xPercent);
-            this.varSave.style.setProperty("--scroll-y-progress", yPercent);
-        }
         this.dispatchEvent(new CustomEvent("scroll-x", { detail: { value: x, percent: xPercent }, bubbles: true }));
         this.dispatchEvent(new CustomEvent("scroll-y", { detail: { value: y, percent: yPercent }, bubbles: true }));
-    }
-
-    scrollToPosition(y, { behavior = "smooth" } = {}) {
-        const requestedY = Number(y);
-        if (!Number.isFinite(requestedY)) return false;
-
-        if (this.usesNativeScroll()) {
-            const maxY = Math.max(0, this.scrollHeight - this.clientHeight);
-            this.scrollTo({ top: Math.max(0, Math.min(maxY, requestedY)), behavior });
-            return true;
-        }
-
-        if (this.scrollTop) this.scrollTop = 0;
-
-        const scrollBar = this.scrollY;
-        if (!scrollBar) return false;
-
-        scrollBar.refreshMeasurements();
-        const maxY = Math.max(0, scrollBar.maxContentOffset || 0);
-        const targetY = Math.max(0, Math.min(maxY, requestedY));
-        scrollBar.scroll.target.value = targetY;
-        scrollBar.scroll.target.percent = maxY > 0 ? targetY / maxY : 0;
-
-        if (behavior !== "smooth") {
-            scrollBar.scroll.current.value = targetY;
-            scrollBar.scroll.current.percent = scrollBar.scroll.target.percent;
-        }
-
-        if (!scrollBar.scrolling) scrollBar.smoothScroll();
-        return true;
-    }
-
-    scrollToElement(element, { behavior = "smooth", offset = 0 } = {}) {
-        if (!(element instanceof Element) || !this.contains(element)) return false;
-
-        const viewTop = this.getBoundingClientRect().top;
-        const targetTop = element.getBoundingClientRect().top;
-        const nativeY = this.scrollTop || 0;
-        const currentY = this.usesNativeScroll() ? nativeY : this.scrollY?.scroll.current.value || 0;
-        const browserHashOffset = this.usesNativeScroll() ? 0 : nativeY;
-
-        return this.scrollToPosition(currentY + targetTop - viewTop + browserHashOffset - (Number(offset) || 0), {
-            behavior
-        });
     }
 
     onPropertyChanged(prop, previous, value) {
@@ -978,5 +840,5 @@ if (typeof customElements !== "undefined") {
     }
 }
 
-export { isNativeScrollTarget, ScrollBar, ScrollView, TrackedView };
+export { ScrollBar, ScrollView, TrackedView };
 export default ScrollView;
