@@ -53,6 +53,8 @@ class FormInfo extends HTMLElement {
             <style>
                 :host {
                     display: block;
+                    grid-column: 1 / -1;
+                    flex: 0 0 100%;
                     width: 100%;
                     max-width: 100%;
                     min-width: 0;
@@ -296,12 +298,16 @@ class FormInfo extends HTMLElement {
 
                 .field-name {
                     display: block;
+                    grid-column: 1 / -1;
+                    flex: 0 0 100%;
                     color: #293241;
                     font-size: 0.82rem;
                 }
 
                 .field-message {
                     display: block;
+                    grid-column: 1 / -1;
+                    flex: 0 0 100%;
                     margin-top: 0.18rem;
                     color: #5f6b7a;
                     font-size: 0.72rem;
@@ -639,13 +645,18 @@ class FormInfo extends HTMLElement {
         const controls = Array.from(target.querySelectorAll(SUBMIT_CONTROL_SELECTOR));
         if (target.id) {
             document.querySelectorAll("input-button[form], button[form], input[form]").forEach((control) => {
-                if (control.getAttribute("form") === target.id && control.matches(SUBMIT_CONTROL_SELECTOR)) {
+                if (
+                    control.getAttribute("form") === target.id &&
+                    control.matches(SUBMIT_CONTROL_SELECTOR)
+                ) {
                     controls.push(control);
                 }
             });
         }
 
-        return [...new Set(controls)].filter((control) => !control.hasAttribute("data-form-info-submit-ignore"));
+        return [...new Set(controls)].filter(
+            (control) => !control.hasAttribute("data-form-info-submit-ignore")
+        );
     }
 
     _syncSubmitControls() {
@@ -686,10 +697,14 @@ class FormInfo extends HTMLElement {
         this._submitControls.clear();
     }
 
-    _fieldValue(field) {
+    _isCheckable(field) {
         const type = String(field.getAttribute("type") || field.type || "").toLowerCase();
         const checkableHost = /checkbox|radio/.test(field.tagName.toLowerCase());
-        if (type === "checkbox" || type === "radio" || ("checked" in field && checkableHost)) {
+        return type === "checkbox" || type === "radio" || ("checked" in field && checkableHost);
+    }
+
+    _fieldValue(field) {
+        if (this._isCheckable(field)) {
             return field.checked ? field.value || true : false;
         }
         return field.value == null ? field.getAttribute("value") || "" : field.value;
@@ -766,12 +781,18 @@ class FormInfo extends HTMLElement {
         map.replaceChildren();
         if (!this._validationTarget || !this._fieldStates.length) return;
 
-        const layouts = this._fieldStates.map((field) => ({
-            field,
-            rects: field.fields
-                .map((element) => element.getBoundingClientRect())
-                .filter((rect) => rect.width > 0 && rect.height > 0)
-        })).filter((layout) => layout.rects.length);
+        const layouts = this._fieldStates.flatMap((field) => {
+            const regions = [];
+            const otherRects = [];
+            for (const element of field.fields) {
+                const rect = element.getBoundingClientRect();
+                if (!rect.width || !rect.height) continue;
+                if (this._isCheckable(element)) regions.push({ field, element, rects: [rect] });
+                else otherRects.push(rect);
+            }
+            if (otherRects.length) regions.push({ field, element: field.primary, rects: otherRects });
+            return regions;
+        });
         if (!layouts.length) return;
 
         const allRects = layouts.flatMap((layout) => layout.rects);
@@ -786,7 +807,7 @@ class FormInfo extends HTMLElement {
         const boundsHeight = bounds.bottom - bounds.top;
         if (!boundsWidth || !boundsHeight) return;
 
-        layouts.forEach(({ field, rects }) => {
+        layouts.forEach(({ field, element, rects }) => {
 
             const left = Math.min(...rects.map((rect) => rect.left));
             const top = Math.min(...rects.map((rect) => rect.top));
@@ -796,7 +817,7 @@ class FormInfo extends HTMLElement {
             block.type = "button";
             block.className = `map-field ${field.status}`;
             block.dataset.fieldIndex = String(field.index);
-            block.title = `${field.label}: ${STATUS_LABELS[field.status]}`;
+            block.title = `${element.getAttribute("label") || field.label}: ${STATUS_LABELS[field.status]}`;
             block.style.left = `${Math.max(0, ((left - bounds.left) / boundsWidth) * 100)}%`;
             block.style.top = `${Math.max(0, ((top - bounds.top) / boundsHeight) * 100)}%`;
             block.style.width = `${Math.min(100, ((right - left) / boundsWidth) * 100)}%`;
@@ -805,7 +826,7 @@ class FormInfo extends HTMLElement {
             block.addEventListener("pointerleave", () => this._clearFieldHighlight());
             block.addEventListener("focus", () => this._highlightField(field.index));
             block.addEventListener("blur", () => this._clearFieldHighlight());
-            block.addEventListener("click", () => this._focusField(field));
+            block.addEventListener("click", () => this._focusField(field, element));
             map.appendChild(block);
         });
     }
@@ -838,15 +859,13 @@ class FormInfo extends HTMLElement {
         return "This field has not been started.";
     }
 
-    _focusField(field) {
+    _focusField(field, target = field.primary) {
         this._setOpen(false);
-        const target = field.primary;
+
         target.scrollIntoView({ behavior: "smooth", block: "center" });
         requestAnimationFrame(() => {
             if (target._dom && typeof target._dom.native?.focus === "function") target._dom.native.focus();
             else if (typeof target.focus === "function") target.focus();
-
-            if (typeof target.highlight === "function") target.highlight();
         });
     }
 

@@ -6,6 +6,7 @@
 
 import DotNotation from "../core/Util/DotNotation.mjs";
 import DEFAULT_CONFIG from "./defaults.mjs";
+<<<<<<< HEAD
 import MANIFEST from "./manifest.json" with { type: "json" };
 
 function parseFilePath(path) {
@@ -24,20 +25,22 @@ function currentFile(meta = import.meta) {
 
 const CONFIG_DIR = currentFile(import.meta).dir;
 const MANIFEST_PATH = CONFIG_DIR + "/manifest.json";
+=======
+>>>>>>> c41c13953f80ba6236f5586b691f3072b84dab59
 
 const root = typeof globalThis !== "undefined" ? globalThis : {};
 const juiceRootDir = import.meta.resolve("../");
+const manifestFilePath = import.meta.resolve("./manifest.json");
 
 function loadJSON(path) {
     try {
-        return JSON.parse(root.fetch(path).then((res) => res?.text() || null));
+        return JSON.parse(root.fetch(path).then((res) => res.text()));
     } catch (e) {
         return {};
     }
 }
 
-const manifestJSON = MANIFEST.hash ? MANIFEST : loadJSON(MANIFEST_PATH);
-console.log(manifestJSON);
+const manifestJSON = loadJSON(manifestFilePath);
 
 function isPlainObject(value) {
     return value != null && typeof value === "object" && !Array.isArray(value);

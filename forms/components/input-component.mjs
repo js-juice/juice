@@ -195,38 +195,6 @@ function createNativeElement(config = {}) {
     return element;
 }
 
-function normalizeStatusConfig(config) {
-    if (!isPlainObject(config)) {
-        return {
-            tag: "input-status",
-            iconOnly: true,
-            cover: true,
-            attrs: { fill: true }
-        };
-    }
-
-    const attrs = isPlainObject(config.attrs)
-        ? config.attrs
-        : isPlainObject(config.attributes)
-          ? config.attributes
-          : {};
-
-    return {
-        tag: String(config.tag || "input-status").trim() || "input-status",
-        iconOnly: config.iconOnly !== false,
-        cover: config.cover !== false,
-        attrs
-    };
-}
-
-function createStatusElement(config) {
-    const element = createNativeElement({ tag: config.tag, attrs: config.attrs });
-    element.classList.add("status");
-    element.toggleAttribute("icon-only", config.iconOnly);
-    if (!element.hasAttribute("state")) element.setAttribute("state", "idle");
-    return element;
-}
-
 function createNativeControls(config) {
     const nativeConfig = Array.isArray(config) ? config : [config || { tag: "input" }];
     const controls = [];
@@ -507,10 +475,6 @@ const BASE_STYLES = {
     ".input-root > label": {
         marginBottom: "0.25rem"
     },
-    ".input-root > label:empty": {
-        marginBottom: "0",
-        display: "none"
-    },
     label: {
         position: "relative",
         display: "block",
@@ -567,10 +531,6 @@ const BASE_STYLES = {
     ":host([disabled]) .input-wrapper": {
         "--input-state-bgcolor": "var(--input-disabled-bgcolor, var(--input-bgcolor, #ffffff))"
     },
-    ":host([highlight]) .input-wrapper": {
-        background: "var(--input-highlight-bgcolor, var(--input-bgcolor, #ffffff))",
-        outline: "var(--input-highlight-outline, 2px solid #cdff1a)"
-    },
     ".input-wrapper > label": {
         lineHeight: "var(--input-height)",
         background:
@@ -623,7 +583,7 @@ const BASE_STYLES = {
         overflow: "hidden",
         color: "#FFFFFF"
     },
-    ".status-wrapper > .status": {
+    "input-status": {
         position: "absolute",
         top: 0,
         right: 0,
@@ -830,12 +790,6 @@ class InputComponent extends HTMLElement {
         return {
             value: { type: "string", default: "" },
             native: { tag: "input", attrs: { type: "text" } },
-            status: {
-                tag: "input-status",
-                iconOnly: true,
-                cover: true,
-                attrs: { fill: true }
-            },
             format: undefined,
             validation: undefined
         };
@@ -876,7 +830,6 @@ class InputComponent extends HTMLElement {
         this._validationMessages = [];
         this._validationErrors = [];
         this._lastValidationStatus = null;
-        this._statusConfig = normalizeStatusConfig(getConfigValue(this, "status"));
         this._fieldFeedbackFrame = 0;
         this._onFieldFeedbackViewportChange = null;
         this._validationController = new FieldValidationController(this);
@@ -900,8 +853,7 @@ class InputComponent extends HTMLElement {
             input: render('div.input-wrapper[part="input-wrapper"]'),
             native: render("div.native-wrapper[part='native-wrapper']"),
             icon: render("div.icon-wrapper[part='icon-wrapper']"),
-            status: render("div.status-wrapper"),
-            statusCover: render("div.cover[part='status-cover']"),
+            status: render("div.status-wrapper > div.cover[part='status-cover']"),
             default: render("div.default[part='default']"),
             validation: render("div.validation-wrapper[part='validation-wrapper']")
         };
@@ -924,7 +876,7 @@ class InputComponent extends HTMLElement {
             native: null,
             template: null,
             default: null,
-            status: createStatusElement(this._statusConfig),
+            status: render("input-status.status"),
             feedbackHeading: render("div.field-feedback-heading"),
             feedbackHeadingLabel: render("span.field-feedback-heading-label"),
             description: render("div.field-description"),
@@ -936,6 +888,10 @@ class InputComponent extends HTMLElement {
             validationAssist: render("div.validation-assist.visually-hidden")
         };
 
+        this._dom.status.setAttribute("fill", "");
+        this._dom.status.setAttribute("icon-only", "");
+        this._dom.status.setAttribute("state", "idle");
+
         this._wireframe.validation.id = uniqueId("field-feedback");
         this._dom.descriptionAssist.id = uniqueId("field-description");
         this._dom.validationAssist.id = uniqueId("field-error");
@@ -944,13 +900,8 @@ class InputComponent extends HTMLElement {
         this._dom.feedbackHeading.append(this._dom.feedbackHeadingLabel, this._dom.example);
         this._dom.guidance.hidden = true;
         this._dom.guidance.append(this._dom.format);
-        this._wireframe.validation.append(
-            this._dom.feedbackHeading,
-            this._dom.validationMessage,
-            this._dom.guidance
-        );
+        this._wireframe.validation.append(this._dom.feedbackHeading, this._dom.validationMessage, this._dom.guidance);
 
-        if (this._statusConfig.cover) this._wireframe.status.appendChild(this._wireframe.statusCover);
         this._wireframe.status.appendChild(this._dom.status);
         this._shadow.append(
             this._dom.style,
@@ -2040,12 +1991,7 @@ class InputComponent extends HTMLElement {
         if (!icon) return;
 
         icon.setAttribute("state", STATUS_ICON_STATES[status] || "idle");
-        const configuredColor = this._statusConfig.attrs.color;
-        if (configuredColor === false || configuredColor == null) {
-            icon.removeAttribute("color");
-        } else {
-            icon.setAttribute("color", configuredColor === true ? "" : String(configuredColor));
-        }
+        icon.removeAttribute("color");
 
         const show = status !== "none";
         icon.toggleAttribute("hidden", !show);
@@ -2465,7 +2411,6 @@ class InputComponent extends HTMLElement {
         this._dom.native.value = normalized;
         this._applyFormatting();
         this.setAttribute("value", this._dom.native.value);
-        this._syncVisualState();
         this._updateFormValue();
         this._queueValidation();
     }
@@ -2536,15 +2481,23 @@ class InputComponent extends HTMLElement {
         }
     }
 
-    highlight() {
-        function highlightClickHandler(event) {
-            if (!this._wireframe.root) return;
-            if (this._wireframe.root.contains(event.target)) return;
-            this.removeAttribute("highlight");
-            window.removeEventListener("click", highlightClickHandler.bind(this));
+    loading(state = true) {
+        if (state) {
+            if (!this._wireframe.input.querySelector(".loading-indicator")) {
+                const indicator = document.createElement("div");
+                indicator.className = "loading-indicator";
+                const statusLoader = document.createElement("input-status");
+                statusLoader.setAttribute("state", "loading");
+                indicator.appendChild(statusLoader);
+                this._wireframe.input.appendChild(indicator);
+            }
+            this.setAttribute("loading", "");
+        } else {
+            if (this._wireframe.input.querySelector(".loading-indicator")) {
+                this._wireframe.input.querySelector(".loading-indicator").remove();
+            }
+            this.removeAttribute("loading");
         }
-
-        window.addEventListener("click", highlightClickHandler.bind(this));
     }
 }
 

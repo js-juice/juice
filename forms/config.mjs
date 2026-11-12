@@ -4,6 +4,12 @@ import validationDefaults from "./presets/validation.mjs";
 
 const input = document.createElement("input");
 input.type = "text";
+// Measure intrinsic control height without participating in a flex/grid page layout.
+input.style.position = "absolute";
+input.style.visibility = "hidden";
+input.style.pointerEvents = "none";
+input.tabIndex = -1;
+input.setAttribute("aria-hidden", "true");
 
 document.body.appendChild(input);
 const inputHeight = getComputedStyle(input).height;
@@ -32,27 +38,11 @@ const formsConfig = {
             presets: {}
         }
     },
+    // Set to another CSS URL to replace the default theme, or false to load none.
+    stylesheet: new URL("./styles.css", import.meta.url).href,
+    // Small runtime overrides; static defaults belong in styles.css.
     styles: {
-        "--form-font-family": "system-ui, Segoe UI, Roboto, Arial, sans-serif",
-        "--form-label-color": "var(--color-text-primary, #48484a)",
-        "--form-label-font-size": "0.7rem",
-        "--form-label-weight": "700",
-        "--form-label-text-transform": "uppercase",
-        "--form-guidance-color": "var(--color-text-secondary, #64748b)",
-        "--form-accent-color": "var(--color-primary, #2563eb)",
-        "--input-height": inputHeight,
-        "--input-padding": "0.25em",
-        "--input-text-indent": "0.75em",
-        "--input-bgcolor": "var(--color-input-background, #ffffff)",
-        "--input-color": "var(--color-input-text, #293241)",
-        "--input-border": "1px solid var(--color-input-border, #c8c8c8)",
-        "--input-border-radius": "var(--button-border-radius, 5px)",
-        "--input-focus-bgcolor": "var(--color-input-background, #ffffff)",
-        "--input-disabled-bgcolor": "var(--color-disabled-background, #f1f5f9)",
-        "--validation-color": "var(--color-error, #dc2626)",
-        "--juice-forms-gap": "2rem",
-        "--input-button-bgcolor": "var(--color-primary, #2563eb)",
-        "--input-button-color": "#ffffff"
+        "--input-height": inputHeight
     }
 };
 
@@ -63,5 +53,6 @@ export const formatters = formsConfig.formatters;
 export const validation = formsConfig.validation;
 export const inputs = formsConfig.inputs;
 export const styles = formsConfig.styles;
+export const stylesheet = formsConfig.stylesheet;
 
 export default formsConfig;

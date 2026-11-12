@@ -81,6 +81,7 @@ class InputFileComponent extends HTMLElement {
                     user-select: none;
                     font: inherit;
                     line-height: 1;
+                    height: var(--input-control-size, 2.5rem);
                     color: var(--input-button-color, #ffffff);
                     background: var(--input-button-bgcolor, #2f5ea6);
                     transition: filter 0.14s ease, opacity 0.14s ease;
@@ -190,8 +191,14 @@ class InputFileComponent extends HTMLElement {
 
         const formsConfig = getJuiceConfig("forms") || {};
         const theme = formsConfig.theme || {};
-        this.style.setProperty("--input-button-bgcolor", this.getAttribute("bgcolor") || theme.inputButtonBgColor || "#2f5ea6");
-        this.style.setProperty("--input-button-color", this.getAttribute("color") || theme.inputButtonColor || "#ffffff");
+        this.style.setProperty(
+            "--input-button-bgcolor",
+            this.getAttribute("bgcolor") || theme.inputButtonBgColor || "#2f5ea6"
+        );
+        this.style.setProperty(
+            "--input-button-color",
+            this.getAttribute("color") || theme.inputButtonColor || "#ffffff"
+        );
 
         const name = this.getAttribute("name");
         if (name == null) this._native.removeAttribute("name");

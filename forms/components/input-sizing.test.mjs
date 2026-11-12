@@ -48,18 +48,6 @@ test("textareas always begin at one row and grow to their content", async () => 
     assert.match(inputTextarea, /textarea\.style\.height = `\$\{textarea\.scrollHeight\}px`/);
 });
 
-test("programmatic input values refresh component-specific visual state", async () => {
-    const inputComponent = await readFile(
-        new URL("./input-component.mjs", import.meta.url),
-        "utf8"
-    );
-
-    assert.match(
-        inputComponent,
-        /set value\(value\) \{[\s\S]*?this\.setAttribute\("value", this\._dom\.native\.value\);\s*this\._syncVisualState\(\);/
-    );
-});
-
 test("browser-prefilled controls color the complete input wrapper", async () => {
     const inputComponent = await readFile(
         new URL("./input-component.mjs", import.meta.url),
@@ -209,38 +197,20 @@ test("custom selects expose combobox semantics and complete keyboard navigation"
     assert.match(inputSelect, /event\.key === "Tab"/);
 });
 
-test("field status honors the component status configuration", async () => {
+test("field status icon fills the top-right half of the triangular status wrapper", async () => {
     const inputComponent = await readFile(
         new URL("./input-component.mjs", import.meta.url),
         "utf8"
     );
-    const inputCode = await readFile(
-        new URL("./input-code.mjs", import.meta.url),
+    const inputStatus = await readFile(
+        new URL("./input-status.mjs", import.meta.url),
         "utf8"
     );
 
-    assert.match(inputComponent, /normalizeStatusConfig\(getConfigValue\(this, "status"\)\)/);
-    assert.match(inputComponent, /createNativeElement\(\{ tag: config\.tag, attrs: config\.attrs \}\)/);
-    assert.match(inputComponent, /toggleAttribute\("icon-only", config\.iconOnly\)/);
-    assert.match(inputComponent, /if \(this\._statusConfig\.cover\) this\._wireframe\.status\.appendChild/);
-    assert.match(inputComponent, /const configuredColor = this\._statusConfig\.attrs\.color/);
-    assert.match(inputComponent, /"\.status-wrapper > \.status":\s*\{[\s\S]*?width:\s*"50%"[\s\S]*?height:\s*"50%"/);
-    assert.match(inputCode, /tag:\s*"input-status"/);
-    assert.match(inputCode, /iconOnly:\s*false/);
-    assert.match(inputCode, /cover:\s*false/);
-    assert.match(inputCode, /color:\s*"currentColor"/);
-});
-
-test("input code can auto-submit a complete six-digit value", async () => {
-    const inputCode = await readFile(new URL("./input-code.mjs", import.meta.url), "utf8");
-
-    assert.match(inputCode, /autoSubmit:\s*false/);
-    assert.match(inputCode, /return \["auto-submit"\]/);
-    assert.match(inputCode, /new RegExp\(`\^\\\\d\{\$\{CODE_LENGTH\}\}\$`\)\.test/);
-    assert.match(inputCode, /if \(!new RegExp\(`\^\\\\d\{\$\{CODE_LENGTH\}\}\$`\)\.test\(value\)\) return/);
-    assert.match(inputCode, /this\._setValidationState\(true, \[\], \[\]\)/);
-    assert.match(inputCode, /this\._dom\.status\?\.setAttribute\("state", state\)/);
-    assert.match(inputCode, /form\.requestSubmit\(\)/);
+    assert.match(inputComponent, /status\.setAttribute\("fill", ""\)/);
+    assert.doesNotMatch(inputComponent, /status\.setAttribute\("size", "14"\)/);
+    assert.match(inputComponent, /"input-status":\s*\{[\s\S]*?width:\s*"50%"[\s\S]*?height:\s*"50%"/);
+    assert.match(inputStatus, /this\.hasAttribute\("fill"\) \? "100%" : `\$\{size\}px`/);
 });
 
 test("field feedback owns descriptions and all validation messages", async () => {

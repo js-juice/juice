@@ -230,7 +230,7 @@ export default class InputJsonComponent extends InputComponent {
                 color: "#ff9b9b",
                 fontSize: "0.8rem"
             },
-            button: {
+            "button": {
                 border: "1px solid transparent",
                 borderRadius: "4px",
                 padding: "0.2rem 0.45rem",
@@ -249,9 +249,6 @@ export default class InputJsonComponent extends InputComponent {
             },
             "input.native": {
                 display: "none !important"
-            },
-            ".input-wrapper": {
-                padding: "0.5rem"
             }
         };
     }
@@ -498,9 +495,7 @@ export default class InputJsonComponent extends InputComponent {
         const field = document.createElement("select");
         field.className = "type";
         field.disabled = this.disabled;
-        ["string", "number", "boolean", "null", "object", "array"].forEach((option) =>
-            field.appendChild(createOption(option))
-        );
+        ["string", "number", "boolean", "null", "object", "array"].forEach((option) => field.appendChild(createOption(option)));
         field.value = type;
         field.addEventListener("change", () => this._setChildValue(parent, key, defaultValueForType(field.value)));
         return field;

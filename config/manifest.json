@@ -563,6 +563,8 @@
       "forms/components/input-buttonbar.mjs",
       "forms/components/input-checkbox.mjs",
       "forms/components/input-color.mjs",
+      "forms/components/input-code.mjs",
+      "forms/components/input-code.test.mjs",
       "forms/components/input-colorstops.mjs",
       "forms/components/input-component.mjs",
       "forms/components/input-dial.mjs",

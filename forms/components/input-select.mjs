@@ -1008,24 +1008,23 @@ class InputSelect extends InputComponent {
 
         super.attributeChangedCallback(name, oldValue, newValue);
 
-                if (
-                    (name === "view" ||
-                        name === "view-type" ||
-                        name === "select-bar-direction" ||
-                        name === "compact" ||
-                        name === "hide-icons" ||
-                        name === "hide-labels" ||
-                        name === "hide-info" ||
-                        name === "option-parts") &&
-                    oldValue !== newValue
-                ) {
-                    this._ensureNativeControl();
-                    this._renderTemplateOrDefault();
-                    this._afterConnected();
-                    return;
-                }
+        if (
+            (name === "view" ||
+                name === "view-type" ||
+                name === "select-bar-direction" ||
+                name === "compact" ||
+                name === "hide-icons" ||
+                name === "hide-labels" ||
+                name === "hide-info" ||
+                name === "option-parts") &&
+            oldValue !== newValue
+        ) {
+            this._renderTemplateOrDefault();
+            this._afterConnected();
+            return;
+        }
 
-                if (name === "value" && oldValue !== newValue) {
+        if (name === "value" && oldValue !== newValue) {
             const normalized = newValue == null ? "" : String(newValue);
             this._setSelectedByValue(normalized);
             if (this._dom.native && !this._useNativeMode()) {
@@ -1518,7 +1517,7 @@ class InputSelect extends InputComponent {
         });
 
         this._optionList.addEventListener("click", (event) => {
-            const target = event.target instanceof Element ? event.target.closest(".select-option") : null;
+            const target = event.target instanceof HTMLElement ? event.target.closest(".select-option") : null;
             if (!target || !this._optionList.contains(target)) return;
             this._dom.native.blur();
             const value = target.dataset.value || "";
