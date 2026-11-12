@@ -452,7 +452,7 @@ class Juice {
             return this._cache[modulePath];
         }
 
-        const moduleUrl = new URL(`./${modulePath}`, this.config.paths.root + "/").href;
+        const moduleUrl = new URL(`./${modulePath}`, import.meta.url).href;
         const module = await import(/* @vite-ignore */ moduleUrl);
         let loadedModule = module;
 
