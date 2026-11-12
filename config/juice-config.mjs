@@ -6,7 +6,6 @@
 
 import DotNotation from "../core/Util/DotNotation.mjs";
 import DEFAULT_CONFIG from "./defaults.mjs";
-<<<<<<< HEAD
 import MANIFEST from "./manifest.json" with { type: "json" };
 
 function parseFilePath(path) {
@@ -25,8 +24,6 @@ function currentFile(meta = import.meta) {
 
 const CONFIG_DIR = currentFile(import.meta).dir;
 const MANIFEST_PATH = CONFIG_DIR + "/manifest.json";
-=======
->>>>>>> c41c13953f80ba6236f5586b691f3072b84dab59
 
 const root = typeof globalThis !== "undefined" ? globalThis : {};
 const juiceRootDir = import.meta.resolve("../");
