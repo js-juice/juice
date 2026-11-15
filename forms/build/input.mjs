@@ -62,6 +62,7 @@ class InputBuilder {
 
     static textarea(name, value, config = {}) {
         const input = document.createElement("input-textarea");
+        if (config.resizable) input.setAttribute("resizable", config.resizable);
         input.setAttribute("name", name);
         input.setAttribute("value", value ?? "");
         return this.applyConfig(input, config);

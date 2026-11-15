@@ -1,5 +1,3 @@
-
-
 /**
  * AUTODOC:START
  * Component: <input-radio>
@@ -39,7 +37,7 @@ import CheckableContentView, { checkableContentViewStyles } from "./checkable-co
 
 class InputRadio extends InputComponent {
     /**
-        * Initializes component state, DOM references, and default behavior.
+     * Initializes component state, DOM references, and default behavior.
      * @returns {*} void.
      */
     constructor() {
@@ -57,7 +55,7 @@ class InputRadio extends InputComponent {
     }
 
     /**
-       * Returns component-scoped style definitions used to generate CSS.
+     * Returns component-scoped style definitions used to generate CSS.
      * @returns {*} Style definition map used for generated component CSS.
      */
     static get styles() {
@@ -87,8 +85,8 @@ class InputRadio extends InputComponent {
             },
             ".input-wrapper": {
                 position: "relative",
-                width: "1em",
-                height: "1em",
+                width: "var(--input-radio-width, var(--input-radio-size, 1.5em))",
+                height: "var(--input-radio-height, var(--input-radio-size, 1.5em))",
                 borderRadius: "50%",
                 border: "1px solid #bdbdbd",
                 display: "inline-flex",
@@ -102,31 +100,32 @@ class InputRadio extends InputComponent {
                 content: "''",
                 position: "absolute",
                 display: "block",
-                width: "0.8em",
-                height: "0.6em",
+                width: "120%",
+                aspectRatio: "2",
                 top: "5%",
                 left: "50%",
                 transform: "translateX(-50%)",
                 borderRadius: "50%",
-                backgroundColor: "#ffffff",
-                opacity: 0.7
+                background: "#ffffff",
+                background: "linear-gradient(0deg,rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.5) 100%)",
+                opacity: 1
             },
             ".radio-center": {
                 position: "absolute",
                 top: "50%",
                 left: "50%",
                 transform: "translate(-50%, -50%)",
-                width: "0.5em",
-                height: "0.5em",
+                width: "50%",
+                height: "50%",
                 borderRadius: "50%",
-                backgroundColor: "#292929",
-                background: "linear-gradient(0deg,rgba(41, 41, 41, 1) 0%, rgba(99, 99, 99, 1) 100%)",
+                backgroundColor: "#5f5f5f",
+                background: "linear-gradient(0deg,rgba(41, 41, 41, 0.5) 0%, rgba(99, 99, 99, 0.5) 100%)",
                 transition:
                     "height 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), width 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275)"
             },
             ":host([checked]) .radio-center": {
-                width: "0.65em",
-                height: "0.65em",
+                width: "50%",
+                height: "50%",
                 backgroundColor: "var(--bgcolor, #0078d4)",
                 background: "linear-gradient(0deg, #1e88d8 0%, rgb(0, 34, 59) 100%)",
                 opacity: 1,
@@ -153,7 +152,7 @@ class InputRadio extends InputComponent {
     }
 
     /**
-      * Creates the hidden native input used for form integration.
+     * Creates the hidden native input used for form integration.
      * @returns {*} Configured native input element.
      */
     _createNativeControl() {
@@ -165,7 +164,7 @@ class InputRadio extends InputComponent {
     }
 
     /**
-      * Builds the default dial DOM (SVG rings, knob, labels, value display).
+     * Builds the default dial DOM (SVG rings, knob, labels, value display).
      * @returns {*} Rendered default dial container node.
      */
     _renderDefault() {
@@ -192,7 +191,7 @@ class InputRadio extends InputComponent {
     }
 
     /**
-      * Performs post-connect setup after the component has its default DOM nodes.
+     * Performs post-connect setup after the component has its default DOM nodes.
      * @returns {*} void.
      */
     _afterConnected() {
@@ -205,7 +204,7 @@ class InputRadio extends InputComponent {
     }
 
     /**
-      * Recomputes ring/progress/tick geometry and knob placement from current value state.
+     * Recomputes ring/progress/tick geometry and knob placement from current value state.
      * @returns {*} void.
      */
     _syncVisualState() {
@@ -230,7 +229,7 @@ class InputRadio extends InputComponent {
     }
 
     /**
-      * Handles native change event events and updates component state.
+     * Handles native change event events and updates component state.
      * @returns {*} void.
      */
     _onNativeChangeEvent() {
@@ -239,7 +238,7 @@ class InputRadio extends InputComponent {
     }
 
     /**
-       * Clears checked state from sibling radios in the same group.
+     * Clears checked state from sibling radios in the same group.
      * @returns {*} Derived internal value or completion status.
      */
     _uncheckSiblings() {
@@ -267,7 +266,7 @@ class InputRadio extends InputComponent {
     }
 
     /**
-        * Returns the current checked state.
+     * Returns the current checked state.
      * @returns {*} Boolean state value.
      */
     get checked() {

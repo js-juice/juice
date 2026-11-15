@@ -5,7 +5,6 @@ import validationDefaults from "./presets/validation.mjs";
 const input = document.createElement("input");
 input.type = "text";
 // Measure intrinsic control height without participating in a flex/grid page layout.
-input.style.position = "absolute";
 input.style.visibility = "hidden";
 input.style.pointerEvents = "none";
 input.tabIndex = -1;

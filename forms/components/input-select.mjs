@@ -577,7 +577,24 @@ class InputSelect extends InputComponent {
                 justifyContent: "var(--form-select-option-icon-justify, center)",
                 marginRight: "var(--form-select-option-icon-margin-right, 0)"
             },
-            ".select-options .select-option .option-icon": {
+            ".native-wrapper:has(> .selected-value-icon)": {
+                display: "flex",
+                alignItems: "center",
+                gap: "var(--input-padding)"
+            },
+            ".selected-value-icon + input.native": {
+                minWidth: 0,
+                flex: "1 1 0"
+            },
+            ".selected-value-icon": {
+                flex: "0 0 auto",
+                marginInlineStart: "var(--input-text-indent, 0px)",
+                pointerEvents: "none"
+            },
+            ":host(.editing-custom-value) .selected-value-icon": {
+                display: "none"
+            },
+            ".select-options .select-option .option-icon, .selected-value-icon .option-icon": {
                 display: "var(--form-select-option-icon-content-display, block)",
                 width: "var(--form-select-option-icon-width, 1.25em)",
                 height: "var(--form-select-option-icon-height, 1.25em)",
@@ -588,10 +605,10 @@ class InputSelect extends InputComponent {
             ".select-options .select-option.selected .option-icon": {
                 color: "var(--form-select-option-icon-selected-color, var(--form-select-option-icon-selected-bg, var(--form-select-option-icon-color, var(--form-select-option-icon-bg, currentColor))))"
             },
-            ".select-options .select-option .option-icon-image": {
+            ".select-options .select-option .option-icon-image, .selected-value-icon .option-icon-image": {
                 objectFit: "var(--form-select-option-icon-fit, contain)"
             },
-            ".select-options .select-option .option-icon-class": {
+            ".select-options .select-option .option-icon-class, .selected-value-icon .option-icon-class": {
                 background: "var(--form-select-option-icon-bg, currentColor)"
             },
             ".select-options .select-option.selected .option-icon-class": {
@@ -1107,6 +1124,27 @@ class InputSelect extends InputComponent {
             label: option ? option.label : this.hasAttribute("editable") ? normalized : "",
             description: option ? option.description || "" : ""
         };
+        const input = this._dom.native;
+        if (!input?.parentNode || this._useNativeMode() || this._useSelectBarMode()) return;
+        const previous = input.previousElementSibling;
+        const wrapper = previous?.classList.contains("selected-value-icon") ? previous : null;
+        if (!option?.icon || !this._getVisibleOptionParts().has("icon")) {
+            wrapper?.remove();
+            return;
+        }
+        if (wrapper && wrapper.optionData === option) return;
+        const container = wrapper || document.createElement("span");
+        container.className = "selected-value-icon";
+        container.setAttribute("part", "selected-icon");
+        const icon = createOptionIconElement(option.icon, option.label, { forceUrl: option.iconIsUrl });
+        if (!icon) {
+            wrapper?.remove();
+            return;
+        }
+        icon.removeAttribute("slot");
+        container.replaceChildren(icon);
+        container.optionData = option;
+        if (!wrapper) input.before(container);
     }
 
     /**

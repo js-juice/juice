@@ -16,6 +16,7 @@
  * Attribute Reference:
  * - Inherits base input attributes and constraints (`required`, `maxlength`, `validation`, etc).
  * - Always begins at one row; preset and entered content determine the expanded height.
+ * - `resizable` accepts `vertical`, `horizontal` or `both` (default).
  *
  * Property Reference:
  * - Inherits base properties (`value`, `disabled`, `nativeInput`, ...).
@@ -39,10 +40,13 @@ class InputTextarea extends InputComponent {
     static get styles() {
         return {
             ".input-wrapper": {
+                resize: "both",
                 padding: "var(--input-padding)",
                 minWidth: "12rem",
                 minHeight: "var(--input-control-size)"
             },
+            ':host([resizable="vertical"]) .input-wrapper': { resize: "vertical" },
+            ':host([resizable="horizontal"]) .input-wrapper': { resize: "horizontal" },
             ".input-wrapper .status-wrapper": {
                 position: "absolute",
                 top: "0",
@@ -58,10 +62,12 @@ class InputTextarea extends InputComponent {
                 padding: 0,
                 border: "0",
                 outline: 0,
-                minWidth: "calc(100% - 0.4rem) ",
+                width: "100%",
+                minWidth: 0,
+                fieldSizing: "content",
                 height: "auto",
                 minHeight: "var(--input-height)",
-                overflow: "hidden",
+                overflow: "auto",
                 boxSizing: "border-box",
                 backgroundColor: "transparent",
                 textIndent: "var(--input-textarea-indent, 0px)",
@@ -83,7 +89,6 @@ class InputTextarea extends InputComponent {
     constructor() {
         super({ _layout: "label:input:>:status:<:validation" });
         this.inputType = "textarea";
-        this._boundAutoGrow = () => this._syncAutoGrowHeight();
     }
 
     /**
@@ -91,43 +96,7 @@ class InputTextarea extends InputComponent {
      * @returns {void}
      */
     _afterConnected() {
-        this._dom.native?.addEventListener("input", this._boundAutoGrow);
         enhanceMarkdown(this);
-        this._syncAutoGrowHeight();
-    }
-
-    /**
-     * Removes textarea-specific listeners when detached.
-     * @returns {void}
-     */
-    disconnectedCallback() {
-        this._dom.native?.removeEventListener("input", this._boundAutoGrow);
-        super.disconnectedCallback();
-    }
-
-    /**
-     * Runs after base attribute sync so preset values and row changes resize correctly.
-     * @returns {void}
-     */
-    _afterSync() {
-        this._syncAutoGrowHeight();
-    }
-
-    /**
-     * Keeps height aligned when the base component changes value or classes.
-     * @returns {void}
-     */
-    _syncVisualState() {
-        this._syncAutoGrowHeight();
-    }
-
-    /**
-     * Restores one-row sizing after native form reset.
-     * @returns {void}
-     */
-    formResetCallback() {
-        super.formResetCallback();
-        this._syncAutoGrowHeight();
     }
 
     /**
@@ -140,18 +109,6 @@ class InputTextarea extends InputComponent {
         return textarea;
     }
 
-    /**
-     * Fits the textarea to its current text content without leaving extra empty rows.
-     * @returns {void}
-     */
-    _syncAutoGrowHeight() {
-        const textarea = this._dom.native;
-        if (!textarea) return;
-
-        textarea.rows = 1;
-        textarea.style.height = "auto";
-        textarea.style.height = `${textarea.scrollHeight}px`;
-    }
 }
 
 customElements.define("input-textarea", InputTextarea);

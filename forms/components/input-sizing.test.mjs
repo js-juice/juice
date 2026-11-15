@@ -42,10 +42,12 @@ test("textareas always begin at one row and grow to their content", async () => 
         "utf8"
     );
 
-    assert.equal((inputTextarea.match(/textarea\.rows = 1;/g) || []).length, 2);
-    assert.doesNotMatch(inputTextarea, /getAttribute\("rows"\)/);
-    assert.match(inputTextarea, /addEventListener\("input", this\._boundAutoGrow\)/);
-    assert.match(inputTextarea, /textarea\.style\.height = `\$\{textarea\.scrollHeight\}px`/);
+    assert.match(inputTextarea, /textarea\.rows = 1;/);
+    assert.match(inputTextarea, /fieldSizing: "content"/);
+    assert.match(inputTextarea, /resize: "both"/);
+    for (const axis of ["vertical", "horizontal"]) {
+        assert.ok(inputTextarea.includes(`':host([resizable="${axis}"]) .input-wrapper': { resize: "${axis}" }`));
+    }
 });
 
 test("browser-prefilled controls color the complete input wrapper", async () => {

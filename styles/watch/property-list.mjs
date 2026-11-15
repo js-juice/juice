@@ -59,9 +59,7 @@ const LEGACY_COLORS = {
 };
 
 function colorUtilities(property) {
-    return Object.fromEntries(
-        Object.entries(LEGACY_COLORS).map(([name, value]) => [name, { [property]: value }])
-    );
+    return Object.fromEntries(Object.entries(LEGACY_COLORS).map(([name, value]) => [name, { [property]: value }]));
 }
 
 export const CHECK_CSS_PROPERTIES = {
@@ -208,6 +206,7 @@ export const CHECK_CSS_PROPERTIES = {
         start: { alignItems: "flex-start" },
         center: { alignItems: "center" },
         end: { alignItems: "flex-end" },
+        bottom: { alignItems: "flex-end" },
         stretch: { alignItems: "stretch" },
         baseline: { alignItems: "baseline" }
     },
@@ -356,8 +355,7 @@ export const CHECK_CSS_PROPERTIES = {
     "user-select": { $: { userSelect: "@" } },
     "white-space": { $: { whiteSpace: "@" } },
     "word-break": { $: { wordBreak: "@" } },
-    "box-sizing": { $: { boxSizing: "@" } }
-    ,
+    "box-sizing": { $: { boxSizing: "@" } },
     row: {
         display: "flex",
         flexDirection: "row",

@@ -15,6 +15,8 @@
  *
  * Attribute Reference:
  * - `label`: Visible button text.
+ * - `view="compact"`: Smaller text, height, and padding.
+ * - `view="icon"`: Shows only the icon attribute or icon slot. Supply a label or aria-label naming its action.
  * - `icon`: Text/icon glyph shown before label.
  * - `action`: Action identifier emitted in event payload.
  * - `bgcolor`, `color`: Button color overrides.
@@ -181,8 +183,38 @@ class InputButtonComponent extends HTMLElement {
                     display: none;
                 }
 
-                :host(.has-icon) button{
-                padding:0 0.25rem;
+                :host(.has-icon) button {
+                    padding: 0 0.25rem;
+                }
+
+                :host([view="compact"]) {
+                    height: auto;
+                }
+                :host([view="compact"]) button {
+                    height: auto;
+                    font-size: 0.875em;
+                    padding: 0.2em 0.65em;
+                }
+                :host([view="compact"].has-icon) button {
+                    padding-inline: 0.2em;
+                }
+
+                :host([view="icon"]) {
+                    height: auto;
+                    background: transparent;
+                }
+                :host([view="icon"]) button {
+                    height: auto;
+                    padding: 0.25em;
+                    border: 0;
+                    background: transparent;
+                }
+                :host([view="icon"]) .label {
+                    display: none;
+                }
+                :host([view="icon"]) .icon-wrap,
+                :host([view="icon"]) .icon-slot {
+                    height: auto;
                 }
             </style>
             <div class="input-root">
